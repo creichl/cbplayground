@@ -89,36 +89,77 @@ This README describes the full product vision.
 | --- | --- |
 | Backend | .NET 10 Minimal API |
 | Frontend | React web frontend |
-| Database | PostgreSQL, accessed via EF Core |
+| Database | SQLite, accessed via EF Core |
 | Staff authentication | ASP.NET Core Identity |
-| Local development | PostgreSQL and Mailpit (catches outgoing email) via `docker-compose` |
+| Local development | No Docker: the API creates and migrates a local SQLite file on startup |
 
 ## Architecture overview
 
 - **API:** a .NET 10 Minimal API.
 - **Web:** a React web frontend for all user interfaces: guest booking, admin and front desk. It also serves the guest booking UI that restaurants embed via an iframe snippet.
-- **Database:** a single PostgreSQL database, accessed via EF Core.
+- **Database:** a single SQLite database, accessed via EF Core.
 - **Multi-tenancy:** one tenant is one restaurant. All tenants share one database. Every tenant-owned table has a `TenantId` column, and EF Core global query filters keep the data of each tenant isolated.
 - **Authentication:** staff users authenticate with ASP.NET Core Identity. Guests have no account.
-- **Email:** the platform sends outgoing email to guests (confirmations and status updates). In local development, Mailpit catches all outgoing email so nothing reaches real recipients.
+- **Email:** the platform sends outgoing email to guests (confirmations and status updates). **Open:** how outgoing email is caught in local development. Mailpit no longer runs via Docker; the replacement will be solved without Docker and is not decided yet.
 
-## Repository layout (planned)
-
-> **Planned.** None of these folders or files exist yet.
+## Repository layout
 
 ```text
 /
-├── api/                  # .NET 10 Minimal API
-├── web/                  # React web frontend
-└── docker-compose.yml    # PostgreSQL and Mailpit for local development
+├── api/                          # .NET 10 Minimal API
+│   ├── Cbplayground.slnx
+│   ├── dotnet-tools.json         # local tool manifest (dotnet-ef)
+│   └── Cbplayground.Api/
+│       ├── Data/                 # AppDbContext and entities
+│       ├── Endpoints/            # endpoint groups, one file per area
+│       └── Migrations/           # EF Core migrations
+└── web/                          # React web frontend (Vite, TypeScript)
 ```
 
 ## Getting started
 
-> **Placeholder.** There is no code yet. Run instructions will follow once code exists.
+The repository contains a first walking skeleton: the API stores restaurants (tenants) in SQLite, and the web frontend lists them through the API. Docker is not used, neither for building nor for running.
 
 Prerequisites:
 
 - .NET 10 SDK
 - Node.js
-- Docker
+
+### Run the API
+
+```sh
+cd api/Cbplayground.Api
+dotnet run
+```
+
+The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations and adds two demo restaurants if there are none yet. The connection string is in `appsettings.json`.
+
+Endpoints:
+
+- `GET /api/health`
+- `GET /api/tenants`: all restaurants, sorted by name
+
+### Run the web frontend
+
+In a second terminal:
+
+```sh
+cd web
+npm install
+npm run dev
+```
+
+Open the URL Vite prints (usually http://localhost:5173). The Vite dev server forwards `/api` to the API on http://localhost:5025, so the API must be running.
+
+### Add a database migration
+
+The EF Core command-line tool `dotnet-ef` is pinned in the local tool manifest `api/dotnet-tools.json`:
+
+```sh
+cd api
+dotnet tool restore
+cd Cbplayground.Api
+dotnet ef migrations add <MigrationName>
+```
+
+The new migration is applied on the next start of the API.
