@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "cbplayground"
+  },
+  "language": {
+    "label": "Jezik",
+    "names": {
+      "en": "English",
+      "de": "Deutsch",
+      "sr-Latn": "Srpski (latinica)",
+      "sr-Cyrl": "Српски (ћирилица)"
+    }
+  },
+  "common": {
+    "retry": "Pokušajte ponovo",
+    "backToStart": "Nazad na početnu stranu"
+  },
+  "errors": {
+    "title": "Došlo je do greške",
+    "network": "Server nije dostupan. Proverite vezu i pokušajte ponovo.",
+    "http": "Server je odgovorio greškom {{status}}.",
+    "invalidResponse": "Server je poslao neočekivan odgovor.",
+    "unexpected": "Došlo je do neočekivane greške."
+  },
+  "home": {
+    "title": "Restorani",
+    "subtitle": "Izaberite restoran i rezervišite sto.",
+    "empty": "Još nema restorana.",
+    "view": "Pogledaj"
+  },
+  "restaurant": {
+    "bookingPlaceholder": "Ovde ćete uskoro moći da rezervišete sto onlajn.",
+    "notFoundTitle": "Restoran nije pronađen",
+    "notFoundText": "Na ovoj adresi nema restorana."
+  },
+  "admin": {
+    "label": "Administracija",
+    "toggleNavigation": "Prikaži ili sakrij navigaciju",
+    "nav": {
+      "overview": "Pregled",
+      "areas": "Prostori i stolovi",
+      "openingHours": "Radno vreme",
+      "reservationSettings": "Podešavanja rezervacija",
+      "staff": "Zaposleni"
+    }
+  },
+  "frontdesk": {
+    "label": "Recepcija",
+    "today": "Danas"
+  },
+  "placeholder": {
+    "text": "Ovaj deo je u izradi."
+  },
+  "notFound": {
+    "label": "Greška 404",
+    "title": "Stranica nije pronađena",
+    "text": "Stranica koju tražite ne postoji ili je premeštena."
+  }
+}

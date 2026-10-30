@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "cbplayground"
+  },
+  "language": {
+    "label": "Language",
+    "names": {
+      "en": "English",
+      "de": "Deutsch",
+      "sr-Latn": "Srpski (latinica)",
+      "sr-Cyrl": "Српски (ћирилица)"
+    }
+  },
+  "common": {
+    "retry": "Try again",
+    "backToStart": "Back to the start page"
+  },
+  "errors": {
+    "title": "Something went wrong",
+    "network": "The server could not be reached. Please check your connection and try again.",
+    "http": "The server responded with error {{status}}.",
+    "invalidResponse": "The server sent an unexpected response.",
+    "unexpected": "An unexpected error occurred."
+  },
+  "home": {
+    "title": "Restaurants",
+    "subtitle": "Choose a restaurant to reserve a table.",
+    "empty": "There are no restaurants yet.",
+    "view": "View"
+  },
+  "restaurant": {
+    "bookingPlaceholder": "Online table booking will be available here soon.",
+    "notFoundTitle": "Restaurant not found",
+    "notFoundText": "There is no restaurant at this address."
+  },
+  "admin": {
+    "label": "Admin",
+    "toggleNavigation": "Show or hide navigation",
+    "nav": {
+      "overview": "Overview",
+      "areas": "Areas & tables",
+      "openingHours": "Opening hours",
+      "reservationSettings": "Reservation settings",
+      "staff": "Staff"
+    }
+  },
+  "frontdesk": {
+    "label": "Front desk",
+    "today": "Today"
+  },
+  "placeholder": {
+    "text": "This section is being built."
+  },
+  "notFound": {
+    "label": "Error 404",
+    "title": "Page not found",
+    "text": "The page you are looking for does not exist or has been moved."
+  }
+}
