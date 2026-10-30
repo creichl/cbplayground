@@ -151,6 +151,26 @@ npm run dev
 
 Open the URL Vite prints (usually http://localhost:5173). The Vite dev server forwards `/api` to the API on http://localhost:5025, so the API must be running.
 
+Routes: `/` lists the restaurants, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/admin` is the admin area and `/frontdesk` the front desk.
+
+Before committing, run `npm run lint` (oxlint plus the translation key check) and `npm run build` (typecheck and production build).
+
+### Translations
+
+The UI texts live in `web/src/i18n/locales/`, one file per language: `en.json`, `de.json`, `sr-Latn.json` and `sr-Cyrl.json`. Code never contains visible text; it uses keys such as `t('home.title')`. `en.json` is the reference: the keys used in code are typed after it, so an unknown key fails the typecheck.
+
+Add a key:
+
+1. Add the key with its text to all four files. Serbian Cyrillic is maintained by hand, not transliterated from the Latin file.
+2. Use it in a component with `const { t } = useTranslation()` and `t('section.key')`.
+3. Run `npm run lint`. It reports every key that is missing in a file or not present in `en.json`.
+
+Add a language:
+
+1. Create `web/src/i18n/locales/<code>.json` with all keys of `en.json`, and add the language's name under `language.names` in every file.
+2. In `web/src/i18n/index.ts`, import the file, add the code to `languages` and `resources`, and map it to a dayjs locale in `dayjsLocales` (import that locale from `dayjs/locale/` as well).
+3. If the browser reports the language differently, extend `browserLanguage()` in the same file.
+
 ### Add a database migration
 
 The EF Core command-line tool `dotnet-ef` is pinned in the local tool manifest `api/dotnet-tools.json`:
