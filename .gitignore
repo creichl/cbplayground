@@ -1,0 +1,12 @@
+# .NET
+bin/
+obj/
+
+# Node
+node_modules/
+dist/
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
