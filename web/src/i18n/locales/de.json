@@ -76,7 +76,8 @@
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
-      "staff": "Mitarbeiter"
+      "staff": "Mitarbeiter",
+      "tables": "Tischübersicht"
     }
   },
   "overview": {
@@ -444,5 +445,68 @@
     },
     "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
+  },
+  "tableOverview": {
+    "title": "Tischübersicht",
+    "views": {
+      "timeline": "Zeitleiste",
+      "floor": "Grundriss"
+    },
+    "date": {
+      "label": "Datum",
+      "previous": "Vorheriger Tag",
+      "next": "Nächster Tag",
+      "today": "Heute"
+    },
+    "closed": "An diesem Tag ist das Restaurant geschlossen.",
+    "noTables": "Es gibt noch keine Tische.",
+    "status": {
+      "free": "Frei",
+      "Requested": "Angefragt",
+      "Confirmed": "Reserviert",
+      "Arrived": "Angekommen",
+      "Late": "Verspätet",
+      "Cancelled": "Storniert",
+      "Declined": "Abgelehnt"
+    },
+    "legendInactive": "Storniert oder abgelehnt",
+    "party": "{{name}} ({{guests}})",
+    "timeline": {
+      "tableColumn": "Tisch · Plätze"
+    },
+    "floor": {
+      "time": "Uhrzeit",
+      "now": "Jetzt",
+      "until": "bis {{time}}",
+      "nextAt": "ab {{time}}",
+      "noFloorPlan": "Für diesen Bereich gibt es noch keinen Grundriss, daher werden seine Tische als Liste gezeigt."
+    },
+    "details": {
+      "time": "Uhrzeit",
+      "guests": "Personen",
+      "table": "Tisch",
+      "tableValue": "{{number}} · {{area}}",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "notes": "Anmerkungen",
+      "reference": "Buchungsnummer",
+      "source": "Gebucht",
+      "sources": {
+        "Online": "Online vom Gast",
+        "Staff": "Vom Personal"
+      },
+      "next": "Danach an diesem Tisch: {{time}}, {{name}} ({{guests}})"
+    },
+    "actions": {
+      "Confirmed": "Annehmen",
+      "Declined": "Ablehnen",
+      "Arrived": "Angekommen",
+      "Late": "Verspätet",
+      "Cancelled": "Storniert"
+    },
+    "errors": {
+      "statusTitle": "Der Status konnte nicht geändert werden",
+      "statusChanged": "Die Reservierung wurde inzwischen geändert. Die Ansicht wurde neu geladen."
+    }
   }
 }

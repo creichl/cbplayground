@@ -76,7 +76,8 @@
       "areas": "Prostori i stolovi",
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
-      "staff": "Zaposleni"
+      "staff": "Zaposleni",
+      "tables": "Pregled stolova"
     }
   },
   "overview": {
@@ -444,5 +445,68 @@
     },
     "save": "Sačuvaj",
     "saved": "Podešavanja rezervacija su sačuvana."
+  },
+  "tableOverview": {
+    "title": "Pregled stolova",
+    "views": {
+      "timeline": "Vremenska osa",
+      "floor": "Tlocrt"
+    },
+    "date": {
+      "label": "Datum",
+      "previous": "Prethodni dan",
+      "next": "Sledeći dan",
+      "today": "Danas"
+    },
+    "closed": "Restoran je zatvoren ovog dana.",
+    "noTables": "Još nema stolova.",
+    "status": {
+      "free": "Slobodan",
+      "Requested": "Zatražena",
+      "Confirmed": "Rezervisan",
+      "Arrived": "Stigli",
+      "Late": "Kasne",
+      "Cancelled": "Otkazana",
+      "Declined": "Odbijena"
+    },
+    "legendInactive": "Otkazane ili odbijene",
+    "party": "{{name}} ({{guests}})",
+    "timeline": {
+      "tableColumn": "Sto · mesta"
+    },
+    "floor": {
+      "time": "Vreme",
+      "now": "Sada",
+      "until": "do {{time}}",
+      "nextAt": "od {{time}}",
+      "noFloorPlan": "Ovaj prostor još nema tlocrt, pa su njegovi stolovi prikazani kao lista."
+    },
+    "details": {
+      "time": "Vreme",
+      "guests": "Gosti",
+      "table": "Sto",
+      "tableValue": "{{number}} · {{area}}",
+      "phone": "Telefon",
+      "email": "Imejl",
+      "notes": "Napomene",
+      "reference": "Broj rezervacije",
+      "source": "Rezervisao",
+      "sources": {
+        "Online": "Gost onlajn",
+        "Staff": "Osoblje"
+      },
+      "next": "Sledeća za ovim stolom: {{time}}, {{name}} ({{guests}})"
+    },
+    "actions": {
+      "Confirmed": "Prihvati",
+      "Declined": "Odbij",
+      "Arrived": "Stigli",
+      "Late": "Kasne",
+      "Cancelled": "Otkazana"
+    },
+    "errors": {
+      "statusTitle": "Status nije mogao da se promeni",
+      "statusChanged": "Rezervacija je u međuvremenu promenjena. Prikaz je ponovo učitan."
+    }
   }
 }
