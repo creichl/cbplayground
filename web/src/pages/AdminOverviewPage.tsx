@@ -1,10 +1,12 @@
-import { Badge, Button, Card, CheckIcon, Group, Progress, Skeleton, Stack, Text, ThemeIcon, Title } from '@mantine/core'
+import { Anchor, Badge, Button, Card, CheckIcon, Group, Progress, Skeleton, Stack, Text, ThemeIcon, Title } from '@mantine/core'
 import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useCurrentUser } from '../api/auth.ts'
 import { type SetupStatus, useSetupStatus } from '../api/profile.ts'
+import { useOpenRequests, useReservations, useRestaurantToday } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { DayStats } from '../components/reservations/DayStats.tsx'
 
 /** The steps of the setup checklist in their order, each with the page where it is done. */
 const steps: { key: keyof SetupStatus; title: ParseKeys; description: ParseKeys; to: string }[] = [
@@ -21,7 +23,7 @@ const steps: { key: keyof SetupStatus; title: ParseKeys; description: ParseKeys;
   },
 ]
 
-/** Admin start page: greeting and the checklist of the restaurant's setup. */
+/** Admin start page: greeting, today's key figures and the checklist of the restaurant's setup. */
 export function AdminOverviewPage() {
   const { t } = useTranslation()
   const currentUser = useCurrentUser()
@@ -43,12 +45,40 @@ export function AdminOverviewPage() {
         )}
       </Group>
 
+      <TodayStats />
+
       {status.isPending ? (
         <Skeleton h={480} radius="md" />
       ) : status.isError ? (
         <ErrorAlert error={status.error} onRetry={() => void status.refetch()} />
       ) : (
         <SetupChecklist status={status.data} />
+      )}
+    </Stack>
+  )
+}
+
+/** Today's reservations, guests and open requests, with the way to the reservations. */
+function TodayStats() {
+  const { t } = useTranslation()
+  const today = useRestaurantToday()
+  const reservations = useReservations(today)
+  const openRequests = useOpenRequests(today)
+
+  return (
+    <Stack gap="xs">
+      <Group justify="space-between" gap="xs">
+        <Title order={3}>{t('overview.today.title')}</Title>
+        <Anchor component={Link} to="/admin/reservations" size="sm">
+          {t('overview.today.toReservations')}
+        </Anchor>
+      </Group>
+      {reservations.data !== undefined ? (
+        <DayStats reservations={reservations.data} openRequests={openRequests.data?.length ?? 0} withArrived={false} requestsTo="/admin/reservations" />
+      ) : reservations.isError ? (
+        <ErrorAlert error={reservations.error} onRetry={() => void reservations.refetch()} />
+      ) : (
+        <Skeleton h={76} radius="md" />
       )}
     </Stack>
   )
