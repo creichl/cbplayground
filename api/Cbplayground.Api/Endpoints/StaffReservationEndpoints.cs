@@ -178,7 +178,8 @@ public static class StaffReservationEndpoints
         });
 
         // Same checks as a new reservation; the reservation does not collide with itself. A start that is not changed
-        // may lie in the past, so a running reservation can still be changed (e.g. its notes or duration).
+        // may lie in the past, so a running reservation can still be changed (e.g. its notes or duration). A walk-in starts
+        // off the quarter-hour grid and may end after closing time: as long as its start is kept, the opening hours do not apply.
         group.MapPut("/reservations/{id:guid}", async (Guid id, ReservationRequest request, ITenantContext tenantContext, AppDbContext db,
             IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
@@ -197,7 +198,8 @@ public static class StaffReservationEndpoints
 
             var startChanged = input.Date.ToDateTime(input.Time) != reservation.StartLocal;
             var check = await availability.CheckAsync(input.Date, input.Time, request.Guests, input.Duration, ReservationSource.Staff,
-                request.TableId, ignoreReservationId: reservation.Id, checkPast: startChanged, cancellationToken: cancellationToken);
+                request.TableId, ignoreReservationId: reservation.Id, checkPast: startChanged,
+                checkOpeningHours: startChanged || reservation.Source != ReservationSource.WalkIn, cancellationToken: cancellationToken);
             if (check.Table is not { } table)
             {
                 return CheckError(check.Error!);

@@ -39,10 +39,12 @@ public interface IAvailabilityService
     /// <summary>
     /// Checks a reservation and picks its table: <paramref name="tableId"/> if given and free, otherwise the smallest free table
     /// that seats the party (then by area order and table number). <paramref name="ignoreReservationId"/> is the reservation
-    /// being changed, so it does not collide with itself. <paramref name="checkPast"/> false skips the "in the past" check.
+    /// being changed, so it does not collide with itself. <paramref name="checkPast"/> false skips the "in the past" check,
+    /// <paramref name="checkOpeningHours"/> false the check of the start time against the opening hours.
     /// </summary>
     Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
-        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, CancellationToken cancellationToken = default);
+        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>The largest party that can be booked online: the seats of the largest table that can be booked online; 0 if none.</summary>
     Task<int> GetMaxOnlinePartySizeAsync(CancellationToken cancellationToken = default);
@@ -107,7 +109,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     }
 
     public async Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
-        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, CancellationToken cancellationToken = default)
+        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
+        CancellationToken cancellationToken = default)
     {
         var tables = await LoadTablesAsync(cancellationToken);
         if (guests < 1 || guests > MaxPartySize(tables, channel))
@@ -131,7 +134,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
 
         var periods = await openingCalendar.GetOpenPeriodsAsync(date, cancellationToken);
-        if (!periods.Any(period => StartTimes(date, period, durationMinutes).Contains(start)))
+        if (checkOpeningHours && !periods.Any(period => StartTimes(date, period, durationMinutes).Contains(start)))
         {
             return Error("outside_opening_hours");
         }

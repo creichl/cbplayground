@@ -242,6 +242,21 @@ public class ReservationStatusWorkflowTests(ApiFactory factory) : IClassFixture<
     }
 
     [Fact]
+    public async Task A_walk_in_can_be_changed_while_its_start_off_the_grid_is_kept()
+    {
+        var restaurant = await OpenNowAsync([new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var walkIn = await WalkedInAsync(frontDesk, 2);
+
+        var changed = await frontDesk.PutAsJsonAsync($"/api/staff/reservations/{walkIn.Id}",
+            new { date = walkIn.Date.ToString("yyyy-MM-dd"), time = walkIn.Time, guests = 3, tableId = walkIn.TableId, durationMinutes = 90, name = "Familie Huber" }, Token);
+
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        var saved = (await changed.Content.ReadFromJsonAsync<ReservationResponse>(Token))!;
+        Assert.Equal((walkIn.Time, 3, 90, "Familie Huber", ReservationSource.WalkIn), (saved.Time, saved.Guests, saved.DurationMinutes, saved.Name, saved.Source));
+    }
+
+    [Fact]
     public async Task Walk_ins_only_use_tables_of_the_own_restaurant()
     {
         var restaurantA = await OpenNowAsync([new TestArea("Gaststube", true, 100, ("1", 4))]);
