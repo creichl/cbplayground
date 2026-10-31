@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Outlet } from 'react-router'
 import { Brand } from '../components/Brand.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
+import { UserMenu } from '../components/UserMenu.tsx'
 
 /** Simplified staff layout without sidebar: the front desk works on a single screen. */
 export function FrontdeskLayout() {
@@ -13,7 +14,10 @@ export function FrontdeskLayout() {
       <AppShell.Header>
         <Group h="100%" px="sm" justify="space-between" wrap="nowrap" gap="xs">
           <Brand to="/frontdesk" area={t('frontdesk.label')} />
-          <LanguageSwitcher />
+          <Group gap="xs" wrap="nowrap" miw={0}>
+            <LanguageSwitcher />
+            <UserMenu />
+          </Group>
         </Group>
       </AppShell.Header>
 
