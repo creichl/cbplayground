@@ -22,6 +22,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<DurationRule> DurationRules => Set<DurationRule>();
 
+    public DbSet<Reservation> Reservations => Set<Reservation>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -98,6 +100,24 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         {
             rule.HasIndex(r => r.TenantId);
             rule.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Reservation>(reservation =>
+        {
+            reservation.HasIndex(r => new { r.TenantId, r.StartLocal });
+            reservation.HasIndex(r => r.ReferenceCode).IsUnique();
+            reservation.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // A table with reservations cannot be deleted by the database; the endpoints remove the reservations
+            // that no longer matter first and refuse the deletion while future ones exist.
+            reservation.HasOne<Table>().WithMany().HasForeignKey(r => r.TableId).OnDelete(DeleteBehavior.Restrict);
+            reservation.Property(r => r.GuestName).HasMaxLength(Reservation.MaxNameLength);
+            reservation.Property(r => r.GuestPhone).HasMaxLength(Reservation.MaxPhoneLength);
+            reservation.Property(r => r.GuestEmail).HasMaxLength(Reservation.MaxEmailLength);
+            reservation.Property(r => r.Notes).HasMaxLength(Reservation.MaxNotesLength);
+            reservation.Property(r => r.ReferenceCode).HasMaxLength(Reservation.ReferenceCodeLength);
+            reservation.Property(r => r.Language).HasMaxLength(10);
+            reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
+            reservation.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);
         });
 
         // The roles are fixed, so the migrations create them in every environment.
