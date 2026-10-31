@@ -10,6 +10,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<ReservationSettings> ReservationSettings => Set<ReservationSettings>();
+
+    public DbSet<DurationRule> DurationRules => Set<DurationRule>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -31,6 +35,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(u => u.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ReservationSettings>(settings =>
+        {
+            // At most one row per restaurant.
+            settings.HasIndex(s => s.TenantId).IsUnique();
+            settings.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Cascade);
+            settings.Property(s => s.ConfirmationMode).HasConversion<string>();
+            settings.Property(s => s.TableSelectionMode).HasConversion<string>();
+        });
+
+        modelBuilder.Entity<DurationRule>(rule =>
+        {
+            rule.HasIndex(r => r.TenantId);
+            rule.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // The roles are fixed, so the migrations create them in every environment.

@@ -1,6 +1,7 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +14,7 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connect
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
 
 // AddIdentity registers the services only; there is no public registration endpoint (no MapIdentityApi).
 builder.Services
@@ -85,6 +87,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapReservationSettingsEndpoints();
 
 app.Run();
 
