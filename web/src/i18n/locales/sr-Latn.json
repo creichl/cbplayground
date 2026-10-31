@@ -13,7 +13,9 @@
   },
   "common": {
     "retry": "Pokušajte ponovo",
-    "backToStart": "Nazad na početnu stranu"
+    "backToStart": "Nazad na početnu stranu",
+    "cancel": "Otkaži",
+    "save": "Sačuvaj"
   },
   "auth": {
     "userMenu": "Meni naloga",
@@ -62,6 +64,67 @@
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni"
+    }
+  },
+  "staff": {
+    "title": "Zaposleni",
+    "subtitle": "Osobe koje se prijavljuju za vaš restoran.",
+    "you": "Vi",
+    "actions": "Radnje",
+    "actionsFor": "Radnje za {{name}}",
+    "fields": {
+      "name": "Ime",
+      "email": "Imejl",
+      "role": "Uloga",
+      "status": "Status",
+      "startPassword": "Početna lozinka",
+      "newPassword": "Nova lozinka"
+    },
+    "roles": {
+      "tenantAdmin": "Administrator",
+      "frontDesk": "Recepcija"
+    },
+    "status": {
+      "active": "Aktivan",
+      "inactive": "Deaktiviran"
+    },
+    "passwordRules": "Najmanje 6 znakova, sa velikim i malim slovima, cifrom i specijalnim znakom.",
+    "create": {
+      "button": "Dodaj zaposlenog",
+      "title": "Dodaj zaposlenog",
+      "submit": "Dodaj"
+    },
+    "edit": {
+      "button": "Izmeni",
+      "title": "Izmeni zaposlenog"
+    },
+    "password": {
+      "button": "Postavi lozinku",
+      "title": "Nova lozinka za {{name}}",
+      "text": "Novu lozinku lično prosledite zaposlenom. Postojeće sesije biće odjavljene.",
+      "submit": "Postavi lozinku"
+    },
+    "deactivate": "Deaktiviraj",
+    "activate": "Aktiviraj",
+    "validation": {
+      "name": "Unesite ime.",
+      "email": "Unesite ispravnu imejl adresu.",
+      "password": "Unesite lozinku."
+    },
+    "notifications": {
+      "created": "{{name}} je dodat.",
+      "updated": "Izmene za {{name}} su sačuvane.",
+      "passwordSet": "Nova lozinka za {{name}} je postavljena.",
+      "activated": "{{name}} je aktiviran.",
+      "deactivated": "{{name}} je deaktiviran i odjavljen."
+    },
+    "errors": {
+      "emailTaken": "Ovu imejl adresu već koristi drugi nalog.",
+      "invalidEmail": "Ova imejl adresa nije ispravna.",
+      "passwordTooWeak": "Lozinka je preslaba. Potrebno je najmanje 6 znakova, sa velikim i malim slovima, cifrom i specijalnim znakom.",
+      "lastAdmin": "Ovo je poslednji aktivni administrator restorana. Najpre postavite drugog zaposlenog za administratora.",
+      "cannotDeactivateSelf": "Ne možete deaktivirati sopstveni nalog.",
+      "actionFailed": "Izmena nije sačuvana. Pokušajte ponovo."
     }
   },
   "frontdesk": {

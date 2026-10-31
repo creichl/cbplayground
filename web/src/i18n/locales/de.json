@@ -13,7 +13,9 @@
   },
   "common": {
     "retry": "Erneut versuchen",
-    "backToStart": "Zurück zur Startseite"
+    "backToStart": "Zurück zur Startseite",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
   },
   "auth": {
     "userMenu": "Kontomenü",
@@ -62,6 +64,67 @@
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter"
+    }
+  },
+  "staff": {
+    "title": "Mitarbeiter",
+    "subtitle": "Die Personen, die sich für Ihr Restaurant anmelden.",
+    "you": "Sie",
+    "actions": "Aktionen",
+    "actionsFor": "Aktionen für {{name}}",
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "status": "Status",
+      "startPassword": "Startpasswort",
+      "newPassword": "Neues Passwort"
+    },
+    "roles": {
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Deaktiviert"
+    },
+    "passwordRules": "Mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.",
+    "create": {
+      "button": "Mitarbeiter anlegen",
+      "title": "Mitarbeiter anlegen",
+      "submit": "Anlegen"
+    },
+    "edit": {
+      "button": "Bearbeiten",
+      "title": "Mitarbeiter bearbeiten"
+    },
+    "password": {
+      "button": "Passwort setzen",
+      "title": "Neues Passwort für {{name}}",
+      "text": "Geben Sie das neue Passwort selbst an den Mitarbeiter weiter. Bestehende Sitzungen werden abgemeldet.",
+      "submit": "Passwort setzen"
+    },
+    "deactivate": "Deaktivieren",
+    "activate": "Aktivieren",
+    "validation": {
+      "name": "Bitte geben Sie einen Namen ein.",
+      "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "password": "Bitte geben Sie ein Passwort ein."
+    },
+    "notifications": {
+      "created": "{{name}} wurde angelegt.",
+      "updated": "Die Änderungen an {{name}} wurden gespeichert.",
+      "passwordSet": "Das neue Passwort für {{name}} wurde gesetzt.",
+      "activated": "{{name}} wurde aktiviert.",
+      "deactivated": "{{name}} wurde deaktiviert und abgemeldet."
+    },
+    "errors": {
+      "emailTaken": "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
+      "invalidEmail": "Diese E-Mail-Adresse ist ungültig.",
+      "passwordTooWeak": "Das Passwort ist zu schwach. Es braucht mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.",
+      "lastAdmin": "Das ist der letzte aktive Admin des Restaurants. Machen Sie zuerst einen anderen Mitarbeiter zum Admin.",
+      "cannotDeactivateSelf": "Sie können Ihr eigenes Konto nicht deaktivieren.",
+      "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
     }
   },
   "frontdesk": {

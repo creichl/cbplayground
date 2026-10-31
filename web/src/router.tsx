@@ -9,6 +9,7 @@ import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { PlaceholderPage } from './pages/PlaceholderPage.tsx'
 import { RestaurantPage } from './pages/RestaurantPage.tsx'
+import { StaffPage } from './pages/StaffPage.tsx'
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -32,7 +33,7 @@ export const router = createBrowserRouter([
       { path: 'areas', element: <PlaceholderPage titleKey="admin.nav.areas" /> },
       { path: 'opening-hours', element: <PlaceholderPage titleKey="admin.nav.openingHours" /> },
       { path: 'reservation-settings', element: <PlaceholderPage titleKey="admin.nav.reservationSettings" /> },
-      { path: 'staff', element: <PlaceholderPage titleKey="admin.nav.staff" /> },
+      { path: 'staff', element: <StaffPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

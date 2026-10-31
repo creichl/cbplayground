@@ -13,7 +13,9 @@
   },
   "common": {
     "retry": "Try again",
-    "backToStart": "Back to the start page"
+    "backToStart": "Back to the start page",
+    "cancel": "Cancel",
+    "save": "Save"
   },
   "auth": {
     "userMenu": "Account menu",
@@ -62,6 +64,67 @@
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
       "staff": "Staff"
+    }
+  },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "The people who sign in for your restaurant.",
+    "you": "You",
+    "actions": "Actions",
+    "actionsFor": "Actions for {{name}}",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "startPassword": "Start password",
+      "newPassword": "New password"
+    },
+    "roles": {
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Deactivated"
+    },
+    "passwordRules": "At least 6 characters, with upper- and lowercase letters, a digit and a special character.",
+    "create": {
+      "button": "Add staff member",
+      "title": "Add staff member",
+      "submit": "Add"
+    },
+    "edit": {
+      "button": "Edit",
+      "title": "Edit staff member"
+    },
+    "password": {
+      "button": "Set password",
+      "title": "New password for {{name}}",
+      "text": "Pass the new password on to the staff member yourself. Their current sessions will be signed out.",
+      "submit": "Set password"
+    },
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "validation": {
+      "name": "Please enter a name.",
+      "email": "Please enter a valid email address.",
+      "password": "Please enter a password."
+    },
+    "notifications": {
+      "created": "{{name}} has been added.",
+      "updated": "The changes to {{name}} have been saved.",
+      "passwordSet": "The new password for {{name}} has been set.",
+      "activated": "{{name}} has been activated.",
+      "deactivated": "{{name}} has been deactivated and signed out."
+    },
+    "errors": {
+      "emailTaken": "This email address is already in use by another account.",
+      "invalidEmail": "This email address is not valid.",
+      "passwordTooWeak": "The password is too weak. It needs at least 6 characters, with upper- and lowercase letters, a digit and a special character.",
+      "lastAdmin": "This is the restaurant’s last active admin. Make another staff member an admin first.",
+      "cannotDeactivateSelf": "You cannot deactivate your own account.",
+      "actionFailed": "The change could not be saved. Please try again."
     }
   },
   "frontdesk": {
