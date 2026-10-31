@@ -188,7 +188,8 @@ public static partial class OpeningHoursEndpoints
 
     private static IResult Error(string error) => Results.BadRequest(new ErrorResponse(error));
 
-    private static bool TryParseTime(string? value, bool allowEndOfDay, out TimeOnly time)
+    /// <summary>Parses "HH:mm"; with <paramref name="allowEndOfDay"/> also "24:00" (<see cref="OpeningPeriod.EndOfDay"/>).</summary>
+    internal static bool TryParseTime(string? value, bool allowEndOfDay, out TimeOnly time)
     {
         if (allowEndOfDay && value == "24:00")
         {
@@ -201,6 +202,7 @@ public static partial class OpeningHoursEndpoints
             && TimeOnly.TryParseExact(value, "HH:mm", CultureInfo.InvariantCulture, DateTimeStyles.None, out time);
     }
 
-    private static string FormatTime(TimeOnly time) =>
+    /// <summary>"HH:mm", and "24:00" for <see cref="OpeningPeriod.EndOfDay"/>.</summary>
+    internal static string FormatTime(TimeOnly time) =>
         time == OpeningPeriod.EndOfDay ? "24:00" : time.ToString("HH:mm", CultureInfo.InvariantCulture);
 }

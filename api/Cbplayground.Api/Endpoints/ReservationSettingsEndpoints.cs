@@ -113,6 +113,7 @@ public static class ReservationSettingsEndpoints
         return null;
     }
 
-    private static bool IsValidDuration(int minutes) =>
+    /// <summary>15 to 480 minutes in steps of 15; also for the duration staff set on a single reservation.</summary>
+    public static bool IsValidDuration(int minutes) =>
         minutes is >= MinDurationMinutes and <= MaxDurationMinutes && minutes % DurationStepMinutes == 0;
 }
