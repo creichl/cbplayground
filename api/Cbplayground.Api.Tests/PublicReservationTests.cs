@@ -122,6 +122,26 @@ public class PublicReservationTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task The_restaurant_shows_its_profile_to_guests()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var anonymous = factory.CreateHttpsClient();
+
+        var empty = await anonymous.GetFromJsonAsync<RestaurantResponse>(PathOf(restaurant), Token);
+        Assert.Equal((null, null, null, null, null, null, null),
+            (empty!.Street, empty.PostalCode, empty.City, empty.Phone, empty.Email, empty.Website, empty.Description));
+
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var put = await admin.PutAsJsonAsync("/api/admin/profile", new ProfileEndpoints.ProfileDto(
+            "Hauptplatz 1", "1010", "Wien", "+43 1 2345678", "info@example.at", "https://www.example.at", "Wiener Beisl."), Token);
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        var info = await anonymous.GetFromJsonAsync<RestaurantResponse>(PathOf(restaurant), Token);
+        Assert.Equal(("Hauptplatz 1", "1010", "Wien", "+43 1 2345678", "info@example.at", "https://www.example.at", "Wiener Beisl."),
+            (info!.Street, info.PostalCode, info.City, info.Phone, info.Email, info.Website, info.Description));
+    }
+
+    [Fact]
     public async Task A_restaurant_without_location_or_online_tables_is_not_bookable()
     {
         var withoutLocation = await TestRestaurants.CreateAsync(factory, OneRoom, withLocation: false);
