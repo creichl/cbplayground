@@ -164,6 +164,9 @@ public static class StaffReservationEndpoints
 
         // Same checks as a new reservation; the reservation does not collide with itself. A start that is not changed
         // may lie in the past, so a running reservation can still be changed (e.g. its notes or duration).
+        // The opening hours, the availability and the table are only checked when the booking itself changes (date, time,
+        // duration, party size or table; no table means the system assigns one), so the guest's details and notes can
+        // still be changed after the opening hours or the tables have changed.
         group.MapPut("/reservations/{id:guid}", async (Guid id, ReservationRequest request, ITenantContext tenantContext, AppDbContext db,
             IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
@@ -181,16 +184,25 @@ public static class StaffReservationEndpoints
             }
 
             var startChanged = input.Date.ToDateTime(input.Time) != reservation.StartLocal;
-            var check = await availability.CheckAsync(input.Date, input.Time, request.Guests, input.Duration, ReservationSource.Staff,
-                request.TableId, ignoreReservationId: reservation.Id, checkPast: startChanged, cancellationToken: cancellationToken);
-            if (check.Table is not { } table)
+            var bookingChanged = startChanged
+                || input.Duration != reservation.DurationMinutes
+                || request.Guests != reservation.PartySize
+                || request.TableId != reservation.TableId;
+            var tableId = reservation.TableId;
+            if (bookingChanged)
             {
-                return CheckError(check.Error!);
+                var check = await availability.CheckAsync(input.Date, input.Time, request.Guests, input.Duration, ReservationSource.Staff,
+                    request.TableId, ignoreReservationId: reservation.Id, checkPast: startChanged, cancellationToken: cancellationToken);
+                if (check.Table is not { } table)
+                {
+                    return CheckError(check.Error!);
+                }
+                tableId = table.Id;
             }
 
             reservation.GuestName = input.Guest!.Name;
             reservation.Language = request.Language is null ? reservation.Language : input.Language!;
-            Apply(reservation, input, request.Guests, table.Id, DateTime.UtcNow);
+            Apply(reservation, input, request.Guests, tableId, DateTime.UtcNow);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
