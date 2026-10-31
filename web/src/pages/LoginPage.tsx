@@ -7,11 +7,14 @@ import { ApiError } from '../api/client.ts'
 import { Brand } from '../components/Brand.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 const loginErrors = {
   invalid_credentials: 'login.errors.invalidCredentials',
   locked_out: 'login.errors.lockedOut',
   deactivated: 'login.errors.deactivated',
+  restaurant_deactivated: 'login.errors.restaurantDeactivated',
+  too_many_requests: 'login.errors.tooManyRequests',
 } as const
 
 function isLoginError(code: string | null): code is keyof typeof loginErrors {
@@ -36,6 +39,7 @@ function safeReturnTo(value: string | null) {
 /** Staff sign-in: a centred card with email and password. */
 export function LoginPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('login.title'), null)
   const [searchParams] = useSearchParams()
   const currentUser = useCurrentUser()
   const login = useLogin()

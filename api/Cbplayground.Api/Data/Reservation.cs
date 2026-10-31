@@ -15,6 +15,12 @@ public enum ReservationStatus
 
     /// <summary>A request the restaurant did not approve.</summary>
     Declined,
+
+    /// <summary>The guest did not come. Does not occupy the table.</summary>
+    NoShow,
+
+    /// <summary>The guest has left; the table is occupied only until <see cref="Reservation.CompletedAtLocal"/>.</summary>
+    Completed,
 }
 
 /// <summary>Who entered the reservation.</summary>
@@ -26,6 +32,9 @@ public enum ReservationSource
 
     /// <summary>A Tenant Admin or Front desk user on the guest's behalf, e.g. for a phone reservation.</summary>
     Staff,
+
+    /// <summary>A guest without a reservation, seated right away by the staff.</summary>
+    WalkIn,
 }
 
 /// <summary>A table reservation. Times are local times of the restaurant (<see cref="Tenant.TimeZoneId"/>), like the opening hours.</summary>
@@ -36,6 +45,9 @@ public class Reservation : ITenantOwned
     public const int MaxEmailLength = 254;
     public const int MaxNotesLength = 500;
     public const int ReferenceCodeLength = 6;
+
+    /// <summary>The name stored for a walk-in without a name; the front desk shows it translated.</summary>
+    public const string WalkInName = "Walk-in";
 
     public Guid Id { get; set; }
 
@@ -65,11 +77,23 @@ public class Reservation : ITenantOwned
 
     public ReservationSource Source { get; set; }
 
+    /// <summary>When the guest left (status <see cref="ReservationStatus.Completed"/>), in the restaurant's local time; null otherwise.</summary>
+    public DateTime? CompletedAtLocal { get; set; }
+
     /// <summary>Short code the guest can read out on the phone, e.g. "K7MX3P". Unique across all restaurants.</summary>
     public required string ReferenceCode { get; set; }
 
     /// <summary>The guest's language (e.g. "de", "sr-Latn"), for the emails to the guest.</summary>
     public required string Language { get; set; }
+
+    /// <summary>
+    /// SHA-256 of the token in the guest's link to manage the reservation (<see cref="Reservations.ManageToken"/>); the token
+    /// itself is never stored. Only online bookings have one, so only they can be viewed and cancelled by the guest.
+    /// </summary>
+    public byte[]? ManageTokenHash { get; set; }
+
+    /// <summary>True when the guest cancelled the reservation through the link; staff see it in their lists.</summary>
+    public bool CancelledByGuest { get; set; }
 
     public DateTime CreatedAtUtc { get; set; }
 

@@ -7,9 +7,12 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api/client.ts'
 import {
+  bookingHorizonLimits,
+  bufferLimits,
   type ConfirmationMode,
   durationLimits,
   isValidDuration,
+  leadTimeLimits,
   matchingRule,
   type ReservationSettings,
   type ReservationSettingsError,
@@ -18,6 +21,7 @@ import {
   useSaveReservationSettings,
 } from '../api/reservationSettings.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 const confirmationOptions: { value: ConfirmationMode; label: ParseKeys; description: ParseKeys }[] = [
   { value: 'Instant', label: 'reservationSettings.confirmation.instant.label', description: 'reservationSettings.confirmation.instant.description' },
@@ -35,6 +39,10 @@ const saveErrors: Record<ReservationSettingsError, ParseKeys> = {
   invalid_min_guests: 'reservationSettings.errors.invalidMinGuests',
   min_greater_than_max: 'reservationSettings.errors.minGreaterThanMax',
   overlapping_rules: 'reservationSettings.errors.overlappingRules',
+  invalid_lead_time: 'reservationSettings.errors.invalidLeadTime',
+  invalid_booking_horizon: 'reservationSettings.errors.invalidBookingHorizon',
+  invalid_buffer: 'reservationSettings.errors.invalidBuffer',
+  invalid_max_party_size: 'reservationSettings.errors.invalidMaxPartySize',
 }
 
 function isSaveError(code: string | null): code is ReservationSettingsError {
@@ -51,19 +59,29 @@ type FormValues = {
   tableSelectionMode: TableSelectionMode
   defaultDurationMinutes: NumberValue
   durationRules: RuleValues[]
+  minLeadTimeMinutes: NumberValue
+  bookingHorizonDays: NumberValue
+  bufferMinutes: NumberValue
+  /** Empty: the largest table that can be booked online. */
+  maxOnlinePartySize: NumberValue
 }
 
 function toFormValues(settings: ReservationSettings): FormValues {
-  return { ...settings, durationRules: settings.durationRules.map((rule) => ({ ...rule, key: randomId() })) }
+  return {
+    ...settings,
+    durationRules: settings.durationRules.map((rule) => ({ ...rule, key: randomId() })),
+    maxOnlinePartySize: settings.maxOnlinePartySize ?? '',
+  }
 }
 
 function isWholeNumber(value: NumberValue): value is number {
   return typeof value === 'number' && Number.isInteger(value)
 }
 
-/** Reservation settings of the restaurant: confirmation, table assignment and duration. */
+/** Reservation settings of the restaurant: confirmation, table assignment, duration and the booking rules. */
 export function ReservationSettingsPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('reservationSettings.title'))
   const settings = useReservationSettings()
 
   return (
@@ -77,6 +95,7 @@ export function ReservationSettingsPage() {
         <Stack gap="lg">
           <Skeleton h={180} radius="md" />
           <Skeleton h={180} radius="md" />
+          <Skeleton h={260} radius="md" />
           <Skeleton h={260} radius="md" />
         </Stack>
       ) : settings.isError ? (
@@ -124,6 +143,23 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
         }
         errors[`${path}.durationMinutes`] = durationError(rule.durationMinutes)
       })
+
+      const inRange = (value: NumberValue, limits: { min: number; max: number }) =>
+        isWholeNumber(value) && value >= limits.min && value <= limits.max
+      errors.minLeadTimeMinutes = inRange(values.minLeadTimeMinutes, leadTimeLimits)
+        ? null
+        : t('reservationSettings.validation.leadTime', { ...leadTimeLimits })
+      errors.bookingHorizonDays = inRange(values.bookingHorizonDays, bookingHorizonLimits)
+        ? null
+        : t('reservationSettings.validation.bookingHorizon', { ...bookingHorizonLimits })
+      errors.bufferMinutes =
+        inRange(values.bufferMinutes, bufferLimits) && Number(values.bufferMinutes) % bufferLimits.step === 0
+          ? null
+          : t('reservationSettings.validation.buffer', { ...bufferLimits })
+      errors.maxOnlinePartySize =
+        values.maxOnlinePartySize === '' || (isWholeNumber(values.maxOnlinePartySize) && values.maxOnlinePartySize >= 1)
+          ? null
+          : t('reservationSettings.validation.maxOnlinePartySize')
       return errors
     },
   })
@@ -139,6 +175,10 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
           maxGuests: Number(rule.maxGuests),
           durationMinutes: Number(rule.durationMinutes),
         })),
+        minLeadTimeMinutes: Number(values.minLeadTimeMinutes),
+        bookingHorizonDays: Number(values.bookingHorizonDays),
+        bufferMinutes: Number(values.bufferMinutes),
+        maxOnlinePartySize: values.maxOnlinePartySize === '' ? null : Number(values.maxOnlinePartySize),
       },
       {
         onSuccess: (saved) => {
@@ -297,7 +337,7 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
                 />
                 {isWholeNumber(previewGuests) && previewGuests >= 1 && isWholeNumber(previewMinutes) && (
                   <Text size="sm">
-                    {t('reservationSettings.duration.previewResult', { guests: previewGuests, minutes: previewMinutes })}{' '}
+                    {t('reservationSettings.duration.previewResult', { guests: previewGuests, count: previewMinutes })}{' '}
                     <Text span c="dimmed" size="sm">
                       {previewRule !== undefined
                         ? t('reservationSettings.duration.previewRule', { min: previewRule.minGuests, max: previewRule.maxGuests })
@@ -307,6 +347,62 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
                 )}
               </Stack>
             </Card>
+          </Stack>
+        </Card>
+
+        <Card>
+          <Stack gap="md">
+            <Stack gap={4}>
+              <Title order={3}>{t('reservationSettings.rules.title')}</Title>
+              <Text c="dimmed" size="sm">
+                {t('reservationSettings.rules.description')}
+              </Text>
+            </Stack>
+            <NumberInput
+              label={t('reservationSettings.rules.leadTime')}
+              description={t('reservationSettings.rules.leadTimeDescription')}
+              suffix={t('reservationSettings.duration.minutesSuffix')}
+              min={leadTimeLimits.min}
+              max={leadTimeLimits.max}
+              step={15}
+              allowDecimal={false}
+              allowNegative={false}
+              maw={420}
+              {...form.getInputProps('minLeadTimeMinutes')}
+            />
+            <NumberInput
+              label={t('reservationSettings.rules.bookingHorizon')}
+              description={t('reservationSettings.rules.bookingHorizonDescription')}
+              suffix={t('reservationSettings.rules.daysSuffix')}
+              min={bookingHorizonLimits.min}
+              max={bookingHorizonLimits.max}
+              allowDecimal={false}
+              allowNegative={false}
+              maw={420}
+              {...form.getInputProps('bookingHorizonDays')}
+            />
+            <NumberInput
+              label={t('reservationSettings.rules.buffer')}
+              description={t('reservationSettings.rules.bufferDescription')}
+              suffix={t('reservationSettings.duration.minutesSuffix')}
+              min={bufferLimits.min}
+              max={bufferLimits.max}
+              step={bufferLimits.step}
+              allowDecimal={false}
+              allowNegative={false}
+              maw={420}
+              {...form.getInputProps('bufferMinutes')}
+            />
+            <NumberInput
+              label={t('reservationSettings.rules.maxOnlinePartySize')}
+              description={t('reservationSettings.rules.maxOnlinePartySizeDescription')}
+              placeholder={t('reservationSettings.rules.maxOnlinePartySizePlaceholder')}
+              min={1}
+              allowDecimal={false}
+              allowNegative={false}
+              maw={420}
+              {...form.getInputProps('maxOnlinePartySize')}
+            />
           </Stack>
         </Card>
 

@@ -1,6 +1,7 @@
 import { Card, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { ReservationRow } from './ReservationRow.tsx'
 import { isActive } from './status.ts'
 
@@ -14,7 +15,7 @@ type ReservationListProps = {
 
 /** The reservations of a day, grouped by start time. */
 export function ReservationList({ reservations, onOpen, emptyText }: ReservationListProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
 
   if (reservations.length === 0) {
     return (
@@ -39,10 +40,10 @@ export function ReservationList({ reservations, onOpen, emptyText }: Reservation
       {groups.map((group) => (
         <Stack key={group.time} gap="xs" component="section">
           <Title order={4}>
-            {group.time}{' '}
+            {formatTime(group.time, i18n.resolvedLanguage ?? 'en')}{' '}
             <Text span size="sm" c="dimmed" fw={400}>
               {t('reservations.list.groupGuests', {
-                guests: group.reservations.filter(isActive).reduce((sum, reservation) => sum + reservation.guests, 0),
+                count: group.reservations.filter(isActive).reduce((sum, reservation) => sum + reservation.guests, 0),
               })}
             </Text>
           </Title>

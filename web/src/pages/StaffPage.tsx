@@ -8,6 +8,8 @@ import { useCurrentUser } from '../api/auth.ts'
 import { ApiError } from '../api/client.ts'
 import { type StaffRole, type StaffUser, useCreateStaff, useSetStaffActive, useSetStaffPassword, useStaff, useUpdateStaff } from '../api/staff.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { DotsVerticalIcon } from '../components/icons.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 const roleLabels = {
   TenantAdmin: 'staff.roles.tenantAdmin',
@@ -210,6 +212,7 @@ function PasswordModal({ user, onClose }: { user: StaffUser; onClose: () => void
 /** Staff management: the users of the admin's restaurant, with create, edit, password and (de)activation. */
 export function StaffPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('staff.title'))
   const staff = useStaff()
   const currentUser = useCurrentUser()
   const setActive = useSetStaffActive()
@@ -299,7 +302,7 @@ export function StaffPage() {
                       <Menu position="bottom-end" withinPortal>
                         <Menu.Target>
                           <ActionIcon variant="subtle" color="gray" aria-label={t('staff.actionsFor', { name: user.displayName })}>
-                            ⋮
+                            <DotsVerticalIcon />
                           </ActionIcon>
                         </Menu.Target>
                         <Menu.Dropdown>

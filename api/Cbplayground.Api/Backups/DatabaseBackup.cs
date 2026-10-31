@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.IO.Compression;
+using Cbplayground.Api.Data;
 using Microsoft.Data.Sqlite;
 
 namespace Cbplayground.Api.Backups;
@@ -8,6 +9,8 @@ namespace Cbplayground.Api.Backups;
 /// Backs up the SQLite database together with the uploaded floor plans: one zip file per run in "Backup:Path"
 /// (relative to the content root), named after the local server time, e.g. "cbplayground-20261031-030000.zip".
 /// Backups older than "Backup:RetentionDays" are deleted.
+/// The Data Protection keys ("DataProtection:KeysPath") are deliberately not backed up: anyone with a backup could forge
+/// sign-in cookies with them, while losing them only signs everybody out once.
 /// </summary>
 public class DatabaseBackup(IConfiguration configuration, IWebHostEnvironment environment)
 {
@@ -25,8 +28,9 @@ public class DatabaseBackup(IConfiguration configuration, IWebHostEnvironment en
     /// <summary>Writes a new backup and returns its path. The zip contains the database file and the folder "uploads/".</summary>
     public string Create(DateTime now)
     {
-        var connectionString = configuration.GetConnectionString("Default")
-            ?? throw new InvalidOperationException("Connection string 'Default' is missing.");
+        var connectionString = SqliteConnectionStrings.Resolve(
+            configuration.GetConnectionString("Default") ?? throw new InvalidOperationException("Connection string 'Default' is missing."),
+            environment.ContentRootPath);
         var databaseFile = new SqliteConnectionStringBuilder(connectionString).DataSource;
         // Opening a missing file would create an empty database and back that up.
         if (!File.Exists(databaseFile))

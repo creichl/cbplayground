@@ -98,30 +98,15 @@ public static partial class OpeningHoursEndpoints
         group.MapPut("/location", async (LocationRequest request, ITenantContext tenantContext, AppDbContext db) =>
         {
             var regionCode = string.IsNullOrEmpty(request.RegionCode) ? null : request.RegionCode;
-            if (request.CountryCode is null || !Locations.TimeZones.TryGetValue(request.CountryCode, out var timeZoneId))
+            if (Locations.Validate(request.CountryCode, regionCode) is { } error)
             {
-                return Error("invalid_country");
-            }
-            if (request.CountryCode == Locations.Germany)
-            {
-                if (regionCode is null)
-                {
-                    return Error("region_required");
-                }
-                if (!Locations.GermanStates.Contains(regionCode))
-                {
-                    return Error("invalid_region");
-                }
-            }
-            else if (regionCode is not null)
-            {
-                return Error("region_not_allowed");
+                return Error(error);
             }
 
             var tenant = await db.Tenants.SingleAsync(t => t.Id == tenantContext.TenantId);
             tenant.CountryCode = request.CountryCode;
             tenant.RegionCode = regionCode;
-            tenant.TimeZoneId = timeZoneId;
+            tenant.TimeZoneId = Locations.TimeZones[request.CountryCode!];
             await db.SaveChangesAsync();
             return Results.Ok(new LocationResponse(tenant.CountryCode, tenant.RegionCode, tenant.TimeZoneId));
         });

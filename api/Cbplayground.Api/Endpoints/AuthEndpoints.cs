@@ -6,13 +6,16 @@ namespace Cbplayground.Api.Endpoints;
 
 /// <summary>
 /// Sign-in for staff users. There is deliberately no registration endpoint:
-/// staff users are created by a Tenant Admin (or the development seed).
+/// staff users are created by a Tenant Admin, the Superadmin (a restaurant's admins) or the development seed.
 /// </summary>
 public static class AuthEndpoints
 {
+    /// <summary>The rate limiter policy of the sign-in, see Program.cs.</summary>
+    public const string LoginRateLimitPolicy = "login";
+
     public record LoginRequest(string? Email, string? Password);
 
-    /// <summary>Why a login failed: "invalid_credentials", "locked_out" or "deactivated".</summary>
+    /// <summary>Why a login failed: "invalid_credentials", "locked_out", "deactivated" (the user) or "restaurant_deactivated".</summary>
     public record LoginError(string Error);
 
     public record MeTenant(Guid Id, string Name, string Slug);
@@ -51,10 +54,15 @@ public static class AuthEndpoints
             {
                 return Results.Json(new LoginError("deactivated"), statusCode: StatusCodes.Status401Unauthorized);
             }
+            // The staff of a deactivated restaurant cannot sign in (the Superadmin has no restaurant).
+            if (user.TenantId is { } tenantId && !await db.Tenants.AnyAsync(t => t.Id == tenantId && t.IsActive))
+            {
+                return Results.Json(new LoginError("restaurant_deactivated"), statusCode: StatusCodes.Status401Unauthorized);
+            }
 
             await signInManager.SignInAsync(user, isPersistent: false);
             return Results.Ok(await ToMeResponse(user, userManager, db));
-        });
+        }).RequireRateLimiting(LoginRateLimitPolicy);
 
         group.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager) =>
         {

@@ -3,7 +3,7 @@ import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
-import { formatDate, formatTime } from './format.ts'
+import { formatShortDate, formatTime } from '../../i18n/format.ts'
 
 type TimeSlotGridProps = {
   slug: string
@@ -72,7 +72,7 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
             <Group gap="xs">
               {nextFreeDays.days.map((day) => (
                 <Button key={day} variant="default" radius="xl" onClick={() => onChangeDate(day)}>
-                  {formatDate(day, language, { weekday: 'short', day: 'numeric', month: 'short' })}
+                  {formatShortDate(day, language)}
                 </Button>
               ))}
             </Group>
@@ -87,7 +87,7 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
                   {t(periodLabel(period.start))}
                 </Title>
                 <Text size="sm" c="dimmed">
-                  {formatTime(period.start, language)}–{formatTime(period.end, language)}
+                  {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
                 </Text>
               </Group>
             )}

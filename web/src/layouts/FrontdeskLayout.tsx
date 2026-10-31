@@ -25,7 +25,7 @@ export function FrontdeskLayout() {
           <Brand to="/frontdesk" area={t('frontdesk.label')} />
           <Group gap="xs" wrap="nowrap" miw={0}>
             <LanguageSwitcher />
-            <UserMenu />
+            <UserMenu withAdminLink />
           </Group>
         </Group>
       </AppShell.Header>

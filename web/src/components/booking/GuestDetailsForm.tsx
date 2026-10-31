@@ -71,7 +71,7 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
         />
         <Textarea
           label={t('booking.details.notes')}
-          description={t('booking.details.notesDescription', { max: guestMaxLengths.notes })}
+          description={t('booking.details.notesDescription', { count: guestMaxLengths.notes })}
           autosize
           minRows={2}
           maxLength={guestMaxLengths.notes}

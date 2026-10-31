@@ -7,6 +7,7 @@ import { DayStats } from './DayStats.tsx'
 import { PendingRequests } from './PendingRequests.tsx'
 import { ReservationFormDrawer } from './ReservationFormDrawer.tsx'
 import { ReservationList } from './ReservationList.tsx'
+import { WalkInDrawer } from './WalkInDrawer.tsx'
 import { statusLabels, statuses } from './status.ts'
 
 type ReservationDayProps = {
@@ -42,6 +43,7 @@ export function ReservationDay({ date, today }: ReservationDayProps) {
   const [status, setStatus] = useState<ReservationStatus | null>(null)
   // undefined: drawer closed, null: new reservation.
   const [editing, setEditing] = useState<Reservation | null | undefined>(undefined)
+  const [seatingWalkIn, setSeatingWalkIn] = useState(false)
 
   const filtered = (reservations.data ?? []).filter(
     (reservation) => (status === null || reservation.status === status) && matches(reservation, search),
@@ -77,6 +79,12 @@ export function ReservationDay({ date, today }: ReservationDayProps) {
           size="md"
           style={{ flex: '0 1 200px' }}
         />
+        {/* A walk-in is seated now, so only on today's page. */}
+        {date === today && (
+          <Button size="md" variant="light" onClick={() => setSeatingWalkIn(true)}>
+            {t('reservations.walkIn.button')}
+          </Button>
+        )}
         <Button size="md" onClick={() => setEditing(null)}>
           {t('reservations.new')}
         </Button>
@@ -107,6 +115,7 @@ export function ReservationDay({ date, today }: ReservationDayProps) {
           onClose={() => setEditing(undefined)}
         />
       )}
+      {seatingWalkIn && <WalkInDrawer onClose={() => setSeatingWalkIn(false)} />}
     </Stack>
   )
 }

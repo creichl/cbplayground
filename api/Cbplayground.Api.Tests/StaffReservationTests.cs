@@ -48,6 +48,8 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData("POST", "/api/staff/reservations")]
     [InlineData("PUT", "/api/staff/reservations/00000000-0000-0000-0000-000000000001")]
     [InlineData("POST", "/api/staff/reservations/00000000-0000-0000-0000-000000000001/status")]
+    [InlineData("GET", "/api/staff/walk-in-tables?guests=2")]
+    [InlineData("POST", "/api/staff/walk-ins")]
     public async Task Staff_endpoints_need_a_sign_in_of_restaurant_staff(string method, string path)
     {
         using var anonymous = factory.CreateHttpsClient();
@@ -179,28 +181,61 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal("in_the_past", await ErrorOf(move, HttpStatusCode.BadRequest));
     }
 
+    [Fact]
+    public async Task Notes_and_contact_can_be_changed_after_the_opening_hours_changed_but_the_time_cannot_be_moved_outside_them()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var date = TestRestaurants.NextOpenDay(factory);
+        var reservation = await CreatedAsync(frontDesk, date, "18:00", 2, restaurant.Tables["2"]);
+        // From now on open at lunchtime only.
+        var lunchOnly = Enum.GetValues<DayOfWeek>().Select(d => new { dayOfWeek = (int)d, start = "11:30", end = "14:30" }).ToArray();
+        (await admin.PutAsJsonAsync("/api/admin/opening-hours", new { periods = lunchOnly }, Token)).EnsureSuccessStatusCode();
+
+        var notes = await UpdateAsync(frontDesk, reservation.Id, date, "18:00", 2, restaurant.Tables["2"], notes: "Fensterplatz");
+        var moved = await UpdateAsync(frontDesk, reservation.Id, date, "18:30", 2, restaurant.Tables["2"]);
+
+        Assert.Equal(HttpStatusCode.OK, notes.StatusCode);
+        var changed = (await notes.Content.ReadFromJsonAsync<ReservationResponse>(Token))!;
+        Assert.Equal(("Fensterplatz", "+43 660 7654321", "18:00", "2"), (changed.Notes, changed.Phone, changed.Time, changed.TableNumber));
+        Assert.Equal("outside_opening_hours", await ErrorOf(moved, HttpStatusCode.BadRequest));
+    }
+
     [Theory]
     [InlineData(ReservationStatus.Requested, "Confirmed", true)]
     [InlineData(ReservationStatus.Requested, "Declined", true)]
     [InlineData(ReservationStatus.Requested, "Arrived", false)]
+    [InlineData(ReservationStatus.Requested, "NoShow", false)]
     [InlineData(ReservationStatus.Confirmed, "Arrived", true)]
     [InlineData(ReservationStatus.Confirmed, "Late", true)]
+    [InlineData(ReservationStatus.Confirmed, "NoShow", true)]
     [InlineData(ReservationStatus.Confirmed, "Cancelled", true)]
+    [InlineData(ReservationStatus.Confirmed, "Completed", false)]
     [InlineData(ReservationStatus.Confirmed, "Declined", false)]
     [InlineData(ReservationStatus.Confirmed, "Requested", false)]
     [InlineData(ReservationStatus.Late, "Arrived", true)]
+    [InlineData(ReservationStatus.Late, "NoShow", true)]
     [InlineData(ReservationStatus.Late, "Cancelled", true)]
-    [InlineData(ReservationStatus.Late, "Confirmed", false)]
+    [InlineData(ReservationStatus.Late, "Confirmed", true)]
     [InlineData(ReservationStatus.Arrived, "Confirmed", true)]
+    [InlineData(ReservationStatus.Arrived, "Completed", true)]
     [InlineData(ReservationStatus.Arrived, "Cancelled", false)]
-    [InlineData(ReservationStatus.Cancelled, "Confirmed", false)]
+    [InlineData(ReservationStatus.Arrived, "NoShow", false)]
+    [InlineData(ReservationStatus.Completed, "Arrived", true)]
+    [InlineData(ReservationStatus.Completed, "Confirmed", false)]
+    [InlineData(ReservationStatus.NoShow, "Confirmed", true)]
+    [InlineData(ReservationStatus.NoShow, "Arrived", false)]
+    [InlineData(ReservationStatus.Cancelled, "Confirmed", true)]
+    [InlineData(ReservationStatus.Cancelled, "Arrived", false)]
     [InlineData(ReservationStatus.Declined, "Requested", false)]
+    [InlineData(ReservationStatus.Declined, "Confirmed", false)]
     public async Task Status_changes_follow_the_allowed_transitions(ReservationStatus from, string to, bool allowed)
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
         using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
-        var start = TestRestaurants.NextOpenDay(factory).ToDateTime(new TimeOnly(18, 0));
-        var id = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", start, status: from);
+        // Started today, so the time rules (arrived only on the day, no-show from the start) allow every transition.
+        var id = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", TestRestaurant.StartedToday, status: from);
 
         var response = await SetStatusAsync(frontDesk, id, to);
 
@@ -222,7 +257,7 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
         var reservation = await CreatedAsync(frontDesk, TestRestaurants.NextOpenDay(factory), "18:00", 2);
 
-        Assert.Equal("invalid_status", await ErrorOf(await SetStatusAsync(frontDesk, reservation.Id, "NoShow"), HttpStatusCode.BadRequest));
+        Assert.Equal("invalid_status", await ErrorOf(await SetStatusAsync(frontDesk, reservation.Id, "Seated"), HttpStatusCode.BadRequest));
         Assert.Equal("invalid_status", await ErrorOf(await SetStatusAsync(frontDesk, reservation.Id, "1"), HttpStatusCode.BadRequest));
     }
 

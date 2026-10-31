@@ -10,23 +10,33 @@ type DayStatsProps = {
   reservations: Reservation[]
   /** The number of open requests from today on. */
   openRequests: number
-  /** Shows how many guests have arrived; the admin overview leaves it out. */
+  /** Shows the arrived reservations, the guests seated now and the no-shows; the admin overview leaves them out. */
   withArrived?: boolean
   /** Where the open requests are answered; without it the number is not a link. */
   requestsTo?: string
 }
 
-/** The key figures of a day: reservations and guests without cancelled and declined ones, arrived, open requests. */
+/**
+ * The key figures of a day: reservations and guests without cancelled, declined and no-show ones, arrived reservations,
+ * guests seated now (arrived and not left yet), no-shows, open requests.
+ */
 export function DayStats({ reservations, openRequests, withArrived = true, requestsTo }: DayStatsProps) {
   const { t } = useTranslation()
   const active = reservations.filter(isActive)
   const arrived = reservations.filter((reservation) => reservation.status === 'Arrived')
+  const noShows = reservations.filter((reservation) => reservation.status === 'NoShow')
 
   return (
-    <SimpleGrid cols={{ base: 2, sm: withArrived ? 4 : 3 }} spacing="sm">
+    <SimpleGrid cols={withArrived ? { base: 2, sm: 3, lg: 6 } : { base: 2, sm: 3 }} spacing="sm">
       <Stat label={t('reservations.stats.reservations')} value={active.length} />
       <Stat label={t('reservations.stats.guests')} value={active.reduce((sum, reservation) => sum + reservation.guests, 0)} />
-      {withArrived && <Stat label={t('reservations.stats.arrived')} value={arrived.length} />}
+      {withArrived && (
+        <>
+          <Stat label={t('reservations.stats.arrived')} value={arrived.length} />
+          <Stat label={t('reservations.stats.seated')} value={arrived.reduce((sum, reservation) => sum + reservation.guests, 0)} />
+          <Stat label={t('reservations.stats.noShows')} value={noShows.length} />
+        </>
+      )}
       <Stat
         label={t('reservations.stats.openRequests')}
         value={

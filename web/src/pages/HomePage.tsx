@@ -3,9 +3,11 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useTenants } from '../api/tenants.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 export function HomePage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('home.title'), null)
   const tenants = useTenants()
 
   return (

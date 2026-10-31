@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "cbplayground"
+    "name": "cbplayground",
+    "title": "{{page}} · {{name}}"
   },
   "language": {
     "label": "Sprache",
@@ -16,11 +17,19 @@
     "backToStart": "Zurück zur Startseite",
     "cancel": "Abbrechen",
     "save": "Speichern",
-    "close": "Schließen"
+    "close": "Schließen",
+    "timeRange": "{{start}}–{{end}}",
+    "tableLabel": "{{number}} · {{seats}}"
   },
   "auth": {
     "userMenu": "Kontomenü",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "roles": {
+      "superadmin": "Superadmin",
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "toAdmin": "Zur Verwaltung"
   },
   "login": {
     "title": "Anmeldung für Mitarbeiter",
@@ -35,7 +44,9 @@
     "errors": {
       "invalidCredentials": "E-Mail-Adresse oder Passwort ist falsch.",
       "lockedOut": "Zu viele Fehlversuche. Ihr Konto ist für einige Minuten gesperrt. Bitte versuchen Sie es später erneut.",
-      "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants."
+      "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants.",
+      "restaurantDeactivated": "Dieses Restaurant wurde deaktiviert. Bitte wenden Sie sich an den Plattformbetreiber.",
+      "tooManyRequests": "Zu viele Anmeldeversuche von dieser Verbindung. Bitte warten Sie eine Minute und versuchen Sie es erneut."
     },
     "demo": {
       "title": "Demo-Zugänge",
@@ -49,6 +60,9 @@
     "title": "Etwas ist schiefgelaufen",
     "network": "Der Server ist nicht erreichbar. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
     "http": "Der Server hat mit Fehler {{status}} geantwortet.",
+    "serverError": "Auf dem Server ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+    "invalidRequest": "Die Anfrage war ungültig. Bitte prüfen Sie Ihre Eingaben und versuchen Sie es erneut.",
+    "tooManyRequests": "Zu viele Anfragen von dieser Verbindung. Bitte warten Sie eine Minute und versuchen Sie es erneut.",
     "invalidResponse": "Der Server hat eine unerwartete Antwort gesendet.",
     "unexpected": "Ein unerwarteter Fehler ist aufgetreten."
   },
@@ -68,7 +82,6 @@
   },
   "booking": {
     "guestsCount_one": "{{count}} Person",
-    "guestsCount_few": "{{count}} Personen",
     "guestsCount_other": "{{count}} Personen",
     "tableNumber": "Tisch {{number}}",
     "summaryLabel": "Ihre Auswahl",
@@ -83,15 +96,18 @@
     },
     "restaurant": {
       "openingHours": "Öffnungszeiten",
-      "website": "Website"
+      "website": "Website",
+      "addressOnMap": "{{address}} – auf der Karte öffnen"
     },
     "partySize": {
       "more": "Mehr",
       "moreLabel": "Anzahl Personen",
       "morePlaceholder": "Bitte wählen",
-      "moreThan": "Mehr als {{max}} Personen",
+      "moreThan_one": "Mehr als {{count}} Person",
+      "moreThan_other": "Mehr als {{count}} Personen",
       "callTitle": "Bitte rufen Sie uns an",
-      "callText": "Online können Sie für bis zu {{max}} Personen reservieren. Für größere Gruppen rufen Sie uns bitte an:",
+      "callText_one": "Online können Sie für bis zu {{count}} Person reservieren. Für größere Gruppen rufen Sie uns bitte an:",
+      "callText_other": "Online können Sie für bis zu {{count}} Personen reservieren. Für größere Gruppen rufen Sie uns bitte an:",
       "noPhone": "Bitte wenden Sie sich direkt an das Restaurant."
     },
     "calendar": {
@@ -111,7 +127,6 @@
     "table": {
       "listLabel": "Freie Tische – {{area}}",
       "option_one": "Tisch {{number}} · {{count}} Platz",
-      "option_few": "Tisch {{number}} · {{count}} Plätze",
       "option_other": "Tisch {{number}} · {{count}} Plätze",
       "noneFreeInArea": "In diesem Bereich ist zu dieser Zeit kein passender Tisch frei.",
       "noneFree": "Zu dieser Zeit ist leider kein Tisch mehr frei.",
@@ -122,7 +137,8 @@
       "phone": "Telefon",
       "email": "E-Mail",
       "notes": "Anmerkung (optional)",
-      "notesDescription": "Z. B. Kinderstuhl oder Allergien. Höchstens {{max}} Zeichen.",
+      "notesDescription_one": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
+      "notesDescription_other": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
       "contactHint": "Damit das Restaurant Sie erreichen kann, geben Sie bitte eine Telefonnummer oder eine E-Mail-Adresse an – eines von beiden genügt.",
       "contactRequired": "Bitte geben Sie eine Telefonnummer oder eine E-Mail-Adresse an.",
       "nameRequired": "Bitte geben Sie Ihren Namen an.",
@@ -150,11 +166,67 @@
       "time": "Uhrzeit",
       "guests": "Personen",
       "area": "Bereich",
-      "table": "Tisch"
+      "table": "Tisch",
+      "addToCalendar": "Zum Kalender hinzufügen",
+      "manageLink": "Reservierung verwalten",
+      "manageLinkLabel": "Link zu Ihrer Reservierung",
+      "manageLinkHint": "Link speichern, um später zu stornieren.",
+      "copy": "Kopieren",
+      "copied": "Kopiert"
+    },
+    "calendarEvent": {
+      "title": "Tischreservierung – {{restaurant}}",
+      "description": "{{guests}}\nReferenzcode: {{code}}\nReservierung ansehen oder stornieren: {{link}}",
+      "fileName": "reservierung"
     },
     "notBookable": {
       "title": "Online-Reservierung nicht möglich",
       "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
+    }
+  },
+  "embed": {
+    "notFound": "Die Online-Buchung ist für dieses Restaurant nicht verfügbar.",
+    "poweredBy": "Powered by cbplayground",
+    "admin": {
+      "title": "Website-Einbindung",
+      "intro": "Binden Sie die Online-Buchung in Ihre eigene Website ein: Kopieren Sie das Snippet und fügen Sie es dort ein, wo die Buchung erscheinen soll.",
+      "language": "Sprache der Buchung",
+      "languageDescription": "Gäste können die Sprache in der Buchung jederzeit wechseln.",
+      "snippet": "Snippet",
+      "snippetHint": "Das Script passt die Höhe der Buchung jedem Schritt an. Ohne Script ist die Buchung {{height}} px hoch und scrollt selbst.",
+      "copy": "Snippet kopieren",
+      "copied": "Kopiert",
+      "directLink": "Direktlink zur Buchungsseite",
+      "directLinkHint": "Für Links, E-Mails oder soziale Medien.",
+      "preview": "Vorschau",
+      "previewHint": "So erscheint die Buchung auf Ihrer Website. Buchungen in der Vorschau sind echte Reservierungen.",
+      "frameTitle": "Tisch reservieren – {{name}}"
+    }
+  },
+  "guestReservation": {
+    "title": "Ihre Reservierung",
+    "notFoundTitle": "Reservierung nicht gefunden",
+    "notFoundText": "Der Link ist ungültig oder unvollständig. Bitte prüfen Sie, ob Sie den vollständigen Link aus Ihrer Buchung geöffnet haben.",
+    "name": "Name",
+    "referenceCode": "Referenzcode",
+    "cancel": "Stornieren",
+    "cancelledTitle": "Ihre Reservierung wurde storniert",
+    "cancelledText": "Der Tisch ist wieder für andere Gäste frei. Wir freuen uns, Sie ein andermal begrüßen zu dürfen.",
+    "bookAgain": "Neu reservieren",
+    "cancelledByGuest": "Sie haben diese Reservierung storniert.",
+    "cancelledByRestaurant": "Das Restaurant hat diese Reservierung storniert.",
+    "declined": "Das Restaurant konnte diese Anfrage leider nicht annehmen.",
+    "cannotCancel": "Online stornieren ist nur bis zum Beginn der Reservierung möglich. Bitte rufen Sie das Restaurant an.",
+    "contact": "Kontakt zum Restaurant",
+    "confirm": {
+      "title": "Reservierung stornieren?",
+      "text": "Ihre Reservierung am {{date}} um {{time}} ({{guests}}) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "back": "Zurück",
+      "confirm": "Stornieren"
+    },
+    "errors": {
+      "notPossible": "Diese Reservierung lässt sich online nicht mehr stornieren. Bitte rufen Sie das Restaurant an.",
+      "tooManyRequests": "Zu viele Anfragen von dieser Verbindung. Bitte versuchen Sie es in einigen Minuten erneut."
     }
   },
   "admin": {
@@ -168,7 +240,83 @@
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter",
-      "tables": "Tischübersicht"
+      "tables": "Tischübersicht",
+      "embed": "Website-Einbindung",
+      "openFrontdesk": "Empfang öffnen"
+    }
+  },
+  "superadmin": {
+    "label": "Plattform",
+    "title": "Restaurants",
+    "subtitle": "Alle Restaurants der Plattform, aktive und deaktivierte.",
+    "search": "Restaurants durchsuchen",
+    "searchPlaceholder": "Nach Name oder Slug suchen",
+    "empty": "Es gibt noch keine Restaurants.",
+    "noMatch": "Kein Restaurant passt zu Ihrer Suche.",
+    "backToList": "Alle Restaurants",
+    "masterData": "Stammdaten",
+    "noLocation": "Noch nicht festgelegt",
+    "inactiveHint": "Dieses Restaurant ist deaktiviert: Gäste sehen es nicht, seine Buchungsseite zeigt „nicht gefunden“ und seine Mitarbeiter können sich nicht anmelden.",
+    "slugRules": "Kleinbuchstaben, Ziffern und Bindestriche. Buchungsseite: {{example}}",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "fields": {
+      "name": "Name",
+      "slug": "Slug",
+      "status": "Status",
+      "admins": "Admins",
+      "tables": "Tische",
+      "upcomingReservations": "Künftige Reservierungen",
+      "location": "Land / Region",
+      "createdAt": "Angelegt am"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Deaktiviert"
+    },
+    "validation": {
+      "name": "Bitte geben Sie einen Namen ein."
+    },
+    "create": {
+      "button": "Restaurant anlegen",
+      "title": "Restaurant anlegen",
+      "submit": "Anlegen",
+      "locationHint": "Optional. Der Admin des Restaurants kann es später festlegen."
+    },
+    "edit": {
+      "button": "Bearbeiten",
+      "title": "Restaurant bearbeiten",
+      "slugHint": "Ein neuer Slug ändert die Adresse der Buchungsseite; alte Links und eingebettete Buchungs-Widgets funktionieren dann nicht mehr."
+    },
+    "activateConfirm": {
+      "title": "{{name}} aktivieren?",
+      "text": "Gäste sehen das Restaurant und seine Buchungsseite wieder, und seine Mitarbeiter können sich wieder anmelden."
+    },
+    "deactivateConfirm": {
+      "title": "{{name}} deaktivieren?",
+      "text": "Das Restaurant verschwindet von der Startseite, seine Buchungsseite zeigt „nicht gefunden“, und seine Mitarbeiter werden abgemeldet und können sich nicht mehr anmelden. Es werden keine Daten gelöscht; Sie können es jederzeit wieder aktivieren."
+    },
+    "admins": {
+      "title": "Admins",
+      "empty": "Dieses Restaurant hat noch keinen Admin. Legen Sie einen an, damit das Restaurant eingerichtet werden kann.",
+      "passwordText": "Geben Sie das neue Passwort selbst an den Admin weiter. Bestehende Sitzungen werden abgemeldet.",
+      "create": {
+        "button": "Admin anlegen",
+        "title": "Admin für {{name}} anlegen",
+        "submit": "Anlegen"
+      }
+    },
+    "notifications": {
+      "created": "{{name}} wurde angelegt.",
+      "updated": "Die Änderungen an {{name}} wurden gespeichert.",
+      "activated": "{{name}} wurde aktiviert.",
+      "deactivated": "{{name}} wurde deaktiviert.",
+      "adminCreated": "{{name}} wurde als Admin angelegt."
+    },
+    "errors": {
+      "invalidName": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
+      "invalidSlug": "Der Slug darf nur Kleinbuchstaben, Ziffern und einzelne Bindestriche (nicht am Anfang oder Ende) enthalten, höchstens 50 Zeichen.",
+      "slugTaken": "Dieser Slug wird bereits von einem anderen Restaurant verwendet."
     }
   },
   "overview": {
@@ -232,8 +380,10 @@
       "email": "E-Mail",
       "website": "Website",
       "websiteDescription": "Die vollständige Adresse mit https://",
+      "websitePlaceholder": "https://",
       "description": "Kurzbeschreibung",
-      "descriptionDescription": "Höchstens {{max}} Zeichen."
+      "descriptionDescription_one": "Höchstens {{count}} Zeichen.",
+      "descriptionDescription_other": "Höchstens {{count}} Zeichen."
     },
     "validation": {
       "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
@@ -364,6 +514,46 @@
       "copyTo": "Zeiten von {{day}} kopieren nach",
       "copyApply": "Kopieren"
     },
+    "specialDays": {
+      "title": "Schließtage & Sonderöffnungszeiten",
+      "description": "Betriebsurlaub, geschlossene Gesellschaften oder abweichende Zeiten an einzelnen Tagen. Ein Eintrag hat Vorrang vor Feiertagen und den regulären Öffnungszeiten.",
+      "empty": "Es gibt keine kommenden Schließtage oder Sonderöffnungszeiten.",
+      "add": "+ Schließtage oder Sonderzeiten",
+      "addTitle": "Schließtage oder Sonderzeiten hinzufügen",
+      "editTitle": "Eintrag bearbeiten",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "deleteTitle": "Eintrag löschen?",
+      "deleteText": "Für {{dates}} gelten dann wieder die regulären Öffnungszeiten und Feiertage.",
+      "deleteConfirm": "Löschen",
+      "dates": "Zeitraum",
+      "datesDescription": "Für einen einzelnen Tag klicken Sie zweimal auf denselben Tag.",
+      "kind": "Art",
+      "kinds": {
+        "Closed": "Geschlossen",
+        "SpecialHours": "Sonderöffnungszeiten"
+      },
+      "periods": "Öffnungszeiten an diesen Tagen",
+      "periodsDescription": "Sie gelten an jedem Tag des Zeitraums. 00:00 als Ende steht für Mitternacht.",
+      "note": "Notiz",
+      "notePlaceholder": "z. B. Betriebsurlaub",
+      "validation": {
+        "dateRequired": "Bitte wählen Sie einen Zeitraum.",
+        "rangeTooLong": "Ein Eintrag kann höchstens 366 Tage umfassen.",
+        "kindRequired": "Bitte wählen Sie die Art.",
+        "noteTooLong": "Die Notiz darf höchstens 100 Zeichen lang sein.",
+        "periodsRequired": "Bitte geben Sie mindestens ein Zeitfenster an.",
+        "overlapping": "Für diese Tage gibt es schon einen Eintrag. Einträge dürfen sich nicht überschneiden."
+      },
+      "affected": {
+        "titleClosed_one": "{{count}} Reservierung liegt in diesem Zeitraum",
+        "titleClosed_other": "{{count}} Reservierungen liegen in diesem Zeitraum",
+        "titleSpecialHours_one": "{{count}} Reservierung liegt außerhalb der Sonderöffnungszeiten",
+        "titleSpecialHours_other": "{{count}} Reservierungen liegen außerhalb der Sonderöffnungszeiten",
+        "text": "Die Reservierungen wurden nicht geändert. Informieren Sie die Gäste bei Bedarf selbst und stornieren oder verschieben Sie die Reservierungen in der Reservierungsansicht.",
+        "link": "Zur Reservierungsansicht"
+      }
+    },
     "validation": {
       "required": "Bitte geben Sie eine Uhrzeit ein.",
       "startBeforeEnd": "Der Beginn muss vor dem Ende liegen.",
@@ -421,9 +611,6 @@
       "tables": "Tischübersicht"
     }
   },
-  "placeholder": {
-    "text": "Dieser Bereich wird gerade aufgebaut."
-  },
   "notFound": {
     "label": "Fehler 404",
     "title": "Seite nicht gefunden",
@@ -436,6 +623,7 @@
     "emptyText": "Legen Sie einen Bereich an, z. B. die Gaststube oder die Terrasse, und laden Sie seinen Grundriss hoch.",
     "addTable": "Tisch hinzufügen",
     "dragHint": "Ziehen Sie Tische, um sie zu verschieben. Klicken Sie auf einen Tisch, um ihn zu bearbeiten.",
+    "noFloorPlanHint": "Ohne Grundriss werden die Tische hier als Liste gezeigt. Laden Sie einen Grundriss hoch, um sie darauf zu platzieren.",
     "capacity": "Sitzplätze: {{seats}}, davon online buchbar: {{online}} ({{percent}} %)",
     "capacityOnlineBlocked": "Sitzplätze: {{seats}}, für Online-Buchungen gesperrt",
     "floorPlanAlt": "Grundriss",
@@ -455,6 +643,7 @@
       "onlineBookingEnabledHint": "Ausgeschaltet können Gäste diesen Bereich nicht online buchen.",
       "onlineCapacityPercent": "Online-Kontingent",
       "onlineCapacityPercentHint": "Anteil der Sitzplätze, den Gäste online buchen können. Der Rest bleibt für Telefon- und Laufkundschaft frei.",
+      "percentSuffix": " %",
       "saved": "Der Bereich wurde gespeichert.",
       "order": "Reihenfolge",
       "moveLeft": "Nach links",
@@ -469,7 +658,12 @@
       "number": "Tischnummer",
       "seats": "Sitzplätze",
       "saved": "Der Tisch wurde gespeichert.",
-      "delete": "Tisch löschen"
+      "delete": "Tisch löschen",
+      "deleteTitle": "Tisch {{number}} löschen?",
+      "deleteText": "Der Tisch wird gelöscht, mit ihm seine vergangenen, stornierten und abgelehnten Reservierungen. Das lässt sich nicht rückgängig machen.",
+      "deleteConfirm": "Löschen",
+      "notDeleted": "Der Tisch wurde nicht gelöscht",
+      "hasReservations": "Für diesen Tisch gibt es noch anstehende Reservierungen. Verlegen Sie sie zuerst an einen anderen Tisch oder stornieren Sie sie."
     },
     "errors": {
       "areaNameInvalid": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
@@ -488,7 +682,7 @@
   },
   "reservationSettings": {
     "title": "Reservierungseinstellungen",
-    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden und wie lange eine Reservierung dauert. Die Einstellungen gelten für neue Reservierungen.",
+    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden, wie lange eine Reservierung dauert und welche Regeln für Buchungen gelten. Die Einstellungen gelten für neue Reservierungen.",
     "confirmation": {
       "title": "Bestätigung",
       "instant": {
@@ -525,15 +719,34 @@
       "deleteRule": "Regel löschen",
       "noRules": "Noch keine Regeln: Jede Reservierung dauert die Standarddauer.",
       "previewGuests": "Vorschau für Personenzahl",
-      "previewResult": "Bei einer Personenzahl von {{guests}} dauert eine Reservierung {{minutes}} Minuten.",
+      "previewResult_one": "Bei einer Personenzahl von {{guests}} dauert eine Reservierung {{count}} Minute.",
+      "previewResult_other": "Bei einer Personenzahl von {{guests}} dauert eine Reservierung {{count}} Minuten.",
       "previewRule": "(Regel {{min}}–{{max}})",
       "previewDefault": "(Standarddauer)"
+    },
+    "rules": {
+      "title": "Buchungsregeln",
+      "description": "Vorlaufzeit, Buchungshorizont und maximale Gruppengröße gelten nur für Online-Buchungen; das Personal kann jede Reservierung eintragen. Die Pufferzeit gilt für alle Reservierungen.",
+      "leadTime": "Mindest-Vorlaufzeit online",
+      "leadTimeDescription": "Gäste können online bis so viele Minuten vor Beginn buchen, z. B. bei 60 ist um 18:10 die früheste Zeit 19:15. 0: bis zum Beginn.",
+      "bookingHorizon": "Buchungshorizont online",
+      "bookingHorizonDescription": "Wie viele Tage im Voraus Gäste online buchen können.",
+      "daysSuffix": " Tage",
+      "buffer": "Pufferzeit zwischen Reservierungen",
+      "bufferDescription": "Nach jeder Reservierung bleibt der Tisch so lange frei, z. B. zum Abräumen und Eindecken. 0 bis 60 Minuten in 5er-Schritten.",
+      "maxOnlinePartySize": "Maximale Gruppengröße online",
+      "maxOnlinePartySizeDescription": "Größere Gruppen werden gebeten anzurufen. Leer: der größte online buchbare Tisch.",
+      "maxOnlinePartySizePlaceholder": "Größter Tisch"
     },
     "validation": {
       "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
       "minGuests": "Geben Sie mindestens 1 Gast ein.",
       "minGreaterThanMax": "„Bis“ darf nicht kleiner als „von“ sein.",
-      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel."
+      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel.",
+      "leadTime": "Geben Sie {{min}} bis {{max}} Minuten ein.",
+      "bookingHorizon": "Geben Sie {{min}} bis {{max}} Tage ein.",
+      "buffer": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
+      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer."
     },
     "errors": {
       "title": "Die Einstellungen wurden nicht gespeichert",
@@ -541,7 +754,11 @@
       "invalidDuration": "Die Dauer muss zwischen 15 und 480 Minuten in Schritten von 15 liegen.",
       "invalidMinGuests": "Eine Regel muss bei mindestens 1 Gast beginnen.",
       "minGreaterThanMax": "In einer Regel darf „von“ nicht größer als „bis“ sein.",
-      "overlappingRules": "Die Bereiche der Regeln überschneiden sich."
+      "overlappingRules": "Die Bereiche der Regeln überschneiden sich.",
+      "invalidLeadTime": "Die Vorlaufzeit muss zwischen 0 und 1440 Minuten liegen.",
+      "invalidBookingHorizon": "Der Buchungshorizont muss zwischen 1 und 365 Tagen liegen.",
+      "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
+      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
     },
     "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
@@ -561,43 +778,89 @@
       "reservations": "Reservierungen",
       "guests": "Gäste",
       "arrived": "Angekommen",
+      "seated": "Sitzende Gäste",
+      "noShows": "Nicht erschienen",
       "openRequests": "Offene Anfragen"
     },
     "list": {
       "empty": "An diesem Tag gibt es keine Reservierungen.",
       "noMatches": "Keine Reservierung passt zur Suche oder zum Filter.",
-      "groupGuests": "{{guests}} Gäste"
+      "groupGuests_one": "{{count}} Gast",
+      "groupGuests_other": "{{count}} Gäste"
     },
     "row": {
-      "summary": "{{guests}} Pers. · Tisch {{table}} ({{area}}) · bis {{end}}",
+      "summary_one": "{{count}} Pers. · Tisch {{table}} ({{area}}) · bis {{end}}",
+      "summary_other": "{{count}} Pers. · Tisch {{table}} ({{area}}) · bis {{end}}",
       "notes": "Notiz",
       "open": "Reservierung von {{name}} um {{time}} öffnen"
     },
     "source": {
       "online": "Online",
-      "phone": "Telefon"
+      "phone": "Telefon",
+      "walkIn": "Walk-in"
     },
     "status": {
       "requested": "Angefragt",
       "confirmed": "Bestätigt",
       "arrived": "Angekommen",
       "late": "Verspätet",
+      "completed": "Gegangen",
+      "noShow": "Nicht erschienen",
       "cancelled": "Storniert",
       "declined": "Abgelehnt"
     },
+    "cancelledByGuest": "vom Gast storniert",
     "actions": {
+      "accept": "Annehmen",
+      "decline": "Ablehnen",
+      "arrived": "Als angekommen markieren",
+      "late": "Verspätet",
+      "noShow": "Nicht erschienen",
+      "completed": "Gast gegangen",
+      "cancel": "Stornieren",
+      "undo": "Rückgängig"
+    },
+    "actionsShort": {
       "accept": "Annehmen",
       "decline": "Ablehnen",
       "arrived": "Angekommen",
       "late": "Verspätet",
-      "cancelled": "Storniert",
-      "undoArrived": "Ankunft rückgängig"
+      "noShow": "No-Show",
+      "completed": "Gegangen",
+      "cancel": "Stornieren",
+      "undo": "Rückgängig"
     },
     "cancelConfirm": {
       "title": "Reservierung stornieren?",
-      "text": "Die Reservierung von {{name}} um {{time}} ({{guests}} Pers.) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "text_one": "Die Reservierung von {{name}} um {{time}} ({{count}} Pers.) wird storniert, der Tisch wird frei.",
+      "text_other": "Die Reservierung von {{name}} um {{time}} ({{count}} Pers.) wird storniert, der Tisch wird frei.",
       "back": "Zurück",
       "confirm": "Stornieren"
+    },
+    "noShowConfirm": {
+      "title": "Als nicht erschienen markieren?",
+      "text_one": "{{name}} ({{time}}, {{count}} Pers.) ist nicht erschienen. Der Tisch wird frei.",
+      "text_other": "{{name}} ({{time}}, {{count}} Pers.) ist nicht erschienen. Der Tisch wird frei.",
+      "confirm": "Nicht erschienen"
+    },
+    "toast": {
+      "changed": "{{name}}: {{status}}"
+    },
+    "walkIn": {
+      "button": "Walk-in",
+      "title": "Walk-in setzen",
+      "defaultName": "Walk-in",
+      "tableDescription_one": "Frei ab jetzt für {{count}} Minute. Der Vorschlag ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
+      "tableDescription_other": "Frei ab jetzt für {{count}} Minuten. Der Vorschlag ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
+      "noTable_one": "Gerade ist kein Tisch für {{count}} Person frei.",
+      "noTable_other": "Gerade ist kein Tisch für {{count}} Personen frei.",
+      "wantedTableTaken_one": "Der gewählte Tisch ist gerade nicht für {{count}} Person frei; ein anderer freier Tisch ist vorausgewählt.",
+      "wantedTableTaken_other": "Der gewählte Tisch ist gerade nicht für {{count}} Personen frei; ein anderer freier Tisch ist vorausgewählt.",
+      "nameDescription": "Optional. Ohne Namen erscheint der Gast als „Walk-in“.",
+      "seat": "Walk-in setzen",
+      "seated": "{{name}} sitzt seit {{time}} an Tisch {{table}}.",
+      "notSeated": "Der Walk-in wurde nicht gesetzt",
+      "closed": "Das Restaurant hat gerade nicht geöffnet."
     },
     "pending": {
       "title": "Offene Anfragen ({{number}})",
@@ -611,15 +874,19 @@
       "time": "Uhrzeit",
       "timeHint": "Geben Sie Personenzahl und Datum ein, um die freien Zeiten zu sehen.",
       "closed": "An diesem Tag ist das Restaurant geschlossen.",
-      "period": "{{start}}–{{end}}",
       "table": "Tisch",
       "tableDescriptionNew": "Der vorgeschlagene Tisch ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
-      "tableDescriptionEdit": "Ist der Tisch zur neuen Zeit belegt, erhalten Sie beim Speichern eine Meldung.",
+      "tableDescriptionEdit": "Angeboten werden die Tische, die zur gewählten Zeit für die ganze Dauer frei sind, sowie der aktuelle Tisch.",
       "tablePlaceholder": "Zuerst eine Uhrzeit wählen",
-      "tableOption": "Tisch {{number}} · {{area}} · {{seats}} Plätze",
-      "tableOptionSuggested": "Tisch {{number}} · {{area}} · {{seats}} Plätze (Vorschlag)",
+      "tableOption_one": "Tisch {{number}} · {{area}} · {{count}} Platz",
+      "tableOption_other": "Tisch {{number}} · {{area}} · {{count}} Plätze",
+      "tableOptionSuggested_one": "Tisch {{number}} · {{area}} · {{count}} Platz (Vorschlag)",
+      "tableOptionSuggested_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (Vorschlag)",
+      "tableOptionCurrent_one": "Tisch {{number}} · {{area}} · {{count}} Platz (aktuell)",
+      "tableOptionCurrent_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (aktuell)",
       "overrideDuration": "Dauer überschreiben",
-      "defaultDuration": "Dauer des Restaurants für diese Personenzahl: {{minutes}} Minuten",
+      "defaultDuration_one": "Dauer des Restaurants für diese Personenzahl: {{count}} Minute",
+      "defaultDuration_other": "Dauer des Restaurants für diese Personenzahl: {{count}} Minuten",
       "duration": "Dauer in Minuten",
       "name": "Name",
       "phone": "Telefon",
@@ -654,7 +921,10 @@
       "tableUnavailable": "Dieser Tisch ist zu dieser Zeit belegt oder hat zu wenige Plätze. Bitte einen anderen Tisch oder eine andere Zeit wählen.",
       "invalidStatus": "Dieser Status ist nicht bekannt.",
       "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
-      "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu."
+      "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit.",
+      "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
+      "statusTitle": "Der Status konnte nicht geändert werden"
     }
   },
   "tableOverview": {
@@ -671,16 +941,11 @@
     },
     "closed": "An diesem Tag ist das Restaurant geschlossen.",
     "noTables": "Es gibt noch keine Tische.",
-    "status": {
-      "free": "Frei",
-      "Requested": "Angefragt",
-      "Confirmed": "Reserviert",
-      "Arrived": "Angekommen",
-      "Late": "Verspätet",
-      "Cancelled": "Storniert",
-      "Declined": "Abgelehnt"
-    },
-    "legendInactive": "Storniert oder abgelehnt",
+    "free": "Frei",
+    "freeTable_one": "Tisch {{number}} · {{count}} Platz · frei",
+    "freeTable_other": "Tisch {{number}} · {{count}} Plätze · frei",
+    "walkInHere": "Walk-in hier setzen",
+    "legendInactive": "Storniert, abgelehnt oder nicht erschienen",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Tisch · Plätze"
@@ -694,6 +959,7 @@
     },
     "details": {
       "time": "Uhrzeit",
+      "left": "Gegangen",
       "guests": "Personen",
       "table": "Tisch",
       "tableValue": "{{number}} · {{area}}",
@@ -704,20 +970,10 @@
       "source": "Gebucht",
       "sources": {
         "Online": "Online vom Gast",
-        "Staff": "Vom Personal"
+        "Staff": "Vom Personal",
+        "WalkIn": "Walk-in ohne Reservierung"
       },
       "next": "Danach an diesem Tisch: {{time}}, {{name}} ({{guests}})"
-    },
-    "actions": {
-      "Confirmed": "Annehmen",
-      "Declined": "Ablehnen",
-      "Arrived": "Angekommen",
-      "Late": "Verspätet",
-      "Cancelled": "Storniert"
-    },
-    "errors": {
-      "statusTitle": "Der Status konnte nicht geändert werden",
-      "statusChanged": "Die Reservierung wurde inzwischen geändert. Die Ansicht wurde neu geladen."
     }
   }
 }

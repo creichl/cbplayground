@@ -1,4 +1,4 @@
-import { AppShell, Burger, Group, NavLink } from '@mantine/core'
+import { AppShell, Burger, Divider, Group, NavLink } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useTranslation } from 'react-i18next'
 import { Link, matchPath, Outlet, useLocation } from 'react-router'
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/admin/opening-hours', label: 'admin.nav.openingHours', end: false },
   { to: '/admin/reservation-settings', label: 'admin.nav.reservationSettings', end: false },
   { to: '/admin/staff', label: 'admin.nav.staff', end: false },
+  { to: '/admin/embed', label: 'admin.nav.embed', end: false },
 ] as const
 
 /** Admin layout: sidebar on desktop, burger menu on small screens. */
@@ -54,6 +55,8 @@ export function AdminLayout() {
             variant="light"
           />
         ))}
+        <Divider my="sm" />
+        <NavLink component={Link} to="/frontdesk" label={t('admin.nav.openFrontdesk')} onClick={close} />
       </AppShell.Navbar>
 
       <AppShell.Main>

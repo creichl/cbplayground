@@ -38,6 +38,61 @@ public class ReservationSettingsTests(ApiFactory factory) : IClassFixture<ApiFac
         Assert.Equal(ConfirmationMode.Instant, settings.ConfirmationMode);
         Assert.Equal(120, settings.DefaultDurationMinutes);
         Assert.Empty(settings.DurationRules!);
+        Assert.Equal((60, 90, 0, (int?)null), (settings.MinLeadTimeMinutes, settings.BookingHorizonDays, settings.BufferMinutes, settings.MaxOnlinePartySize));
+    }
+
+    [Fact]
+    public async Task The_booking_rules_are_saved_and_returned_on_the_next_read()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var client = await SignedInClientAsync(restaurant.AdminEmail);
+
+        var put = await client.PutAsJsonAsync(Path, Settings() with { MinLeadTimeMinutes = 1440, BookingHorizonDays = 365, BufferMinutes = 60, MaxOnlinePartySize = 8 }, Token);
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+
+        var settings = await client.GetFromJsonAsync<ReservationSettingsDto>(Path, Token);
+        Assert.Equal((1440, 365, 60, (int?)8), (settings!.MinLeadTimeMinutes, settings.BookingHorizonDays, settings.BufferMinutes, settings.MaxOnlinePartySize));
+
+        // Empty: the largest table decides again.
+        await client.PutAsJsonAsync(Path, Settings() with { MaxOnlinePartySize = null }, Token);
+        Assert.Null((await client.GetFromJsonAsync<ReservationSettingsDto>(Path, Token))!.MaxOnlinePartySize);
+    }
+
+    [Fact]
+    public async Task Booking_rules_left_out_of_a_request_get_their_defaults()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var client = await SignedInClientAsync(restaurant.AdminEmail);
+
+        var put = await client.PutAsJsonAsync(Path, new { confirmationMode = "Instant", tableSelectionMode = "SystemAssigns", defaultDurationMinutes = 90, durationRules = Array.Empty<object>() }, Token);
+
+        var settings = (await put.Content.ReadFromJsonAsync<ReservationSettingsDto>(Token))!;
+        Assert.Equal((60, 90, 0, (int?)null), (settings.MinLeadTimeMinutes, settings.BookingHorizonDays, settings.BufferMinutes, settings.MaxOnlinePartySize));
+    }
+
+    [Theory]
+    [InlineData(-1, 90, 0, null, "invalid_lead_time")]
+    [InlineData(1441, 90, 0, null, "invalid_lead_time")]
+    [InlineData(60, 0, 0, null, "invalid_booking_horizon")]
+    [InlineData(60, 366, 0, null, "invalid_booking_horizon")]
+    [InlineData(60, 90, -5, null, "invalid_buffer")]
+    [InlineData(60, 90, 65, null, "invalid_buffer")]
+    [InlineData(60, 90, 7, null, "invalid_buffer")]
+    [InlineData(60, 90, 0, 0, "invalid_max_party_size")]
+    public async Task Invalid_booking_rules_are_rejected(int leadTime, int horizon, int buffer, int? maxParty, string error)
+    {
+        using var client = await SignedInClientAsync("admin@zur-linde.test");
+
+        var response = await client.PutAsJsonAsync(Path, Settings() with
+        {
+            MinLeadTimeMinutes = leadTime,
+            BookingHorizonDays = horizon,
+            BufferMinutes = buffer,
+            MaxOnlinePartySize = maxParty,
+        }, Token);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(error, await ErrorAsync(response));
     }
 
     [Fact]

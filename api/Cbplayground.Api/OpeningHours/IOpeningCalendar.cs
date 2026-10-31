@@ -7,8 +7,9 @@ public record OpenPeriod(TimeOnly Start, TimeOnly End);
 public interface IOpeningCalendar
 {
     /// <summary>
-    /// The opening hours on <paramref name="date"/>, sorted by start: the regular hours of the day of the week,
-    /// or none if the date is a public holiday on which the restaurant is closed. Empty when the restaurant is closed.
+    /// The opening hours on <paramref name="date"/>, sorted by start: the hours of a special day if the date has one
+    /// (none on a closing day), otherwise none if the date is a public holiday on which the restaurant is closed,
+    /// otherwise the regular hours of the day of the week. Empty when the restaurant is closed.
     /// </summary>
     Task<IReadOnlyList<OpenPeriod>> GetOpenPeriodsAsync(DateOnly date, CancellationToken cancellationToken = default);
 }
