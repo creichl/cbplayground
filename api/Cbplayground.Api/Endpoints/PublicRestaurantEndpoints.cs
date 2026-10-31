@@ -50,9 +50,9 @@ public static class PublicRestaurantEndpoints
 
     public record AvailabilityResponse(DateOnly Date, int Guests, int DurationMinutes, IReadOnlyList<AvailabilityPeriod> Periods);
 
-    public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, bool Available);
+    public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
 
-    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, IReadOnlyList<PublicTable> Tables);
+    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, int TableScale, IReadOnlyList<PublicTable> Tables);
 
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
@@ -229,9 +229,10 @@ public static class PublicRestaurantEndpoints
                 area.Id,
                 area.Name,
                 AreaEndpoints.FloorPlanUrl(area),
+                area.TableScale,
                 tables
                     .Where(t => t.AreaId == area.Id)
-                    .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, freeTableIds.Contains(t.Id)))
+                    .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation, freeTableIds.Contains(t.Id)))
                     .ToList()))
                 .ToList());
         }).RequireRateLimiting(ReadRateLimitPolicy);

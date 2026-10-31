@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Cbplayground.Api.FloorPlans;
 using static Cbplayground.Api.Endpoints.AreaEndpoints;
 using static Cbplayground.Api.Endpoints.TableEndpoints;
 
@@ -66,6 +68,7 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [InlineData("PUT", "/api/admin/areas/00000000-0000-0000-0000-000000000001")]
     [InlineData("DELETE", "/api/admin/areas/00000000-0000-0000-0000-000000000001")]
     [InlineData("PUT", "/api/admin/areas/00000000-0000-0000-0000-000000000001/floorplan")]
+    [InlineData("POST", "/api/admin/areas/00000000-0000-0000-0000-000000000001/arrange-tables")]
     [InlineData("GET", "/api/admin/tables")]
     [InlineData("POST", "/api/admin/tables")]
     [InlineData("PUT", "/api/admin/tables/positions")]
@@ -91,6 +94,7 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("Terrasse", area.Name);
         Assert.True(area.OnlineBookingEnabled);
         Assert.Equal(100, area.OnlineCapacityPercent);
+        Assert.Equal(100, area.TableScale);
         Assert.Null(area.FloorPlanUrl);
         Assert.True(area.SortOrder > first.SortOrder);
         Assert.Equal(area, (await GetAreasAsync(client))!.Last());
@@ -109,6 +113,51 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("Gaststube", saved.Name);
         Assert.False(saved.OnlineBookingEnabled);
         Assert.Equal(60, saved.OnlineCapacityPercent);
+    }
+
+    [Fact]
+    public async Task The_table_scale_of_an_area_can_be_changed_and_stays_when_it_is_missing()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var changed = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 150 }, Ct);
+        var withoutScale = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "Bašta", onlineBookingEnabled = true, onlineCapacityPercent = 100 }, Ct);
+
+        Assert.Equal(150, (await changed.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.TableScale);
+        Assert.Equal(HttpStatusCode.OK, withoutScale.StatusCode);
+        var saved = Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id);
+        Assert.Equal(("Bašta", 150), (saved.Name, saved.TableScale));
+    }
+
+    [Theory]
+    [InlineData(50)]
+    [InlineData(200)]
+    public async Task The_table_scale_may_be_50_or_200_percent(int tableScale)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(tableScale, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).TableScale);
+    }
+
+    [Theory]
+    [InlineData(49)]
+    [InlineData(201)]
+    [InlineData(0)]
+    public async Task The_table_scale_must_be_between_50_and_200_percent(int tableScale)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "Neu", onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("table_scale_invalid", await ErrorOf(response));
+        Assert.Equal(area, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id));
     }
 
     [Theory]
@@ -184,15 +233,206 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
-    public async Task A_new_table_is_placed_in_the_middle_of_its_area()
+    public async Task A_new_table_is_placed_in_the_middle_of_the_floor_plan_image()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        await UploadAsync(client, area.Id, Png);
+
+        var table = await CreateTableAsync(client, area.Id, " 12 ", 4);
+        var second = await CreateTableAsync(client, area.Id, seats: 2);
+
+        Assert.Equal(new TableResponse(table.Id, area.Id, "12", 4, 0.5, 0.5, TableShape.Square, 0), table);
+        Assert.Equal((0.5, 0.5), (second.PosX, second.PosY));
+        Assert.Contains(table, (await GetTablesAsync(client))!);
+    }
+
+    [Fact]
+    public async Task A_new_table_in_an_area_without_floor_plan_image_does_not_overlap_the_others()
     {
         using var client = await LoginAsync(AdminA);
         var area = await CreateAreaAsync(client);
 
-        var table = await CreateTableAsync(client, area.Id, " 12 ", 4);
+        var first = await CreateTableAsync(client, area.Id, seats: 4);
+        var tables = new List<TableResponse> { first };
+        foreach (var seats in new[] { 2, 8, 6, 4, 3, 10, 2 })
+        {
+            tables.Add(await CreateTableAsync(client, area.Id, seats: seats));
+        }
 
-        Assert.Equal(new TableResponse(table.Id, area.Id, "12", 4, 0.5, 0.5), table);
-        Assert.Contains(table, (await GetTablesAsync(client))!);
+        // The first table of an empty area comes to the middle, every further one to a free place.
+        Assert.Equal((0.5, 0.5), (first.PosX, first.PosY));
+        for (var i = 0; i < tables.Count; i++)
+        {
+            Assert.InRange(tables[i].PosX, 0, 1);
+            Assert.InRange(tables[i].PosY, 0, 1);
+            for (var j = i + 1; j < tables.Count; j++)
+            {
+                Assert.False(Overlap(tables[i], tables[j], 100), $"Tables {tables[i].Number} and {tables[j].Number} overlap.");
+            }
+        }
+    }
+
+    /// <summary>Whether the rectangles of the two drawn tables (round ones: the enclosing square) overlap.</summary>
+    private static bool Overlap(TableResponse a, TableResponse b, int tableScale)
+    {
+        var sizeA = TableLayout.TableSize(a.Shape, a.Seats, a.Rotation, tableScale);
+        var sizeB = TableLayout.TableSize(b.Shape, b.Seats, b.Rotation, tableScale);
+        return Math.Abs(a.PosX - b.PosX) < (sizeA.Width + sizeB.Width) / 2 - 1e-9
+            && Math.Abs(a.PosY - b.PosY) < (sizeA.Height + sizeB.Height) / 2 * TableLayout.AspectRatio - 1e-9;
+    }
+
+    [Theory]
+    [InlineData(1, "Square")]
+    [InlineData(4, "Square")]
+    [InlineData(5, "Rectangle")]
+    [InlineData(12, "Rectangle")]
+    public async Task A_new_table_without_shape_gets_the_default_for_its_seats_and_no_rotation(int seats, string shape)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var table = await CreateTableAsync(client, area.Id, seats: seats);
+
+        Assert.Equal(Enum.Parse<TableShape>(shape), table.Shape);
+        Assert.Equal(0, table.Rotation);
+    }
+
+    [Fact]
+    public async Task Shape_and_rotation_are_saved_and_serialized_as_text_and_number()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = UniqueNumber(), seats = 6, shape = "Round", rotation = 90 }, Ct);
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var json = await response.Content.ReadAsStringAsync(Ct);
+        Assert.Contains("\"shape\":\"Round\"", json);
+        Assert.Contains("\"rotation\":90", json);
+        var table = (await response.Content.ReadFromJsonAsync<TableResponse>(Ct))!;
+        Assert.Equal((TableShape.Round, 90), (table.Shape, table.Rotation));
+        Assert.Equal(table, Assert.Single((await GetTablesAsync(client))!, t => t.Id == table.Id));
+    }
+
+    [Fact]
+    public async Task Changing_a_table_keeps_shape_and_rotation_unless_they_are_given()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var table = await CreateTableAsync(client, area.Id, seats: 4);
+
+        // More seats do not change the shape.
+        var moreSeats = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 8 }, Ct);
+        Assert.Equal(HttpStatusCode.OK, moreSeats.StatusCode);
+        Assert.Equal((TableShape.Square, 0), Shape(await moreSeats.Content.ReadFromJsonAsync<TableResponse>(Ct)));
+
+        var changed = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 8, shape = "Rectangle", rotation = 90 }, Ct);
+        Assert.Equal((TableShape.Rectangle, 90), Shape(await changed.Content.ReadFromJsonAsync<TableResponse>(Ct)));
+
+        var onlyShape = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 8, shape = "round" }, Ct);
+        Assert.Equal((TableShape.Round, 90), Shape(await onlyShape.Content.ReadFromJsonAsync<TableResponse>(Ct)));
+        Assert.Equal((TableShape.Round, 90), Shape(Assert.Single((await GetTablesAsync(client))!, t => t.Id == table.Id)));
+    }
+
+    private static (TableShape, int) Shape(TableResponse? table) => (table!.Shape, table.Rotation);
+
+    [Theory]
+    [InlineData("Oval")]
+    [InlineData("")]
+    [InlineData("1")]
+    public async Task An_unknown_shape_is_rejected(string shape)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var table = await CreateTableAsync(client, area.Id);
+
+        var create = await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = UniqueNumber(), seats = 2, shape }, Ct);
+        var update = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 2, shape }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("shape_invalid", await ErrorOf(create));
+        Assert.Equal(HttpStatusCode.BadRequest, update.StatusCode);
+        Assert.Equal("shape_invalid", await ErrorOf(update));
+        Assert.Equal(table, Assert.Single((await GetTablesAsync(client))!, t => t.Id == table.Id));
+    }
+
+    [Theory]
+    [InlineData(45)]
+    [InlineData(180)]
+    [InlineData(-90)]
+    public async Task The_rotation_is_0_or_90_degrees(int rotation)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var table = await CreateTableAsync(client, area.Id);
+
+        var create = await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = UniqueNumber(), seats = 6, rotation }, Ct);
+        var update = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 6, rotation }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("rotation_invalid", await ErrorOf(create));
+        Assert.Equal(HttpStatusCode.BadRequest, update.StatusCode);
+        Assert.Equal("rotation_invalid", await ErrorOf(update));
+    }
+
+    [Fact]
+    public async Task Arranging_the_tables_of_an_area_spreads_them_in_the_order_of_their_numbers()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var other = await CreateAreaAsync(client);
+        var prefix = $"{Guid.NewGuid():N}"[..6];
+        foreach (var (number, seats) in new[] { ("3", 2), ("1", 4), ("10", 8), ("2", 6) })
+        {
+            await CreateTableAsync(client, area.Id, prefix + number, seats);
+        }
+        var otherTable = await CreateTableAsync(client, other.Id);
+        // Moved on top of each other, as before the schematic floor plan.
+        var stacked = (await GetTablesAsync(client))!.Where(t => t.AreaId == area.Id).Select(t => new TablePosition(t.Id, 0.5, 0.5)).ToList();
+        (await client.PutAsJsonAsync("/api/admin/tables/positions", stacked, Ct)).EnsureSuccessStatusCode();
+
+        var response = await client.PostAsync($"/api/admin/areas/{area.Id}/arrange-tables", null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var arranged = (await response.Content.ReadFromJsonAsync<List<TableResponse>>(Ct))!;
+        Assert.Equal(["1", "2", "3", "10"], arranged.Select(t => t.Number[prefix.Length..]));
+        Assert.Equal(arranged, (await GetTablesAsync(client))!.Where(t => t.AreaId == area.Id));
+        for (var i = 0; i < arranged.Count; i++)
+        {
+            for (var j = i + 1; j < arranged.Count; j++)
+            {
+                Assert.False(Overlap(arranged[i], arranged[j], 100), $"Tables {arranged[i].Number} and {arranged[j].Number} overlap.");
+            }
+        }
+        Assert.Equal(otherTable, Assert.Single((await GetTablesAsync(client))!, t => t.Id == otherTable.Id));
+    }
+
+    [Fact]
+    public async Task The_tables_of_an_area_with_floor_plan_image_can_be_arranged_too()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        await UploadAsync(client, area.Id, Png);
+        await CreateTableAsync(client, area.Id);
+        await CreateTableAsync(client, area.Id);
+
+        var response = await client.PostAsync($"/api/admin/areas/{area.Id}/arrange-tables", null, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var arranged = (await response.Content.ReadFromJsonAsync<List<TableResponse>>(Ct))!;
+        Assert.Equal(2, arranged.Count);
+        Assert.False(Overlap(arranged[0], arranged[1], 100));
+    }
+
+    [Fact]
+    public async Task Arranging_an_unknown_area_is_not_found()
+    {
+        using var client = await LoginAsync(AdminA);
+
+        var response = await client.PostAsync($"/api/admin/areas/{Guid.NewGuid()}/arrange-tables", null, Ct);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
@@ -460,6 +700,7 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "taken by B", onlineBookingEnabled = false, onlineCapacityPercent = 0 }, Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await UploadAsync(clientB, area.Id, Jpeg, "image/jpeg")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/admin/areas/{area.Id}", Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await clientB.PostAsync($"/api/admin/areas/{area.Id}/arrange-tables", null, Ct)).StatusCode);
         var areaIdsOfB = (await GetAreasAsync(clientB))!.Select(a => a.Id).Append(area.Id);
         Assert.Equal(HttpStatusCode.BadRequest, (await clientB.PutAsJsonAsync("/api/admin/areas/order", new { areaIds = areaIdsOfB }, Ct)).StatusCode);
 

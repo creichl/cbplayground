@@ -1,9 +1,11 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Endpoints;
+using Cbplayground.Api.FloorPlans;
 using Cbplayground.Api.OpeningHours;
 using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using static Cbplayground.Api.Data.TableShape;
 
 namespace Cbplayground.Api.Data;
 
@@ -23,9 +25,14 @@ public static class DevelopmentSeed
     private const double PlanWidth = 1200;
     private const double PlanHeight = 800;
 
-    private record DemoTable(string Number, int Seats, double X, double Y);
+    /// <summary>Table scale of the areas with a seed floor plan: at 100 % the drawn tables are large for the rooms and come too close.</summary>
+    private const int SeedFloorPlanTableScale = 80;
 
-    private record DemoArea(string Name, string FloorPlanFile, int OnlineCapacityPercent, DemoTable[] Tables);
+    /// <summary>A demo table; in an area without floor plan the position is ignored and the tables are arranged (<see cref="TableLayout"/>).</summary>
+    private record DemoTable(string Number, int Seats, TableShape Shape, double X = 0, double Y = 0, int Rotation = 0);
+
+    /// <summary>A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image.</summary>
+    private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, int TableScale, DemoTable[] Tables);
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
@@ -66,15 +73,17 @@ public static class DevelopmentSeed
             ],
             Areas:
             [
-                new("Gaststube", "gaststube.png", 100,
+                new("Gaststube", "gaststube.png", 100, SeedFloorPlanTableScale,
                 [
-                    new("1", 2, 260, 270), new("2", 4, 450, 270), new("3", 4, 640, 270), new("4", 2, 880, 250), new("5", 2, 1060, 250),
-                    new("6", 4, 260, 470), new("7", 6, 470, 470), new("8", 8, 720, 470), new("9", 4, 980, 470), new("10", 6, 260, 660),
+                    new("1", 2, Square, 260, 270), new("2", 4, Square, 450, 270), new("3", 4, Square, 640, 270),
+                    new("4", 2, Square, 880, 250), new("5", 2, Square, 1060, 250),
+                    new("6", 4, Square, 260, 470), new("7", 6, Rectangle, 470, 470), new("8", 8, Rectangle, 720, 470),
+                    new("9", 4, Round, 980, 470), new("10", 6, Rectangle, 260, 660),
                 ]),
-                new("Terrasse", "terrasse.png", 50,
+                new("Terrasse", "terrasse.png", 50, SeedFloorPlanTableScale,
                 [
-                    new("T1", 4, 220, 230), new("T2", 4, 480, 260), new("T3", 6, 800, 230),
-                    new("T4", 2, 220, 520), new("T5", 4, 500, 540), new("T6", 2, 760, 500),
+                    new("T1", 4, Round, 220, 230), new("T2", 4, Round, 480, 260), new("T3", 6, Rectangle, 800, 230),
+                    new("T4", 2, Round, 220, 520), new("T5", 4, Round, 500, 540), new("T6", 2, Round, 760, 500),
                 ]),
             ],
             Settings: new ReservationSettings
@@ -105,11 +114,20 @@ public static class DevelopmentSeed
             OpeningHours: [.. Enum.GetValues<DayOfWeek>().Select(day => new DemoPeriod(day, new TimeOnly(12, 0), OpeningPeriod.EndOfDay))],
             Areas:
             [
-                new("Sala", "sala.png", 100,
+                new("Sala", "sala.png", 100, SeedFloorPlanTableScale,
                 [
-                    new("1", 2, 300, 200), new("2", 4, 500, 200), new("3", 4, 700, 200), new("4", 6, 860, 330),
-                    new("5", 4, 300, 400), new("6", 6, 500, 400), new("7", 8, 700, 400), new("8", 4, 960, 420),
-                    new("9", 2, 300, 620), new("10", 4, 500, 620), new("11", 4, 700, 620), new("12", 2, 900, 620),
+                    new("1", 2, Square, 300, 200), new("2", 4, Square, 500, 200), new("3", 4, Square, 700, 200),
+                    new("4", 6, Rectangle, 860, 330, Rotation: 90),
+                    new("5", 4, Square, 300, 400), new("6", 6, Rectangle, 500, 400), new("7", 8, Rectangle, 700, 400),
+                    new("8", 4, Round, 960, 420),
+                    new("9", 2, Square, 300, 620), new("10", 4, Square, 500, 620), new("11", 4, Square, 700, 620),
+                    new("12", 2, Square, 900, 620),
+                ]),
+                // The garden has no floor plan image: the API draws it from the tables.
+                new("Bašta", null, 100, 100,
+                [
+                    new("B1", 2, Round), new("B2", 4, Square), new("B3", 4, Round),
+                    new("B4", 6, Rectangle), new("B5", 8, Rectangle), new("B6", 2, Square),
                 ]),
             ],
             Settings: new ReservationSettings
@@ -180,9 +198,13 @@ public static class DevelopmentSeed
                     for (var i = 0; i < demo.Areas.Length; i++)
                     {
                         var demoArea = demo.Areas[i];
-                        // A new file name for every copy, as for an upload, so deleting the area deletes only its own copy.
-                        var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(demoArea.FloorPlanFile)}";
-                        File.Copy(Path.Combine(environment.ContentRootPath, SeedAssetsPath, demoArea.FloorPlanFile), Path.Combine(uploads, fileName));
+                        string? fileName = null;
+                        if (demoArea.FloorPlanFile is not null)
+                        {
+                            // A new file name for every copy, as for an upload, so deleting the area deletes only its own copy.
+                            fileName = $"{Guid.NewGuid():N}{Path.GetExtension(demoArea.FloorPlanFile)}";
+                            File.Copy(Path.Combine(environment.ContentRootPath, SeedAssetsPath, demoArea.FloorPlanFile), Path.Combine(uploads, fileName));
+                        }
 
                         var area = new Area
                         {
@@ -191,16 +213,24 @@ public static class DevelopmentSeed
                             SortOrder = i,
                             FloorPlanFileName = fileName,
                             OnlineCapacityPercent = demoArea.OnlineCapacityPercent,
+                            TableScale = demoArea.TableScale,
                         };
                         db.Areas.Add(area);
-                        db.Tables.AddRange(demoArea.Tables.Select(t => new Table
+                        var tables = demoArea.Tables.Select(t => new Table
                         {
                             AreaId = area.Id,
                             Number = t.Number,
                             Seats = t.Seats,
+                            Shape = t.Shape,
+                            Rotation = t.Rotation,
                             PosX = t.X / PlanWidth,
                             PosY = t.Y / PlanHeight,
-                        }));
+                        }).ToList();
+                        if (fileName is null)
+                        {
+                            TableLayout.Arrange(tables, area.TableScale);
+                        }
+                        db.Tables.AddRange(tables);
                     }
                 }
 

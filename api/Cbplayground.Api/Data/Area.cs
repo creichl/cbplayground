@@ -20,4 +20,7 @@ public class Area : ITenantOwned
 
     /// <summary>Share of the area's seats that guests can book online, 0–100. The rest stays for phone bookings and walk-ins.</summary>
     public int OnlineCapacityPercent { get; set; } = 100;
+
+    /// <summary>Size of the drawn tables of this area in percent, 50–200, so they match an uploaded floor plan.</summary>
+    public int TableScale { get; set; } = 100;
 }

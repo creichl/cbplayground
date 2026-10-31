@@ -72,6 +72,9 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal(["Gaststube", "Terrasse"], floor!.Select(a => a.Name));
         Assert.Equal(["2", "10"], floor[0].Tables.Select(t => t.Number));
         Assert.Equal(6, Assert.Single(floor[1].Tables).Seats);
+        Assert.All(floor, a => Assert.Equal(100, a.TableScale));
+        Assert.Equal([(TableShape.Square, 0), (TableShape.Square, 0)], floor[0].Tables.Select(t => (t.Shape, t.Rotation)));
+        Assert.Equal(TableShape.Rectangle, floor[1].Tables[0].Shape);
     }
 
     [Fact]
