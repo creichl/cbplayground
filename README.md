@@ -138,7 +138,7 @@ cd api/Cbplayground.Api
 dotnet run
 ```
 
-The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations, sets up the two demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
+The API listens on http://localhost:5025. In every environment it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` (and its folder) on startup and applies all migrations. In the Development environment (the default for `dotnet run`), it also sets up the two demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
 
 #### Demo data
 
@@ -166,9 +166,9 @@ A second start therefore adds nothing, and an existing database whose restaurant
 
 Endpoints:
 
-- `GET /api/health`
+- `GET /api/health`: 200 `{ "status": "ok" }` when the database can be reached, otherwise 503 `{ "error": "unhealthy" }`.
 - `GET /api/tenants`: all restaurants, sorted by name: `id`, `name`, `slug`, and `city` and `description` from the profile (`null` when empty)
-- `POST /api/auth/login`: body `{ "email", "password" }`. Signs in with a cookie and returns the same user as `me`. On failure: 401 with `{ "error": "invalid_credentials" | "locked_out" | "deactivated" }`.
+- `POST /api/auth/login`: body `{ "email", "password" }`. Signs in with a cookie and returns the same user as `me`. On failure: 401 with `{ "error": "invalid_credentials" | "locked_out" | "deactivated" }`; 429 `too_many_requests` after 10 attempts from the same client IP within a minute (`RateLimiting:Login:PermitLimit`).
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
@@ -214,18 +214,18 @@ Endpoints:
 
 `IReservationDurationPolicy.GetDurationAsync(guests)` returns the duration of a reservation for the current restaurant: the duration of the rule that contains the party size, otherwise the default duration.
 
-- Guest booking, without sign-in. The restaurant comes from the slug in the URL (unknown slug: 404) and is the tenant of the request, also when a user of another restaurant is signed in:
+- Guest booking, without sign-in. The restaurant comes from the slug in the URL (unknown slug: 404) and is the tenant of the request, also when a user of another restaurant is signed in. `calendar`, `availability` and `tables` share a limit of 120 calls per client IP and minute (`RateLimiting:PublicReads:PermitLimit`), then 429 `too_many_requests`:
   - `GET /api/public/restaurants/{slug}`: `name`, the profile (`street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`, each `null` when empty), `timeZoneId`, `confirmationMode`, `tableSelectionMode`, `maxOnlinePartySize` (seats of the largest table that can be booked online, 0 if none), `openingHours` (the week, as in `GET /api/admin/opening-hours`) and `bookable` (false without location, opening hours or tables that can be booked online).
   - `GET /api/public/restaurants/{slug}/calendar?month=YYYY-MM&guests=N`: one entry per day of the month, `{ "date", "status" }` with `closed` (closed, in the past or more than 90 days ahead), `full` or `available`, for the date picker. Errors: `invalid_month`, `invalid_party_size`.
   - `GET /api/public/restaurants/{slug}/availability?date=YYYY-MM-DD&guests=N`: `date`, `guests`, `durationMinutes` and `periods`: per opening window `{ "start", "end", "times": [{ "time", "available" }] }`. No periods on closing days and closed public holidays.
   - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tables": [{ "id", "number", "seats", "posX", "posY", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
-  - `POST /api/public/restaurants/{slug}/reservations`: body `{ "date", "time", "guests", "tableId", "name", "phone", "email", "notes", "language" }`. `tableId` is required when the guest chooses the table and ignored when the system assigns it; `phone` or `email` is required; `language` is `en`, `de`, `sr-Latn` or `sr-Cyrl`. Returns 201 with `referenceCode`, `status` (`Confirmed` in the instant mode, `Requested` in the request mode), `date`, `time`, `guests`, `durationMinutes`, `area` and `tableNumber`. Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_name`, `contact_required`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `table_required`, `outside_opening_hours`, `too_far_ahead`, `in_the_past`; 409 `slot_unavailable`, `table_unavailable`; 429 after 10 bookings from the same IP address within 10 minutes (`RateLimiting:PublicBookings:PermitLimit`, the address the API sees).
+  - `POST /api/public/restaurants/{slug}/reservations`: body `{ "date", "time", "guests", "tableId", "name", "phone", "email", "notes", "language" }`. `tableId` is required when the guest chooses the table and ignored when the system assigns it; `phone` or `email` is required; `language` is `en`, `de`, `sr-Latn` or `sr-Cyrl`. Returns 201 with `referenceCode`, `status` (`Confirmed` in the instant mode, `Requested` in the request mode), `date`, `time`, `guests`, `durationMinutes`, `area` and `tableNumber`. Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_name`, `contact_required`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `table_required`, `outside_opening_hours`, `too_far_ahead`, `in_the_past`; 409 `slot_unavailable`, `table_unavailable`; 429 `too_many_requests` after 10 bookings from the same client IP within 10 minutes (`RateLimiting:PublicBookings:PermitLimit`).
 - Reservations for the staff (Tenant Admins and Front desk users, `RequireStaff` policy), always of the signed-in user's restaurant; reservations of other restaurants are 404:
   - `GET /api/staff/floor`: the areas in their order with their tables: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tables` (`id`, `number`, `seats`, `posX`, `posY`).
   - `GET /api/staff/reservations?from=YYYY-MM-DD&to=YYYY-MM-DD`: the reservations starting on these days (without `from`/`to`: today in the restaurant's time zone; at most 366 days, otherwise `invalid_range`), sorted by start: `id`, `referenceCode`, `date`, `time`, `endTime`, `durationMinutes`, `guests`, `status`, `source` (`Online` | `Staff`), `tableId`, `tableNumber`, `areaId`, `areaName`, `name`, `phone`, `email`, `notes`, `language`, `createdAtUtc`, `updatedAtUtc`.
   - `GET /api/staff/availability?date=YYYY-MM-DD&guests=N&durationMinutes=M`: like the public availability, but each time lists the free tables (`id`, `number`, `seats`, `areaId`, `areaName`, empty when none is free), without online quota and online block. `durationMinutes` is optional.
   - `POST /api/staff/reservations`: body `{ "date", "time", "guests", "tableId", "durationMinutes", "name", "phone", "email", "notes", "language" }`, e.g. for a phone reservation. Always `Confirmed`, source `Staff`. Without `tableId` the system assigns a table; `durationMinutes` (15–480 in steps of 15) overrides the restaurant's duration; the name is required, phone and email are optional; without `language` the language of the restaurant's country (`de` for Germany and Austria, `sr-Latn` for Serbia, otherwise `en`). Returns 201 with the reservation as in the list.
-  - `PUT /api/staff/reservations/{id}`: same body; changes date, time, party size, table, duration, contact and notes with the same checks, without colliding with itself. Without `durationMinutes` the restaurant's duration for the party size applies again, without `language` the stored one stays. A start that is not changed may lie in the past, so a running reservation can still be changed.
+  - `PUT /api/staff/reservations/{id}`: same body; changes date, time, party size, table, duration, contact and notes with the same checks, without colliding with itself. Without `durationMinutes` the restaurant's duration for the party size applies again, without `language` the stored one stays. A start that is not changed may lie in the past, so a running reservation can still be changed. The opening hours, the availability and the table are only checked when date, time, duration, party size or table change (no `tableId` means the system assigns one, which is a change), so contact and notes can still be changed after the opening hours have changed.
   - `POST /api/staff/reservations/{id}/status`: body `{ "status" }`. Returns the reservation.
   - Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_duration`, `invalid_name`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `outside_opening_hours`, `in_the_past`, `invalid_status`; 409 `slot_unavailable`, `table_unavailable`, `invalid_status_transition`.
 
@@ -264,6 +264,8 @@ Outside Development, the API backs up the database once a day at `Backup:TimeOfD
 
 `Backup:Enabled` switches the backups on (`appsettings.json`) or off (`appsettings.Development.json`). To try them locally: `dotnet run -- --Backup:Enabled=true`.
 
+The Data Protection keys (`DataProtection:KeysPath`) are deliberately not part of the backups: with them, anyone who has a copy of a backup could forge sign-in cookies, while losing them only means that everybody has to sign in again once.
+
 The backups lie on the same disk as the database. To survive the loss of the server, `Backup:Path` should be on another disk or be copied off the server regularly; that is part of the server setup, not of this repository.
 
 Restore a backup:
@@ -275,6 +277,34 @@ Restore a backup:
 5. Start the API.
 
 There is no registration endpoint: staff users are created by a Tenant Admin (staff management, `/admin/staff`) or by the development seed.
+
+### Configuration for operation
+
+All settings are in `appsettings.json` and can be overridden per environment (`appsettings.{Environment}.json`), with environment variables (`__` instead of `:`, e.g. `ConnectionStrings__Default`) or on the command line (`--Backup:Path=/srv/backups`). Relative paths are resolved against the content root, i.e. `api/Cbplayground.Api` (when the API is started with `dotnet run`, also from another folder with `--project`), so the database, uploads, backups and keys always end up in the same place.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `ConnectionStrings:Default` | `Data Source=data/cbplayground.db` | The SQLite database. Its folder is created and all migrations are applied on startup, in every environment; demo data only in Development. |
+| `Uploads:Path` | `data/uploads` | The uploaded floor plans. |
+| `Backup:Enabled`, `Backup:Path`, `Backup:TimeOfDay`, `Backup:RetentionDays` | `true`, `data/backups`, `03:00`, `30` | The daily backups, see [Backups](#backups). |
+| `DataProtection:KeysPath` | `data/keys` | The keys of the sign-in cookie (ASP.NET Core Data Protection, application name `cbplayground`). Kept on disk so staff stay signed in when the API restarts; ignored by git and not backed up. The folder must be writable and should only be readable by the API's user. Deleting it signs everybody out. |
+| `RateLimiting:Login:PermitLimit` | `10` | Sign-in attempts per client IP and minute. |
+| `RateLimiting:PublicReads:PermitLimit` | `120` | Calls of the public `calendar`, `availability` and `tables` per client IP and minute, together. |
+| `RateLimiting:PublicBookings:PermitLimit` | `10` | Online bookings per client IP in 10 minutes. |
+| `ForwardedHeaders:Enabled` | `false` | Behind a reverse proxy: take the client IP and the scheme from `X-Forwarded-For` and `X-Forwarded-Proto`. Without it, all guests behind a proxy share one rate limit counter. |
+| `ForwardedHeaders:KnownProxies` | `[]` | IP addresses of the trusted proxies, e.g. `["10.0.0.5"]`. Loopback (`127.0.0.0/8`, `::1`) is always trusted; the headers of other senders are ignored. |
+| `ForwardedHeaders:KnownNetworks` | `[]` | Networks of the trusted proxies in CIDR notation, e.g. `["172.18.0.0/16"]`. |
+
+The rate limits count per client IP: the address of the connection, or with `ForwardedHeaders:Enabled` the client address the trusted proxy forwards. An account is locked after 5 failed attempts; with at most 10 attempts per minute, one address can lock at most two accounts a minute instead of any number, and a person who mistypes is not affected. The 120 reads per minute leave room for a guest clicking through the calendar quickly.
+
+Error answers always have the form `{ "error": "<code>" }`. Besides the codes of the single endpoints, every endpoint can answer with 400 `invalid_request` (a parameter or body that cannot be read, e.g. a missing `guests` or an invalid date), 429 `too_many_requests` and 500 `server_error`. An unexpected error is logged with its stack trace and never contains details in the answer, in Development neither.
+
+To run the API outside Development locally, start it without the launch profile, which sets Development:
+
+```sh
+cd api/Cbplayground.Api
+ASPNETCORE_ENVIRONMENT=Production dotnet run --no-launch-profile
+```
 
 ### Sign-in, roles and tenants
 
@@ -327,7 +357,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules, the restaurant profile, the setup status, the development seed, the database backups, and the reservations: availability, online quota, table assignment, the guest booking per slug, the staff endpoints, status changes, concurrent bookings of the last table, the rate limit, deleting tables with reservations and the demo reservations.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules, the restaurant profile, the setup status, the development seed, the database backups, and the reservations: availability, online quota, table assignment, the guest booking per slug, the staff endpoints, status changes, concurrent bookings of the last table, the rate limits, deleting tables with reservations and the demo reservations, as well as the start with an empty database outside Development, staying signed in after a restart, the health check, forwarded headers and the `invalid_request` and `server_error` answers.
 
 ### Run the web frontend
 
