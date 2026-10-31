@@ -7,14 +7,15 @@ import { ApiError } from '../api/client.ts'
 import { isNotFound, type PublicRestaurant, todayIn, useCreateBooking, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingCalendar } from '../components/booking/BookingCalendar.tsx'
 import { BookingConfirmation } from '../components/booking/BookingConfirmation.tsx'
-import { formatDate, formatTime } from '../components/booking/format.ts'
 import { GuestDetailsForm, type GuestDetailsValues } from '../components/booking/GuestDetailsForm.tsx'
 import { PartySizePicker } from '../components/booking/PartySizePicker.tsx'
 import { RestaurantHeader } from '../components/booking/RestaurantHeader.tsx'
 import { type ChosenTable, TablePicker } from '../components/booking/TablePicker.tsx'
 import { TimeSlotGrid } from '../components/booking/TimeSlotGrid.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { formatShortDate, formatTime } from '../i18n/format.ts'
 import type { Language } from '../i18n/index.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** Online bookings reach at most this many days ahead, as on the server. */
 const maxDaysAhead = 90
@@ -81,6 +82,10 @@ export function RestaurantPage() {
   const { t } = useTranslation()
   const { slug = '' } = useParams()
   const restaurant = usePublicRestaurant(slug)
+  useDocumentTitle(
+    restaurant.isError && isNotFound(restaurant.error) ? t('restaurant.notFoundTitle') : t('home.reserve'),
+    restaurant.data?.name ?? null,
+  )
 
   if (restaurant.isPending) {
     return (
@@ -240,7 +245,7 @@ function BookingFlow({ slug, restaurant, timeZoneId }: BookingFlowProps) {
     summary.push({ step: 'guests', label: t('booking.guestsCount', { count: guests }) })
   }
   if (date !== null) {
-    summary.push({ step: 'date', label: formatDate(date, language, { weekday: 'short', day: 'numeric', month: 'short' }) })
+    summary.push({ step: 'date', label: formatShortDate(date, language) })
   }
   if (time !== null) {
     summary.push({ step: 'time', label: formatTime(time, language) })

@@ -128,7 +128,7 @@ function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string
                 }}
               >
                 <Text size="xs" fw={600}>
-                  {table.number} · {table.seats}
+                  {t('common.tableLabel', { number: table.number, seats: table.seats })}
                 </Text>
               </Paper>
             )

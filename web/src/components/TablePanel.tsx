@@ -1,5 +1,6 @@
-import { Button, Group, NumberInput, Stack, TextInput, Title } from '@mantine/core'
+import { Alert, Button, Group, Modal, NumberInput, Stack, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
+import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { useTranslation } from 'react-i18next'
 import { type Table, useDeleteTable, useUpdateTable } from '../api/areas.ts'
@@ -10,11 +11,17 @@ type TablePanelProps = {
   onClose: () => void
 }
 
-/** Properties of the selected table: number and seats. */
+/** Properties of the selected table: number and seats, and its deletion after a confirmation. */
 export function TablePanel({ table, onClose }: TablePanelProps) {
   const { t } = useTranslation()
   const updateTable = useUpdateTable()
   const deleteTable = useDeleteTable()
+  const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure()
+
+  function cancelDelete() {
+    deleteTable.reset()
+    closeDelete()
+  }
 
   const form = useForm({
     initialValues: { number: table.number, seats: table.seats as number | string },
@@ -28,52 +35,76 @@ export function TablePanel({ table, onClose }: TablePanelProps) {
   })
 
   return (
-    <form
-      onSubmit={form.onSubmit((values) =>
-        updateTable.mutate(
-          { id: table.id, number: values.number.trim(), seats: Number(values.seats) },
-          {
-            onSuccess: () => notifications.show({ color: 'brand', message: t('areas.table.saved') }),
-            onError: (error) => {
-              const code = errorCode(error)
-              if (code === 'table_number_taken' || code === 'table_number_invalid') {
-                form.setFieldError('number', errorMessage(error, t))
-              } else if (code === 'seats_invalid') {
-                form.setFieldError('seats', errorMessage(error, t))
-              } else {
-                notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) })
-              }
+    <>
+      <form
+        onSubmit={form.onSubmit((values) =>
+          updateTable.mutate(
+            { id: table.id, number: values.number.trim(), seats: Number(values.seats) },
+            {
+              onSuccess: () => notifications.show({ color: 'brand', message: t('areas.table.saved') }),
+              onError: (error) => {
+                const code = errorCode(error)
+                if (code === 'table_number_taken' || code === 'table_number_invalid') {
+                  form.setFieldError('number', errorMessage(error, t))
+                } else if (code === 'seats_invalid') {
+                  form.setFieldError('seats', errorMessage(error, t))
+                } else {
+                  notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) })
+                }
+              },
             },
-          },
-        ),
-      )}
-    >
-      <Stack gap="md">
-        <Title order={4}>{t('areas.table.title', { number: table.number })}</Title>
-        <TextInput label={t('areas.table.number')} maxLength={20} {...form.getInputProps('number')} />
-        <NumberInput label={t('areas.table.seats')} min={1} allowDecimal={false} allowNegative={false} {...form.getInputProps('seats')} />
-        <Group justify="space-between">
-          <Button type="submit" loading={updateTable.isPending}>
-            {t('common.save')}
+          ),
+        )}
+      >
+        <Stack gap="md">
+          <Title order={4}>{t('areas.table.title', { number: table.number })}</Title>
+          <TextInput label={t('areas.table.number')} maxLength={20} {...form.getInputProps('number')} />
+          <NumberInput label={t('areas.table.seats')} min={1} allowDecimal={false} allowNegative={false} {...form.getInputProps('seats')} />
+          <Group justify="space-between">
+            <Button type="submit" loading={updateTable.isPending}>
+              {t('common.save')}
+            </Button>
+            <Button variant="default" onClick={onClose}>
+              {t('common.close')}
+            </Button>
+          </Group>
+          <Button variant="subtle" color="red" onClick={openDelete}>
+            {t('areas.table.delete')}
           </Button>
-          <Button variant="default" onClick={onClose}>
-            {t('common.close')}
-          </Button>
-        </Group>
-        <Button
-          variant="subtle"
-          color="red"
-          loading={deleteTable.isPending}
-          onClick={() =>
-            deleteTable.mutate(table.id, {
-              onSuccess: onClose,
-              onError: (error) => notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) }),
-            })
-          }
-        >
-          {t('areas.table.delete')}
-        </Button>
-      </Stack>
-    </form>
+        </Stack>
+      </form>
+
+      <Modal opened={deleteOpened} onClose={cancelDelete} title={t('areas.table.deleteTitle', { number: table.number })}>
+        <Stack gap="md">
+          <Text size="sm">{t('areas.table.deleteText')}</Text>
+          {deleteTable.error !== null && (
+            <Alert color="red" variant="light" title={t('areas.table.notDeleted')}>
+              {errorCode(deleteTable.error) === 'table_has_reservations'
+                ? t('areas.table.hasReservations')
+                : errorMessage(deleteTable.error, t)}
+            </Alert>
+          )}
+          <Group justify="flex-end">
+            <Button variant="default" onClick={cancelDelete}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              color="red"
+              loading={deleteTable.isPending}
+              onClick={() =>
+                deleteTable.mutate(table.id, {
+                  onSuccess: () => {
+                    closeDelete()
+                    onClose()
+                  },
+                })
+              }
+            >
+              {t('areas.table.deleteConfirm')}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
   )
 }

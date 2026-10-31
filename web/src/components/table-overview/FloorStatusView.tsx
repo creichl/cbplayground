@@ -9,6 +9,7 @@ import {
   type Reservation,
   toMinutes,
 } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { statusColors } from '../reservations/status.ts'
 import { TableMarker } from '../TableMarker.tsx'
 import { ReservationPopover } from './ReservationPopover.tsx'
@@ -34,13 +35,14 @@ const step = 15
  * and the next reservation at each table. Areas without floor plan show their tables as a grid.
  */
 export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes }: FloorStatusViewProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [time, setTime] = useState(initialTime)
   const active = reservations.filter((reservation) => blockingStatuses.includes(reservation.status))
+  const label = (minutes: number) => formatTime(formatMinutes(minutes), i18n.resolvedLanguage ?? 'en')
 
   const marks: { value: number; label: string }[] = []
   for (let minutes = Math.ceil(start / 120) * 120; minutes <= end; minutes += 120) {
-    marks.push({ value: minutes, label: formatMinutes(minutes) })
+    marks.push({ value: minutes, label: label(minutes) })
   }
 
   return (
@@ -52,7 +54,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
               {t('tableOverview.floor.time')}
             </Text>
             <Text size="xl" fw={650}>
-              {formatMinutes(time)}
+              {label(time)}
             </Text>
           </Stack>
           <Slider
@@ -65,7 +67,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
             step={step}
             value={time}
             onChange={setTime}
-            label={formatMinutes}
+            label={label}
             marks={marks}
             aria-label={t('tableOverview.floor.time')}
           />
@@ -124,7 +126,8 @@ type TableStatusProps = {
 
 /** A table in the colour of its status at `time`, with the end of the current or the start of the next reservation. */
 function TableStatus({ table, reservations, time, onPlan }: TableStatusProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const atTable = reservations.filter((reservation) => reservation.tableId === table.id)
   const current = atTable.find((reservation) => toMinutes(reservation.time) <= time && time < toMinutes(reservation.endTime))
   const next = atTable.find((reservation) => toMinutes(reservation.time) > time)
@@ -156,13 +159,13 @@ function TableStatus({ table, reservations, time, onPlan }: TableStatusProps) {
     children: (
       <>
         <Text size="sm" fw={600} inherit>
-          {table.number} · {table.seats}
+          {t('common.tableLabel', { number: table.number, seats: table.seats })}
         </Text>
         {shown !== undefined && (
           <Text size="xs">
             {current !== undefined
-              ? t('tableOverview.floor.until', { time: current.endTime })
-              : t('tableOverview.floor.nextAt', { time: shown.time })}
+              ? t('tableOverview.floor.until', { time: formatTime(current.endTime, language) })
+              : t('tableOverview.floor.nextAt', { time: formatTime(shown.time, language) })}
           </Text>
         )}
       </>

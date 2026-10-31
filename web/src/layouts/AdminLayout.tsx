@@ -1,4 +1,4 @@
-import { AppShell, Burger, Group, NavLink } from '@mantine/core'
+import { AppShell, Burger, Divider, Group, NavLink } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { useTranslation } from 'react-i18next'
 import { Link, matchPath, Outlet, useLocation } from 'react-router'
@@ -54,6 +54,8 @@ export function AdminLayout() {
             variant="light"
           />
         ))}
+        <Divider my="sm" />
+        <NavLink component={Link} to="/frontdesk" label={t('admin.nav.openFrontdesk')} onClick={close} />
       </AppShell.Navbar>
 
       <AppShell.Main>

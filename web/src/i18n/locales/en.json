@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "cbplayground"
+    "name": "cbplayground",
+    "title": "{{page}} · {{name}}"
   },
   "language": {
     "label": "Language",
@@ -16,11 +17,19 @@
     "backToStart": "Back to the start page",
     "cancel": "Cancel",
     "save": "Save",
-    "close": "Close"
+    "close": "Close",
+    "timeRange": "{{start}}–{{end}}",
+    "tableLabel": "{{number}} · {{seats}}"
   },
   "auth": {
     "userMenu": "Account menu",
-    "logout": "Sign out"
+    "logout": "Sign out",
+    "roles": {
+      "superadmin": "Superadmin",
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "toAdmin": "Go to management"
   },
   "login": {
     "title": "Staff sign-in",
@@ -68,7 +77,6 @@
   },
   "booking": {
     "guestsCount_one": "{{count}} person",
-    "guestsCount_few": "{{count}} people",
     "guestsCount_other": "{{count}} people",
     "tableNumber": "Table {{number}}",
     "summaryLabel": "Your selection",
@@ -89,9 +97,11 @@
       "more": "More",
       "moreLabel": "Number of people",
       "morePlaceholder": "Please choose",
-      "moreThan": "More than {{max}} people",
+      "moreThan_one": "More than {{count}} person",
+      "moreThan_other": "More than {{count}} people",
       "callTitle": "Please call us",
-      "callText": "Online you can book for up to {{max}} people. For larger groups, please call us:",
+      "callText_one": "Online you can book for up to {{count}} person. For larger groups, please call us:",
+      "callText_other": "Online you can book for up to {{count}} people. For larger groups, please call us:",
       "noPhone": "Please contact the restaurant directly."
     },
     "calendar": {
@@ -111,7 +121,6 @@
     "table": {
       "listLabel": "Free tables – {{area}}",
       "option_one": "Table {{number}} · {{count}} seat",
-      "option_few": "Table {{number}} · {{count}} seats",
       "option_other": "Table {{number}} · {{count}} seats",
       "noneFreeInArea": "There is no suitable free table in this area at this time.",
       "noneFree": "Unfortunately, there is no free table left at this time.",
@@ -122,7 +131,8 @@
       "phone": "Phone",
       "email": "Email",
       "notes": "Note (optional)",
-      "notesDescription": "E.g. high chair or allergies. At most {{max}} characters.",
+      "notesDescription_one": "E.g. high chair or allergies. At most {{count}} character.",
+      "notesDescription_other": "E.g. high chair or allergies. At most {{count}} characters.",
       "contactHint": "So the restaurant can reach you, please enter a phone number or an email address – one of the two is enough.",
       "contactRequired": "Please enter a phone number or an email address.",
       "nameRequired": "Please enter your name.",
@@ -168,7 +178,8 @@
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
       "staff": "Staff",
-      "tables": "Table overview"
+      "tables": "Table overview",
+      "openFrontdesk": "Open front desk"
     }
   },
   "overview": {
@@ -232,8 +243,10 @@
       "email": "Email",
       "website": "Website",
       "websiteDescription": "The full address, including https://",
+      "websitePlaceholder": "https://",
       "description": "Short description",
-      "descriptionDescription": "At most {{max}} characters."
+      "descriptionDescription_one": "At most {{count}} character.",
+      "descriptionDescription_other": "At most {{count}} characters."
     },
     "validation": {
       "email": "Please enter a valid email address.",
@@ -421,9 +434,6 @@
       "tables": "Table overview"
     }
   },
-  "placeholder": {
-    "text": "This section is being built."
-  },
   "notFound": {
     "label": "Error 404",
     "title": "Page not found",
@@ -436,6 +446,7 @@
     "emptyText": "Create an area, e.g. the dining room or the terrace, and upload its floor plan.",
     "addTable": "Add table",
     "dragHint": "Drag tables to move them. Click a table to edit it.",
+    "noFloorPlanHint": "Without a floor plan, the tables are listed here. Upload a floor plan to place them on it.",
     "capacity": "Seats: {{seats}}, bookable online: {{online}} ({{percent}}%)",
     "capacityOnlineBlocked": "Seats: {{seats}}, blocked for online booking",
     "floorPlanAlt": "Floor plan",
@@ -455,6 +466,7 @@
       "onlineBookingEnabledHint": "When off, guests cannot book this area online.",
       "onlineCapacityPercent": "Online quota",
       "onlineCapacityPercentHint": "Share of the seats guests can book online. The rest stays free for phone bookings and walk-ins.",
+      "percentSuffix": "%",
       "saved": "The area has been saved.",
       "order": "Order",
       "moveLeft": "Move left",
@@ -469,7 +481,12 @@
       "number": "Table number",
       "seats": "Seats",
       "saved": "The table has been saved.",
-      "delete": "Delete table"
+      "delete": "Delete table",
+      "deleteTitle": "Delete table {{number}}?",
+      "deleteText": "The table will be deleted, together with its past, cancelled and declined reservations. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "notDeleted": "The table was not deleted",
+      "hasReservations": "This table still has upcoming reservations. Move them to another table or cancel them first."
     },
     "errors": {
       "areaNameInvalid": "Please enter a name of at most 100 characters.",
@@ -525,7 +542,8 @@
       "deleteRule": "Delete rule",
       "noRules": "No rules yet: every reservation lasts the default duration.",
       "previewGuests": "Preview for party size",
-      "previewResult": "For a party of {{guests}}, a reservation lasts {{minutes}} minutes.",
+      "previewResult_one": "For a party of {{guests}}, a reservation lasts {{count}} minute.",
+      "previewResult_other": "For a party of {{guests}}, a reservation lasts {{count}} minutes.",
       "previewRule": "(rule {{min}}–{{max}})",
       "previewDefault": "(default duration)"
     },
@@ -566,10 +584,12 @@
     "list": {
       "empty": "There are no reservations on this day.",
       "noMatches": "No reservation matches the search or filter.",
-      "groupGuests": "{{guests}} guests"
+      "groupGuests_one": "{{count}} guest",
+      "groupGuests_other": "{{count}} guests"
     },
     "row": {
-      "summary": "Party of {{guests}} · Table {{table}} ({{area}}) · until {{end}}",
+      "summary_one": "Party of {{count}} · Table {{table}} ({{area}}) · until {{end}}",
+      "summary_other": "Party of {{count}} · Table {{table}} ({{area}}) · until {{end}}",
       "notes": "Note",
       "open": "Open the reservation of {{name}} at {{time}}"
     },
@@ -595,7 +615,8 @@
     },
     "cancelConfirm": {
       "title": "Cancel the reservation?",
-      "text": "The reservation of {{name}} at {{time}} (party of {{guests}}) will be cancelled. This cannot be undone.",
+      "text_one": "The reservation of {{name}} at {{time}} (party of {{count}}) will be cancelled. This cannot be undone.",
+      "text_other": "The reservation of {{name}} at {{time}} (party of {{count}}) will be cancelled. This cannot be undone.",
       "back": "Back",
       "confirm": "Cancel reservation"
     },
@@ -611,15 +632,19 @@
       "time": "Time",
       "timeHint": "Enter the party size and the date to see the free times.",
       "closed": "The restaurant is closed on this day.",
-      "period": "{{start}}–{{end}}",
       "table": "Table",
       "tableDescriptionNew": "The suggested table is preselected; you can choose another free one.",
-      "tableDescriptionEdit": "If the table is taken at the new time, you will get a message when saving.",
+      "tableDescriptionEdit": "Only the tables that are free at the chosen time for the whole duration are offered, plus the current table.",
       "tablePlaceholder": "Choose a time first",
-      "tableOption": "Table {{number}} · {{area}} · {{seats}} seats",
-      "tableOptionSuggested": "Table {{number}} · {{area}} · {{seats}} seats (suggested)",
+      "tableOption_one": "Table {{number}} · {{area}} · {{count}} seat",
+      "tableOption_other": "Table {{number}} · {{area}} · {{count}} seats",
+      "tableOptionSuggested_one": "Table {{number}} · {{area}} · {{count}} seat (suggested)",
+      "tableOptionSuggested_other": "Table {{number}} · {{area}} · {{count}} seats (suggested)",
+      "tableOptionCurrent_one": "Table {{number}} · {{area}} · {{count}} seat (current)",
+      "tableOptionCurrent_other": "Table {{number}} · {{area}} · {{count}} seats (current)",
       "overrideDuration": "Override duration",
-      "defaultDuration": "The restaurant's duration for this party size: {{minutes}} minutes",
+      "defaultDuration_one": "The restaurant's duration for this party size: {{count}} minute",
+      "defaultDuration_other": "The restaurant's duration for this party size: {{count}} minutes",
       "duration": "Duration in minutes",
       "name": "Name",
       "phone": "Phone",

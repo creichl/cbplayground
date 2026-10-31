@@ -1,6 +1,7 @@
 {
   "app": {
-    "name": "cbplayground"
+    "name": "cbplayground",
+    "title": "{{page}} · {{name}}"
   },
   "language": {
     "label": "Jezik",
@@ -16,11 +17,19 @@
     "backToStart": "Nazad na početnu stranu",
     "cancel": "Otkaži",
     "save": "Sačuvaj",
-    "close": "Zatvori"
+    "close": "Zatvori",
+    "timeRange": "{{start}}–{{end}}",
+    "tableLabel": "{{number}} · {{seats}}"
   },
   "auth": {
     "userMenu": "Meni naloga",
-    "logout": "Odjavi se"
+    "logout": "Odjavi se",
+    "roles": {
+      "superadmin": "Superadministrator",
+      "tenantAdmin": "Administrator",
+      "frontDesk": "Recepcija"
+    },
+    "toAdmin": "Na administraciju"
   },
   "login": {
     "title": "Prijava za zaposlene",
@@ -89,9 +98,13 @@
       "more": "Više",
       "moreLabel": "Broj osoba",
       "morePlaceholder": "Izaberite",
-      "moreThan": "Više od {{max}} osoba",
+      "moreThan_one": "Više od {{count}} osobe",
+      "moreThan_few": "Više od {{count}} osobe",
+      "moreThan_other": "Više od {{count}} osoba",
       "callTitle": "Molimo vas da nas pozovete",
-      "callText": "Onlajn možete rezervisati za najviše {{max}} osoba. Za veće grupe pozovite nas:",
+      "callText_one": "Onlajn možete rezervisati za najviše {{count}} osobu. Za veće grupe pozovite nas:",
+      "callText_few": "Onlajn možete rezervisati za najviše {{count}} osobe. Za veće grupe pozovite nas:",
+      "callText_other": "Onlajn možete rezervisati za najviše {{count}} osoba. Za veće grupe pozovite nas:",
       "noPhone": "Obratite se direktno restoranu."
     },
     "calendar": {
@@ -122,7 +135,9 @@
       "phone": "Telefon",
       "email": "Imejl",
       "notes": "Napomena (opciono)",
-      "notesDescription": "Npr. dečja stolica ili alergije. Najviše {{max}} znakova.",
+      "notesDescription_one": "Npr. dečja stolica ili alergije. Najviše {{count}} znak.",
+      "notesDescription_few": "Npr. dečja stolica ili alergije. Najviše {{count}} znaka.",
+      "notesDescription_other": "Npr. dečja stolica ili alergije. Najviše {{count}} znakova.",
       "contactHint": "Da bi restoran mogao da vas kontaktira, unesite broj telefona ili imejl adresu – dovoljno je jedno od to dvoje.",
       "contactRequired": "Unesite broj telefona ili imejl adresu.",
       "nameRequired": "Unesite svoje ime.",
@@ -168,7 +183,8 @@
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni",
-      "tables": "Pregled stolova"
+      "tables": "Pregled stolova",
+      "openFrontdesk": "Otvori recepciju"
     }
   },
   "overview": {
@@ -232,8 +248,11 @@
       "email": "Imejl",
       "website": "Veb-sajt",
       "websiteDescription": "Puna adresa, sa https://",
+      "websitePlaceholder": "https://",
       "description": "Kratak opis",
-      "descriptionDescription": "Najviše {{max}} znakova."
+      "descriptionDescription_one": "Najviše {{count}} znak.",
+      "descriptionDescription_few": "Najviše {{count}} znaka.",
+      "descriptionDescription_other": "Najviše {{count}} znakova."
     },
     "validation": {
       "email": "Unesite ispravnu imejl adresu.",
@@ -421,9 +440,6 @@
       "tables": "Pregled stolova"
     }
   },
-  "placeholder": {
-    "text": "Ovaj deo je u izradi."
-  },
   "notFound": {
     "label": "Greška 404",
     "title": "Stranica nije pronađena",
@@ -436,6 +452,7 @@
     "emptyText": "Kreirajte prostor, npr. salu ili terasu, i otpremite njegov tlocrt.",
     "addTable": "Dodaj sto",
     "dragHint": "Prevucite sto da biste ga pomerili. Kliknite na sto da biste ga izmenili.",
+    "noFloorPlanHint": "Bez tlocrta stolovi su ovde prikazani kao lista. Otpremite tlocrt da biste ih postavili na njega.",
     "capacity": "Mesta: {{seats}}, od toga online: {{online}} ({{percent}} %)",
     "capacityOnlineBlocked": "Mesta: {{seats}}, blokirano za online rezervacije",
     "floorPlanAlt": "Tlocrt",
@@ -455,6 +472,7 @@
       "onlineBookingEnabledHint": "Kada je isključeno, gosti ne mogu online da rezervišu ovaj prostor.",
       "onlineCapacityPercent": "Online kvota",
       "onlineCapacityPercentHint": "Udeo mesta koji gosti mogu da rezervišu online. Ostatak ostaje slobodan za telefonske rezervacije i goste bez rezervacije.",
+      "percentSuffix": " %",
       "saved": "Prostor je sačuvan.",
       "order": "Redosled",
       "moveLeft": "Pomeri levo",
@@ -469,7 +487,12 @@
       "number": "Broj stola",
       "seats": "Broj mesta",
       "saved": "Sto je sačuvan.",
-      "delete": "Obriši sto"
+      "delete": "Obriši sto",
+      "deleteTitle": "Obrisati sto {{number}}?",
+      "deleteText": "Sto će biti obrisan, zajedno sa njegovim prošlim, otkazanim i odbijenim rezervacijama. Ovo ne može da se poništi.",
+      "deleteConfirm": "Obriši",
+      "notDeleted": "Sto nije obrisan",
+      "hasReservations": "Za ovaj sto još postoje predstojeće rezervacije. Prvo ih premestite za drugi sto ili ih otkažite."
     },
     "errors": {
       "areaNameInvalid": "Unesite naziv od najviše 100 znakova.",
@@ -525,7 +548,9 @@
       "deleteRule": "Obriši pravilo",
       "noRules": "Još nema pravila: svaka rezervacija traje koliko i podrazumevano trajanje.",
       "previewGuests": "Pregled za broj gostiju",
-      "previewResult": "Za broj gostiju {{guests}} rezervacija traje {{minutes}} minuta.",
+      "previewResult_one": "Za broj gostiju {{guests}} rezervacija traje {{count}} minut.",
+      "previewResult_few": "Za broj gostiju {{guests}} rezervacija traje {{count}} minuta.",
+      "previewResult_other": "Za broj gostiju {{guests}} rezervacija traje {{count}} minuta.",
       "previewRule": "(pravilo {{min}}–{{max}})",
       "previewDefault": "(podrazumevano trajanje)"
     },
@@ -566,10 +591,14 @@
     "list": {
       "empty": "Za ovaj dan nema rezervacija.",
       "noMatches": "Nijedna rezervacija ne odgovara pretrazi ili filteru.",
-      "groupGuests": "Gostiju: {{guests}}"
+      "groupGuests_one": "{{count}} gost",
+      "groupGuests_few": "{{count}} gosta",
+      "groupGuests_other": "{{count}} gostiju"
     },
     "row": {
-      "summary": "Osoba: {{guests}} · Sto {{table}} ({{area}}) · do {{end}}",
+      "summary_one": "{{count}} osoba · Sto {{table}} ({{area}}) · do {{end}}",
+      "summary_few": "{{count}} osobe · Sto {{table}} ({{area}}) · do {{end}}",
+      "summary_other": "{{count}} osoba · Sto {{table}} ({{area}}) · do {{end}}",
       "notes": "Napomena",
       "open": "Otvori rezervaciju za {{name}} u {{time}}"
     },
@@ -595,7 +624,9 @@
     },
     "cancelConfirm": {
       "title": "Otkazati rezervaciju?",
-      "text": "Rezervacija za {{name}} u {{time}} (osoba: {{guests}}) biće otkazana. Ovo se ne može poništiti.",
+      "text_one": "Rezervacija za {{name}} u {{time}} ({{count}} osoba) biće otkazana. Ovo se ne može poništiti.",
+      "text_few": "Rezervacija za {{name}} u {{time}} ({{count}} osobe) biće otkazana. Ovo se ne može poništiti.",
+      "text_other": "Rezervacija za {{name}} u {{time}} ({{count}} osoba) biće otkazana. Ovo se ne može poništiti.",
       "back": "Nazad",
       "confirm": "Otkaži rezervaciju"
     },
@@ -611,15 +642,23 @@
       "time": "Vreme",
       "timeHint": "Unesite broj osoba i datum da biste videli slobodne termine.",
       "closed": "Restoran je ovog dana zatvoren.",
-      "period": "{{start}}–{{end}}",
       "table": "Sto",
       "tableDescriptionNew": "Predloženi sto je unapred izabran; možete izabrati drugi slobodan sto.",
-      "tableDescriptionEdit": "Ako je sto u novo vreme zauzet, pri čuvanju ćete dobiti poruku.",
+      "tableDescriptionEdit": "Ponuđeni su stolovi koji su u izabrano vreme slobodni za celo trajanje, kao i trenutni sto.",
       "tablePlaceholder": "Prvo izaberite vreme",
-      "tableOption": "Sto {{number}} · {{area}} · mesta: {{seats}}",
-      "tableOptionSuggested": "Sto {{number}} · {{area}} · mesta: {{seats}} (predlog)",
+      "tableOption_one": "Sto {{number}} · {{area}} · {{count}} mesto",
+      "tableOption_few": "Sto {{number}} · {{area}} · {{count}} mesta",
+      "tableOption_other": "Sto {{number}} · {{area}} · {{count}} mesta",
+      "tableOptionSuggested_one": "Sto {{number}} · {{area}} · {{count}} mesto (predlog)",
+      "tableOptionSuggested_few": "Sto {{number}} · {{area}} · {{count}} mesta (predlog)",
+      "tableOptionSuggested_other": "Sto {{number}} · {{area}} · {{count}} mesta (predlog)",
+      "tableOptionCurrent_one": "Sto {{number}} · {{area}} · {{count}} mesto (trenutni)",
+      "tableOptionCurrent_few": "Sto {{number}} · {{area}} · {{count}} mesta (trenutni)",
+      "tableOptionCurrent_other": "Sto {{number}} · {{area}} · {{count}} mesta (trenutni)",
       "overrideDuration": "Promeni trajanje",
-      "defaultDuration": "Trajanje restorana za ovaj broj osoba: {{minutes}} minuta",
+      "defaultDuration_one": "Trajanje restorana za ovaj broj osoba: {{count}} minut",
+      "defaultDuration_few": "Trajanje restorana za ovaj broj osoba: {{count}} minuta",
+      "defaultDuration_other": "Trajanje restorana za ovaj broj osoba: {{count}} minuta",
       "duration": "Trajanje u minutima",
       "name": "Ime",
       "phone": "Telefon",

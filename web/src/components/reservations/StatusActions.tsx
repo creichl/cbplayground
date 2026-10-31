@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import { type Reservation, type ReservationStatus, useSetReservationStatus } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 
 /**
  * The quick status changes of a reservation as large buttons for the tablet: accept or decline a request;
  * arrived, late or cancelled for a confirmed one; undo of an arrival. Cancelling asks first.
  */
 export function StatusActions({ reservation }: { reservation: Reservation }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const setStatus = useSetReservationStatus()
   const [confirmingCancel, setConfirmingCancel] = useState(false)
 
@@ -71,7 +72,11 @@ export function StatusActions({ reservation }: { reservation: Reservation }) {
       <Modal opened={confirmingCancel} onClose={() => setConfirmingCancel(false)} title={t('reservations.cancelConfirm.title')}>
         <Stack gap="md">
           <Text size="sm">
-            {t('reservations.cancelConfirm.text', { name: reservation.name, time: reservation.time, guests: reservation.guests })}
+            {t('reservations.cancelConfirm.text', {
+              name: reservation.name,
+              time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
+              count: reservation.guests,
+            })}
           </Text>
           <Group justify="flex-end">
             <Button variant="default" onClick={() => setConfirmingCancel(false)}>

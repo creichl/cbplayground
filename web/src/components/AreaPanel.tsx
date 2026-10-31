@@ -81,7 +81,7 @@ export function AreaPanel({ area, tableCount, canMoveLeft, canMoveRight, onMove,
             max={100}
             allowDecimal={false}
             allowNegative={false}
-            suffix=" %"
+            suffix={t('areas.area.percentSuffix')}
             disabled={!form.values.onlineBookingEnabled}
             {...form.getInputProps('onlineCapacityPercent')}
           />

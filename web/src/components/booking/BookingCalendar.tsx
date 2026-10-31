@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useBookingCalendar } from '../../api/publicBooking.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
-import { formatDate } from './format.ts'
+import { formatLongDate } from '../../i18n/format.ts'
 
 type BookingCalendarProps = {
   slug: string
@@ -51,7 +51,7 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
             status.get(date) === 'full' ? { style: { textDecoration: 'line-through' }, title: t('booking.calendar.full') } : {}
           }
           getDayAriaLabel={(date) => {
-            const label = formatDate(date, language, { dateStyle: 'full' })
+            const label = formatLongDate(date, language)
             const day = status.get(date)
             return day === 'full'
               ? `${label}, ${t('booking.calendar.full')}`

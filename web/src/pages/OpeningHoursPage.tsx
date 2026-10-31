@@ -37,6 +37,8 @@ import {
   type RestaurantLocation,
 } from '../api/openingHours.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { formatDate } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The week as shown, starting on Monday. */
 const weekdays = [
@@ -358,18 +360,6 @@ function HolidayList() {
     return <Text c="dimmed">{t('openingHours.holidays.empty')}</Text>
   }
 
-  const dateFormat = new Intl.DateTimeFormat(i18n.resolvedLanguage, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-  // A holiday is a calendar date: build it in local time so the day does not shift.
-  const formatDate = (date: string) => {
-    const [year, month, day] = date.split('-').map(Number)
-    return dateFormat.format(new Date(year, month - 1, day))
-  }
-
   return (
     <Stack gap="sm">
       {setOpen.error !== null && <ErrorAlert error={setOpen.error} />}
@@ -379,7 +369,7 @@ function HolidayList() {
             <Table.Tr key={holiday.date}>
               <Table.Td w={220}>
                 <Text size="sm" c="dimmed">
-                  {formatDate(holiday.date)}
+                  {formatDate(holiday.date, i18n.resolvedLanguage ?? 'en')}
                 </Text>
               </Table.Td>
               <Table.Td>
@@ -409,6 +399,7 @@ function HolidayList() {
 /** Admin page: regular opening hours per day of the week, location of the restaurant and upcoming public holidays. */
 export function OpeningHoursPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('admin.nav.openingHours'))
   const hours = useOpeningHours()
   const location = useRestaurantLocation()
 

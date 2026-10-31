@@ -2,7 +2,7 @@ import { Card, CheckIcon, Code, Stack, Table, Text, ThemeIcon, Title } from '@ma
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { BookingResult } from '../../api/publicBooking.ts'
-import { formatDate, formatTime } from './format.ts'
+import { formatLongDate, formatTime } from '../../i18n/format.ts'
 
 /** The end of the booking: a big check, the reference code and what was booked; for a request, that the restaurant gets back to the guest. */
 export function BookingConfirmation({ result, restaurantName }: { result: BookingResult; restaurantName: string }) {
@@ -16,7 +16,7 @@ export function BookingConfirmation({ result, restaurantName }: { result: Bookin
 
   const rows = [
     { label: t('booking.confirmation.restaurant'), value: restaurantName },
-    { label: t('booking.confirmation.date'), value: formatDate(result.date, language, { dateStyle: 'full' }) },
+    { label: t('booking.confirmation.date'), value: formatLongDate(result.date, language) },
     { label: t('booking.confirmation.time'), value: formatTime(result.time, language) },
     { label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: result.guests }) },
     { label: t('booking.confirmation.area'), value: result.area },

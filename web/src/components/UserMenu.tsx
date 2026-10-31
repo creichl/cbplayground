@@ -1,9 +1,22 @@
 import { Avatar, Group, Menu, Stack, Text, UnstyledButton } from '@mantine/core'
+import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
-import { useCurrentUser, useLogout } from '../api/auth.ts'
+import { Link } from 'react-router'
+import { type Role, useCurrentUser, useLogout } from '../api/auth.ts'
 
-/** Restaurant name, user name and sign-out in the header of the staff layouts. */
-export function UserMenu() {
+const roleLabels: Record<Role, ParseKeys> = {
+  Superadmin: 'auth.roles.superadmin',
+  TenantAdmin: 'auth.roles.tenantAdmin',
+  FrontDesk: 'auth.roles.frontDesk',
+}
+
+type UserMenuProps = {
+  /** Offers a TenantAdmin the way to the admin area, e.g. from the front desk. */
+  withAdminLink?: boolean
+}
+
+/** Restaurant name, user name and role, and sign-out in the header of the staff layouts. */
+export function UserMenu({ withAdminLink = false }: UserMenuProps) {
   const { t } = useTranslation()
   const currentUser = useCurrentUser()
   const logout = useLogout()
@@ -11,7 +24,7 @@ export function UserMenu() {
   if (!currentUser.data) {
     return null
   }
-  const { displayName, email, tenant } = currentUser.data
+  const { displayName, email, role, tenant } = currentUser.data
 
   return (
     <Menu position="bottom-end" width={240}>
@@ -39,10 +52,18 @@ export function UserMenu() {
           )}
           <Text size="sm">{displayName}</Text>
           <Text size="xs" c="dimmed">
+            {t(roleLabels[role])}
+          </Text>
+          <Text size="xs" c="dimmed">
             {email}
           </Text>
         </Stack>
         <Menu.Divider />
+        {withAdminLink && role === 'TenantAdmin' && (
+          <Menu.Item component={Link} to="/admin">
+            {t('auth.toAdmin')}
+          </Menu.Item>
+        )}
         <Menu.Item color="red" disabled={logout.isPending} onClick={() => logout.mutate()}>
           {t('auth.logout')}
         </Menu.Item>

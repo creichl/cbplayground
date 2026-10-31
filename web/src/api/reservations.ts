@@ -157,21 +157,23 @@ export function useFloor() {
  * The opening windows of `date`, holidays included; empty when the restaurant is closed.
  * Taken from the staff availability, the only opening hours front desk users may read.
  */
-export function useOpenPeriods(date: string) {
+export function useOpenPeriods(date: string | null) {
   return useQuery({
     queryKey: [...availabilityKey, 'open-periods', date],
     queryFn: async () => {
       const availability = await apiGet<{ periods: OpenPeriod[] }>(`/staff/availability?date=${date}&guests=1`)
       return availability.periods.map(({ start, end }) => ({ start, end }))
     },
+    enabled: date !== null,
   })
 }
 
 /**
- * Today's date ("YYYY-MM-DD") in the restaurant's time zone, as the server counts it; null while it loads.
- * Falls back to the device's date when the restaurant has no location yet or the restaurant could not be read.
+ * The current date ("YYYY-MM-DD") and time of day (minutes since midnight) in the restaurant's time zone, as the server counts them;
+ * null while it loads. Falls back to the device's clock when the restaurant has no location yet or the restaurant could not be read.
+ * Updated every 30 seconds, so a page left open moves on to the new day and a line at the current time moves on.
  */
-export function useRestaurantToday() {
+export function useRestaurantNow() {
   const currentUser = useCurrentUser()
   const slug = currentUser.data?.tenant?.slug ?? null
   const restaurant = useQuery({
@@ -180,10 +182,9 @@ export function useRestaurantToday() {
     enabled: slug !== null,
     staleTime: Infinity,
   })
-  // Checked every minute, so a page left open over midnight moves on to the new day.
   const [now, setNow] = useState(() => new Date())
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), refreshIntervalMs)
+    const timer = setInterval(() => setNow(new Date()), 30_000)
     return () => clearInterval(timer)
   }, [])
 
@@ -192,10 +193,27 @@ export function useRestaurantToday() {
   }
   const timeZone = restaurant.data?.timeZoneId
   if (timeZone === undefined || timeZone === null) {
-    return dayjs(now).format('YYYY-MM-DD')
+    return { date: dayjs(now).format('YYYY-MM-DD'), minutes: now.getHours() * 60 + now.getMinutes() }
   }
-  // Swedish formats dates as YYYY-MM-DD.
-  return new Intl.DateTimeFormat('sv-SE', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now)
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone,
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hourCycle: 'h23',
+    })
+      .formatToParts(now)
+      .map((part) => [part.type, part.value]),
+  )
+  return { date: `${parts.year}-${parts.month}-${parts.day}`, minutes: Number(parts.hour) * 60 + Number(parts.minute) }
+}
+
+/** Today's date ("YYYY-MM-DD") in the restaurant's time zone, as the server counts it; null while it loads. */
+export function useRestaurantToday() {
+  return useRestaurantNow()?.date ?? null
 }
 
 /** Shows the changed reservation right away and reloads the lists and free times, which the change may affect. */

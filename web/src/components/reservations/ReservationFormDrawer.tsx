@@ -14,6 +14,7 @@ import {
   useUpdateReservation,
 } from '../../api/reservations.ts'
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
+import { datePickerFormatter, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 
@@ -106,7 +107,8 @@ function wholeNumber(value: NumberValue) {
 }
 
 function ReservationForm({ reservation, initialDate, initialDuration, today, onClose }: ReservationFormProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const isNew = reservation === null
   const createReservation = useCreateReservation()
   const updateReservation = useUpdateReservation()
@@ -148,24 +150,36 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
   const time = isNew ? (times.some((slot) => slot.time === values.time && slot.tables.length > 0) ? values.time : null) : values.time
   const freeTables = times.find((slot) => slot.time === time)?.tables ?? []
   const suggestion = freeTables.at(0) ?? null
-  const tableId = isNew ? (freeTables.some((table) => table.id === values.tableId) ? values.tableId : (suggestion?.id ?? null)) : values.tableId
 
-  const tableOptions = isNew
-    ? freeTables.map((table) => ({
-        value: table.id,
-        label: t(table.id === suggestion?.id ? 'reservations.form.tableOptionSuggested' : 'reservations.form.tableOption', {
-          number: table.number,
-          area: table.areaName,
-          seats: table.seats,
-        }),
-      }))
-    : (floor.data ?? []).map((area) => ({
-        group: area.name,
-        items: area.tables.map((table) => ({
-          value: table.id,
-          label: t('reservations.form.tableOption', { number: table.number, area: area.name, seats: table.seats }),
-        })),
-      }))
+  // A change offers the tables that are free for the chosen time and duration, and always its current table
+  // (the reservation itself occupies it, so it is not among the free ones).
+  const currentArea = isNew ? undefined : floor.data?.find((area) => area.tables.some((table) => table.id === reservation.tableId))
+  const currentTable = currentArea?.tables.find((table) => table.id === reservation?.tableId)
+  const offeredTables = isNew ? freeTables : freeTables.filter((table) => table.id !== reservation.tableId)
+  const tableOptions = [
+    ...(reservation !== null
+      ? [
+          {
+            value: reservation.tableId,
+            label: t('reservations.form.tableOptionCurrent', {
+              number: reservation.tableNumber,
+              area: reservation.areaName,
+              count: currentTable?.seats ?? 0,
+            }),
+          },
+        ]
+      : []),
+    ...offeredTables.map((table) => ({
+      value: table.id,
+      label: t(isNew && table.id === suggestion?.id ? 'reservations.form.tableOptionSuggested' : 'reservations.form.tableOption', {
+        number: table.number,
+        area: table.areaName,
+        count: table.seats,
+      }),
+    })),
+  ]
+  const fallbackTableId = isNew ? (suggestion?.id ?? null) : reservation.tableId
+  const tableId = tableOptions.some((option) => option.value === values.tableId) ? values.tableId : fallbackTableId
 
   const submit = form.onSubmit((submitted) => {
     if (time === null || submitted.date === null) {
@@ -226,7 +240,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
           <DatePickerInput
             label={t('reservations.form.date')}
             minDate={today}
-            valueFormat="dd, DD.MM.YYYY"
+            valueFormatter={datePickerFormatter(language)}
             size="md"
             {...form.getInputProps('date')}
           />
@@ -256,19 +270,19 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
                 {!isNew && time !== null && !times.some((slot) => slot.time === time) && (
                   <Group gap={6}>
                     <Chip value={time} size="md">
-                      {time}
+                      {formatTime(time, language)}
                     </Chip>
                   </Group>
                 )}
                 {availability.data.periods.map((period) => (
                   <Stack key={period.start} gap={4}>
                     <Text size="xs" c="dimmed">
-                      {t('reservations.form.period', { start: period.start, end: period.end })}
+                      {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
                     </Text>
                     <Group gap={6}>
                       {period.times.map((slot) => (
                         <Chip key={slot.time} value={slot.time} size="md" disabled={isNew && slot.tables.length === 0}>
-                          {slot.time}
+                          {formatTime(slot.time, language)}
                         </Chip>
                       ))}
                     </Group>
@@ -291,7 +305,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
           data={tableOptions}
           value={tableId}
           onChange={(value) => form.setFieldValue('tableId', value)}
-          disabled={isNew && time === null}
+          disabled={isNew ? time === null : floor.isPending}
           allowDeselect={false}
           size="md"
         />
@@ -301,7 +315,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
             label={t('reservations.form.overrideDuration')}
             description={
               availability.data !== undefined && !values.overrideDuration
-                ? t('reservations.form.defaultDuration', { minutes: availability.data.durationMinutes })
+                ? t('reservations.form.defaultDuration', { count: availability.data.durationMinutes })
                 : undefined
             }
             size="md"

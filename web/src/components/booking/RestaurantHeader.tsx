@@ -2,7 +2,7 @@ import { Anchor, Card, Group, Stack, Table, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { DayOfWeek } from '../../api/openingHours.ts'
 import type { PublicRestaurant } from '../../api/publicBooking.ts'
-import { formatTime } from './format.ts'
+import { formatTime } from '../../i18n/format.ts'
 
 /** The week as shown, starting on Monday. */
 const weekdays = [
@@ -75,7 +75,7 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
                               <span key={period.start}>
                                 {index > 0 && ', '}
                                 <span style={{ whiteSpace: 'nowrap' }}>
-                                  {formatTime(period.start, language)}–{formatTime(period.end, language)}
+                                  {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
                                 </span>
                               </span>
                             ))}

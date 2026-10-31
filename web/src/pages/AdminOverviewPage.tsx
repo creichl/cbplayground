@@ -7,6 +7,7 @@ import { type SetupStatus, useSetupStatus } from '../api/profile.ts'
 import { useOpenRequests, useReservations, useRestaurantToday } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { DayStats } from '../components/reservations/DayStats.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The steps of the setup checklist in their order, each with the page where it is done. */
 const steps: { key: keyof SetupStatus; title: ParseKeys; description: ParseKeys; to: string }[] = [
@@ -26,6 +27,7 @@ const steps: { key: keyof SetupStatus; title: ParseKeys; description: ParseKeys;
 /** Admin start page: greeting, today's key figures and the checklist of the restaurant's setup. */
 export function AdminOverviewPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('admin.nav.overview'))
   const currentUser = useCurrentUser()
   const status = useSetupStatus()
   // The admin area is only shown to a signed-in Tenant Admin, who always has a restaurant.

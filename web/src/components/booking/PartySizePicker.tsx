@@ -26,7 +26,7 @@ export function PartySizePicker({ value, maxOnlinePartySize, phone, onChange }: 
   const tooLargeValue = Math.max(maxOnlinePartySize, chipSizes.length) + 1
   const moreOptions = [
     ...largerSizes.map((size) => ({ value: String(size), label: t('booking.guestsCount', { count: size }) })),
-    { value: String(tooLargeValue), label: t('booking.partySize.moreThan', { max: tooLargeValue - 1 }) },
+    { value: String(tooLargeValue), label: t('booking.partySize.moreThan', { count: tooLargeValue - 1 }) },
   ]
 
   return (
@@ -81,7 +81,7 @@ export function PartySizePicker({ value, maxOnlinePartySize, phone, onChange }: 
       {tooLarge && (
         <Alert color="yellow" variant="light" title={t('booking.partySize.callTitle')}>
           <Stack gap={4}>
-            <Text size="sm">{t('booking.partySize.callText', { max: maxOnlinePartySize })}</Text>
+            <Text size="sm">{t('booking.partySize.callText', { count: maxOnlinePartySize })}</Text>
             {phone !== null ? (
               <Anchor href={`tel:${phone.replace(/[^0-9+]/g, '')}`} fw={600}>
                 {phone}

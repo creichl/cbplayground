@@ -137,7 +137,7 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
             }}
           >
             <Text size="sm" fw={600} inherit>
-              {table.number} · {table.seats}
+              {t('common.tableLabel', { number: table.number, seats: table.seats })}
             </Text>
           </TableMarker>
         )

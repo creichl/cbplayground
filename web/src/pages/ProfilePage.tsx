@@ -14,6 +14,7 @@ import {
   useSaveProfile,
 } from '../api/profile.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 const saveErrors: Record<ProfileError, ParseKeys> = {
   invalid_street: 'profile.errors.tooLong',
@@ -60,6 +61,7 @@ function toProfile(values: FormValues): Profile {
 /** Admin page: address, contact and short description of the restaurant, which guests will see. */
 export function ProfilePage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('profile.title'))
   const profile = useProfile()
 
   return (
@@ -170,7 +172,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
               description={t('profile.fields.websiteDescription')}
               type="url"
               autoComplete="url"
-              placeholder="https://"
+              placeholder={t('profile.fields.websitePlaceholder')}
               maxLength={profileMaxLengths.website}
               key={form.key('website')}
               {...form.getInputProps('website')}
@@ -183,7 +185,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
             <Title order={3}>{t('profile.description.title')}</Title>
             <Textarea
               label={t('profile.fields.description')}
-              description={t('profile.fields.descriptionDescription', { max: profileMaxLengths.description })}
+              description={t('profile.fields.descriptionDescription', { count: profileMaxLengths.description })}
               autosize
               minRows={3}
               maxLength={profileMaxLengths.description}

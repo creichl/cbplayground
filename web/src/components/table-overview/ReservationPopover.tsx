@@ -4,6 +4,7 @@ import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { errorCode, errorMessage } from '../../api/areaErrors.ts'
 import { type Reservation, type ReservationStatus, statusActions, useSetReservationStatus } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { statusColors } from '../reservations/status.ts'
 
 type ReservationPopoverProps = {
@@ -19,7 +20,8 @@ const actionColors: Record<ReservationStatus, string> = { ...statusColors, Cance
 
 /** Details of a reservation with the status changes that are possible from its current status. */
 export function ReservationPopover({ reservation, nextReservation, children }: ReservationPopoverProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const [opened, setOpened] = useState(false)
   const setStatus = useSetReservationStatus()
 
@@ -39,7 +41,7 @@ export function ReservationPopover({ reservation, nextReservation, children }: R
   }
 
   const details: [string, string | null][] = [
-    [t('tableOverview.details.time'), `${reservation.time}–${reservation.endTime}`],
+    [t('tableOverview.details.time'), t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) })],
     [t('tableOverview.details.guests'), String(reservation.guests)],
     [t('tableOverview.details.table'), t('tableOverview.details.tableValue', { number: reservation.tableNumber, area: reservation.areaName })],
     [t('tableOverview.details.phone'), reservation.phone],
@@ -95,7 +97,7 @@ export function ReservationPopover({ reservation, nextReservation, children }: R
             <>
               <Divider />
               <Text size="sm" c="dimmed">
-                {t('tableOverview.details.next', { time: nextReservation.time, name: nextReservation.name, guests: nextReservation.guests })}
+                {t('tableOverview.details.next', { time: formatTime(nextReservation.time, language), name: nextReservation.name, guests: nextReservation.guests })}
               </Text>
             </>
           )}
