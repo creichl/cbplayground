@@ -561,6 +561,8 @@
       "reservations": "Reservierungen",
       "guests": "Gäste",
       "arrived": "Angekommen",
+      "seated": "Sitzende Gäste",
+      "noShows": "Nicht erschienen",
       "openRequests": "Offene Anfragen"
     },
     "list": {
@@ -575,29 +577,65 @@
     },
     "source": {
       "online": "Online",
-      "phone": "Telefon"
+      "phone": "Telefon",
+      "walkIn": "Walk-in"
     },
     "status": {
       "requested": "Angefragt",
       "confirmed": "Bestätigt",
       "arrived": "Angekommen",
       "late": "Verspätet",
+      "completed": "Gegangen",
+      "noShow": "Nicht erschienen",
       "cancelled": "Storniert",
       "declined": "Abgelehnt"
     },
     "actions": {
       "accept": "Annehmen",
       "decline": "Ablehnen",
+      "arrived": "Als angekommen markieren",
+      "late": "Verspätet",
+      "noShow": "Nicht erschienen",
+      "completed": "Gast gegangen",
+      "cancel": "Stornieren",
+      "undo": "Rückgängig"
+    },
+    "actionsShort": {
+      "accept": "Annehmen",
+      "decline": "Ablehnen",
       "arrived": "Angekommen",
       "late": "Verspätet",
-      "cancelled": "Storniert",
-      "undoArrived": "Ankunft rückgängig"
+      "noShow": "No-Show",
+      "completed": "Gegangen",
+      "cancel": "Stornieren",
+      "undo": "Rückgängig"
     },
     "cancelConfirm": {
       "title": "Reservierung stornieren?",
-      "text": "Die Reservierung von {{name}} um {{time}} ({{guests}} Pers.) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "text": "Die Reservierung von {{name}} um {{time}} ({{guests}} Pers.) wird storniert, der Tisch wird frei.",
       "back": "Zurück",
       "confirm": "Stornieren"
+    },
+    "noShowConfirm": {
+      "title": "Als nicht erschienen markieren?",
+      "text": "{{name}} ({{time}}, {{guests}} Pers.) ist nicht erschienen. Der Tisch wird frei.",
+      "confirm": "Nicht erschienen"
+    },
+    "toast": {
+      "changed": "{{name}}: {{status}}"
+    },
+    "walkIn": {
+      "button": "Walk-in",
+      "title": "Walk-in setzen",
+      "defaultName": "Walk-in",
+      "tableDescription": "Frei ab jetzt für {{minutes}} Minuten. Der Vorschlag ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
+      "noTable": "Gerade ist kein Tisch für {{guests}} Personen frei.",
+      "wantedTableTaken": "Der gewählte Tisch ist gerade nicht für {{guests}} Personen frei; ein anderer freier Tisch ist vorausgewählt.",
+      "nameDescription": "Optional. Ohne Namen erscheint der Gast als „Walk-in“.",
+      "seat": "Walk-in setzen",
+      "seated": "{{name}} sitzt seit {{time}} an Tisch {{table}}.",
+      "notSeated": "Der Walk-in wurde nicht gesetzt",
+      "closed": "Das Restaurant hat gerade nicht geöffnet."
     },
     "pending": {
       "title": "Offene Anfragen ({{number}})",
@@ -654,7 +692,10 @@
       "tableUnavailable": "Dieser Tisch ist zu dieser Zeit belegt oder hat zu wenige Plätze. Bitte einen anderen Tisch oder eine andere Zeit wählen.",
       "invalidStatus": "Dieser Status ist nicht bekannt.",
       "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
-      "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu."
+      "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit.",
+      "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
+      "statusTitle": "Der Status konnte nicht geändert werden"
     }
   },
   "tableOverview": {
@@ -671,16 +712,10 @@
     },
     "closed": "An diesem Tag ist das Restaurant geschlossen.",
     "noTables": "Es gibt noch keine Tische.",
-    "status": {
-      "free": "Frei",
-      "Requested": "Angefragt",
-      "Confirmed": "Reserviert",
-      "Arrived": "Angekommen",
-      "Late": "Verspätet",
-      "Cancelled": "Storniert",
-      "Declined": "Abgelehnt"
-    },
-    "legendInactive": "Storniert oder abgelehnt",
+    "free": "Frei",
+    "freeTable": "Tisch {{number}} · {{seats}} Plätze · frei",
+    "walkInHere": "Walk-in hier setzen",
+    "legendInactive": "Storniert, abgelehnt oder nicht erschienen",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Tisch · Plätze"
@@ -694,6 +729,7 @@
     },
     "details": {
       "time": "Uhrzeit",
+      "left": "Gegangen",
       "guests": "Personen",
       "table": "Tisch",
       "tableValue": "{{number}} · {{area}}",
@@ -704,20 +740,10 @@
       "source": "Gebucht",
       "sources": {
         "Online": "Online vom Gast",
-        "Staff": "Vom Personal"
+        "Staff": "Vom Personal",
+        "WalkIn": "Walk-in ohne Reservierung"
       },
       "next": "Danach an diesem Tisch: {{time}}, {{name}} ({{guests}})"
-    },
-    "actions": {
-      "Confirmed": "Annehmen",
-      "Declined": "Ablehnen",
-      "Arrived": "Angekommen",
-      "Late": "Verspätet",
-      "Cancelled": "Storniert"
-    },
-    "errors": {
-      "statusTitle": "Der Status konnte nicht geändert werden",
-      "statusChanged": "Die Reservierung wurde inzwischen geändert. Die Ansicht wurde neu geladen."
     }
   }
 }

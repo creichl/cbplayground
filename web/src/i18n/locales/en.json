@@ -561,6 +561,8 @@
       "reservations": "Reservations",
       "guests": "Guests",
       "arrived": "Arrived",
+      "seated": "Guests seated",
+      "noShows": "No-shows",
       "openRequests": "Open requests"
     },
     "list": {
@@ -575,29 +577,65 @@
     },
     "source": {
       "online": "Online",
-      "phone": "Phone"
+      "phone": "Phone",
+      "walkIn": "Walk-in"
     },
     "status": {
       "requested": "Requested",
       "confirmed": "Confirmed",
       "arrived": "Arrived",
       "late": "Late",
+      "completed": "Left",
+      "noShow": "No-show",
       "cancelled": "Cancelled",
       "declined": "Declined"
     },
     "actions": {
       "accept": "Accept",
       "decline": "Decline",
+      "arrived": "Mark as arrived",
+      "late": "Late",
+      "noShow": "No-show",
+      "completed": "Guest left",
+      "cancel": "Cancel",
+      "undo": "Undo"
+    },
+    "actionsShort": {
+      "accept": "Accept",
+      "decline": "Decline",
       "arrived": "Arrived",
       "late": "Late",
-      "cancelled": "Cancelled",
-      "undoArrived": "Undo arrival"
+      "noShow": "No-show",
+      "completed": "Left",
+      "cancel": "Cancel",
+      "undo": "Undo"
     },
     "cancelConfirm": {
       "title": "Cancel the reservation?",
-      "text": "The reservation of {{name}} at {{time}} (party of {{guests}}) will be cancelled. This cannot be undone.",
+      "text": "The reservation of {{name}} at {{time}} (party of {{guests}}) will be cancelled and its table freed.",
       "back": "Back",
       "confirm": "Cancel reservation"
+    },
+    "noShowConfirm": {
+      "title": "Mark as no-show?",
+      "text": "{{name}} ({{time}}, party of {{guests}}) did not come. The table will be freed.",
+      "confirm": "No-show"
+    },
+    "toast": {
+      "changed": "{{name}}: {{status}}"
+    },
+    "walkIn": {
+      "button": "Walk-in",
+      "title": "Seat a walk-in",
+      "defaultName": "Walk-in",
+      "tableDescription": "Free from now for {{minutes}} minutes. The suggestion is preselected; you can choose another free table.",
+      "noTable": "No table for a party of {{guests}} is free right now.",
+      "wantedTableTaken": "The chosen table is not free for a party of {{guests}} right now; another free table is preselected.",
+      "nameDescription": "Optional. Without a name, the guest is shown as “Walk-in”.",
+      "seat": "Seat walk-in",
+      "seated": "{{name}} seated at table {{table}} since {{time}}.",
+      "notSeated": "The walk-in was not seated",
+      "closed": "The restaurant is not open right now."
     },
     "pending": {
       "title": "Open requests ({{number}})",
@@ -654,7 +692,10 @@
       "tableUnavailable": "This table is taken at this time or has too few seats. Please choose another table or time.",
       "invalidStatus": "This status is not known.",
       "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
-      "notFound": "This reservation no longer exists. Please reload the page."
+      "notFound": "This reservation no longer exists. Please reload the page.",
+      "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time.",
+      "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
+      "statusTitle": "The status could not be changed"
     }
   },
   "tableOverview": {
@@ -671,16 +712,10 @@
     },
     "closed": "The restaurant is closed on this day.",
     "noTables": "There are no tables yet.",
-    "status": {
-      "free": "Free",
-      "Requested": "Requested",
-      "Confirmed": "Reserved",
-      "Arrived": "Arrived",
-      "Late": "Late",
-      "Cancelled": "Cancelled",
-      "Declined": "Declined"
-    },
-    "legendInactive": "Cancelled or declined",
+    "free": "Free",
+    "freeTable": "Table {{number}} · {{seats}} seats · free",
+    "walkInHere": "Seat walk-in here",
+    "legendInactive": "Cancelled, declined or no-show",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Table · seats"
@@ -694,6 +729,7 @@
     },
     "details": {
       "time": "Time",
+      "left": "Left",
       "guests": "Guests",
       "table": "Table",
       "tableValue": "{{number}} · {{area}}",
@@ -704,20 +740,10 @@
       "source": "Booked",
       "sources": {
         "Online": "Online by the guest",
-        "Staff": "By staff"
+        "Staff": "By staff",
+        "WalkIn": "Walk-in without reservation"
       },
       "next": "Next at this table: {{time}}, {{name}} ({{guests}})"
-    },
-    "actions": {
-      "Confirmed": "Accept",
-      "Declined": "Decline",
-      "Arrived": "Arrived",
-      "Late": "Late",
-      "Cancelled": "Cancelled"
-    },
-    "errors": {
-      "statusTitle": "The status could not be changed",
-      "statusChanged": "The reservation has been changed in the meantime. The view has been reloaded."
     }
   }
 }

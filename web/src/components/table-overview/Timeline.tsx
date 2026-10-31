@@ -1,14 +1,8 @@
 import { Box, Text, UnstyledButton } from '@mantine/core'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import {
-  blockingStatuses,
-  type FloorArea,
-  type OpenPeriod,
-  type Reservation,
-  toMinutes,
-} from '../../api/reservations.ts'
-import { statusColors } from '../reservations/status.ts'
+import { type FloorArea, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
+import { guestName, isActive, occupiedUntil, statusColors, statusLabels } from '../reservations/status.ts'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
 type TimelineProps = {
@@ -73,10 +67,8 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
     }
   }, [initialScrollLeft])
 
-  // Cancelled and declined reservations go first, so the active reservations of the same table lie on top of them.
-  const sorted = [...reservations].sort(
-    (a, b) => Number(blockingStatuses.includes(a.status)) - Number(blockingStatuses.includes(b.status)),
-  )
+  // Cancelled, declined and no-show reservations go first, so the active reservations of the same table lie on top of them.
+  const sorted = [...reservations].sort((a, b) => Number(isActive(a)) - Number(isActive(b)))
 
   const labelCell = {
     position: 'sticky',
@@ -151,21 +143,23 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
                     {sorted
                       .filter((reservation) => reservation.tableId === table.id)
                       .map((reservation) => {
-                        const active = blockingStatuses.includes(reservation.status)
+                        const active = isActive(reservation)
                         const color = statusColors[reservation.status]
                         const left = x(toMinutes(reservation.time))
-                        const party = t('tableOverview.party', { name: reservation.name, guests: reservation.guests })
+                        // A guest who left ends at the time they left.
+                        const until = occupiedUntil(reservation)
+                        const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
                         return (
                           <ReservationPopover key={reservation.id} reservation={reservation}>
                             <UnstyledButton
-                              aria-label={`${party}, ${reservation.time}–${reservation.endTime}, ${t(`tableOverview.status.${reservation.status}`)}`}
+                              aria-label={`${party}, ${reservation.time}–${until}, ${t(statusLabels[reservation.status])}`}
                               px={6}
                               style={{
                                 position: 'absolute',
                                 top: 4,
                                 bottom: 4,
                                 left: left + 1,
-                                width: Math.max(x(toMinutes(reservation.endTime)) - left - 2, 8),
+                                width: Math.max(x(toMinutes(until)) - left - 2, 8),
                                 zIndex: 1,
                                 overflow: 'hidden',
                                 display: 'flex',

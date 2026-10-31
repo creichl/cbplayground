@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
 import { StatusActions } from './StatusActions.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
+import { guestName, isActive, occupiedUntil, sourceLabels } from './status.ts'
 
 type ReservationRowProps = {
   reservation: Reservation
@@ -15,7 +16,8 @@ type ReservationRowProps = {
 /** One reservation: time, guest, party size, table, source, notes, status and the quick status actions. */
 export function ReservationRow({ reservation, onOpen, withDate = false }: ReservationRowProps) {
   const { t, i18n } = useTranslation()
-  const inactive = reservation.status === 'Cancelled' || reservation.status === 'Declined'
+  const inactive = !isActive(reservation)
+  const name = guestName(reservation, t)
 
   const details = (
     <Group gap="md" wrap="nowrap" align="flex-start">
@@ -34,10 +36,10 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
       <Stack gap={2} miw={0} style={{ flex: 1 }}>
         <Group gap="xs" wrap="wrap">
           <Text fw={600} td={inactive ? 'line-through' : undefined} c={inactive ? 'dimmed' : undefined}>
-            {reservation.name}
+            {name}
           </Text>
           <Badge size="sm" variant="outline" color="gray">
-            {t(reservation.source === 'Online' ? 'reservations.source.online' : 'reservations.source.phone')}
+            {t(sourceLabels[reservation.source])}
           </Badge>
         </Group>
         <Text size="sm" c="dimmed">
@@ -45,7 +47,7 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
             guests: reservation.guests,
             table: reservation.tableNumber,
             area: reservation.areaName,
-            end: reservation.endTime,
+            end: occupiedUntil(reservation),
           })}
         </Text>
         {reservation.notes !== null && (
@@ -68,7 +70,7 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
         {onOpen !== undefined ? (
           <UnstyledButton
             onClick={() => onOpen(reservation)}
-            aria-label={t('reservations.row.open', { name: reservation.name, time: reservation.time })}
+            aria-label={t('reservations.row.open', { name, time: reservation.time })}
             miw={0}
             style={{ flex: '1 1 260px' }}
           >
