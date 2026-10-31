@@ -38,6 +38,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             tenant.Property(t => t.CountryCode).HasMaxLength(2);
             tenant.Property(t => t.RegionCode).HasMaxLength(5);
             tenant.Property(t => t.TimeZoneId).HasMaxLength(64);
+            tenant.Property(t => t.Street).HasMaxLength(Tenant.MaxStreetLength);
+            tenant.Property(t => t.PostalCode).HasMaxLength(Tenant.MaxPostalCodeLength);
+            tenant.Property(t => t.City).HasMaxLength(Tenant.MaxCityLength);
+            tenant.Property(t => t.Phone).HasMaxLength(Tenant.MaxPhoneLength);
+            tenant.Property(t => t.Email).HasMaxLength(Tenant.MaxEmailLength);
+            tenant.Property(t => t.Website).HasMaxLength(Tenant.MaxWebsiteLength);
+            tenant.Property(t => t.Description).HasMaxLength(Tenant.MaxDescriptionLength);
         });
 
         modelBuilder.Entity<OpeningPeriod>(period =>

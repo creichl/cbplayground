@@ -109,6 +109,7 @@ app.MapAreaEndpoints();
 app.MapTableEndpoints();
 app.MapOpeningHoursEndpoints();
 app.MapReservationSettingsEndpoints();
+app.MapProfileEndpoints();
 
 app.Run();
 

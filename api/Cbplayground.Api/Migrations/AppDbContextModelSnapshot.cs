@@ -270,6 +270,10 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("City")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("CountryCode")
                         .HasMaxLength(2)
                         .HasColumnType("TEXT");
@@ -277,8 +281,24 @@ namespace Cbplayground.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(254)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PostalCode")
+                        .HasMaxLength(10)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("RegionCode")
@@ -289,8 +309,16 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Street")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("TimeZoneId")
                         .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Website")
+                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
