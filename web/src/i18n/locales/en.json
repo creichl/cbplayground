@@ -162,6 +162,7 @@
     "toggleNavigation": "Show or hide navigation",
     "nav": {
       "overview": "Overview",
+      "reservations": "Reservations",
       "profile": "Restaurant profile",
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
@@ -172,6 +173,10 @@
   "overview": {
     "welcome": "Welcome, {{name}}! Here you can see what your restaurant still needs.",
     "viewBookingPage": "View booking page",
+    "today": {
+      "title": "Today",
+      "toReservations": "Go to reservations"
+    },
     "checklist": {
       "title": "Set up your restaurant",
       "progress": "{{done}} of {{total}} done",
@@ -408,7 +413,11 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Today"
+    "today": "Today",
+    "nav": {
+      "today": "Today",
+      "reservations": "Reservations"
+    }
   },
   "placeholder": {
     "text": "This section is being built."
@@ -534,5 +543,116 @@
     },
     "save": "Save",
     "saved": "The reservation settings have been saved."
+  },
+  "reservations": {
+    "title": "Reservations",
+    "previousDay": "Previous day",
+    "nextDay": "Next day",
+    "date": "Date",
+    "today": "Today",
+    "search": "Search",
+    "searchPlaceholder": "Search by name, phone or reference",
+    "filter": "Filter by status",
+    "filterAll": "All statuses",
+    "new": "New reservation",
+    "stats": {
+      "reservations": "Reservations",
+      "guests": "Guests",
+      "arrived": "Arrived",
+      "openRequests": "Open requests"
+    },
+    "list": {
+      "empty": "There are no reservations on this day.",
+      "noMatches": "No reservation matches the search or filter.",
+      "groupGuests": "{{guests}} guests"
+    },
+    "row": {
+      "summary": "Party of {{guests}} · Table {{table}} ({{area}}) · until {{end}}",
+      "notes": "Note",
+      "open": "Open the reservation of {{name}} at {{time}}"
+    },
+    "source": {
+      "online": "Online",
+      "phone": "Phone"
+    },
+    "status": {
+      "requested": "Requested",
+      "confirmed": "Confirmed",
+      "arrived": "Arrived",
+      "late": "Late",
+      "cancelled": "Cancelled",
+      "declined": "Declined"
+    },
+    "actions": {
+      "accept": "Accept",
+      "decline": "Decline",
+      "arrived": "Arrived",
+      "late": "Late",
+      "cancelled": "Cancelled",
+      "undoArrived": "Undo arrival"
+    },
+    "cancelConfirm": {
+      "title": "Cancel the reservation?",
+      "text": "The reservation of {{name}} at {{time}} (party of {{guests}}) will be cancelled. This cannot be undone.",
+      "back": "Back",
+      "confirm": "Cancel reservation"
+    },
+    "pending": {
+      "title": "Open requests ({{number}})",
+      "text": "These guests are waiting for your answer. Accept confirms the reservation, decline rejects it."
+    },
+    "form": {
+      "createTitle": "New reservation",
+      "editTitle": "Edit reservation",
+      "guests": "Guests",
+      "date": "Date",
+      "time": "Time",
+      "timeHint": "Enter the party size and the date to see the free times.",
+      "closed": "The restaurant is closed on this day.",
+      "period": "{{start}}–{{end}}",
+      "table": "Table",
+      "tableDescriptionNew": "The suggested table is preselected; you can choose another free one.",
+      "tableDescriptionEdit": "If the table is taken at the new time, you will get a message when saving.",
+      "tablePlaceholder": "Choose a time first",
+      "tableOption": "Table {{number}} · {{area}} · {{seats}} seats",
+      "tableOptionSuggested": "Table {{number}} · {{area}} · {{seats}} seats (suggested)",
+      "overrideDuration": "Override duration",
+      "defaultDuration": "The restaurant's duration for this party size: {{minutes}} minutes",
+      "duration": "Duration in minutes",
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "notes": "Note",
+      "notSaved": "The reservation was not saved",
+      "create": "Create reservation",
+      "created": "The reservation for {{name}} has been created (reference {{code}}).",
+      "saved": "The changes to the reservation of {{name}} have been saved.",
+      "reference": "Reference {{code}}",
+      "validation": {
+        "guests": "Please enter at least 1 guest.",
+        "date": "Please choose a date.",
+        "time": "Please choose a time.",
+        "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
+        "name": "Please enter the guest's name."
+      }
+    },
+    "errors": {
+      "invalidDate": "Please choose a valid date.",
+      "invalidTime": "Please choose a valid time.",
+      "invalidPartySize": "Please enter at least 1 guest.",
+      "invalidDuration": "The duration must be between 15 and 480 minutes in steps of 15.",
+      "invalidName": "Please enter a name of at most 100 characters.",
+      "invalidPhone": "Please enter a valid phone number of at most 30 characters.",
+      "invalidEmail": "Please enter a valid email address.",
+      "invalidNotes": "The note may have at most 500 characters.",
+      "invalidLanguage": "The guest's language is not supported.",
+      "outsideOpeningHours": "The restaurant is not open at this time, or the reservation would end after closing time.",
+      "inThePast": "This time is in the past.",
+      "slotUnavailable": "There is no free table at this time any more.",
+      "tableUnavailable": "This table is taken at this time or has too few seats. Please choose another table or time.",
+      "invalidStatus": "This status is not known.",
+      "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
+      "notFound": "This reservation no longer exists. Please reload the page."
+    }
   }
 }

@@ -162,6 +162,7 @@
     "toggleNavigation": "Navigation ein- oder ausblenden",
     "nav": {
       "overview": "Übersicht",
+      "reservations": "Reservierungen",
       "profile": "Restaurantprofil",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
@@ -172,6 +173,10 @@
   "overview": {
     "welcome": "Willkommen, {{name}}! Hier sehen Sie, was Ihrem Restaurant noch fehlt.",
     "viewBookingPage": "Buchungsseite ansehen",
+    "today": {
+      "title": "Heute",
+      "toReservations": "Zu den Reservierungen"
+    },
     "checklist": {
       "title": "Restaurant einrichten",
       "progress": "{{done}} von {{total}} erledigt",
@@ -408,7 +413,11 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Heute"
+    "today": "Heute",
+    "nav": {
+      "today": "Heute",
+      "reservations": "Reservierungen"
+    }
   },
   "placeholder": {
     "text": "Dieser Bereich wird gerade aufgebaut."
@@ -534,5 +543,116 @@
     },
     "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
+  },
+  "reservations": {
+    "title": "Reservierungen",
+    "previousDay": "Vorheriger Tag",
+    "nextDay": "Nächster Tag",
+    "date": "Datum",
+    "today": "Heute",
+    "search": "Suche",
+    "searchPlaceholder": "Nach Name, Telefon oder Referenz suchen",
+    "filter": "Nach Status filtern",
+    "filterAll": "Alle Status",
+    "new": "Neue Reservierung",
+    "stats": {
+      "reservations": "Reservierungen",
+      "guests": "Gäste",
+      "arrived": "Angekommen",
+      "openRequests": "Offene Anfragen"
+    },
+    "list": {
+      "empty": "An diesem Tag gibt es keine Reservierungen.",
+      "noMatches": "Keine Reservierung passt zur Suche oder zum Filter.",
+      "groupGuests": "{{guests}} Gäste"
+    },
+    "row": {
+      "summary": "{{guests}} Pers. · Tisch {{table}} ({{area}}) · bis {{end}}",
+      "notes": "Notiz",
+      "open": "Reservierung von {{name}} um {{time}} öffnen"
+    },
+    "source": {
+      "online": "Online",
+      "phone": "Telefon"
+    },
+    "status": {
+      "requested": "Angefragt",
+      "confirmed": "Bestätigt",
+      "arrived": "Angekommen",
+      "late": "Verspätet",
+      "cancelled": "Storniert",
+      "declined": "Abgelehnt"
+    },
+    "actions": {
+      "accept": "Annehmen",
+      "decline": "Ablehnen",
+      "arrived": "Angekommen",
+      "late": "Verspätet",
+      "cancelled": "Storniert",
+      "undoArrived": "Ankunft rückgängig"
+    },
+    "cancelConfirm": {
+      "title": "Reservierung stornieren?",
+      "text": "Die Reservierung von {{name}} um {{time}} ({{guests}} Pers.) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "back": "Zurück",
+      "confirm": "Stornieren"
+    },
+    "pending": {
+      "title": "Offene Anfragen ({{number}})",
+      "text": "Diese Gäste warten auf Ihre Antwort. „Annehmen“ bestätigt die Reservierung, „Ablehnen“ lehnt sie ab."
+    },
+    "form": {
+      "createTitle": "Neue Reservierung",
+      "editTitle": "Reservierung bearbeiten",
+      "guests": "Personen",
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "timeHint": "Geben Sie Personenzahl und Datum ein, um die freien Zeiten zu sehen.",
+      "closed": "An diesem Tag ist das Restaurant geschlossen.",
+      "period": "{{start}}–{{end}}",
+      "table": "Tisch",
+      "tableDescriptionNew": "Der vorgeschlagene Tisch ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
+      "tableDescriptionEdit": "Ist der Tisch zur neuen Zeit belegt, erhalten Sie beim Speichern eine Meldung.",
+      "tablePlaceholder": "Zuerst eine Uhrzeit wählen",
+      "tableOption": "Tisch {{number}} · {{area}} · {{seats}} Plätze",
+      "tableOptionSuggested": "Tisch {{number}} · {{area}} · {{seats}} Plätze (Vorschlag)",
+      "overrideDuration": "Dauer überschreiben",
+      "defaultDuration": "Dauer des Restaurants für diese Personenzahl: {{minutes}} Minuten",
+      "duration": "Dauer in Minuten",
+      "name": "Name",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "notes": "Notiz",
+      "notSaved": "Die Reservierung wurde nicht gespeichert",
+      "create": "Reservierung anlegen",
+      "created": "Die Reservierung für {{name}} wurde angelegt (Referenz {{code}}).",
+      "saved": "Die Änderungen an der Reservierung von {{name}} wurden gespeichert.",
+      "reference": "Referenz {{code}}",
+      "validation": {
+        "guests": "Bitte mindestens 1 Person angeben.",
+        "date": "Bitte ein Datum wählen.",
+        "time": "Bitte eine Uhrzeit wählen.",
+        "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
+        "name": "Bitte den Namen des Gastes angeben."
+      }
+    },
+    "errors": {
+      "invalidDate": "Bitte ein gültiges Datum wählen.",
+      "invalidTime": "Bitte eine gültige Uhrzeit wählen.",
+      "invalidPartySize": "Bitte mindestens 1 Person angeben.",
+      "invalidDuration": "Die Dauer muss zwischen 15 und 480 Minuten in Schritten von 15 liegen.",
+      "invalidName": "Bitte einen Namen mit höchstens 100 Zeichen angeben.",
+      "invalidPhone": "Bitte eine gültige Telefonnummer mit höchstens 30 Zeichen angeben.",
+      "invalidEmail": "Bitte eine gültige E-Mail-Adresse angeben.",
+      "invalidNotes": "Die Notiz darf höchstens 500 Zeichen lang sein.",
+      "invalidLanguage": "Die Sprache des Gastes wird nicht unterstützt.",
+      "outsideOpeningHours": "Zu dieser Zeit hat das Restaurant nicht geöffnet, oder die Reservierung würde nach Ladenschluss enden.",
+      "inThePast": "Diese Zeit liegt in der Vergangenheit.",
+      "slotUnavailable": "Zu dieser Zeit ist kein Tisch mehr frei.",
+      "tableUnavailable": "Dieser Tisch ist zu dieser Zeit belegt oder hat zu wenige Plätze. Bitte einen anderen Tisch oder eine andere Zeit wählen.",
+      "invalidStatus": "Dieser Status ist nicht bekannt.",
+      "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
+      "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu."
+    }
   }
 }
