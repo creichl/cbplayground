@@ -144,6 +144,25 @@ Endpoints:
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
+- Areas (Tenant Admins only):
+  - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`.
+  - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking and has an online quota of 100 %.
+  - `PUT /api/admin/areas/{id}`: body `{ "name", "onlineBookingEnabled", "onlineCapacityPercent" }` (0–100).
+  - `DELETE /api/admin/areas/{id}`: deletes the area with its tables and its floor plan image.
+  - `PUT /api/admin/areas/order`: body `{ "areaIds": [...] }` with every area of the restaurant once, in the new order.
+  - `PUT /api/admin/areas/{id}/floorplan`: the body is the image itself (PNG, JPEG or WebP, at most 10 MB). The type is detected from the content; the file name is chosen by the server. Replaces an existing floor plan.
+- `GET /api/areas/{id}/floorplan`: the floor plan image of an area. Public, because guests will see it to pick a table.
+- Tables (Tenant Admins only):
+  - `GET /api/admin/tables`: all tables of the restaurant: `id`, `areaId`, `number`, `seats`, `posX`, `posY`. The position is relative to the floor plan image, from 0 to 1.
+  - `POST /api/admin/tables`: body `{ "areaId", "number", "seats" }`. The table is placed in the middle of the floor plan.
+  - `PUT /api/admin/tables/{id}`: body `{ "number", "seats" }`.
+  - `DELETE /api/admin/tables/{id}`.
+  - `PUT /api/admin/tables/positions`: body `[{ "id", "posX", "posY" }, ...]`. Saves the positions of several tables at once, all or none.
+  - The table number (at most 20 characters) is unique within the restaurant, a table has at least 1 seat.
+
+Failed validations answer with an error code, e.g. 409 `{ "error": "table_number_taken" }`; the web frontend translates it.
+
+Uploaded floor plans are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
 
 There is no registration endpoint: staff users are created by a Tenant Admin (staff management is a later ticket) or by the development seed.
 
@@ -180,7 +199,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and cover sign-in, sign-out, `me`, the 401/403 answers and the tenant isolation.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, and areas, tables and floor plan uploads.
 
 ### Run the web frontend
 
@@ -194,7 +213,7 @@ npm run dev
 
 Open the URL Vite prints (usually http://localhost:5173). The Vite dev server forwards `/api` to the API on http://localhost:5025, so the API must be running.
 
-Routes: `/` lists the restaurants, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
+Routes: `/` lists the restaurants, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). Under `/admin/areas` a Tenant Admin manages the areas, uploads their floor plans, places the tables on them by drag and drop (mouse and touch) and sets the online quota per area. Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
 
 Before committing, run `npm run lint` (oxlint plus the translation key check) and `npm run build` (typecheck and production build).
 
