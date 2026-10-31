@@ -63,9 +63,99 @@
     "toManagement": "Go to management"
   },
   "restaurant": {
-    "bookingPlaceholder": "Online table booking will be available here soon.",
     "notFoundTitle": "Restaurant not found",
     "notFoundText": "There is no restaurant at this address."
+  },
+  "booking": {
+    "guestsCount_one": "{{count}} person",
+    "guestsCount_few": "{{count}} people",
+    "guestsCount_other": "{{count}} people",
+    "tableNumber": "Table {{number}}",
+    "summaryLabel": "Your selection",
+    "changePart": "Change: {{part}}",
+    "continue": "Continue",
+    "steps": {
+      "guests": "How many people?",
+      "date": "Which day?",
+      "time": "What time?",
+      "table": "Which table?",
+      "details": "Your contact details"
+    },
+    "restaurant": {
+      "openingHours": "Opening hours",
+      "website": "Website"
+    },
+    "partySize": {
+      "more": "More",
+      "moreLabel": "Number of people",
+      "morePlaceholder": "Please choose",
+      "moreThan": "More than {{max}} people",
+      "callTitle": "Please call us",
+      "callText": "Online you can book for up to {{max}} people. For larger groups, please call us:",
+      "noPhone": "Please contact the restaurant directly."
+    },
+    "calendar": {
+      "full": "fully booked",
+      "closed": "closed",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month",
+      "legend": "Greyed-out days are closed or cannot be booked; struck-through days are fully booked."
+    },
+    "time": {
+      "morning": "Morning",
+      "midday": "Lunch",
+      "evening": "Evening",
+      "noTables": "No free tables – next free days:",
+      "noFreeDays": "Unfortunately, no day is free in the coming weeks. Please choose another date or call us."
+    },
+    "table": {
+      "listLabel": "Free tables – {{area}}",
+      "option_one": "Table {{number}} · {{count}} seat",
+      "option_few": "Table {{number}} · {{count}} seats",
+      "option_other": "Table {{number}} · {{count}} seats",
+      "noneFreeInArea": "There is no suitable free table in this area at this time.",
+      "noneFree": "Unfortunately, there is no free table left at this time.",
+      "otherTime": "Choose another time"
+    },
+    "details": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "notes": "Note (optional)",
+      "notesDescription": "E.g. high chair or allergies. At most {{max}} characters.",
+      "contactHint": "So the restaurant can reach you, please enter a phone number or an email address – one of the two is enough.",
+      "contactRequired": "Please enter a phone number or an email address.",
+      "nameRequired": "Please enter your name.",
+      "invalidPhone": "Please enter a valid phone number (at least 6 digits).",
+      "invalidEmail": "Please enter a valid email address.",
+      "invalidNotes": "The note is too long.",
+      "submit": "Book now",
+      "submitRequest": "Send request"
+    },
+    "errors": {
+      "slotTaken": "Sorry, this time has just been booked by someone else. Please choose another time – the free times have been updated.",
+      "tableTaken": "Sorry, this table has just been booked by someone else. Please choose the time again – the free times have been updated.",
+      "timeNotBookable": "This time can no longer be booked. Please choose another time.",
+      "tooManyBookings": "Too many bookings from this connection. Please try again in a few minutes.",
+      "invalidBooking": "The booking could not be completed. Please check your selection."
+    },
+    "confirmation": {
+      "confirmedTitle": "Your table is reserved",
+      "confirmedText": "We look forward to your visit.",
+      "requestTitle": "Request sent",
+      "requestText": "Your reservation is not confirmed yet. The restaurant will review your request and get back to you.",
+      "referenceCode": "Your reference code",
+      "restaurant": "Restaurant",
+      "date": "Date",
+      "time": "Time",
+      "guests": "People",
+      "area": "Area",
+      "table": "Table"
+    },
+    "notBookable": {
+      "title": "Online booking unavailable",
+      "text": "This restaurant does not take online reservations at the moment. Please call:"
+    }
   },
   "admin": {
     "label": "Admin",

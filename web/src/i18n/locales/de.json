@@ -63,9 +63,99 @@
     "toManagement": "Zur Verwaltung"
   },
   "restaurant": {
-    "bookingPlaceholder": "Hier können Sie bald online einen Tisch reservieren.",
     "notFoundTitle": "Restaurant nicht gefunden",
     "notFoundText": "Unter dieser Adresse gibt es kein Restaurant."
+  },
+  "booking": {
+    "guestsCount_one": "{{count}} Person",
+    "guestsCount_few": "{{count}} Personen",
+    "guestsCount_other": "{{count}} Personen",
+    "tableNumber": "Tisch {{number}}",
+    "summaryLabel": "Ihre Auswahl",
+    "changePart": "Ändern: {{part}}",
+    "continue": "Weiter",
+    "steps": {
+      "guests": "Wie viele Personen?",
+      "date": "An welchem Tag?",
+      "time": "Um wie viel Uhr?",
+      "table": "Welcher Tisch?",
+      "details": "Ihre Kontaktdaten"
+    },
+    "restaurant": {
+      "openingHours": "Öffnungszeiten",
+      "website": "Website"
+    },
+    "partySize": {
+      "more": "Mehr",
+      "moreLabel": "Anzahl Personen",
+      "morePlaceholder": "Bitte wählen",
+      "moreThan": "Mehr als {{max}} Personen",
+      "callTitle": "Bitte rufen Sie uns an",
+      "callText": "Online können Sie für bis zu {{max}} Personen reservieren. Für größere Gruppen rufen Sie uns bitte an:",
+      "noPhone": "Bitte wenden Sie sich direkt an das Restaurant."
+    },
+    "calendar": {
+      "full": "ausgebucht",
+      "closed": "geschlossen",
+      "previousMonth": "Vorheriger Monat",
+      "nextMonth": "Nächster Monat",
+      "legend": "Ausgegraute Tage sind geschlossen oder nicht buchbar, durchgestrichene ausgebucht."
+    },
+    "time": {
+      "morning": "Vormittag",
+      "midday": "Mittag",
+      "evening": "Abend",
+      "noTables": "Keine freien Tische – nächste freie Tage:",
+      "noFreeDays": "In den nächsten Wochen ist leider kein Tag mehr frei. Bitte wählen Sie ein anderes Datum oder rufen Sie uns an."
+    },
+    "table": {
+      "listLabel": "Freie Tische – {{area}}",
+      "option_one": "Tisch {{number}} · {{count}} Platz",
+      "option_few": "Tisch {{number}} · {{count}} Plätze",
+      "option_other": "Tisch {{number}} · {{count}} Plätze",
+      "noneFreeInArea": "In diesem Bereich ist zu dieser Zeit kein passender Tisch frei.",
+      "noneFree": "Zu dieser Zeit ist leider kein Tisch mehr frei.",
+      "otherTime": "Andere Uhrzeit wählen"
+    },
+    "details": {
+      "name": "Name",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "notes": "Anmerkung (optional)",
+      "notesDescription": "Z. B. Kinderstuhl oder Allergien. Höchstens {{max}} Zeichen.",
+      "contactHint": "Damit das Restaurant Sie erreichen kann, geben Sie bitte eine Telefonnummer oder eine E-Mail-Adresse an – eines von beiden genügt.",
+      "contactRequired": "Bitte geben Sie eine Telefonnummer oder eine E-Mail-Adresse an.",
+      "nameRequired": "Bitte geben Sie Ihren Namen an.",
+      "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer an (mindestens 6 Ziffern).",
+      "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse an.",
+      "invalidNotes": "Die Anmerkung ist zu lang.",
+      "submit": "Jetzt reservieren",
+      "submitRequest": "Anfrage senden"
+    },
+    "errors": {
+      "slotTaken": "Diese Uhrzeit wurde leider gerade vergeben. Bitte wählen Sie eine andere – die freien Zeiten sind aktualisiert.",
+      "tableTaken": "Dieser Tisch wurde leider gerade vergeben. Bitte wählen Sie die Uhrzeit erneut – die freien Zeiten sind aktualisiert.",
+      "timeNotBookable": "Diese Uhrzeit ist nicht mehr buchbar. Bitte wählen Sie eine andere.",
+      "tooManyBookings": "Zu viele Buchungen von dieser Verbindung. Bitte versuchen Sie es in einigen Minuten erneut.",
+      "invalidBooking": "Die Buchung konnte nicht abgeschlossen werden. Bitte prüfen Sie Ihre Auswahl."
+    },
+    "confirmation": {
+      "confirmedTitle": "Ihr Tisch ist reserviert",
+      "confirmedText": "Wir freuen uns auf Ihren Besuch.",
+      "requestTitle": "Anfrage gesendet",
+      "requestText": "Ihre Reservierung ist noch nicht bestätigt. Das Restaurant prüft Ihre Anfrage und meldet sich bei Ihnen.",
+      "referenceCode": "Ihr Referenzcode",
+      "restaurant": "Restaurant",
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "guests": "Personen",
+      "area": "Bereich",
+      "table": "Tisch"
+    },
+    "notBookable": {
+      "title": "Online-Reservierung nicht möglich",
+      "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
+    }
   },
   "admin": {
     "label": "Admin",
