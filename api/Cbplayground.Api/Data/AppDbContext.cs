@@ -14,6 +14,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<Table> Tables => Set<Table>();
 
+    public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
+
+    public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -27,6 +31,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         modelBuilder.Entity<Tenant>(tenant =>
         {
             tenant.HasIndex(t => t.Slug).IsUnique();
+            tenant.Property(t => t.CountryCode).HasMaxLength(2);
+            tenant.Property(t => t.RegionCode).HasMaxLength(5);
+            tenant.Property(t => t.TimeZoneId).HasMaxLength(64);
+        });
+
+        modelBuilder.Entity<OpeningPeriod>(period =>
+        {
+            period.HasOne<Tenant>().WithMany().HasForeignKey(p => p.TenantId).OnDelete(DeleteBehavior.Cascade);
+            period.HasIndex(p => new { p.TenantId, p.DayOfWeek, p.Start });
+        });
+
+        modelBuilder.Entity<HolidayOverride>(holidayOverride =>
+        {
+            holidayOverride.HasOne<Tenant>().WithMany().HasForeignKey(o => o.TenantId).OnDelete(DeleteBehavior.Cascade);
+            holidayOverride.HasIndex(o => new { o.TenantId, o.Date }).IsUnique();
         });
 
         modelBuilder.Entity<ApplicationUser>(user =>

@@ -126,6 +126,111 @@
       "lastAdmin": "This is the restaurant’s last active admin. Make another staff member an admin first.",
       "cannotDeactivateSelf": "You cannot deactivate your own account.",
       "actionFailed": "The change could not be saved. Please try again."
+      }
+    },
+  "openingHours": {
+    "save": "Save",
+    "saved": "Saved.",
+    "open": "Open",
+    "closed": "Closed",
+    "weekdays": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "location": {
+      "title": "Location",
+      "description": "The public holidays depend on the country and, in Germany, on the federal state.",
+      "country": "Country",
+      "region": "Federal state",
+      "countryRequired": "Please choose a country.",
+      "regionRequired": "Please choose a federal state.",
+      "invalid": "Please choose a valid country and, for Germany, a federal state."
+    },
+    "countries": {
+      "DE": "Germany",
+      "AT": "Austria",
+      "RS": "Serbia"
+    },
+    "regions": {
+      "DE-BW": "Baden-Württemberg",
+      "DE-BY": "Bavaria",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hesse",
+      "DE-MV": "Mecklenburg-Western Pomerania",
+      "DE-NI": "Lower Saxony",
+      "DE-NW": "North Rhine-Westphalia",
+      "DE-RP": "Rhineland-Palatinate",
+      "DE-SL": "Saarland",
+      "DE-SN": "Saxony",
+      "DE-ST": "Saxony-Anhalt",
+      "DE-SH": "Schleswig-Holstein",
+      "DE-TH": "Thuringia"
+    },
+    "weekly": {
+      "title": "Regular opening hours",
+      "description": "Set one or more time windows for each day. 00:00 as the closing time means midnight.",
+      "start": "Opens at",
+      "end": "Closes at",
+      "addPeriod": "+ Time window",
+      "removePeriod": "Remove time window",
+      "copy": "Copy times to other days",
+      "copyTo": "Copy the times of {{day}} to",
+      "copyApply": "Copy"
+    },
+    "validation": {
+      "required": "Please enter a time.",
+      "startBeforeEnd": "The opening time must be before the closing time.",
+      "overlap": "Time windows on the same day must not overlap.",
+      "invalidTime": "Please enter valid times (HH:MM)."
+    },
+    "holidays": {
+      "title": "Upcoming public holidays",
+      "description": "The public holidays of the next 12 months. The restaurant is closed on public holidays unless you open it; it then has the regular hours of that day of the week.",
+      "noLocation": "Choose the country above to see the public holidays.",
+      "empty": "There are no public holidays in the next 12 months."
+    },
+    "holidayNames": {
+      "newYear": "New Year's Day",
+      "newYear2": "New Year (second day)",
+      "epiphany": "Epiphany",
+      "womensDay": "International Women's Day",
+      "goodFriday": "Good Friday",
+      "easterSunday": "Easter Sunday",
+      "easterMonday": "Easter Monday",
+      "labourDay": "Labour Day",
+      "labourDay2": "Labour Day (second day)",
+      "stateHoliday": "State Holiday (Labour Day)",
+      "ascension": "Ascension Day",
+      "whitSunday": "Whit Sunday",
+      "whitMonday": "Whit Monday",
+      "corpusChristi": "Corpus Christi",
+      "assumption": "Assumption Day",
+      "childrensDay": "World Children's Day",
+      "germanUnity": "Day of German Unity",
+      "reformationDay": "Reformation Day",
+      "allSaints": "All Saints' Day",
+      "repentanceDay": "Day of Repentance and Prayer",
+      "nationalDay": "Austrian National Day",
+      "immaculateConception": "Immaculate Conception",
+      "christmasDay": "Christmas Day",
+      "secondChristmasDay": "Second Day of Christmas",
+      "stStephensDay": "St. Stephen's Day",
+      "orthodoxChristmas": "Orthodox Christmas",
+      "statehoodDay": "Statehood Day (Sretenje)",
+      "statehoodDay2": "Statehood Day (second day)",
+      "orthodoxGoodFriday": "Orthodox Good Friday",
+      "orthodoxHolySaturday": "Orthodox Holy Saturday",
+      "orthodoxEaster": "Orthodox Easter Sunday",
+      "orthodoxEasterMonday": "Orthodox Easter Monday",
+      "armisticeDay": "Armistice Day (First World War)"
     }
   },
   "frontdesk": {

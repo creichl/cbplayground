@@ -126,6 +126,111 @@
       "lastAdmin": "Ovo je poslednji aktivni administrator restorana. Najpre postavite drugog zaposlenog za administratora.",
       "cannotDeactivateSelf": "Ne možete deaktivirati sopstveni nalog.",
       "actionFailed": "Izmena nije sačuvana. Pokušajte ponovo."
+      }
+    },
+  "openingHours": {
+    "save": "Sačuvaj",
+    "saved": "Sačuvano.",
+    "open": "Otvoreno",
+    "closed": "Zatvoreno",
+    "weekdays": {
+      "monday": "Ponedeljak",
+      "tuesday": "Utorak",
+      "wednesday": "Sreda",
+      "thursday": "Četvrtak",
+      "friday": "Petak",
+      "saturday": "Subota",
+      "sunday": "Nedelja"
+    },
+    "location": {
+      "title": "Lokacija",
+      "description": "Državni praznici zavise od zemlje, a u Nemačkoj i od savezne pokrajine.",
+      "country": "Zemlja",
+      "region": "Savezna pokrajina",
+      "countryRequired": "Izaberite zemlju.",
+      "regionRequired": "Izaberite saveznu pokrajinu.",
+      "invalid": "Izaberite važeću zemlju, a za Nemačku i saveznu pokrajinu."
+    },
+    "countries": {
+      "DE": "Nemačka",
+      "AT": "Austrija",
+      "RS": "Srbija"
+    },
+    "regions": {
+      "DE-BW": "Baden-Virtemberg",
+      "DE-BY": "Bavarska",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hesen",
+      "DE-MV": "Meklenburg-Prednja Pomeranija",
+      "DE-NI": "Donja Saksonija",
+      "DE-NW": "Severna Rajna-Vestfalija",
+      "DE-RP": "Rajna-Palatinat",
+      "DE-SL": "Sarland",
+      "DE-SN": "Saksonija",
+      "DE-ST": "Saksonija-Anhalt",
+      "DE-SH": "Šlezvig-Holštajn",
+      "DE-TH": "Tiringija"
+    },
+    "weekly": {
+      "title": "Redovno radno vreme",
+      "description": "Za svaki dan unesite jedan ili više termina. 00:00 kao vreme zatvaranja znači ponoć.",
+      "start": "Otvara se u",
+      "end": "Zatvara se u",
+      "addPeriod": "+ Termin",
+      "removePeriod": "Ukloni termin",
+      "copy": "Kopiraj vreme na druge dane",
+      "copyTo": "Kopiraj vreme dana {{day}} na",
+      "copyApply": "Kopiraj"
+    },
+    "validation": {
+      "required": "Unesite vreme.",
+      "startBeforeEnd": "Vreme otvaranja mora biti pre vremena zatvaranja.",
+      "overlap": "Termini istog dana ne smeju da se preklapaju.",
+      "invalidTime": "Unesite ispravna vremena (HH:MM)."
+    },
+    "holidays": {
+      "title": "Predstojeći praznici",
+      "description": "Državni praznici u narednih 12 meseci. Na praznike je restoran zatvoren, osim ako ga otvorite; tada važi redovno radno vreme tog dana u nedelji.",
+      "noLocation": "Izaberite zemlju iznad da biste videli praznike.",
+      "empty": "U narednih 12 meseci nema praznika."
+    },
+    "holidayNames": {
+      "newYear": "Nova godina",
+      "newYear2": "Nova godina (drugi dan)",
+      "epiphany": "Sveta tri kralja",
+      "womensDay": "Međunarodni dan žena",
+      "goodFriday": "Veliki petak",
+      "easterSunday": "Uskrs",
+      "easterMonday": "Uskršnji ponedeljak",
+      "labourDay": "Praznik rada",
+      "labourDay2": "Praznik rada (drugi dan)",
+      "stateHoliday": "Državni praznik (Praznik rada)",
+      "ascension": "Vaznesenje Hristovo",
+      "whitSunday": "Duhovi",
+      "whitMonday": "Duhovski ponedeljak",
+      "corpusChristi": "Brašančevo",
+      "assumption": "Velika Gospa",
+      "childrensDay": "Svetski dan deteta",
+      "germanUnity": "Dan nemačkog jedinstva",
+      "reformationDay": "Dan reformacije",
+      "allSaints": "Svi sveti",
+      "repentanceDay": "Dan pokajanja i molitve",
+      "nationalDay": "Nacionalni praznik Austrije",
+      "immaculateConception": "Bezgrešno začeće",
+      "christmasDay": "Božić (prvi dan)",
+      "secondChristmasDay": "Božić (drugi dan)",
+      "stStephensDay": "Sveti Stefan",
+      "orthodoxChristmas": "Božić",
+      "statehoodDay": "Sretenje – Dan državnosti Srbije",
+      "statehoodDay2": "Dan državnosti (drugi dan)",
+      "orthodoxGoodFriday": "Veliki petak",
+      "orthodoxHolySaturday": "Velika subota",
+      "orthodoxEaster": "Vaskrs",
+      "orthodoxEasterMonday": "Vaskršnji ponedeljak",
+      "armisticeDay": "Dan primirja u Prvom svetskom ratu"
     }
   },
   "frontdesk": {

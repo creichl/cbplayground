@@ -126,6 +126,111 @@
       "lastAdmin": "Das ist der letzte aktive Admin des Restaurants. Machen Sie zuerst einen anderen Mitarbeiter zum Admin.",
       "cannotDeactivateSelf": "Sie können Ihr eigenes Konto nicht deaktivieren.",
       "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+      }
+    },
+  "openingHours": {
+    "save": "Speichern",
+    "saved": "Gespeichert.",
+    "open": "Geöffnet",
+    "closed": "Geschlossen",
+    "weekdays": {
+      "monday": "Montag",
+      "tuesday": "Dienstag",
+      "wednesday": "Mittwoch",
+      "thursday": "Donnerstag",
+      "friday": "Freitag",
+      "saturday": "Samstag",
+      "sunday": "Sonntag"
+    },
+    "location": {
+      "title": "Standort",
+      "description": "Die gesetzlichen Feiertage richten sich nach dem Land und in Deutschland nach dem Bundesland.",
+      "country": "Land",
+      "region": "Bundesland",
+      "countryRequired": "Bitte wählen Sie ein Land.",
+      "regionRequired": "Bitte wählen Sie ein Bundesland.",
+      "invalid": "Bitte wählen Sie ein gültiges Land und bei Deutschland ein Bundesland."
+    },
+    "countries": {
+      "DE": "Deutschland",
+      "AT": "Österreich",
+      "RS": "Serbien"
+    },
+    "regions": {
+      "DE-BW": "Baden-Württemberg",
+      "DE-BY": "Bayern",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hessen",
+      "DE-MV": "Mecklenburg-Vorpommern",
+      "DE-NI": "Niedersachsen",
+      "DE-NW": "Nordrhein-Westfalen",
+      "DE-RP": "Rheinland-Pfalz",
+      "DE-SL": "Saarland",
+      "DE-SN": "Sachsen",
+      "DE-ST": "Sachsen-Anhalt",
+      "DE-SH": "Schleswig-Holstein",
+      "DE-TH": "Thüringen"
+    },
+    "weekly": {
+      "title": "Reguläre Öffnungszeiten",
+      "description": "Legen Sie je Tag ein oder mehrere Zeitfenster fest. 00:00 als Ende steht für Mitternacht.",
+      "start": "Öffnet um",
+      "end": "Schließt um",
+      "addPeriod": "+ Zeitfenster",
+      "removePeriod": "Zeitfenster entfernen",
+      "copy": "Zeiten auf andere Tage kopieren",
+      "copyTo": "Zeiten von {{day}} kopieren nach",
+      "copyApply": "Kopieren"
+    },
+    "validation": {
+      "required": "Bitte geben Sie eine Uhrzeit ein.",
+      "startBeforeEnd": "Der Beginn muss vor dem Ende liegen.",
+      "overlap": "Zeitfenster am selben Tag dürfen sich nicht überschneiden.",
+      "invalidTime": "Bitte geben Sie gültige Uhrzeiten ein (HH:MM)."
+    },
+    "holidays": {
+      "title": "Kommende Feiertage",
+      "description": "Die gesetzlichen Feiertage der nächsten 12 Monate. An Feiertagen ist geschlossen, außer Sie öffnen den Tag; dann gelten die normalen Zeiten des Wochentags.",
+      "noLocation": "Wählen Sie oben das Land, um die Feiertage zu sehen.",
+      "empty": "In den nächsten 12 Monaten gibt es keine Feiertage."
+    },
+    "holidayNames": {
+      "newYear": "Neujahr",
+      "newYear2": "Neujahr (2. Tag)",
+      "epiphany": "Heilige Drei Könige",
+      "womensDay": "Internationaler Frauentag",
+      "goodFriday": "Karfreitag",
+      "easterSunday": "Ostersonntag",
+      "easterMonday": "Ostermontag",
+      "labourDay": "Tag der Arbeit",
+      "labourDay2": "Tag der Arbeit (2. Tag)",
+      "stateHoliday": "Staatsfeiertag",
+      "ascension": "Christi Himmelfahrt",
+      "whitSunday": "Pfingstsonntag",
+      "whitMonday": "Pfingstmontag",
+      "corpusChristi": "Fronleichnam",
+      "assumption": "Mariä Himmelfahrt",
+      "childrensDay": "Weltkindertag",
+      "germanUnity": "Tag der Deutschen Einheit",
+      "reformationDay": "Reformationstag",
+      "allSaints": "Allerheiligen",
+      "repentanceDay": "Buß- und Bettag",
+      "nationalDay": "Nationalfeiertag",
+      "immaculateConception": "Mariä Empfängnis",
+      "christmasDay": "1. Weihnachtsfeiertag",
+      "secondChristmasDay": "2. Weihnachtsfeiertag",
+      "stStephensDay": "Stefanitag",
+      "orthodoxChristmas": "Orthodoxes Weihnachtsfest",
+      "statehoodDay": "Staatsfeiertag (Sretenje)",
+      "statehoodDay2": "Staatsfeiertag (2. Tag)",
+      "orthodoxGoodFriday": "Orthodoxer Karfreitag",
+      "orthodoxHolySaturday": "Orthodoxer Karsamstag",
+      "orthodoxEaster": "Orthodoxer Ostersonntag",
+      "orthodoxEasterMonday": "Orthodoxer Ostermontag",
+      "armisticeDay": "Waffenstillstandstag (Erster Weltkrieg)"
     }
   },
   "frontdesk": {
