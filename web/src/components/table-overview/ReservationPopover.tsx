@@ -60,6 +60,11 @@ export function ReservationPopover({ reservation, nextReservation, children }: R
               {t(`tableOverview.status.${reservation.status}`)}
             </Badge>
           </Group>
+          {reservation.cancelledByGuest && (
+            <Text size="sm" c="red" fw={500}>
+              {t('reservations.cancelledByGuest')}
+            </Text>
+          )}
           <Stack gap={4}>
             {details
               .filter((detail): detail is [string, string] => detail[1] !== null)

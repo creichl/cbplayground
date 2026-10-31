@@ -6,6 +6,7 @@ import { GuestLayout } from './layouts/GuestLayout.tsx'
 import { AdminOverviewPage } from './pages/AdminOverviewPage.tsx'
 import { AreasPage } from './pages/AreasPage.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
+import { GuestReservationPage } from './pages/GuestReservationPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'r/:slug', element: <RestaurantPage /> },
+      { path: 'r/:slug/reservation/:code', element: <GuestReservationPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

@@ -230,7 +230,7 @@ function BookingFlow({ slug, restaurant, timeZoneId }: BookingFlowProps) {
   }
 
   if (booking.isSuccess) {
-    return <BookingConfirmation result={booking.data} restaurantName={restaurant.name} />
+    return <BookingConfirmation result={booking.data} slug={slug} restaurant={restaurant} timeZoneId={timeZoneId} />
   }
 
   // The choices so far in short; each part leads back to its step.

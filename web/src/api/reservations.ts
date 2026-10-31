@@ -29,6 +29,8 @@ export type Reservation = {
   email: string | null
   notes: string | null
   language: string
+  /** The guest cancelled through the link of their online booking. */
+  cancelledByGuest: boolean
   createdAtUtc: string
   updatedAtUtc: string
 }

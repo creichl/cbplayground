@@ -83,7 +83,8 @@
     },
     "restaurant": {
       "openingHours": "Öffnungszeiten",
-      "website": "Website"
+      "website": "Website",
+      "addressOnMap": "{{address}} – auf der Karte öffnen"
     },
     "partySize": {
       "more": "Mehr",
@@ -150,11 +151,48 @@
       "time": "Uhrzeit",
       "guests": "Personen",
       "area": "Bereich",
-      "table": "Tisch"
+      "table": "Tisch",
+      "addToCalendar": "Zum Kalender hinzufügen",
+      "manageLink": "Reservierung verwalten",
+      "manageLinkLabel": "Link zu Ihrer Reservierung",
+      "manageLinkHint": "Link speichern, um später zu stornieren.",
+      "copy": "Kopieren",
+      "copied": "Kopiert"
+    },
+    "calendarEvent": {
+      "title": "Tischreservierung – {{restaurant}}",
+      "description": "{{guests}}\nReferenzcode: {{code}}\nReservierung ansehen oder stornieren: {{link}}",
+      "fileName": "reservierung"
     },
     "notBookable": {
       "title": "Online-Reservierung nicht möglich",
       "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
+    }
+  },
+  "guestReservation": {
+    "title": "Ihre Reservierung",
+    "notFoundTitle": "Reservierung nicht gefunden",
+    "notFoundText": "Der Link ist ungültig oder unvollständig. Bitte prüfen Sie, ob Sie den vollständigen Link aus Ihrer Buchung geöffnet haben.",
+    "name": "Name",
+    "referenceCode": "Referenzcode",
+    "cancel": "Stornieren",
+    "cancelledTitle": "Ihre Reservierung wurde storniert",
+    "cancelledText": "Der Tisch ist wieder für andere Gäste frei. Wir freuen uns, Sie ein andermal begrüßen zu dürfen.",
+    "bookAgain": "Neu reservieren",
+    "cancelledByGuest": "Sie haben diese Reservierung storniert.",
+    "cancelledByRestaurant": "Das Restaurant hat diese Reservierung storniert.",
+    "declined": "Das Restaurant konnte diese Anfrage leider nicht annehmen.",
+    "cannotCancel": "Online stornieren ist nur bis zum Beginn der Reservierung möglich. Bitte rufen Sie das Restaurant an.",
+    "contact": "Kontakt zum Restaurant",
+    "confirm": {
+      "title": "Reservierung stornieren?",
+      "text": "Ihre Reservierung am {{date}} um {{time}} ({{guests}}) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "back": "Zurück",
+      "confirm": "Stornieren"
+    },
+    "errors": {
+      "notPossible": "Diese Reservierung lässt sich online nicht mehr stornieren. Bitte rufen Sie das Restaurant an.",
+      "tooManyRequests": "Zu viele Anfragen von dieser Verbindung. Bitte versuchen Sie es in einigen Minuten erneut."
     }
   },
   "admin": {
@@ -585,6 +623,7 @@
       "cancelled": "Storniert",
       "declined": "Abgelehnt"
     },
+    "cancelledByGuest": "vom Gast storniert",
     "actions": {
       "accept": "Annehmen",
       "decline": "Ablehnen",

@@ -83,7 +83,8 @@
     },
     "restaurant": {
       "openingHours": "Opening hours",
-      "website": "Website"
+      "website": "Website",
+      "addressOnMap": "{{address}} – open on a map"
     },
     "partySize": {
       "more": "More",
@@ -150,11 +151,48 @@
       "time": "Time",
       "guests": "People",
       "area": "Area",
-      "table": "Table"
+      "table": "Table",
+      "addToCalendar": "Add to calendar",
+      "manageLink": "Manage reservation",
+      "manageLinkLabel": "Link to your reservation",
+      "manageLinkHint": "Save this link to cancel later.",
+      "copy": "Copy",
+      "copied": "Copied"
+    },
+    "calendarEvent": {
+      "title": "Table reservation – {{restaurant}}",
+      "description": "{{guests}}\nReference code: {{code}}\nView or cancel the reservation: {{link}}",
+      "fileName": "reservation"
     },
     "notBookable": {
       "title": "Online booking unavailable",
       "text": "This restaurant does not take online reservations at the moment. Please call:"
+    }
+  },
+  "guestReservation": {
+    "title": "Your reservation",
+    "notFoundTitle": "Reservation not found",
+    "notFoundText": "The link is invalid or incomplete. Please check that you opened the full link from your booking.",
+    "name": "Name",
+    "referenceCode": "Reference code",
+    "cancel": "Cancel reservation",
+    "cancelledTitle": "Your reservation has been cancelled",
+    "cancelledText": "The table is free again for other guests. We hope to see you another time.",
+    "bookAgain": "Book again",
+    "cancelledByGuest": "You cancelled this reservation.",
+    "cancelledByRestaurant": "The restaurant cancelled this reservation.",
+    "declined": "The restaurant could not accept this request.",
+    "cannotCancel": "This reservation can only be cancelled online until it starts. Please call the restaurant.",
+    "contact": "Contact the restaurant",
+    "confirm": {
+      "title": "Cancel the reservation?",
+      "text": "Your reservation on {{date}} at {{time}} ({{guests}}) will be cancelled. This cannot be undone.",
+      "back": "Back",
+      "confirm": "Cancel reservation"
+    },
+    "errors": {
+      "notPossible": "This reservation can no longer be cancelled online. Please call the restaurant.",
+      "tooManyRequests": "Too many requests from this connection. Please try again in a few minutes."
     }
   },
   "admin": {
@@ -585,6 +623,7 @@
       "cancelled": "Cancelled",
       "declined": "Declined"
     },
+    "cancelledByGuest": "Cancelled by the guest",
     "actions": {
       "accept": "Accept",
       "decline": "Decline",

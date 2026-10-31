@@ -65,6 +65,31 @@ export type BookingResult = {
   durationMinutes: number
   area: string
   tableNumber: string
+  /** Belongs in the guest's link to view and cancel the reservation (managePath); only returned by the booking. */
+  manageToken: string
+}
+
+/** A reservation as the guest sees it through the link, as returned by GET /api/public/restaurants/{slug}/reservations/{code}. */
+export type GuestReservation = {
+  referenceCode: string
+  status: 'Requested' | 'Confirmed' | 'Arrived' | 'Late' | 'Cancelled' | 'Declined'
+  /** "YYYY-MM-DD"; times "HH:mm" in the restaurant's local time, the end may be "24:00". */
+  date: string
+  time: string
+  endTime: string
+  guests: number
+  durationMinutes: number
+  area: string
+  tableNumber: string
+  name: string
+  cancelledByGuest: boolean
+  /** Whether the guest can still cancel online: an open reservation before its start. */
+  canCancel: boolean
+}
+
+/** The path of the guest's page to view and cancel a reservation; the token stays in the link only. */
+export function managePath(slug: string, referenceCode: string, token: string) {
+  return `/r/${encodeURIComponent(slug)}/reservation/${encodeURIComponent(referenceCode)}?t=${encodeURIComponent(token)}`
 }
 
 /** Maximum lengths of the guest's details, as on the server. */
@@ -148,6 +173,34 @@ export function usePublicTables(slug: string, date: string, time: string, guests
     queryKey: [...publicKey(slug), 'tables', date, time, guests],
     queryFn: () =>
       apiGet<PublicArea[]>(`/public/restaurants/${encodeURIComponent(slug)}/tables?date=${date}&time=${time}&guests=${guests}`),
+  })
+}
+
+const guestReservationKey = (slug: string, referenceCode: string, token: string) =>
+  [...publicKey(slug), 'reservation', referenceCode, token] as const
+
+const guestReservationPath = (slug: string, referenceCode: string) =>
+  `/public/restaurants/${encodeURIComponent(slug)}/reservations/${encodeURIComponent(referenceCode)}`
+
+/** The guest's reservation; a wrong code or token is 404 (isNotFound) without telling which one. */
+export function useGuestReservation(slug: string, referenceCode: string, token: string) {
+  return useQuery({
+    queryKey: guestReservationKey(slug, referenceCode, token),
+    queryFn: () => apiGet<GuestReservation>(`${guestReservationPath(slug, referenceCode)}?token=${encodeURIComponent(token)}`),
+    retry: (failureCount, error) => !isNotFound(error) && failureCount < 1,
+    // The link is rate limited like the booking; switching tabs should not use up the requests.
+    refetchOnWindowFocus: false,
+  })
+}
+
+/** Cancels the guest's reservation. Errors: 409 "cancellation_not_possible", 404 for a wrong code or token. */
+export function useCancelGuestReservation(slug: string, referenceCode: string, token: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiPost<GuestReservation>(`${guestReservationPath(slug, referenceCode)}/cancel`, { token }),
+    onSuccess: (reservation) => queryClient.setQueryData(guestReservationKey(slug, referenceCode, token), reservation),
+    // The free times of the restaurant change with the cancellation.
+    onSettled: () => queryClient.invalidateQueries({ queryKey: publicKey(slug) }),
   })
 }
 

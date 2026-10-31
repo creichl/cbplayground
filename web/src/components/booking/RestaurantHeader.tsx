@@ -1,8 +1,9 @@
-import { Anchor, Card, Group, Stack, Table, Text, Title } from '@mantine/core'
+import { Card, Stack, Table, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { DayOfWeek } from '../../api/openingHours.ts'
 import type { PublicRestaurant } from '../../api/publicBooking.ts'
 import { formatTime } from './format.ts'
+import { RestaurantContact } from './RestaurantContact.tsx'
 
 /** The week as shown, starting on Monday. */
 const weekdays = [
@@ -15,12 +16,10 @@ const weekdays = [
   { dayOfWeek: 0, key: 'sunday' },
 ] as const satisfies readonly { dayOfWeek: DayOfWeek; key: string }[]
 
-/** The top of the booking page: name, description, address, contact and the regular opening hours. */
+/** The top of the booking page: name, description, address (with a map link), contact and the regular opening hours. */
 export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
-  const cityLine = [restaurant.postalCode, restaurant.city].filter((part) => part !== null).join(' ')
-  const address = [restaurant.street, cityLine].filter((part) => part !== null && part !== '').join(', ')
 
   return (
     <Stack gap="md">
@@ -31,28 +30,7 @@ export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant 
 
       <Card padding="md">
         <Stack gap="md">
-          {(address !== '' || restaurant.phone !== null || restaurant.email !== null || restaurant.website !== null) && (
-            <Stack gap={4}>
-              {address !== '' && <Text size="sm">{address}</Text>}
-              <Group gap="md" wrap="wrap">
-                {restaurant.phone !== null && (
-                  <Anchor size="sm" href={`tel:${restaurant.phone.replace(/[^0-9+]/g, '')}`}>
-                    {restaurant.phone}
-                  </Anchor>
-                )}
-                {restaurant.email !== null && (
-                  <Anchor size="sm" href={`mailto:${restaurant.email}`}>
-                    {restaurant.email}
-                  </Anchor>
-                )}
-                {restaurant.website !== null && (
-                  <Anchor size="sm" href={restaurant.website} target="_blank" rel="noopener noreferrer">
-                    {t('booking.restaurant.website')}
-                  </Anchor>
-                )}
-              </Group>
-            </Stack>
-          )}
+          <RestaurantContact restaurant={restaurant} />
 
           <Stack gap={4}>
             <Title order={2} size="h5">
