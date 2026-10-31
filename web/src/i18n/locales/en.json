@@ -459,6 +459,48 @@
       "copyTo": "Copy the times of {{day}} to",
       "copyApply": "Copy"
     },
+    "specialDays": {
+      "title": "Closing days & special opening hours",
+      "description": "Company holidays, private parties or different hours on single days. An entry takes precedence over public holidays and the regular opening hours.",
+      "empty": "There are no upcoming closing days or special opening hours.",
+      "add": "+ Closing days or special hours",
+      "addTitle": "Add closing days or special hours",
+      "editTitle": "Edit entry",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteTitle": "Delete entry?",
+      "deleteText": "For {{dates}} the regular opening hours and public holidays apply again.",
+      "deleteConfirm": "Delete",
+      "dates": "Dates",
+      "datesDescription": "For a single day, click the same day twice.",
+      "kind": "Type",
+      "kinds": {
+        "Closed": "Closed",
+        "SpecialHours": "Special hours"
+      },
+      "periods": "Opening hours on these days",
+      "periodsDescription": "They apply to every day of the range. 00:00 as the closing time means midnight.",
+      "note": "Note",
+      "notePlaceholder": "e.g. company holidays",
+      "validation": {
+        "dateRequired": "Please choose the dates.",
+        "rangeTooLong": "An entry can cover at most 366 days.",
+        "kindRequired": "Please choose the type.",
+        "noteTooLong": "The note can have at most 100 characters.",
+        "periodsRequired": "Please enter at least one time window.",
+        "overlapping": "There is already an entry on these dates. Entries must not overlap."
+      },
+      "affected": {
+        "titleClosed_one": "{{count}} reservation lies in this period",
+        "titleClosed_few": "{{count}} reservations lie in this period",
+        "titleClosed_other": "{{count}} reservations lie in this period",
+        "titleSpecialHours_one": "{{count}} reservation lies outside the special hours",
+        "titleSpecialHours_few": "{{count}} reservations lie outside the special hours",
+        "titleSpecialHours_other": "{{count}} reservations lie outside the special hours",
+        "text": "The reservations have not been changed. If necessary, inform the guests yourself and cancel or move the reservations in the reservations view.",
+        "link": "Go to the reservations"
+      }
+    },
     "validation": {
       "required": "Please enter a time.",
       "startBeforeEnd": "The opening time must be before the closing time.",
@@ -583,7 +625,7 @@
   },
   "reservationSettings": {
     "title": "Reservation settings",
-    "subtitle": "How reservations are confirmed, how tables are assigned and how long a reservation lasts. The settings apply to new reservations.",
+    "subtitle": "How reservations are confirmed, how tables are assigned, how long a reservation lasts and which rules apply to bookings. The settings apply to new reservations.",
     "confirmation": {
       "title": "Confirmation",
       "instant": {
@@ -624,11 +666,29 @@
       "previewRule": "(rule {{min}}–{{max}})",
       "previewDefault": "(default duration)"
     },
+    "rules": {
+      "title": "Booking rules",
+      "description": "Lead time, booking horizon and the largest party apply to online bookings only; staff can enter any reservation. The buffer applies to all reservations.",
+      "leadTime": "Minimum lead time online",
+      "leadTimeDescription": "Guests can book online up to this many minutes before the start, e.g. with 60 the earliest time at 18:10 is 19:15. 0: up to the start.",
+      "bookingHorizon": "Booking horizon online",
+      "bookingHorizonDescription": "How many days ahead guests can book online.",
+      "daysSuffix": " days",
+      "buffer": "Buffer between reservations",
+      "bufferDescription": "After every reservation the table stays free for this time, e.g. to clear and lay it. 0 to 60 minutes in steps of 5.",
+      "maxOnlinePartySize": "Largest party online",
+      "maxOnlinePartySizeDescription": "Larger parties are asked to call. Empty: the largest table that can be booked online.",
+      "maxOnlinePartySizePlaceholder": "Largest table"
+    },
     "validation": {
       "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
       "minGuests": "Enter at least 1 guest.",
       "minGreaterThanMax": "“To” must not be smaller than “from”.",
-      "overlap": "This range overlaps another rule."
+      "overlap": "This range overlaps another rule.",
+      "leadTime": "Enter {{min}} to {{max}} minutes.",
+      "bookingHorizon": "Enter {{min}} to {{max}} days.",
+      "buffer": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
+      "maxOnlinePartySize": "Enter at least 1 guest or leave the field empty."
     },
     "errors": {
       "title": "The settings were not saved",
@@ -636,7 +696,11 @@
       "invalidDuration": "Durations must be between 15 and 480 minutes in steps of 15.",
       "invalidMinGuests": "A rule must start at 1 guest or more.",
       "minGreaterThanMax": "In a rule, “from” must not be greater than “to”.",
-      "overlappingRules": "The ranges of the rules overlap."
+      "overlappingRules": "The ranges of the rules overlap.",
+      "invalidLeadTime": "The lead time must be between 0 and 1440 minutes.",
+      "invalidBookingHorizon": "The booking horizon must be between 1 and 365 days.",
+      "invalidBuffer": "The buffer must be between 0 and 60 minutes in steps of 5.",
+      "invalidMaxPartySize": "The largest online party must be at least 1 guest."
     },
     "save": "Save",
     "saved": "The reservation settings have been saved."

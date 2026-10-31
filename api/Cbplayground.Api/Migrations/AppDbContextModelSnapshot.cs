@@ -288,11 +288,23 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("BookingHorizonDays")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("BufferMinutes")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ConfirmationMode")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<int>("DefaultDurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("MaxOnlinePartySize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MinLeadTimeMinutes")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("TableSelectionMode")
@@ -308,6 +320,64 @@ namespace Cbplayground.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("ReservationSettings");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.SpecialDay", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("From")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("To")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "From");
+
+                    b.ToTable("SpecialDays");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.SpecialDayPeriod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("End")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SpecialDayId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("Start")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SpecialDayId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("SpecialDayPeriods");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.Table", b =>
@@ -635,6 +705,30 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.SpecialDay", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.SpecialDayPeriod", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.SpecialDay", null)
+                        .WithMany("Periods")
+                        .HasForeignKey("SpecialDayId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.Table", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Area", null)
@@ -699,6 +793,11 @@ namespace Cbplayground.Api.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.SpecialDay", b =>
+                {
+                    b.Navigation("Periods");
                 });
 #pragma warning restore 612, 618
         }

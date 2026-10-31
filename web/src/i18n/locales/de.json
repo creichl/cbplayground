@@ -459,6 +459,48 @@
       "copyTo": "Zeiten von {{day}} kopieren nach",
       "copyApply": "Kopieren"
     },
+    "specialDays": {
+      "title": "Schließtage & Sonderöffnungszeiten",
+      "description": "Betriebsurlaub, geschlossene Gesellschaften oder abweichende Zeiten an einzelnen Tagen. Ein Eintrag hat Vorrang vor Feiertagen und den regulären Öffnungszeiten.",
+      "empty": "Es gibt keine kommenden Schließtage oder Sonderöffnungszeiten.",
+      "add": "+ Schließtage oder Sonderzeiten",
+      "addTitle": "Schließtage oder Sonderzeiten hinzufügen",
+      "editTitle": "Eintrag bearbeiten",
+      "edit": "Bearbeiten",
+      "delete": "Löschen",
+      "deleteTitle": "Eintrag löschen?",
+      "deleteText": "Für {{dates}} gelten dann wieder die regulären Öffnungszeiten und Feiertage.",
+      "deleteConfirm": "Löschen",
+      "dates": "Zeitraum",
+      "datesDescription": "Für einen einzelnen Tag klicken Sie zweimal auf denselben Tag.",
+      "kind": "Art",
+      "kinds": {
+        "Closed": "Geschlossen",
+        "SpecialHours": "Sonderöffnungszeiten"
+      },
+      "periods": "Öffnungszeiten an diesen Tagen",
+      "periodsDescription": "Sie gelten an jedem Tag des Zeitraums. 00:00 als Ende steht für Mitternacht.",
+      "note": "Notiz",
+      "notePlaceholder": "z. B. Betriebsurlaub",
+      "validation": {
+        "dateRequired": "Bitte wählen Sie einen Zeitraum.",
+        "rangeTooLong": "Ein Eintrag kann höchstens 366 Tage umfassen.",
+        "kindRequired": "Bitte wählen Sie die Art.",
+        "noteTooLong": "Die Notiz darf höchstens 100 Zeichen lang sein.",
+        "periodsRequired": "Bitte geben Sie mindestens ein Zeitfenster an.",
+        "overlapping": "Für diese Tage gibt es schon einen Eintrag. Einträge dürfen sich nicht überschneiden."
+      },
+      "affected": {
+        "titleClosed_one": "{{count}} Reservierung liegt in diesem Zeitraum",
+        "titleClosed_few": "{{count}} Reservierungen liegen in diesem Zeitraum",
+        "titleClosed_other": "{{count}} Reservierungen liegen in diesem Zeitraum",
+        "titleSpecialHours_one": "{{count}} Reservierung liegt außerhalb der Sonderöffnungszeiten",
+        "titleSpecialHours_few": "{{count}} Reservierungen liegen außerhalb der Sonderöffnungszeiten",
+        "titleSpecialHours_other": "{{count}} Reservierungen liegen außerhalb der Sonderöffnungszeiten",
+        "text": "Die Reservierungen wurden nicht geändert. Informieren Sie die Gäste bei Bedarf selbst und stornieren oder verschieben Sie die Reservierungen in der Reservierungsansicht.",
+        "link": "Zur Reservierungsansicht"
+      }
+    },
     "validation": {
       "required": "Bitte geben Sie eine Uhrzeit ein.",
       "startBeforeEnd": "Der Beginn muss vor dem Ende liegen.",
@@ -583,7 +625,7 @@
   },
   "reservationSettings": {
     "title": "Reservierungseinstellungen",
-    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden und wie lange eine Reservierung dauert. Die Einstellungen gelten für neue Reservierungen.",
+    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden, wie lange eine Reservierung dauert und welche Regeln für Buchungen gelten. Die Einstellungen gelten für neue Reservierungen.",
     "confirmation": {
       "title": "Bestätigung",
       "instant": {
@@ -624,11 +666,29 @@
       "previewRule": "(Regel {{min}}–{{max}})",
       "previewDefault": "(Standarddauer)"
     },
+    "rules": {
+      "title": "Buchungsregeln",
+      "description": "Vorlaufzeit, Buchungshorizont und maximale Gruppengröße gelten nur für Online-Buchungen; das Personal kann jede Reservierung eintragen. Die Pufferzeit gilt für alle Reservierungen.",
+      "leadTime": "Mindest-Vorlaufzeit online",
+      "leadTimeDescription": "Gäste können online bis so viele Minuten vor Beginn buchen, z. B. bei 60 ist um 18:10 die früheste Zeit 19:15. 0: bis zum Beginn.",
+      "bookingHorizon": "Buchungshorizont online",
+      "bookingHorizonDescription": "Wie viele Tage im Voraus Gäste online buchen können.",
+      "daysSuffix": " Tage",
+      "buffer": "Pufferzeit zwischen Reservierungen",
+      "bufferDescription": "Nach jeder Reservierung bleibt der Tisch so lange frei, z. B. zum Abräumen und Eindecken. 0 bis 60 Minuten in 5er-Schritten.",
+      "maxOnlinePartySize": "Maximale Gruppengröße online",
+      "maxOnlinePartySizeDescription": "Größere Gruppen werden gebeten anzurufen. Leer: der größte online buchbare Tisch.",
+      "maxOnlinePartySizePlaceholder": "Größter Tisch"
+    },
     "validation": {
       "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
       "minGuests": "Geben Sie mindestens 1 Gast ein.",
       "minGreaterThanMax": "„Bis“ darf nicht kleiner als „von“ sein.",
-      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel."
+      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel.",
+      "leadTime": "Geben Sie {{min}} bis {{max}} Minuten ein.",
+      "bookingHorizon": "Geben Sie {{min}} bis {{max}} Tage ein.",
+      "buffer": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
+      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer."
     },
     "errors": {
       "title": "Die Einstellungen wurden nicht gespeichert",
@@ -636,7 +696,11 @@
       "invalidDuration": "Die Dauer muss zwischen 15 und 480 Minuten in Schritten von 15 liegen.",
       "invalidMinGuests": "Eine Regel muss bei mindestens 1 Gast beginnen.",
       "minGreaterThanMax": "In einer Regel darf „von“ nicht größer als „bis“ sein.",
-      "overlappingRules": "Die Bereiche der Regeln überschneiden sich."
+      "overlappingRules": "Die Bereiche der Regeln überschneiden sich.",
+      "invalidLeadTime": "Die Vorlaufzeit muss zwischen 0 und 1440 Minuten liegen.",
+      "invalidBookingHorizon": "Der Buchungshorizont muss zwischen 1 und 365 Tagen liegen.",
+      "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
+      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
     },
     "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."

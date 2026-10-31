@@ -31,6 +31,7 @@ public static class PublicRestaurantEndpoints
         ConfirmationMode ConfirmationMode,
         TableSelectionMode TableSelectionMode,
         int MaxOnlinePartySize,
+        int BookingHorizonDays,
         IReadOnlyList<PeriodDto> OpeningHours,
         bool Bookable);
 
@@ -51,7 +52,7 @@ public static class PublicRestaurantEndpoints
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
     /// the guest chooses the table and ignored otherwise. Errors (400): "invalid_date", "invalid_time", "invalid_party_size",
     /// "invalid_name", "contact_required", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language", "table_required",
-    /// "outside_opening_hours", "too_far_ahead", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
+    /// "outside_opening_hours", "too_short_notice", "too_far_ahead", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
     /// </summary>
     public record BookingRequest(
         string? Date,
@@ -114,12 +115,13 @@ public static class PublicRestaurantEndpoints
                 settings.ConfirmationMode,
                 settings.TableSelectionMode,
                 maxOnlinePartySize,
+                settings.BookingHorizonDays,
                 openingHours,
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0);
         });
 
-        // One entry per day of the month. Days in the past and more than 90 days ahead are "closed", like closing days.
-        group.MapGet("/calendar", async (string? month, int guests, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
+        // One entry per day of the month. Days in the past and beyond the booking horizon are "closed", like closing days.
+        group.MapGet("/calendar", async (string? month, int guests, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
         {
             if (!DateOnly.TryParseExact($"{month}-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var first))
             {
@@ -133,11 +135,12 @@ public static class PublicRestaurantEndpoints
             var now = await availability.GetLocalNowAsync();
             var today = now is null ? (DateOnly?)null : DateOnly.FromDateTime(now.Value);
             var duration = await durationPolicy.GetDurationAsync(guests);
+            var horizonDays = (await LoadSettingsAsync(db)).BookingHorizonDays;
             var days = new List<CalendarDay>();
             for (var date = first; date.Month == first.Month; date = date.AddDays(1))
             {
                 var status = "closed";
-                if (today is not null && date >= today && date <= today.Value.AddDays(ReservationRules.MaxOnlineDaysAhead))
+                if (today is not null && date >= today && date <= today.Value.AddDays(horizonDays))
                 {
                     var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online);
                     if (periods.Count > 0)

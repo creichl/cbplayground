@@ -2,14 +2,14 @@ using Cbplayground.Api.Data;
 
 namespace Cbplayground.Api.Reservations;
 
-/// <summary>The fixed rules of reservations, in one place so a change stays small.</summary>
+/// <summary>
+/// The fixed rules of reservations, in one place so a change stays small. The rules a restaurant sets itself (lead time,
+/// booking horizon, buffer, largest online party) are in <see cref="ReservationSettings"/>, with their defaults.
+/// </summary>
 public static class ReservationRules
 {
     /// <summary>Reservations start on a grid of quarter hours (:00, :15, :30, :45).</summary>
     public const int SlotMinutes = 15;
-
-    /// <summary>Guests can book online at most this many days ahead (today plus 90 days). Staff have no limit.</summary>
-    public const int MaxOnlineDaysAhead = 90;
 
     /// <summary>
     /// True: a reservation has to end by the end of its opening window (last start = end of the window − duration).

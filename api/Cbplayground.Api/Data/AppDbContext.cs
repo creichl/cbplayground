@@ -18,6 +18,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
 
+    public DbSet<SpecialDay> SpecialDays => Set<SpecialDay>();
+
+    public DbSet<SpecialDayPeriod> SpecialDayPeriods => Set<SpecialDayPeriod>();
+
     public DbSet<ReservationSettings> ReservationSettings => Set<ReservationSettings>();
 
     public DbSet<DurationRule> DurationRules => Set<DurationRule>();
@@ -59,6 +63,20 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         {
             holidayOverride.HasOne<Tenant>().WithMany().HasForeignKey(o => o.TenantId).OnDelete(DeleteBehavior.Cascade);
             holidayOverride.HasIndex(o => new { o.TenantId, o.Date }).IsUnique();
+        });
+
+        modelBuilder.Entity<SpecialDay>(specialDay =>
+        {
+            specialDay.HasOne<Tenant>().WithMany().HasForeignKey(d => d.TenantId).OnDelete(DeleteBehavior.Cascade);
+            specialDay.HasIndex(d => new { d.TenantId, d.From });
+            specialDay.Property(d => d.Kind).HasConversion<string>().HasMaxLength(20);
+            specialDay.Property(d => d.Note).HasMaxLength(SpecialDay.MaxNoteLength);
+            specialDay.HasMany(d => d.Periods).WithOne().HasForeignKey(p => p.SpecialDayId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<SpecialDayPeriod>(period =>
+        {
+            period.HasOne<Tenant>().WithMany().HasForeignKey(p => p.TenantId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ApplicationUser>(user =>

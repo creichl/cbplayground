@@ -18,6 +18,8 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connect
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<TenantScope>();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+// The clock of the reservation rules ("now" in the restaurant's time zone); the tests replace it.
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<IHolidayProvider, HolidayProvider>();
 builder.Services.AddScoped<IOpeningCalendar, OpeningCalendar>();
 builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
@@ -120,6 +122,7 @@ app.MapStaffEndpoints();
 app.MapAreaEndpoints();
 app.MapTableEndpoints();
 app.MapOpeningHoursEndpoints();
+app.MapSpecialDayEndpoints();
 app.MapReservationSettingsEndpoints();
 app.MapProfileEndpoints();
 app.MapPublicRestaurantEndpoints();

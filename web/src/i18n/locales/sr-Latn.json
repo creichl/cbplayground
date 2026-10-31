@@ -459,6 +459,48 @@
       "copyTo": "Kopiraj vreme dana {{day}} na",
       "copyApply": "Kopiraj"
     },
+    "specialDays": {
+      "title": "Neradni dani i posebno radno vreme",
+      "description": "Kolektivni godišnji odmor, zatvorena društva ili drugačije radno vreme pojedinih dana. Unos ima prednost pred praznicima i redovnim radnim vremenom.",
+      "empty": "Nema predstojećih neradnih dana ni posebnog radnog vremena.",
+      "add": "+ Neradni dani ili posebno radno vreme",
+      "addTitle": "Dodaj neradne dane ili posebno radno vreme",
+      "editTitle": "Izmeni unos",
+      "edit": "Izmeni",
+      "delete": "Obriši",
+      "deleteTitle": "Obrisati unos?",
+      "deleteText": "Za {{dates}} ponovo važe redovno radno vreme i praznici.",
+      "deleteConfirm": "Obriši",
+      "dates": "Period",
+      "datesDescription": "Za jedan dan dvaput kliknite na isti dan.",
+      "kind": "Vrsta",
+      "kinds": {
+        "Closed": "Zatvoreno",
+        "SpecialHours": "Posebno radno vreme"
+      },
+      "periods": "Radno vreme tih dana",
+      "periodsDescription": "Važi za svaki dan perioda. 00:00 kao vreme zatvaranja znači ponoć.",
+      "note": "Napomena",
+      "notePlaceholder": "npr. kolektivni godišnji odmor",
+      "validation": {
+        "dateRequired": "Izaberite period.",
+        "rangeTooLong": "Unos može da obuhvati najviše 366 dana.",
+        "kindRequired": "Izaberite vrstu.",
+        "noteTooLong": "Napomena može imati najviše 100 znakova.",
+        "periodsRequired": "Unesite bar jedan termin.",
+        "overlapping": "Za ove dane već postoji unos. Unosi ne smeju da se preklapaju."
+      },
+      "affected": {
+        "titleClosed_one": "{{count}} rezervacija je u ovom periodu",
+        "titleClosed_few": "{{count}} rezervacije su u ovom periodu",
+        "titleClosed_other": "{{count}} rezervacija je u ovom periodu",
+        "titleSpecialHours_one": "{{count}} rezervacija je van posebnog radnog vremena",
+        "titleSpecialHours_few": "{{count}} rezervacije su van posebnog radnog vremena",
+        "titleSpecialHours_other": "{{count}} rezervacija je van posebnog radnog vremena",
+        "text": "Rezervacije nisu promenjene. Po potrebi sami obavestite goste i otkažite ili pomerite rezervacije u pregledu rezervacija.",
+        "link": "Na pregled rezervacija"
+      }
+    },
     "validation": {
       "required": "Unesite vreme.",
       "startBeforeEnd": "Vreme otvaranja mora biti pre vremena zatvaranja.",
@@ -583,7 +625,7 @@
   },
   "reservationSettings": {
     "title": "Podešavanja rezervacija",
-    "subtitle": "Kako se rezervacije potvrđuju, kako se dodeljuju stolovi i koliko traje rezervacija. Podešavanja važe za nove rezervacije.",
+    "subtitle": "Kako se rezervacije potvrđuju, kako se dodeljuju stolovi, koliko traje rezervacija i koja pravila važe za rezervisanje. Podešavanja važe za nove rezervacije.",
     "confirmation": {
       "title": "Potvrda",
       "instant": {
@@ -624,11 +666,29 @@
       "previewRule": "(pravilo {{min}}–{{max}})",
       "previewDefault": "(podrazumevano trajanje)"
     },
+    "rules": {
+      "title": "Pravila rezervisanja",
+      "description": "Minimalno vreme unapred, period rezervisanja i najveća grupa važe samo za onlajn rezervacije; osoblje može da unese svaku rezervaciju. Pauza između rezervacija važi za sve rezervacije.",
+      "leadTime": "Minimalno vreme unapred (onlajn)",
+      "leadTimeDescription": "Gosti mogu onlajn da rezervišu najkasnije toliko minuta pre početka, npr. sa 60 je u 18:10 najraniji termin 19:15. 0: do samog početka.",
+      "bookingHorizon": "Period rezervisanja (onlajn)",
+      "bookingHorizonDescription": "Koliko dana unapred gosti mogu onlajn da rezervišu.",
+      "daysSuffix": " dana",
+      "buffer": "Pauza između rezervacija",
+      "bufferDescription": "Posle svake rezervacije sto ostaje slobodan toliko vremena, npr. za raspremanje i postavljanje. Od 0 do 60 minuta u koracima od 5.",
+      "maxOnlinePartySize": "Najveća grupa (onlajn)",
+      "maxOnlinePartySizeDescription": "Veće grupe se mole da pozovu telefonom. Prazno: najveći sto koji se može rezervisati onlajn.",
+      "maxOnlinePartySizePlaceholder": "Najveći sto"
+    },
     "validation": {
       "duration": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
       "minGuests": "Unesite najmanje 1 gosta.",
       "minGreaterThanMax": "„Do“ ne sme biti manje od „od“.",
-      "overlap": "Ovaj opseg se preklapa sa drugim pravilom."
+      "overlap": "Ovaj opseg se preklapa sa drugim pravilom.",
+      "leadTime": "Unesite od {{min}} do {{max}} minuta.",
+      "bookingHorizon": "Unesite od {{min}} do {{max}} dana.",
+      "buffer": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
+      "maxOnlinePartySize": "Unesite najmanje 1 gosta ili ostavite polje prazno."
     },
     "errors": {
       "title": "Podešavanja nisu sačuvana",
@@ -636,7 +696,11 @@
       "invalidDuration": "Trajanje mora biti između 15 i 480 minuta u koracima od 15.",
       "invalidMinGuests": "Pravilo mora počinjati od najmanje 1 gosta.",
       "minGreaterThanMax": "U pravilu „od“ ne sme biti veće od „do“.",
-      "overlappingRules": "Opsezi pravila se preklapaju."
+      "overlappingRules": "Opsezi pravila se preklapaju.",
+      "invalidLeadTime": "Minimalno vreme unapred mora biti između 0 i 1440 minuta.",
+      "invalidBookingHorizon": "Period rezervisanja mora biti između 1 i 365 dana.",
+      "invalidBuffer": "Pauza mora biti između 0 i 60 minuta u koracima od 5.",
+      "invalidMaxPartySize": "Najveća grupa onlajn mora imati najmanje 1 gosta."
     },
     "save": "Sačuvaj",
     "saved": "Podešavanja rezervacija su sačuvana."

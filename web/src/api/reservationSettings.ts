@@ -17,6 +17,14 @@ export type ReservationSettings = {
   tableSelectionMode: TableSelectionMode
   defaultDurationMinutes: number
   durationRules: DurationRule[]
+  /** Online, a reservation has to start at least this many minutes from now. */
+  minLeadTimeMinutes: number
+  /** Online, a reservation can start at most this many days after today. */
+  bookingHorizonDays: number
+  /** After every reservation its table stays occupied for this many minutes. */
+  bufferMinutes: number
+  /** The largest party that can book online; null: the largest table that can be booked online. */
+  maxOnlinePartySize: number | null
 }
 
 /** Error codes of PUT /api/admin/reservation-settings. */
@@ -26,9 +34,18 @@ export type ReservationSettingsError =
   | 'invalid_min_guests'
   | 'min_greater_than_max'
   | 'overlapping_rules'
+  | 'invalid_lead_time'
+  | 'invalid_booking_horizon'
+  | 'invalid_buffer'
+  | 'invalid_max_party_size'
 
 /** Durations are 15 to 480 minutes in steps of 15, as on the server. */
 export const durationLimits = { min: 15, max: 480, step: 15 } as const
+
+/** The limits of the booking rules, as on the server. */
+export const leadTimeLimits = { min: 0, max: 1440 } as const
+export const bookingHorizonLimits = { min: 1, max: 365 } as const
+export const bufferLimits = { min: 0, max: 60, step: 5 } as const
 
 export function isValidDuration(minutes: number) {
   return Number.isInteger(minutes) && minutes >= durationLimits.min && minutes <= durationLimits.max && minutes % durationLimits.step === 0

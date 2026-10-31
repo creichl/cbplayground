@@ -14,9 +14,6 @@ import { PartySizePicker } from './PartySizePicker.tsx'
 import { TablePicker } from './TablePicker.tsx'
 import { TimeSlotGrid } from './TimeSlotGrid.tsx'
 
-/** Online bookings reach at most this many days ahead, as on the server. */
-const maxDaysAhead = 90
-
 const steps = ['guests', 'date', 'time', 'table', 'details'] as const
 type Step = (typeof steps)[number]
 
@@ -43,6 +40,7 @@ const timeErrors: Record<string, ParseKeys> = {
   table_unavailable: 'booking.errors.tableTaken',
   outside_opening_hours: 'booking.errors.timeNotBookable',
   in_the_past: 'booking.errors.timeNotBookable',
+  too_short_notice: 'booking.errors.timeNotBookable',
   too_far_ahead: 'booking.errors.timeNotBookable',
 }
 
@@ -174,7 +172,7 @@ function BookingSteps({ slug, restaurant, timeZoneId }: BookingFlowProps & { tim
   const booking = useCreateBooking(slug)
 
   const today = todayIn(timeZoneId)
-  const lastDay = addDays(today, maxDaysAhead)
+  const lastDay = addDays(today, restaurant.bookingHorizonDays)
   const state = readState(searchParams, restaurant, today, lastDay)
   const { step, guests, date, time, tableId } = state
   // Why the guest has to pick the time again; it belongs to the history entry of the time step.
