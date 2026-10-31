@@ -150,13 +150,12 @@ function BookingFlow({ slug, restaurant, timeZoneId }: BookingFlowProps) {
 
   // After a change of step, the focus moves to the new step's heading, so keyboard and screen reader users follow along.
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const firstRender = useRef(true)
+  const focusedStep = useRef(step)
   useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false
-      return
+    if (focusedStep.current !== step) {
+      focusedStep.current = step
+      headingRef.current?.focus()
     }
-    headingRef.current?.focus()
   }, [step])
 
   const goTo = (next: Step) => {
