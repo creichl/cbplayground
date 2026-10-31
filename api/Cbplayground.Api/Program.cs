@@ -86,14 +86,8 @@ if (app.Environment.IsDevelopment())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
-    if (!db.Tenants.Any())
-    {
-        db.Tenants.AddRange(
-            new Tenant { Name = "Gasthaus zur Linde", Slug = "zur-linde", CreatedAt = DateTime.UtcNow },
-            new Tenant { Name = "Kafana Dunav", Slug = "kafana-dunav", CreatedAt = DateTime.UtcNow });
-        db.SaveChanges();
-    }
-
+    // Demo restaurants with their setup, then the demo users of these restaurants. Both only add what is missing.
+    await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
     await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, app.Configuration);
 }
 

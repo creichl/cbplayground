@@ -185,7 +185,7 @@ public static class AreaEndpoints
         area.OnlineCapacityPercent);
 
     /// <summary>The folder of the uploaded images, "Uploads:Path" in the configuration, relative to the content root.</summary>
-    private static string FloorPlanDirectory(IConfiguration configuration, IWebHostEnvironment environment) =>
+    internal static string FloorPlanDirectory(IConfiguration configuration, IWebHostEnvironment environment) =>
         Path.GetFullPath(Path.Combine(environment.ContentRootPath, configuration["Uploads:Path"] ?? "data/uploads"));
 
     private static void DeleteFloorPlanFile(IConfiguration configuration, IWebHostEnvironment environment, string? fileName)
