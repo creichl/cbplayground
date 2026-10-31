@@ -10,6 +10,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<Area> Areas => Set<Area>();
+
+    public DbSet<Table> Tables => Set<Table>();
+
+    public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
+
+    public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
+
+    public DbSet<ReservationSettings> ReservationSettings => Set<ReservationSettings>();
+
+    public DbSet<DurationRule> DurationRules => Set<DurationRule>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -23,6 +35,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         modelBuilder.Entity<Tenant>(tenant =>
         {
             tenant.HasIndex(t => t.Slug).IsUnique();
+            tenant.Property(t => t.CountryCode).HasMaxLength(2);
+            tenant.Property(t => t.RegionCode).HasMaxLength(5);
+            tenant.Property(t => t.TimeZoneId).HasMaxLength(64);
+        });
+
+        modelBuilder.Entity<OpeningPeriod>(period =>
+        {
+            period.HasOne<Tenant>().WithMany().HasForeignKey(p => p.TenantId).OnDelete(DeleteBehavior.Cascade);
+            period.HasIndex(p => new { p.TenantId, p.DayOfWeek, p.Start });
+        });
+
+        modelBuilder.Entity<HolidayOverride>(holidayOverride =>
+        {
+            holidayOverride.HasOne<Tenant>().WithMany().HasForeignKey(o => o.TenantId).OnDelete(DeleteBehavior.Cascade);
+            holidayOverride.HasIndex(o => new { o.TenantId, o.Date }).IsUnique();
         });
 
         modelBuilder.Entity<ApplicationUser>(user =>
@@ -31,6 +58,46 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(u => u.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Area>(area =>
+        {
+            area.Property(a => a.Name).HasMaxLength(100);
+            area.Property(a => a.FloorPlanFileName).HasMaxLength(100);
+            area.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(a => a.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Table>(table =>
+        {
+            table.Property(t => t.Number).HasMaxLength(20);
+            table.HasIndex(t => new { t.TenantId, t.Number }).IsUnique();
+            table.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(t => t.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Deleting an area deletes its tables.
+            table.HasOne<Area>()
+                .WithMany()
+                .HasForeignKey(t => t.AreaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReservationSettings>(settings =>
+        {
+            // At most one row per restaurant.
+            settings.HasIndex(s => s.TenantId).IsUnique();
+            settings.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Cascade);
+            settings.Property(s => s.ConfirmationMode).HasConversion<string>();
+            settings.Property(s => s.TableSelectionMode).HasConversion<string>();
+        });
+
+        modelBuilder.Entity<DurationRule>(rule =>
+        {
+            rule.HasIndex(r => r.TenantId);
+            rule.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Cascade);
         });
 
         // The roles are fixed, so the migrations create them in every environment.

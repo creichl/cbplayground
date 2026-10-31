@@ -13,7 +13,10 @@
   },
   "common": {
     "retry": "Erneut versuchen",
-    "backToStart": "Zurück zur Startseite"
+    "backToStart": "Zurück zur Startseite",
+    "cancel": "Abbrechen",
+    "save": "Speichern",
+    "close": "Schließen"
   },
   "auth": {
     "userMenu": "Kontomenü",
@@ -64,6 +67,172 @@
       "staff": "Mitarbeiter"
     }
   },
+  "staff": {
+    "title": "Mitarbeiter",
+    "subtitle": "Die Personen, die sich für Ihr Restaurant anmelden.",
+    "you": "Sie",
+    "actions": "Aktionen",
+    "actionsFor": "Aktionen für {{name}}",
+    "fields": {
+      "name": "Name",
+      "email": "E-Mail",
+      "role": "Rolle",
+      "status": "Status",
+      "startPassword": "Startpasswort",
+      "newPassword": "Neues Passwort"
+    },
+    "roles": {
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Deaktiviert"
+    },
+    "passwordRules": "Mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.",
+    "create": {
+      "button": "Mitarbeiter anlegen",
+      "title": "Mitarbeiter anlegen",
+      "submit": "Anlegen"
+    },
+    "edit": {
+      "button": "Bearbeiten",
+      "title": "Mitarbeiter bearbeiten"
+    },
+    "password": {
+      "button": "Passwort setzen",
+      "title": "Neues Passwort für {{name}}",
+      "text": "Geben Sie das neue Passwort selbst an den Mitarbeiter weiter. Bestehende Sitzungen werden abgemeldet.",
+      "submit": "Passwort setzen"
+    },
+    "deactivate": "Deaktivieren",
+    "activate": "Aktivieren",
+    "validation": {
+      "name": "Bitte geben Sie einen Namen ein.",
+      "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "password": "Bitte geben Sie ein Passwort ein."
+    },
+    "notifications": {
+      "created": "{{name}} wurde angelegt.",
+      "updated": "Die Änderungen an {{name}} wurden gespeichert.",
+      "passwordSet": "Das neue Passwort für {{name}} wurde gesetzt.",
+      "activated": "{{name}} wurde aktiviert.",
+      "deactivated": "{{name}} wurde deaktiviert und abgemeldet."
+    },
+    "errors": {
+      "emailTaken": "Diese E-Mail-Adresse wird bereits von einem anderen Konto verwendet.",
+      "invalidEmail": "Diese E-Mail-Adresse ist ungültig.",
+      "passwordTooWeak": "Das Passwort ist zu schwach. Es braucht mindestens 6 Zeichen, mit Groß- und Kleinbuchstaben, einer Ziffer und einem Sonderzeichen.",
+      "lastAdmin": "Das ist der letzte aktive Admin des Restaurants. Machen Sie zuerst einen anderen Mitarbeiter zum Admin.",
+      "cannotDeactivateSelf": "Sie können Ihr eigenes Konto nicht deaktivieren.",
+      "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
+    }
+  },
+  "openingHours": {
+    "save": "Speichern",
+    "saved": "Gespeichert.",
+    "open": "Geöffnet",
+    "closed": "Geschlossen",
+    "weekdays": {
+      "monday": "Montag",
+      "tuesday": "Dienstag",
+      "wednesday": "Mittwoch",
+      "thursday": "Donnerstag",
+      "friday": "Freitag",
+      "saturday": "Samstag",
+      "sunday": "Sonntag"
+    },
+    "location": {
+      "title": "Standort",
+      "description": "Die gesetzlichen Feiertage richten sich nach dem Land und in Deutschland nach dem Bundesland.",
+      "country": "Land",
+      "region": "Bundesland",
+      "countryRequired": "Bitte wählen Sie ein Land.",
+      "regionRequired": "Bitte wählen Sie ein Bundesland.",
+      "invalid": "Bitte wählen Sie ein gültiges Land und bei Deutschland ein Bundesland."
+    },
+    "countries": {
+      "DE": "Deutschland",
+      "AT": "Österreich",
+      "RS": "Serbien"
+    },
+    "regions": {
+      "DE-BW": "Baden-Württemberg",
+      "DE-BY": "Bayern",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hessen",
+      "DE-MV": "Mecklenburg-Vorpommern",
+      "DE-NI": "Niedersachsen",
+      "DE-NW": "Nordrhein-Westfalen",
+      "DE-RP": "Rheinland-Pfalz",
+      "DE-SL": "Saarland",
+      "DE-SN": "Sachsen",
+      "DE-ST": "Sachsen-Anhalt",
+      "DE-SH": "Schleswig-Holstein",
+      "DE-TH": "Thüringen"
+    },
+    "weekly": {
+      "title": "Reguläre Öffnungszeiten",
+      "description": "Legen Sie je Tag ein oder mehrere Zeitfenster fest. 00:00 als Ende steht für Mitternacht.",
+      "start": "Öffnet um",
+      "end": "Schließt um",
+      "addPeriod": "+ Zeitfenster",
+      "removePeriod": "Zeitfenster entfernen",
+      "copy": "Zeiten auf andere Tage kopieren",
+      "copyTo": "Zeiten von {{day}} kopieren nach",
+      "copyApply": "Kopieren"
+    },
+    "validation": {
+      "required": "Bitte geben Sie eine Uhrzeit ein.",
+      "startBeforeEnd": "Der Beginn muss vor dem Ende liegen.",
+      "overlap": "Zeitfenster am selben Tag dürfen sich nicht überschneiden.",
+      "invalidTime": "Bitte geben Sie gültige Uhrzeiten ein (HH:MM)."
+    },
+    "holidays": {
+      "title": "Kommende Feiertage",
+      "description": "Die gesetzlichen Feiertage der nächsten 12 Monate. An Feiertagen ist geschlossen, außer Sie öffnen den Tag; dann gelten die normalen Zeiten des Wochentags.",
+      "noLocation": "Wählen Sie oben das Land, um die Feiertage zu sehen.",
+      "empty": "In den nächsten 12 Monaten gibt es keine Feiertage."
+    },
+    "holidayNames": {
+      "newYear": "Neujahr",
+      "newYear2": "Neujahr (2. Tag)",
+      "epiphany": "Heilige Drei Könige",
+      "womensDay": "Internationaler Frauentag",
+      "goodFriday": "Karfreitag",
+      "easterSunday": "Ostersonntag",
+      "easterMonday": "Ostermontag",
+      "labourDay": "Tag der Arbeit",
+      "labourDay2": "Tag der Arbeit (2. Tag)",
+      "stateHoliday": "Staatsfeiertag",
+      "ascension": "Christi Himmelfahrt",
+      "whitSunday": "Pfingstsonntag",
+      "whitMonday": "Pfingstmontag",
+      "corpusChristi": "Fronleichnam",
+      "assumption": "Mariä Himmelfahrt",
+      "childrensDay": "Weltkindertag",
+      "germanUnity": "Tag der Deutschen Einheit",
+      "reformationDay": "Reformationstag",
+      "allSaints": "Allerheiligen",
+      "repentanceDay": "Buß- und Bettag",
+      "nationalDay": "Nationalfeiertag",
+      "immaculateConception": "Mariä Empfängnis",
+      "christmasDay": "1. Weihnachtsfeiertag",
+      "secondChristmasDay": "2. Weihnachtsfeiertag",
+      "stStephensDay": "Stefanitag",
+      "orthodoxChristmas": "Orthodoxes Weihnachtsfest",
+      "statehoodDay": "Staatsfeiertag (Sretenje)",
+      "statehoodDay2": "Staatsfeiertag (2. Tag)",
+      "orthodoxGoodFriday": "Orthodoxer Karfreitag",
+      "orthodoxHolySaturday": "Orthodoxer Karsamstag",
+      "orthodoxEaster": "Orthodoxer Ostersonntag",
+      "orthodoxEasterMonday": "Orthodoxer Ostermontag",
+      "armisticeDay": "Waffenstillstandstag (Erster Weltkrieg)"
+    }
+  },
   "frontdesk": {
     "label": "Front desk",
     "today": "Heute"
@@ -75,5 +244,122 @@
     "label": "Fehler 404",
     "title": "Seite nicht gefunden",
     "text": "Die gesuchte Seite gibt es nicht oder sie wurde verschoben."
+  },
+  "areas": {
+    "addArea": "Bereich hinzufügen",
+    "create": "Anlegen",
+    "emptyTitle": "Noch keine Bereiche",
+    "emptyText": "Legen Sie einen Bereich an, z. B. die Gaststube oder die Terrasse, und laden Sie seinen Grundriss hoch.",
+    "addTable": "Tisch hinzufügen",
+    "dragHint": "Ziehen Sie Tische, um sie zu verschieben. Klicken Sie auf einen Tisch, um ihn zu bearbeiten.",
+    "capacity": "Sitzplätze: {{seats}}, davon online buchbar: {{online}} ({{percent}} %)",
+    "capacityOnlineBlocked": "Sitzplätze: {{seats}}, für Online-Buchungen gesperrt",
+    "floorPlanAlt": "Grundriss",
+    "tableMarker": "Tisch {{number}}, Sitzplätze: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Grundriss hochladen",
+      "emptyText": "Ziehen Sie ein Bild des Grundrisses dieses Bereichs hierher. Darauf platzieren Sie anschließend die Tische.",
+      "choose": "Bild auswählen",
+      "hint": "PNG, JPEG oder WebP, höchstens 10 MB",
+      "replace": "Grundriss ersetzen"
+    },
+    "area": {
+      "title": "Bereich",
+      "name": "Name",
+      "namePlaceholder": "z. B. Terrasse",
+      "onlineBookingEnabled": "Online-Buchung",
+      "onlineBookingEnabledHint": "Ausgeschaltet können Gäste diesen Bereich nicht online buchen.",
+      "onlineCapacityPercent": "Online-Kontingent",
+      "onlineCapacityPercentHint": "Anteil der Sitzplätze, den Gäste online buchen können. Der Rest bleibt für Telefon- und Laufkundschaft frei.",
+      "saved": "Der Bereich wurde gespeichert.",
+      "order": "Reihenfolge",
+      "moveLeft": "Nach links",
+      "moveRight": "Nach rechts",
+      "delete": "Bereich löschen",
+      "deleteTitle": "„{{name}}“ löschen?",
+      "deleteText": "Die Tische des Bereichs ({{tables}}) und sein Grundriss werden ebenfalls gelöscht. Das lässt sich nicht rückgängig machen.",
+      "deleteConfirm": "Löschen"
+    },
+    "table": {
+      "title": "Tisch {{number}}",
+      "number": "Tischnummer",
+      "seats": "Sitzplätze",
+      "saved": "Der Tisch wurde gespeichert.",
+      "delete": "Tisch löschen"
+    },
+    "errors": {
+      "areaNameInvalid": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
+      "areaNotFound": "Diesen Bereich gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "areaOrderInvalid": "Die Reihenfolge konnte nicht gespeichert werden, weil sich die Bereiche geändert haben. Bitte laden Sie die Seite neu.",
+      "percentInvalid": "Bitte geben Sie eine ganze Zahl von 0 bis 100 ein.",
+      "floorPlanTooLarge": "Das Bild ist größer als 10 MB.",
+      "floorPlanTypeInvalid": "Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild.",
+      "tableNumberInvalid": "Bitte geben Sie eine Tischnummer mit höchstens 20 Zeichen ein.",
+      "tableNumberTaken": "Ein anderer Tisch hat bereits diese Nummer.",
+      "tableNotFound": "Diesen Tisch gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "seatsInvalid": "Ein Tisch braucht mindestens 1 Sitzplatz.",
+      "positionInvalid": "Ein Tisch muss auf dem Grundriss liegen.",
+      "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden"
+    }
+  },
+  "reservationSettings": {
+    "title": "Reservierungseinstellungen",
+    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden und wie lange eine Reservierung dauert. Die Einstellungen gelten für neue Reservierungen.",
+    "confirmation": {
+      "title": "Bestätigung",
+      "instant": {
+        "label": "Sofortbestätigung",
+        "description": "Die Reservierung ist bestätigt, sobald der Gast bucht."
+      },
+      "request": {
+        "label": "Anfrage",
+        "description": "Der Gast schickt eine Anfrage; das Restaurant muss sie freigeben, bevor sie bestätigt ist."
+      }
+    },
+    "tableSelection": {
+      "title": "Tischzuweisung",
+      "guestChooses": {
+        "label": "Gast wählt den Tisch",
+        "description": "Der Gast wählt beim Buchen einen freien Tisch auf dem Raumplan."
+      },
+      "systemAssigns": {
+        "label": "System weist den Tisch zu",
+        "description": "Der Gast wählt nur Datum, Uhrzeit und Personenzahl; das System wählt einen passenden freien Tisch."
+      }
+    },
+    "duration": {
+      "title": "Dauer",
+      "default": "Standarddauer",
+      "defaultDescription": "Gilt, wenn keine Regel zur Personenzahl passt.",
+      "minutesSuffix": " min",
+      "rules": "Regeln nach Personenzahl",
+      "rulesDescription": "Optional. Die Bereiche dürfen sich nicht überschneiden; für Personenzahlen zwischen den Regeln gilt die Standarddauer.",
+      "from": "Von (Gäste)",
+      "to": "Bis (Gäste)",
+      "minutes": "Minuten",
+      "addRule": "+ Regel",
+      "deleteRule": "Regel löschen",
+      "noRules": "Noch keine Regeln: Jede Reservierung dauert die Standarddauer.",
+      "previewGuests": "Vorschau für Personenzahl",
+      "previewResult": "Bei einer Personenzahl von {{guests}} dauert eine Reservierung {{minutes}} Minuten.",
+      "previewRule": "(Regel {{min}}–{{max}})",
+      "previewDefault": "(Standarddauer)"
+    },
+    "validation": {
+      "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
+      "minGuests": "Geben Sie mindestens 1 Gast ein.",
+      "minGreaterThanMax": "„Bis“ darf nicht kleiner als „von“ sein.",
+      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel."
+    },
+    "errors": {
+      "title": "Die Einstellungen wurden nicht gespeichert",
+      "invalidMode": "Bitte wählen Sie einen Bestätigungsmodus und eine Tischzuweisung.",
+      "invalidDuration": "Die Dauer muss zwischen 15 und 480 Minuten in Schritten von 15 liegen.",
+      "invalidMinGuests": "Eine Regel muss bei mindestens 1 Gast beginnen.",
+      "minGreaterThanMax": "In einer Regel darf „von“ nicht größer als „bis“ sein.",
+      "overlappingRules": "Die Bereiche der Regeln überschneiden sich."
+    },
+    "save": "Speichern",
+    "saved": "Die Reservierungseinstellungen wurden gespeichert."
   }
 }

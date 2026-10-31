@@ -1,6 +1,8 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Cbplayground.Api.OpeningHours;
+using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -13,6 +15,9 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connect
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
+builder.Services.AddSingleton<IHolidayProvider, HolidayProvider>();
+builder.Services.AddScoped<IOpeningCalendar, OpeningCalendar>();
+builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
 
 // AddIdentity registers the services only; there is no public registration endpoint (no MapIdentityApi).
 builder.Services
@@ -24,7 +29,13 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddClaimsPrincipalFactory<TenantClaimsPrincipalFactory>();
+    .AddClaimsPrincipalFactory<TenantClaimsPrincipalFactory>()
+    // Token providers for the password reset that a Tenant Admin does in the staff management.
+    .AddDefaultTokenProviders();
+
+// Check the security stamp on every request: a deactivated user (or one whose password was set anew)
+// is signed out on their next request, and role changes apply right away.
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -85,6 +96,11 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapStaffEndpoints();
+app.MapAreaEndpoints();
+app.MapTableEndpoints();
+app.MapOpeningHoursEndpoints();
+app.MapReservationSettingsEndpoints();
 
 app.Run();
 

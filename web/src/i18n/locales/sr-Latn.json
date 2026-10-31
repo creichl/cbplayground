@@ -13,7 +13,10 @@
   },
   "common": {
     "retry": "Pokušajte ponovo",
-    "backToStart": "Nazad na početnu stranu"
+    "backToStart": "Nazad na početnu stranu",
+    "cancel": "Otkaži",
+    "save": "Sačuvaj",
+    "close": "Zatvori"
   },
   "auth": {
     "userMenu": "Meni naloga",
@@ -64,6 +67,172 @@
       "staff": "Zaposleni"
     }
   },
+  "staff": {
+    "title": "Zaposleni",
+    "subtitle": "Osobe koje se prijavljuju za vaš restoran.",
+    "you": "Vi",
+    "actions": "Radnje",
+    "actionsFor": "Radnje za {{name}}",
+    "fields": {
+      "name": "Ime",
+      "email": "Imejl",
+      "role": "Uloga",
+      "status": "Status",
+      "startPassword": "Početna lozinka",
+      "newPassword": "Nova lozinka"
+    },
+    "roles": {
+      "tenantAdmin": "Administrator",
+      "frontDesk": "Recepcija"
+    },
+    "status": {
+      "active": "Aktivan",
+      "inactive": "Deaktiviran"
+    },
+    "passwordRules": "Najmanje 6 znakova, sa velikim i malim slovima, cifrom i specijalnim znakom.",
+    "create": {
+      "button": "Dodaj zaposlenog",
+      "title": "Dodaj zaposlenog",
+      "submit": "Dodaj"
+    },
+    "edit": {
+      "button": "Izmeni",
+      "title": "Izmeni zaposlenog"
+    },
+    "password": {
+      "button": "Postavi lozinku",
+      "title": "Nova lozinka za {{name}}",
+      "text": "Novu lozinku lično prosledite zaposlenom. Postojeće sesije biće odjavljene.",
+      "submit": "Postavi lozinku"
+    },
+    "deactivate": "Deaktiviraj",
+    "activate": "Aktiviraj",
+    "validation": {
+      "name": "Unesite ime.",
+      "email": "Unesite ispravnu imejl adresu.",
+      "password": "Unesite lozinku."
+    },
+    "notifications": {
+      "created": "{{name}} je dodat.",
+      "updated": "Izmene za {{name}} su sačuvane.",
+      "passwordSet": "Nova lozinka za {{name}} je postavljena.",
+      "activated": "{{name}} je aktiviran.",
+      "deactivated": "{{name}} je deaktiviran i odjavljen."
+    },
+    "errors": {
+      "emailTaken": "Ovu imejl adresu već koristi drugi nalog.",
+      "invalidEmail": "Ova imejl adresa nije ispravna.",
+      "passwordTooWeak": "Lozinka je preslaba. Potrebno je najmanje 6 znakova, sa velikim i malim slovima, cifrom i specijalnim znakom.",
+      "lastAdmin": "Ovo je poslednji aktivni administrator restorana. Najpre postavite drugog zaposlenog za administratora.",
+      "cannotDeactivateSelf": "Ne možete deaktivirati sopstveni nalog.",
+      "actionFailed": "Izmena nije sačuvana. Pokušajte ponovo."
+    }
+  },
+  "openingHours": {
+    "save": "Sačuvaj",
+    "saved": "Sačuvano.",
+    "open": "Otvoreno",
+    "closed": "Zatvoreno",
+    "weekdays": {
+      "monday": "Ponedeljak",
+      "tuesday": "Utorak",
+      "wednesday": "Sreda",
+      "thursday": "Četvrtak",
+      "friday": "Petak",
+      "saturday": "Subota",
+      "sunday": "Nedelja"
+    },
+    "location": {
+      "title": "Lokacija",
+      "description": "Državni praznici zavise od zemlje, a u Nemačkoj i od savezne pokrajine.",
+      "country": "Zemlja",
+      "region": "Savezna pokrajina",
+      "countryRequired": "Izaberite zemlju.",
+      "regionRequired": "Izaberite saveznu pokrajinu.",
+      "invalid": "Izaberite važeću zemlju, a za Nemačku i saveznu pokrajinu."
+    },
+    "countries": {
+      "DE": "Nemačka",
+      "AT": "Austrija",
+      "RS": "Srbija"
+    },
+    "regions": {
+      "DE-BW": "Baden-Virtemberg",
+      "DE-BY": "Bavarska",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hesen",
+      "DE-MV": "Meklenburg-Prednja Pomeranija",
+      "DE-NI": "Donja Saksonija",
+      "DE-NW": "Severna Rajna-Vestfalija",
+      "DE-RP": "Rajna-Palatinat",
+      "DE-SL": "Sarland",
+      "DE-SN": "Saksonija",
+      "DE-ST": "Saksonija-Anhalt",
+      "DE-SH": "Šlezvig-Holštajn",
+      "DE-TH": "Tiringija"
+    },
+    "weekly": {
+      "title": "Redovno radno vreme",
+      "description": "Za svaki dan unesite jedan ili više termina. 00:00 kao vreme zatvaranja znači ponoć.",
+      "start": "Otvara se u",
+      "end": "Zatvara se u",
+      "addPeriod": "+ Termin",
+      "removePeriod": "Ukloni termin",
+      "copy": "Kopiraj vreme na druge dane",
+      "copyTo": "Kopiraj vreme dana {{day}} na",
+      "copyApply": "Kopiraj"
+    },
+    "validation": {
+      "required": "Unesite vreme.",
+      "startBeforeEnd": "Vreme otvaranja mora biti pre vremena zatvaranja.",
+      "overlap": "Termini istog dana ne smeju da se preklapaju.",
+      "invalidTime": "Unesite ispravna vremena (HH:MM)."
+    },
+    "holidays": {
+      "title": "Predstojeći praznici",
+      "description": "Državni praznici u narednih 12 meseci. Na praznike je restoran zatvoren, osim ako ga otvorite; tada važi redovno radno vreme tog dana u nedelji.",
+      "noLocation": "Izaberite zemlju iznad da biste videli praznike.",
+      "empty": "U narednih 12 meseci nema praznika."
+    },
+    "holidayNames": {
+      "newYear": "Nova godina",
+      "newYear2": "Nova godina (drugi dan)",
+      "epiphany": "Sveta tri kralja",
+      "womensDay": "Međunarodni dan žena",
+      "goodFriday": "Veliki petak",
+      "easterSunday": "Uskrs",
+      "easterMonday": "Uskršnji ponedeljak",
+      "labourDay": "Praznik rada",
+      "labourDay2": "Praznik rada (drugi dan)",
+      "stateHoliday": "Državni praznik (Praznik rada)",
+      "ascension": "Vaznesenje Hristovo",
+      "whitSunday": "Duhovi",
+      "whitMonday": "Duhovski ponedeljak",
+      "corpusChristi": "Brašančevo",
+      "assumption": "Velika Gospa",
+      "childrensDay": "Svetski dan deteta",
+      "germanUnity": "Dan nemačkog jedinstva",
+      "reformationDay": "Dan reformacije",
+      "allSaints": "Svi sveti",
+      "repentanceDay": "Dan pokajanja i molitve",
+      "nationalDay": "Nacionalni praznik Austrije",
+      "immaculateConception": "Bezgrešno začeće",
+      "christmasDay": "Božić (prvi dan)",
+      "secondChristmasDay": "Božić (drugi dan)",
+      "stStephensDay": "Sveti Stefan",
+      "orthodoxChristmas": "Božić",
+      "statehoodDay": "Sretenje – Dan državnosti Srbije",
+      "statehoodDay2": "Dan državnosti (drugi dan)",
+      "orthodoxGoodFriday": "Veliki petak",
+      "orthodoxHolySaturday": "Velika subota",
+      "orthodoxEaster": "Vaskrs",
+      "orthodoxEasterMonday": "Vaskršnji ponedeljak",
+      "armisticeDay": "Dan primirja u Prvom svetskom ratu"
+    }
+  },
   "frontdesk": {
     "label": "Recepcija",
     "today": "Danas"
@@ -75,5 +244,122 @@
     "label": "Greška 404",
     "title": "Stranica nije pronađena",
     "text": "Stranica koju tražite ne postoji ili je premeštena."
+  },
+  "areas": {
+    "addArea": "Dodaj prostor",
+    "create": "Kreiraj",
+    "emptyTitle": "Još nema prostora",
+    "emptyText": "Kreirajte prostor, npr. salu ili terasu, i otpremite njegov tlocrt.",
+    "addTable": "Dodaj sto",
+    "dragHint": "Prevucite sto da biste ga pomerili. Kliknite na sto da biste ga izmenili.",
+    "capacity": "Mesta: {{seats}}, od toga online: {{online}} ({{percent}} %)",
+    "capacityOnlineBlocked": "Mesta: {{seats}}, blokirano za online rezervacije",
+    "floorPlanAlt": "Tlocrt",
+    "tableMarker": "Sto {{number}}, mesta: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Otpremite tlocrt",
+      "emptyText": "Prevucite ovde sliku tlocrta ovog prostora. Na njoj zatim postavljate stolove.",
+      "choose": "Izaberi sliku",
+      "hint": "PNG, JPEG ili WebP, najviše 10 MB",
+      "replace": "Zameni tlocrt"
+    },
+    "area": {
+      "title": "Prostor",
+      "name": "Naziv",
+      "namePlaceholder": "npr. Terasa",
+      "onlineBookingEnabled": "Online rezervacija",
+      "onlineBookingEnabledHint": "Kada je isključeno, gosti ne mogu online da rezervišu ovaj prostor.",
+      "onlineCapacityPercent": "Online kvota",
+      "onlineCapacityPercentHint": "Udeo mesta koji gosti mogu da rezervišu online. Ostatak ostaje slobodan za telefonske rezervacije i goste bez rezervacije.",
+      "saved": "Prostor je sačuvan.",
+      "order": "Redosled",
+      "moveLeft": "Pomeri levo",
+      "moveRight": "Pomeri desno",
+      "delete": "Obriši prostor",
+      "deleteTitle": "Obrisati „{{name}}“?",
+      "deleteText": "Stolovi ovog prostora ({{tables}}) i njegov tlocrt biće takođe obrisani. Ovo ne može da se poništi.",
+      "deleteConfirm": "Obriši"
+    },
+    "table": {
+      "title": "Sto {{number}}",
+      "number": "Broj stola",
+      "seats": "Broj mesta",
+      "saved": "Sto je sačuvan.",
+      "delete": "Obriši sto"
+    },
+    "errors": {
+      "areaNameInvalid": "Unesite naziv od najviše 100 znakova.",
+      "areaNotFound": "Ovaj prostor više ne postoji. Ponovo učitajte stranicu.",
+      "areaOrderInvalid": "Redosled nije mogao da se sačuva jer su se prostori promenili. Ponovo učitajte stranicu.",
+      "percentInvalid": "Unesite ceo broj od 0 do 100.",
+      "floorPlanTooLarge": "Slika je veća od 10 MB.",
+      "floorPlanTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku.",
+      "tableNumberInvalid": "Unesite broj stola od najviše 20 znakova.",
+      "tableNumberTaken": "Drugi sto već ima ovaj broj.",
+      "tableNotFound": "Ovaj sto više ne postoji. Ponovo učitajte stranicu.",
+      "seatsInvalid": "Sto mora da ima najmanje 1 mesto.",
+      "positionInvalid": "Sto mora da bude na tlocrtu.",
+      "positionsNotSaved": "Položaji stolova nisu mogli da se sačuvaju"
+    }
+  },
+  "reservationSettings": {
+    "title": "Podešavanja rezervacija",
+    "subtitle": "Kako se rezervacije potvrđuju, kako se dodeljuju stolovi i koliko traje rezervacija. Podešavanja važe za nove rezervacije.",
+    "confirmation": {
+      "title": "Potvrda",
+      "instant": {
+        "label": "Trenutna potvrda",
+        "description": "Rezervacija je potvrđena čim gost rezerviše."
+      },
+      "request": {
+        "label": "Zahtev",
+        "description": "Gost šalje zahtev; restoran mora da ga odobri pre nego što bude potvrđen."
+      }
+    },
+    "tableSelection": {
+      "title": "Dodela stola",
+      "guestChooses": {
+        "label": "Gost bira sto",
+        "description": "Gost pri rezervaciji bira slobodan sto na planu prostora."
+      },
+      "systemAssigns": {
+        "label": "Sistem dodeljuje sto",
+        "description": "Gost bira samo datum, vreme i broj gostiju; sistem bira odgovarajući slobodan sto."
+      }
+    },
+    "duration": {
+      "title": "Trajanje",
+      "default": "Podrazumevano trajanje",
+      "defaultDescription": "Važi kada nijedno pravilo ne odgovara broju gostiju.",
+      "minutesSuffix": " min",
+      "rules": "Pravila prema broju gostiju",
+      "rulesDescription": "Opciono. Opsezi ne smeju da se preklapaju; za broj gostiju između pravila važi podrazumevano trajanje.",
+      "from": "Od (gostiju)",
+      "to": "Do (gostiju)",
+      "minutes": "Minuti",
+      "addRule": "+ Pravilo",
+      "deleteRule": "Obriši pravilo",
+      "noRules": "Još nema pravila: svaka rezervacija traje koliko i podrazumevano trajanje.",
+      "previewGuests": "Pregled za broj gostiju",
+      "previewResult": "Za broj gostiju {{guests}} rezervacija traje {{minutes}} minuta.",
+      "previewRule": "(pravilo {{min}}–{{max}})",
+      "previewDefault": "(podrazumevano trajanje)"
+    },
+    "validation": {
+      "duration": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
+      "minGuests": "Unesite najmanje 1 gosta.",
+      "minGreaterThanMax": "„Do“ ne sme biti manje od „od“.",
+      "overlap": "Ovaj opseg se preklapa sa drugim pravilom."
+    },
+    "errors": {
+      "title": "Podešavanja nisu sačuvana",
+      "invalidMode": "Izaberite način potvrde i dodelu stola.",
+      "invalidDuration": "Trajanje mora biti između 15 i 480 minuta u koracima od 15.",
+      "invalidMinGuests": "Pravilo mora počinjati od najmanje 1 gosta.",
+      "minGreaterThanMax": "U pravilu „od“ ne sme biti veće od „do“.",
+      "overlappingRules": "Opsezi pravila se preklapaju."
+    },
+    "save": "Sačuvaj",
+    "saved": "Podešavanja rezervacija su sačuvana."
   }
 }

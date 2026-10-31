@@ -13,7 +13,10 @@
   },
   "common": {
     "retry": "Try again",
-    "backToStart": "Back to the start page"
+    "backToStart": "Back to the start page",
+    "cancel": "Cancel",
+    "save": "Save",
+    "close": "Close"
   },
   "auth": {
     "userMenu": "Account menu",
@@ -64,6 +67,172 @@
       "staff": "Staff"
     }
   },
+  "staff": {
+    "title": "Staff",
+    "subtitle": "The people who sign in for your restaurant.",
+    "you": "You",
+    "actions": "Actions",
+    "actionsFor": "Actions for {{name}}",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "role": "Role",
+      "status": "Status",
+      "startPassword": "Start password",
+      "newPassword": "New password"
+    },
+    "roles": {
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Deactivated"
+    },
+    "passwordRules": "At least 6 characters, with upper- and lowercase letters, a digit and a special character.",
+    "create": {
+      "button": "Add staff member",
+      "title": "Add staff member",
+      "submit": "Add"
+    },
+    "edit": {
+      "button": "Edit",
+      "title": "Edit staff member"
+    },
+    "password": {
+      "button": "Set password",
+      "title": "New password for {{name}}",
+      "text": "Pass the new password on to the staff member yourself. Their current sessions will be signed out.",
+      "submit": "Set password"
+    },
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "validation": {
+      "name": "Please enter a name.",
+      "email": "Please enter a valid email address.",
+      "password": "Please enter a password."
+    },
+    "notifications": {
+      "created": "{{name}} has been added.",
+      "updated": "The changes to {{name}} have been saved.",
+      "passwordSet": "The new password for {{name}} has been set.",
+      "activated": "{{name}} has been activated.",
+      "deactivated": "{{name}} has been deactivated and signed out."
+    },
+    "errors": {
+      "emailTaken": "This email address is already in use by another account.",
+      "invalidEmail": "This email address is not valid.",
+      "passwordTooWeak": "The password is too weak. It needs at least 6 characters, with upper- and lowercase letters, a digit and a special character.",
+      "lastAdmin": "This is the restaurant’s last active admin. Make another staff member an admin first.",
+      "cannotDeactivateSelf": "You cannot deactivate your own account.",
+      "actionFailed": "The change could not be saved. Please try again."
+    }
+  },
+  "openingHours": {
+    "save": "Save",
+    "saved": "Saved.",
+    "open": "Open",
+    "closed": "Closed",
+    "weekdays": {
+      "monday": "Monday",
+      "tuesday": "Tuesday",
+      "wednesday": "Wednesday",
+      "thursday": "Thursday",
+      "friday": "Friday",
+      "saturday": "Saturday",
+      "sunday": "Sunday"
+    },
+    "location": {
+      "title": "Location",
+      "description": "The public holidays depend on the country and, in Germany, on the federal state.",
+      "country": "Country",
+      "region": "Federal state",
+      "countryRequired": "Please choose a country.",
+      "regionRequired": "Please choose a federal state.",
+      "invalid": "Please choose a valid country and, for Germany, a federal state."
+    },
+    "countries": {
+      "DE": "Germany",
+      "AT": "Austria",
+      "RS": "Serbia"
+    },
+    "regions": {
+      "DE-BW": "Baden-Württemberg",
+      "DE-BY": "Bavaria",
+      "DE-BE": "Berlin",
+      "DE-BB": "Brandenburg",
+      "DE-HB": "Bremen",
+      "DE-HH": "Hamburg",
+      "DE-HE": "Hesse",
+      "DE-MV": "Mecklenburg-Western Pomerania",
+      "DE-NI": "Lower Saxony",
+      "DE-NW": "North Rhine-Westphalia",
+      "DE-RP": "Rhineland-Palatinate",
+      "DE-SL": "Saarland",
+      "DE-SN": "Saxony",
+      "DE-ST": "Saxony-Anhalt",
+      "DE-SH": "Schleswig-Holstein",
+      "DE-TH": "Thuringia"
+    },
+    "weekly": {
+      "title": "Regular opening hours",
+      "description": "Set one or more time windows for each day. 00:00 as the closing time means midnight.",
+      "start": "Opens at",
+      "end": "Closes at",
+      "addPeriod": "+ Time window",
+      "removePeriod": "Remove time window",
+      "copy": "Copy times to other days",
+      "copyTo": "Copy the times of {{day}} to",
+      "copyApply": "Copy"
+    },
+    "validation": {
+      "required": "Please enter a time.",
+      "startBeforeEnd": "The opening time must be before the closing time.",
+      "overlap": "Time windows on the same day must not overlap.",
+      "invalidTime": "Please enter valid times (HH:MM)."
+    },
+    "holidays": {
+      "title": "Upcoming public holidays",
+      "description": "The public holidays of the next 12 months. The restaurant is closed on public holidays unless you open it; it then has the regular hours of that day of the week.",
+      "noLocation": "Choose the country above to see the public holidays.",
+      "empty": "There are no public holidays in the next 12 months."
+    },
+    "holidayNames": {
+      "newYear": "New Year's Day",
+      "newYear2": "New Year (second day)",
+      "epiphany": "Epiphany",
+      "womensDay": "International Women's Day",
+      "goodFriday": "Good Friday",
+      "easterSunday": "Easter Sunday",
+      "easterMonday": "Easter Monday",
+      "labourDay": "Labour Day",
+      "labourDay2": "Labour Day (second day)",
+      "stateHoliday": "State Holiday (Labour Day)",
+      "ascension": "Ascension Day",
+      "whitSunday": "Whit Sunday",
+      "whitMonday": "Whit Monday",
+      "corpusChristi": "Corpus Christi",
+      "assumption": "Assumption Day",
+      "childrensDay": "World Children's Day",
+      "germanUnity": "Day of German Unity",
+      "reformationDay": "Reformation Day",
+      "allSaints": "All Saints' Day",
+      "repentanceDay": "Day of Repentance and Prayer",
+      "nationalDay": "Austrian National Day",
+      "immaculateConception": "Immaculate Conception",
+      "christmasDay": "Christmas Day",
+      "secondChristmasDay": "Second Day of Christmas",
+      "stStephensDay": "St. Stephen's Day",
+      "orthodoxChristmas": "Orthodox Christmas",
+      "statehoodDay": "Statehood Day (Sretenje)",
+      "statehoodDay2": "Statehood Day (second day)",
+      "orthodoxGoodFriday": "Orthodox Good Friday",
+      "orthodoxHolySaturday": "Orthodox Holy Saturday",
+      "orthodoxEaster": "Orthodox Easter Sunday",
+      "orthodoxEasterMonday": "Orthodox Easter Monday",
+      "armisticeDay": "Armistice Day (First World War)"
+    }
+  },
   "frontdesk": {
     "label": "Front desk",
     "today": "Today"
@@ -75,5 +244,122 @@
     "label": "Error 404",
     "title": "Page not found",
     "text": "The page you are looking for does not exist or has been moved."
+  },
+  "areas": {
+    "addArea": "Add area",
+    "create": "Create",
+    "emptyTitle": "No areas yet",
+    "emptyText": "Create an area, e.g. the dining room or the terrace, and upload its floor plan.",
+    "addTable": "Add table",
+    "dragHint": "Drag tables to move them. Click a table to edit it.",
+    "capacity": "Seats: {{seats}}, bookable online: {{online}} ({{percent}}%)",
+    "capacityOnlineBlocked": "Seats: {{seats}}, blocked for online booking",
+    "floorPlanAlt": "Floor plan",
+    "tableMarker": "Table {{number}}, seats: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Upload a floor plan",
+      "emptyText": "Drop an image of this area's floor plan here. You then place the tables on it.",
+      "choose": "Choose image",
+      "hint": "PNG, JPEG or WebP, at most 10 MB",
+      "replace": "Replace floor plan"
+    },
+    "area": {
+      "title": "Area",
+      "name": "Name",
+      "namePlaceholder": "e.g. Terrace",
+      "onlineBookingEnabled": "Online booking",
+      "onlineBookingEnabledHint": "When off, guests cannot book this area online.",
+      "onlineCapacityPercent": "Online quota",
+      "onlineCapacityPercentHint": "Share of the seats guests can book online. The rest stays free for phone bookings and walk-ins.",
+      "saved": "The area has been saved.",
+      "order": "Order",
+      "moveLeft": "Move left",
+      "moveRight": "Move right",
+      "delete": "Delete area",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteText": "The area’s tables ({{tables}}) and its floor plan will be deleted as well. This cannot be undone.",
+      "deleteConfirm": "Delete"
+    },
+    "table": {
+      "title": "Table {{number}}",
+      "number": "Table number",
+      "seats": "Seats",
+      "saved": "The table has been saved.",
+      "delete": "Delete table"
+    },
+    "errors": {
+      "areaNameInvalid": "Please enter a name of at most 100 characters.",
+      "areaNotFound": "This area no longer exists. Please reload the page.",
+      "areaOrderInvalid": "The order could not be saved because the areas have changed. Please reload the page.",
+      "percentInvalid": "Please enter a whole number from 0 to 100.",
+      "floorPlanTooLarge": "The image is larger than 10 MB.",
+      "floorPlanTypeInvalid": "Please choose a PNG, JPEG or WebP image.",
+      "tableNumberInvalid": "Please enter a table number of at most 20 characters.",
+      "tableNumberTaken": "Another table already has this number.",
+      "tableNotFound": "This table no longer exists. Please reload the page.",
+      "seatsInvalid": "A table needs at least 1 seat.",
+      "positionInvalid": "A table must lie on the floor plan.",
+      "positionsNotSaved": "The table positions could not be saved"
+    }
+  },
+  "reservationSettings": {
+    "title": "Reservation settings",
+    "subtitle": "How reservations are confirmed, how tables are assigned and how long a reservation lasts. The settings apply to new reservations.",
+    "confirmation": {
+      "title": "Confirmation",
+      "instant": {
+        "label": "Instant confirmation",
+        "description": "The reservation is confirmed as soon as the guest books."
+      },
+      "request": {
+        "label": "Request",
+        "description": "The guest sends a request; the restaurant has to approve it before it is confirmed."
+      }
+    },
+    "tableSelection": {
+      "title": "Table assignment",
+      "guestChooses": {
+        "label": "Guest chooses a table",
+        "description": "The guest picks a free table on the floor plan when booking."
+      },
+      "systemAssigns": {
+        "label": "System assigns a table",
+        "description": "The guest only chooses date, time and party size; the system picks a suitable free table."
+      }
+    },
+    "duration": {
+      "title": "Duration",
+      "default": "Default duration",
+      "defaultDescription": "Applies when no rule matches the party size.",
+      "minutesSuffix": " min",
+      "rules": "Rules by party size",
+      "rulesDescription": "Optional. Ranges must not overlap; for party sizes between the rules the default duration applies.",
+      "from": "From (guests)",
+      "to": "To (guests)",
+      "minutes": "Minutes",
+      "addRule": "+ Rule",
+      "deleteRule": "Delete rule",
+      "noRules": "No rules yet: every reservation lasts the default duration.",
+      "previewGuests": "Preview for party size",
+      "previewResult": "For a party of {{guests}}, a reservation lasts {{minutes}} minutes.",
+      "previewRule": "(rule {{min}}–{{max}})",
+      "previewDefault": "(default duration)"
+    },
+    "validation": {
+      "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
+      "minGuests": "Enter at least 1 guest.",
+      "minGreaterThanMax": "“To” must not be smaller than “from”.",
+      "overlap": "This range overlaps another rule."
+    },
+    "errors": {
+      "title": "The settings were not saved",
+      "invalidMode": "Please choose a confirmation mode and a table assignment.",
+      "invalidDuration": "Durations must be between 15 and 480 minutes in steps of 15.",
+      "invalidMinGuests": "A rule must start at 1 guest or more.",
+      "minGreaterThanMax": "In a rule, “from” must not be greater than “to”.",
+      "overlappingRules": "The ranges of the rules overlap."
+    },
+    "save": "Save",
+    "saved": "The reservation settings have been saved."
   }
 }
