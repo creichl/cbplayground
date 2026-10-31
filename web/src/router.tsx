@@ -1,14 +1,17 @@
 import { createBrowserRouter } from 'react-router'
+import { RequireRole } from './components/RequireRole.tsx'
 import { AdminLayout } from './layouts/AdminLayout.tsx'
 import { FrontdeskLayout } from './layouts/FrontdeskLayout.tsx'
 import { GuestLayout } from './layouts/GuestLayout.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
+import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { PlaceholderPage } from './pages/PlaceholderPage.tsx'
 import { RestaurantPage } from './pages/RestaurantPage.tsx'
 
 export const router = createBrowserRouter([
+  { path: 'login', element: <LoginPage /> },
   {
     element: <GuestLayout />,
     children: [
@@ -19,7 +22,11 @@ export const router = createBrowserRouter([
   },
   {
     path: 'admin',
-    element: <AdminLayout />,
+    element: (
+      <RequireRole roles={['TenantAdmin']}>
+        <AdminLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <PlaceholderPage titleKey="admin.nav.overview" /> },
       { path: 'areas', element: <PlaceholderPage titleKey="admin.nav.areas" /> },
@@ -31,7 +38,11 @@ export const router = createBrowserRouter([
   },
   {
     path: 'frontdesk',
-    element: <FrontdeskLayout />,
+    element: (
+      <RequireRole roles={['TenantAdmin', 'FrontDesk']}>
+        <FrontdeskLayout />
+      </RequireRole>
+    ),
     children: [
       { index: true, element: <FrontdeskTodayPage /> },
       { path: '*', element: <NotFoundPage /> },

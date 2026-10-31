@@ -15,6 +15,26 @@
     "retry": "Try again",
     "backToStart": "Back to the start page"
   },
+  "auth": {
+    "userMenu": "Account menu",
+    "logout": "Sign out"
+  },
+  "login": {
+    "title": "Staff sign-in",
+    "subtitle": "Sign in with your work email address.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "validation": {
+      "email": "Please enter a valid email address.",
+      "password": "Please enter your password."
+    },
+    "errors": {
+      "invalidCredentials": "The email address or password is incorrect.",
+      "lockedOut": "Too many failed attempts. Your account is locked for a few minutes; please try again later.",
+      "deactivated": "Your account has been deactivated. Please contact your restaurant’s administrator."
+    }
+  },
   "errors": {
     "title": "Something went wrong",
     "network": "The server could not be reached. Please check your connection and try again.",
