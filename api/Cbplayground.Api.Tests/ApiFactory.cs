@@ -18,7 +18,8 @@ public class ApiFactory : WebApplicationFactory<Program>
 {
     public const string Password = "Test1234!";
 
-    private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-{Guid.NewGuid():N}.db");
+    /// <summary>The temporary SQLite file.</summary>
+    public string DatabasePath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-{Guid.NewGuid():N}.db");
 
     /// <summary>Temporary folder for the uploaded floor plans.</summary>
     public string UploadsPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-uploads-{Guid.NewGuid():N}");
@@ -26,20 +27,33 @@ public class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Temporary folder for the database backups.</summary>
     public string BackupPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-backups-{Guid.NewGuid():N}");
 
+    /// <summary>Temporary folder for the Data Protection keys.</summary>
+    public string KeysPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-keys-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
-        builder.UseSetting("ConnectionStrings:Default", $"Data Source={databasePath}");
+        builder.UseSetting("ConnectionStrings:Default", $"Data Source={DatabasePath}");
         builder.UseSetting("Uploads:Path", UploadsPath);
         // No scheduled backups during the tests; BackupTests call DatabaseBackup directly.
         builder.UseSetting("Backup:Enabled", "false");
         builder.UseSetting("Backup:Path", BackupPath);
-        // The tests book far more than 10 times from the same client; RateLimitTests use the real limit.
+        builder.UseSetting("DataProtection:KeysPath", KeysPath);
+        // The tests book, sign in and read far more often from the same client than the real limits allow;
+        // the rate limit tests set their own limits.
         builder.UseSetting("RateLimiting:PublicBookings:PermitLimit", PublicBookingLimit.ToString());
+        builder.UseSetting("RateLimiting:Login:PermitLimit", LoginLimit.ToString());
+        builder.UseSetting("RateLimiting:PublicReads:PermitLimit", PublicReadLimit.ToString());
     }
 
     /// <summary>Online bookings per client in 10 minutes.</summary>
     protected virtual int PublicBookingLimit => 10_000;
+
+    /// <summary>Sign-in attempts per client in a minute.</summary>
+    protected virtual int LoginLimit => 10_000;
+
+    /// <summary>Calls of the public calendar, availability and tables per client in a minute.</summary>
+    protected virtual int PublicReadLimit => 10_000;
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
@@ -55,8 +69,8 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     private static async Task SeedAsync(IServiceProvider services)
     {
+        // The API has applied the migrations on startup.
         var db = services.GetRequiredService<AppDbContext>();
-        await db.Database.MigrateAsync();
 
         var linde = new Tenant { Name = "Gasthaus zur Linde", Slug = "zur-linde", CreatedAt = DateTime.UtcNow };
         var dunav = new Tenant { Name = "Kafana Dunav", Slug = "kafana-dunav", CreatedAt = DateTime.UtcNow };
@@ -92,7 +106,7 @@ public class ApiFactory : WebApplicationFactory<Program>
     {
         base.Dispose(disposing);
         SqliteConnection.ClearAllPools();
-        File.Delete(databasePath);
+        File.Delete(DatabasePath);
         if (Directory.Exists(UploadsPath))
         {
             Directory.Delete(UploadsPath, recursive: true);
@@ -100,6 +114,10 @@ public class ApiFactory : WebApplicationFactory<Program>
         if (Directory.Exists(BackupPath))
         {
             Directory.Delete(BackupPath, recursive: true);
+        }
+        if (Directory.Exists(KeysPath))
+        {
+            Directory.Delete(KeysPath, recursive: true);
         }
     }
 }

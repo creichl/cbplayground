@@ -421,5 +421,6 @@ public class PublicBookingRateLimitTests(PublicBookingRateLimitTests.RateLimited
         var limited = await anonymous.PostAsJsonAsync($"/api/public/restaurants/{restaurant.Slug}/reservations", body, TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
+        Assert.Equal("too_many_requests", (await limited.Content.ReadFromJsonAsync<ErrorResponse>(TestContext.Current.CancellationToken))?.Error);
     }
 }
