@@ -144,6 +144,10 @@ Endpoints:
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
+- `GET /api/admin/reservation-settings`: the reservation settings of the Tenant Admin's restaurant: `confirmationMode` (`Instant` | `Request`), `tableSelectionMode` (`GuestChooses` | `SystemAssigns`), `defaultDurationMinutes` and `durationRules` (`minGuests`, `maxGuests`, `durationMinutes`, sorted by `minGuests`). A restaurant that has not saved any settings gets the defaults: instant confirmation, the system assigns tables, 120 minutes, no rules.
+- `PUT /api/admin/reservation-settings`: saves the settings and replaces all duration rules, same body as `GET`. Durations are 15 to 480 minutes in steps of 15; a rule needs `minGuests` ≥ 1 and `minGuests` ≤ `maxGuests`, and rules must not overlap (gaps are allowed, the default duration applies there). On failure: 400 with `{ "error": "invalid_mode" | "invalid_duration" | "invalid_min_guests" | "min_greater_than_max" | "overlapping_rules" }`.
+
+`IReservationDurationPolicy.GetDurationAsync(guests)` returns the duration of a reservation for the current restaurant: the duration of the rule that contains the party size, otherwise the default duration.
 
 There is no registration endpoint: staff users are created by a Tenant Admin (staff management is a later ticket) or by the development seed.
 
@@ -180,7 +184,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and cover sign-in, sign-out, `me`, the 401/403 answers and the tenant isolation.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation and the reservation settings with their duration rules.
 
 ### Run the web frontend
 
