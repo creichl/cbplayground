@@ -64,6 +64,66 @@
       "staff": "Zaposleni"
     }
   },
+  "reservationSettings": {
+    "title": "Podešavanja rezervacija",
+    "subtitle": "Kako se rezervacije potvrđuju, kako se dodeljuju stolovi i koliko traje rezervacija. Podešavanja važe za nove rezervacije.",
+    "confirmation": {
+      "title": "Potvrda",
+      "instant": {
+        "label": "Trenutna potvrda",
+        "description": "Rezervacija je potvrđena čim gost rezerviše."
+      },
+      "request": {
+        "label": "Zahtev",
+        "description": "Gost šalje zahtev; restoran mora da ga odobri pre nego što bude potvrđen."
+      }
+    },
+    "tableSelection": {
+      "title": "Dodela stola",
+      "guestChooses": {
+        "label": "Gost bira sto",
+        "description": "Gost pri rezervaciji bira slobodan sto na planu prostora."
+      },
+      "systemAssigns": {
+        "label": "Sistem dodeljuje sto",
+        "description": "Gost bira samo datum, vreme i broj gostiju; sistem bira odgovarajući slobodan sto."
+      }
+    },
+    "duration": {
+      "title": "Trajanje",
+      "default": "Podrazumevano trajanje",
+      "defaultDescription": "Važi kada nijedno pravilo ne odgovara broju gostiju.",
+      "minutesSuffix": " min",
+      "rules": "Pravila prema broju gostiju",
+      "rulesDescription": "Opciono. Opsezi ne smeju da se preklapaju; za broj gostiju između pravila važi podrazumevano trajanje.",
+      "from": "Od (gostiju)",
+      "to": "Do (gostiju)",
+      "minutes": "Minuti",
+      "addRule": "+ Pravilo",
+      "deleteRule": "Obriši pravilo",
+      "noRules": "Još nema pravila: svaka rezervacija traje koliko i podrazumevano trajanje.",
+      "previewGuests": "Pregled za broj gostiju",
+      "previewResult": "Za broj gostiju {{guests}} rezervacija traje {{minutes}} minuta.",
+      "previewRule": "(pravilo {{min}}–{{max}})",
+      "previewDefault": "(podrazumevano trajanje)"
+    },
+    "validation": {
+      "duration": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
+      "minGuests": "Unesite najmanje 1 gosta.",
+      "minGreaterThanMax": "„Do“ ne sme biti manje od „od“.",
+      "overlap": "Ovaj opseg se preklapa sa drugim pravilom."
+    },
+    "errors": {
+      "title": "Podešavanja nisu sačuvana",
+      "invalidMode": "Izaberite način potvrde i dodelu stola.",
+      "invalidDuration": "Trajanje mora biti između 15 i 480 minuta u koracima od 15.",
+      "invalidMinGuests": "Pravilo mora počinjati od najmanje 1 gosta.",
+      "minGreaterThanMax": "U pravilu „od“ ne sme biti veće od „do“.",
+      "overlappingRules": "Opsezi pravila se preklapaju."
+    },
+    "save": "Sačuvaj",
+    "saved": "Podešavanja rezervacija su sačuvana."
+  },
   "frontdesk": {
     "label": "Recepcija",
     "today": "Danas"

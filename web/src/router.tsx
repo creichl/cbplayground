@@ -8,6 +8,7 @@ import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
 import { NotFoundPage } from './pages/NotFoundPage.tsx'
 import { PlaceholderPage } from './pages/PlaceholderPage.tsx'
+import { ReservationSettingsPage } from './pages/ReservationSettingsPage.tsx'
 import { RestaurantPage } from './pages/RestaurantPage.tsx'
 
 export const router = createBrowserRouter([
@@ -31,7 +32,7 @@ export const router = createBrowserRouter([
       { index: true, element: <PlaceholderPage titleKey="admin.nav.overview" /> },
       { path: 'areas', element: <PlaceholderPage titleKey="admin.nav.areas" /> },
       { path: 'opening-hours', element: <PlaceholderPage titleKey="admin.nav.openingHours" /> },
-      { path: 'reservation-settings', element: <PlaceholderPage titleKey="admin.nav.reservationSettings" /> },
+      { path: 'reservation-settings', element: <ReservationSettingsPage /> },
       { path: 'staff', element: <PlaceholderPage titleKey="admin.nav.staff" /> },
       { path: '*', element: <NotFoundPage /> },
     ],

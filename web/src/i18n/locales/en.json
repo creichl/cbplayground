@@ -64,6 +64,66 @@
       "staff": "Staff"
     }
   },
+  "reservationSettings": {
+    "title": "Reservation settings",
+    "subtitle": "How reservations are confirmed, how tables are assigned and how long a reservation lasts. The settings apply to new reservations.",
+    "confirmation": {
+      "title": "Confirmation",
+      "instant": {
+        "label": "Instant confirmation",
+        "description": "The reservation is confirmed as soon as the guest books."
+      },
+      "request": {
+        "label": "Request",
+        "description": "The guest sends a request; the restaurant has to approve it before it is confirmed."
+      }
+    },
+    "tableSelection": {
+      "title": "Table assignment",
+      "guestChooses": {
+        "label": "Guest chooses a table",
+        "description": "The guest picks a free table on the floor plan when booking."
+      },
+      "systemAssigns": {
+        "label": "System assigns a table",
+        "description": "The guest only chooses date, time and party size; the system picks a suitable free table."
+      }
+    },
+    "duration": {
+      "title": "Duration",
+      "default": "Default duration",
+      "defaultDescription": "Applies when no rule matches the party size.",
+      "minutesSuffix": " min",
+      "rules": "Rules by party size",
+      "rulesDescription": "Optional. Ranges must not overlap; for party sizes between the rules the default duration applies.",
+      "from": "From (guests)",
+      "to": "To (guests)",
+      "minutes": "Minutes",
+      "addRule": "+ Rule",
+      "deleteRule": "Delete rule",
+      "noRules": "No rules yet: every reservation lasts the default duration.",
+      "previewGuests": "Preview for party size",
+      "previewResult": "For a party of {{guests}}, a reservation lasts {{minutes}} minutes.",
+      "previewRule": "(rule {{min}}–{{max}})",
+      "previewDefault": "(default duration)"
+    },
+    "validation": {
+      "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
+      "minGuests": "Enter at least 1 guest.",
+      "minGreaterThanMax": "“To” must not be smaller than “from”.",
+      "overlap": "This range overlaps another rule."
+    },
+    "errors": {
+      "title": "The settings were not saved",
+      "invalidMode": "Please choose a confirmation mode and a table assignment.",
+      "invalidDuration": "Durations must be between 15 and 480 minutes in steps of 15.",
+      "invalidMinGuests": "A rule must start at 1 guest or more.",
+      "minGreaterThanMax": "In a rule, “from” must not be greater than “to”.",
+      "overlappingRules": "The ranges of the rules overlap."
+    },
+    "save": "Save",
+    "saved": "The reservation settings have been saved."
+  },
   "frontdesk": {
     "label": "Front desk",
     "today": "Today"
