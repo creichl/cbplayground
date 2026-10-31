@@ -113,6 +113,7 @@ This README describes the full product vision.
 │   │   ├── Auth/                 # roles, policies, tenant claim
 │   │   ├── Backups/              # daily backup of the database and the floor plans
 │   │   ├── Data/                 # AppDbContext, entities, development seed
+│   │   │   └── SeedAssets/       # floor plans of the demo restaurants (development seed)
 │   │   ├── Endpoints/            # endpoint groups, one file per area
 │   │   ├── Migrations/           # EF Core migrations
 │   │   └── OpeningHours/         # public holidays, opening calendar, supported countries
@@ -136,16 +137,49 @@ cd api/Cbplayground.Api
 dotnet run
 ```
 
-The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations, adds two demo restaurants if there are none yet and creates the demo staff users (see below) that do not exist yet. The connection string is in `appsettings.json`.
+The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations, sets up the two demo restaurants (see [Demo data](#demo-data)) and creates the demo staff users (see below) that do not exist yet. The connection string is in `appsettings.json`.
+
+#### Demo data
+
+In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so both are ready to try right after the first start:
+
+| | Gasthaus zur Linde (`zur-linde`) | Kafana Dunav (`kafana-dunav`) |
+| --- | --- | --- |
+| Location | Germany, Bavaria (`DE-BY`) | Serbia (`RS`) |
+| Profile | Address in Munich, phone, email, website, description | Address in Novi Sad, phone, email, website, description |
+| Opening hours | Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays | Every day 12:00–24:00 |
+| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) |
+| Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes |
+
+So both confirmation modes and both table selection modes can be shown. The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms.
+
+The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
+
+- the location, if no country is set;
+- the profile, if all profile fields are empty;
+- the opening hours, if there are none;
+- the areas with their floor plans and tables, if there are no areas (an area without tables gets none);
+- the reservation settings with their duration rules, if they were never saved.
+
+A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created.
 
 Endpoints:
 
 - `GET /api/health`
-- `GET /api/tenants`: all restaurants, sorted by name
+- `GET /api/tenants`: all restaurants, sorted by name: `id`, `name`, `slug`, and `city` and `description` from the profile (`null` when empty)
 - `POST /api/auth/login`: body `{ "email", "password" }`. Signs in with a cookie and returns the same user as `me`. On failure: 401 with `{ "error": "invalid_credentials" | "locked_out" | "deactivated" }`.
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
+- `GET /api/admin/profile`: the profile of the Tenant Admin's restaurant, which guests will see: `street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`. Every field is optional and `null` when empty.
+- `PUT /api/admin/profile`: saves the profile, same body as `GET`, and returns it. Values are trimmed, empty values are stored as `null`. Maximum lengths: street 200, postal code 10, city 100, phone 30, email 254, website 200, description 500 characters. The email needs the form `name@domain.tld`, the website must be an absolute `http` or `https` URL. On failure: 400 with `{ "error": "invalid_street" | "invalid_postal_code" | "invalid_city" | "invalid_phone" | "invalid_email" | "invalid_website" | "invalid_description" }`.
+- `GET /api/admin/setup-status`: which steps of the restaurant's setup are done, each `true` or `false`:
+  - `profile`: street, postal code, city and phone are filled in;
+  - `location`: the country is set;
+  - `openingHours`: at least one opening period;
+  - `floorPlan`: at least one area with a floor plan;
+  - `tables`: at least one table;
+  - `reservationSettings`: the reservation settings have been saved once.
 - Staff management, Tenant Admins only, always for the signed-in admin's own restaurant (users of other restaurants get 404):
   - `GET /api/admin/staff`: the restaurant's users: `id`, `email`, `displayName`, `role`, `isActive`, sorted by name.
   - `POST /api/admin/staff`: body `{ "email", "displayName", "role", "password" }` with the role `TenantAdmin` or `FrontDesk` and the start password. Returns 201 with the new user.
@@ -217,7 +251,7 @@ Deactivated users (`IsActive = false`) cannot sign in. The security stamp is che
 
 Tenant isolation: an entity that belongs to a restaurant implements `ITenantOwned` (a `Guid TenantId`). `AppDbContext` then filters every query on it by the signed-in user's restaurant and sets `TenantId` on new entities when saving. Creating, changing or deleting data of another restaurant throws an exception, and without a restaurant (nobody signed in, or the Superadmin) these queries return nothing. `IgnoreQueryFilters()` is reserved for Superadmin cases and has to be justified in the pull request.
 
-Demo users, created in Development only (from `Seed:Users` in `appsettings.Development.json`). The password of all of them is `Demo1234!`:
+Demo users, created in Development only (from `Seed:Users` in `appsettings.Development.json`) and listed on the login page of the development server. The password of all of them is `Demo1234!`:
 
 | Email | Role | Restaurant |
 | --- | --- | --- |
@@ -252,7 +286,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules and the database backups.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules, the restaurant profile, the setup status, the development seed and the database backups.
 
 ### Run the web frontend
 
@@ -266,7 +300,7 @@ npm run dev
 
 Open the URL Vite prints (usually http://localhost:5173). The Vite dev server forwards `/api` to the API on http://localhost:5025, so the API must be running.
 
-Routes: `/` lists the restaurants, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). Under `/admin/areas` a Tenant Admin manages the areas, uploads their floor plans, places the tables on them by drag and drop (mouse and touch) and sets the online quota per area. Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
+Routes: `/` lists the restaurants as cards with city, short description and a "Reserve a table" button, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). The header of the guest pages links to `/login` ("For restaurants: Sign in"); a signed-in Tenant Admin or Front desk user sees a link to their own area instead. In development (`npm run dev`), the login page lists the demo accounts, and a click fills in the form; the production build does not contain them. `/admin` greets the admin and shows the setup checklist (see `GET /api/admin/setup-status`) with its progress, a link to the right page for every open step and a button that opens the restaurant's booking page in a new tab. Under `/admin/profile` a Tenant Admin maintains the restaurant profile. Under `/admin/areas` a Tenant Admin manages the areas, uploads their floor plans, places the tables on them by drag and drop (mouse and touch) and sets the online quota per area. Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
 
 Before committing, run `npm run lint` (oxlint plus the translation key check) and `npm run build` (typecheck and production build).
 
