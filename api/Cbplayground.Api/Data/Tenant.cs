@@ -11,12 +11,21 @@ public class Tenant
     public const int MaxWebsiteLength = 200;
     public const int MaxDescriptionLength = 500;
 
+    public const int MaxNameLength = 100;
+    public const int MaxSlugLength = 50;
+
     public Guid Id { get; set; }
 
     public required string Name { get; set; }
 
     /// <summary>URL-friendly, unique identifier of the restaurant, e.g. "zur-linde".</summary>
     public required string Slug { get; set; }
+
+    /// <summary>
+    /// Deactivated restaurants are hidden from guests (list and booking page) and their staff cannot sign in.
+    /// Restaurants are never deleted, only deactivated by the Superadmin.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
 
     /// <summary>Creation time in UTC. DateTime instead of DateTimeOffset because EF Core cannot sort or filter DateTimeOffset on SQLite.</summary>
     public DateTime CreatedAt { get; set; }

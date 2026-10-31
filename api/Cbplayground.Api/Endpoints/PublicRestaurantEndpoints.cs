@@ -81,9 +81,10 @@ public static class PublicRestaurantEndpoints
             var services = context.HttpContext.RequestServices;
             var slug = context.HttpContext.GetRouteValue("slug") as string;
             var tenantId = await services.GetRequiredService<AppDbContext>().Tenants
-                .Where(t => t.Slug == slug)
+                .Where(t => t.Slug == slug && t.IsActive)
                 .Select(t => (Guid?)t.Id)
                 .SingleOrDefaultAsync();
+            // Unknown and deactivated restaurants are both "not found" for guests.
             if (tenantId is null)
             {
                 return Results.NotFound();
