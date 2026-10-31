@@ -4,16 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { type PublicArea, type PublicTable, usePublicTables } from '../../api/publicBooking.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 
-/** The chosen table, with what the summary shows of it. */
-export type ChosenTable = { id: string; number: string; areaName: string }
-
 type TablePickerProps = {
   slug: string
   date: string
   time: string
   guests: number
-  value: ChosenTable | null
-  onChange: (table: ChosenTable) => void
+  /** The id of the chosen table. */
+  value: string | null
+  onChange: (tableId: string) => void
   onContinue: () => void
   onChangeTime: () => void
 }
@@ -48,14 +46,13 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
     )
   }
 
-  const choose = (area: PublicArea, table: PublicTable) => onChange({ id: table.id, number: table.number, areaName: area.name })
   // Starts at the area of the chosen table, otherwise at the first area with a free table.
   const defaultArea =
-    areas.data.find((area) => area.tables.some((table) => table.id === value?.id)) ??
+    areas.data.find((area) => area.tables.some((table) => table.id === value)) ??
     areas.data.find((area) => area.tables.some((table) => table.available))!
   const current = activeArea ?? defaultArea.id
 
-  const content = (area: PublicArea) => <AreaTables area={area} value={value?.id ?? null} onChoose={(table) => choose(area, table)} />
+  const content = (area: PublicArea) => <AreaTables area={area} value={value} onChoose={(table) => onChange(table.id)} />
 
   return (
     <Stack gap="md">
