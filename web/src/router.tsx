@@ -3,6 +3,7 @@ import { RequireRole } from './components/RequireRole.tsx'
 import { AdminLayout } from './layouts/AdminLayout.tsx'
 import { FrontdeskLayout } from './layouts/FrontdeskLayout.tsx'
 import { GuestLayout } from './layouts/GuestLayout.tsx'
+import { SuperadminLayout } from './layouts/SuperadminLayout.tsx'
 import { AdminOverviewPage } from './pages/AdminOverviewPage.tsx'
 import { AreasPage } from './pages/AreasPage.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
@@ -15,6 +16,8 @@ import { ReservationSettingsPage } from './pages/ReservationSettingsPage.tsx'
 import { ReservationsPage } from './pages/ReservationsPage.tsx'
 import { RestaurantPage } from './pages/RestaurantPage.tsx'
 import { StaffPage } from './pages/StaffPage.tsx'
+import { SuperadminTenantPage } from './pages/SuperadminTenantPage.tsx'
+import { SuperadminTenantsPage } from './pages/SuperadminTenantsPage.tsx'
 import { TableOverviewPage } from './pages/TableOverviewPage.tsx'
 
 export const router = createBrowserRouter([
@@ -24,6 +27,19 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <HomePage /> },
       { path: 'r/:slug', element: <RestaurantPage /> },
+      { path: '*', element: <NotFoundPage /> },
+    ],
+  },
+  {
+    path: 'superadmin',
+    element: (
+      <RequireRole roles={['Superadmin']}>
+        <SuperadminLayout />
+      </RequireRole>
+    ),
+    children: [
+      { index: true, element: <SuperadminTenantsPage /> },
+      { path: 'tenants/:id', element: <SuperadminTenantPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

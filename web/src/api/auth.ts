@@ -20,7 +20,7 @@ function removeUserData(queryClient: QueryClient) {
   queryClient.removeQueries({ predicate: (query) => query.queryKey[0] !== currentUserKey[0] })
 }
 
-/** Where a user lands after signing in. There is no Superadmin UI yet, so the Superadmin goes to the start page. */
+/** Where a user lands after signing in: the start page of their own area. */
 export function homePath(role: Role) {
   switch (role) {
     case 'TenantAdmin':
@@ -28,7 +28,7 @@ export function homePath(role: Role) {
     case 'FrontDesk':
       return '/frontdesk'
     case 'Superadmin':
-      return '/'
+      return '/superadmin'
   }
 }
 

@@ -35,7 +35,8 @@
     "errors": {
       "invalidCredentials": "Imejl adresa ili lozinka nisu ispravni.",
       "lockedOut": "Previše neuspešnih pokušaja. Vaš nalog je zaključan nekoliko minuta. Pokušajte ponovo kasnije.",
-      "deactivated": "Vaš nalog je deaktiviran. Obratite se administratoru svog restorana."
+      "deactivated": "Vaš nalog je deaktiviran. Obratite se administratoru svog restorana.",
+      "restaurantDeactivated": "Ovaj restoran je deaktiviran. Obratite se operateru platforme."
     },
     "demo": {
       "title": "Demo nalozi",
@@ -169,6 +170,80 @@
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni",
       "tables": "Pregled stolova"
+    }
+  },
+  "superadmin": {
+    "label": "Platforma",
+    "title": "Restorani",
+    "subtitle": "Svi restorani na platformi, aktivni i deaktivirani.",
+    "search": "Pretraga restorana",
+    "searchPlaceholder": "Pretraga po nazivu ili slugu",
+    "empty": "Još nema restorana.",
+    "noMatch": "Nijedan restoran ne odgovara pretrazi.",
+    "backToList": "Svi restorani",
+    "masterData": "Osnovni podaci",
+    "noLocation": "Još nije postavljeno",
+    "inactiveHint": "Ovaj restoran je deaktiviran: gosti ga ne vide, njegova stranica za rezervacije prikazuje „nije pronađeno“, a zaposleni ne mogu da se prijave.",
+    "slugRules": "Mala slova, cifre i crtice. Stranica za rezervacije: {{example}}",
+    "activate": "Aktiviraj",
+    "deactivate": "Deaktiviraj",
+    "fields": {
+      "name": "Naziv",
+      "slug": "Slug",
+      "status": "Status",
+      "admins": "Administratori",
+      "tables": "Stolovi",
+      "upcomingReservations": "Predstojeće rezervacije",
+      "location": "Država / region",
+      "createdAt": "Kreiran"
+    },
+    "status": {
+      "active": "Aktivan",
+      "inactive": "Deaktiviran"
+    },
+    "validation": {
+      "name": "Unesite naziv."
+    },
+    "create": {
+      "button": "Dodaj restoran",
+      "title": "Dodaj restoran",
+      "submit": "Dodaj",
+      "locationHint": "Opciono. Administrator restorana može to kasnije da postavi."
+    },
+    "edit": {
+      "button": "Izmeni",
+      "title": "Izmeni restoran",
+      "slugHint": "Novi slug menja adresu stranice za rezervacije; stari linkovi i ugrađeni vidžeti za rezervacije više neće raditi."
+    },
+    "activateConfirm": {
+      "title": "Aktivirati {{name}}?",
+      "text": "Gosti će ponovo videti restoran i njegovu stranicu za rezervacije, a zaposleni će ponovo moći da se prijave."
+    },
+    "deactivateConfirm": {
+      "title": "Deaktivirati {{name}}?",
+      "text": "Restoran nestaje sa početne stranice, njegova stranica za rezervacije prikazuje „nije pronađeno“, a zaposleni se odjavljuju i ne mogu da se prijave. Podaci se ne brišu; restoran možete ponovo aktivirati u svakom trenutku."
+    },
+    "admins": {
+      "title": "Administratori",
+      "empty": "Ovaj restoran još nema administratora. Dodajte ga kako bi restoran mogao da se podesi.",
+      "passwordText": "Novu lozinku lično prosledite administratoru. Postojeće sesije biće odjavljene.",
+      "create": {
+        "button": "Dodaj administratora",
+        "title": "Dodaj administratora za {{name}}",
+        "submit": "Dodaj"
+      }
+    },
+    "notifications": {
+      "created": "{{name}} je dodat.",
+      "updated": "Izmene za {{name}} su sačuvane.",
+      "activated": "{{name}} je aktiviran.",
+      "deactivated": "{{name}} je deaktiviran.",
+      "adminCreated": "{{name}} je dodat kao administrator."
+    },
+    "errors": {
+      "invalidName": "Unesite naziv od najviše 100 znakova.",
+      "invalidSlug": "Slug sme da sadrži samo mala slova, cifre i pojedinačne crtice (ne na početku ni na kraju), najviše 50 znakova.",
+      "slugTaken": "Ovaj slug već koristi drugi restoran."
     }
   },
   "overview": {

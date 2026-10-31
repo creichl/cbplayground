@@ -35,4 +35,32 @@ public static class Locations
         "DE-SH", // Schleswig-Holstein
         "DE-TH", // Thüringen
     };
+
+    /// <summary>
+    /// Checks a country with its region: "invalid_country", "region_required", "invalid_region" or "region_not_allowed";
+    /// null when valid. Only Germany has (and needs) a region.
+    /// </summary>
+    public static string? Validate(string? countryCode, string? regionCode)
+    {
+        if (countryCode is null || !TimeZones.ContainsKey(countryCode))
+        {
+            return "invalid_country";
+        }
+        if (countryCode == Germany)
+        {
+            if (regionCode is null)
+            {
+                return "region_required";
+            }
+            if (!GermanStates.Contains(regionCode))
+            {
+                return "invalid_region";
+            }
+        }
+        else if (regionCode is not null)
+        {
+            return "region_not_allowed";
+        }
+        return null;
+    }
 }
