@@ -260,6 +260,8 @@ The public endpoints find the restaurant by its slug and set it as the tenant of
 
 In Development, every start adds demo reservations from today to today + 7 days for every restaurant that has tables, a location and opening hours, but no reservations from today on; where the tables come from does not matter. 30–60 % of the tables are booked at the peak times (12:00–13:00 and 18:00–20:00, or the whole opening window if it has neither) with names and phone numbers or email addresses of the restaurant's country. Today's reservations that have started are mostly `Arrived`, some `Late` or `Cancelled`; in a restaurant with the request mode some online reservations are `Requested`. To get new ones, delete the database or the reservations from today on.
 
+The demo reservations have no guest link (no manage token), so they cannot be opened on the guest's page "Your reservation". To see a reservation with a link after its start (cancelling is no longer possible): while a demo restaurant is open, e.g. Kafana Dunav (12:00–22:00 start times, Europe/Belgrade), book the next free quarter hour of today online, keep the link from the confirmation and open it again once that time has passed in the restaurant's time zone.
+
 Uploaded floor plans are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
 
 ### Backups
