@@ -1,4 +1,4 @@
-import { Card, Group, Skeleton, Stack, Text, Title } from '@mantine/core'
+import { Button, Card, Group, Skeleton, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useTenants } from '../api/tenants.ts'
@@ -17,9 +17,9 @@ export function HomePage() {
 
       {tenants.isPending ? (
         <Stack gap="sm">
-          <Skeleton h={76} radius="md" />
-          <Skeleton h={76} radius="md" />
-          <Skeleton h={76} radius="md" />
+          <Skeleton h={140} radius="md" />
+          <Skeleton h={140} radius="md" />
+          <Skeleton h={140} radius="md" />
         </Stack>
       ) : tenants.isError ? (
         <ErrorAlert error={tenants.error} onRetry={() => void tenants.refetch()} />
@@ -28,15 +28,25 @@ export function HomePage() {
       ) : (
         <Stack gap="sm">
           {tenants.data.map((tenant) => (
-            <Card key={tenant.id} component={Link} to={`/r/${tenant.slug}`}>
-              <Group justify="space-between" wrap="nowrap">
-                <Text fw={600} size="lg">
-                  {tenant.name}
-                </Text>
-                <Text c="brand" fw={500} size="sm">
-                  {t('home.view')}
-                </Text>
-              </Group>
+            <Card key={tenant.id}>
+              <Stack gap="sm">
+                <Stack gap={2}>
+                  <Title order={2} size="h3">
+                    {tenant.name}
+                  </Title>
+                  {tenant.city !== null && (
+                    <Text c="dimmed" size="sm">
+                      {tenant.city}
+                    </Text>
+                  )}
+                </Stack>
+                {tenant.description !== null && <Text size="sm">{tenant.description}</Text>}
+                <Group>
+                  <Button component={Link} to={`/r/${tenant.slug}`}>
+                    {t('home.reserve')}
+                  </Button>
+                </Group>
+              </Stack>
             </Card>
           ))}
         </Stack>

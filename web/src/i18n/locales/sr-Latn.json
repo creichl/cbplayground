@@ -36,6 +36,13 @@
       "invalidCredentials": "Imejl adresa ili lozinka nisu ispravni.",
       "lockedOut": "Previše neuspešnih pokušaja. Vaš nalog je zaključan nekoliko minuta. Pokušajte ponovo kasnije.",
       "deactivated": "Vaš nalog je deaktiviran. Obratite se administratoru svog restorana."
+    },
+    "demo": {
+      "title": "Demo nalozi",
+      "text": "Vidljivo samo u razvoju. Klik na nalog popunjava formular, lozinka je {{password}}.",
+      "tenantAdmin": "Administrator",
+      "frontDesk": "Recepcija",
+      "superadmin": "Superadministrator"
     }
   },
   "errors": {
@@ -49,7 +56,11 @@
     "title": "Restorani",
     "subtitle": "Izaberite restoran i rezervišite sto.",
     "empty": "Još nema restorana.",
-    "view": "Pogledaj"
+    "reserve": "Rezerviši sto"
+  },
+  "guest": {
+    "staffLogin": "Za restorane: prijava",
+    "toManagement": "Na administraciju"
   },
   "restaurant": {
     "bookingPlaceholder": "Ovde ćete uskoro moći da rezervišete sto onlajn.",
@@ -61,11 +72,83 @@
     "toggleNavigation": "Prikaži ili sakrij navigaciju",
     "nav": {
       "overview": "Pregled",
+      "profile": "Profil restorana",
       "areas": "Prostori i stolovi",
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni"
     }
+  },
+  "overview": {
+    "welcome": "Dobro došli, {{name}}! Ovde vidite šta još nedostaje vašem restoranu.",
+    "viewBookingPage": "Pogledaj stranicu za rezervacije",
+    "checklist": {
+      "title": "Podešavanje restorana",
+      "progress": "Završeno {{done}} od {{total}}",
+      "allDone": "Sve je završeno: vaš restoran je potpuno podešen.",
+      "done": "Završeno",
+      "setUp": "Podesi"
+    },
+    "steps": {
+      "profile": {
+        "title": "Profil restorana",
+        "description": "Adresa i broj telefona, da bi vas gosti pronašli i kontaktirali."
+      },
+      "location": {
+        "title": "Lokacija",
+        "description": "Država i region, zbog praznika."
+      },
+      "openingHours": {
+        "title": "Radno vreme",
+        "description": "Najmanje jedan termin u kome gosti mogu da rezervišu."
+      },
+      "floorPlan": {
+        "title": "Prostor sa tlocrtom",
+        "description": "Prostor, npr. sala, sa otpremljenim tlocrtom."
+      },
+      "tables": {
+        "title": "Stolovi",
+        "description": "Najmanje jedan sto na tlocrtu."
+      },
+      "reservationSettings": {
+        "title": "Podešavanja rezervacija",
+        "description": "Kako se rezervacije potvrđuju, ko bira sto i koliko traje rezervacija."
+      }
+    }
+  },
+  "profile": {
+    "title": "Profil restorana",
+    "subtitle": "Adresa, kontakt i kratak opis. Gosti će ih videti na vašoj stranici za rezervacije.",
+    "address": {
+      "title": "Adresa"
+    },
+    "contact": {
+      "title": "Kontakt"
+    },
+    "description": {
+      "title": "Opis"
+    },
+    "fields": {
+      "street": "Ulica i broj",
+      "postalCode": "Poštanski broj",
+      "city": "Mesto",
+      "phone": "Telefon",
+      "email": "Imejl",
+      "website": "Veb-sajt",
+      "websiteDescription": "Puna adresa, sa https://",
+      "description": "Kratak opis",
+      "descriptionDescription": "Najviše {{max}} znakova."
+    },
+    "validation": {
+      "email": "Unesite ispravnu imejl adresu.",
+      "website": "Unesite punu veb-adresu koja počinje sa https:// ili http://."
+    },
+    "errors": {
+      "title": "Profil nije sačuvan",
+      "tooLong": "Jedno polje je duže nego što je dozvoljeno."
+    },
+    "save": "Sačuvaj",
+    "saved": "Profil je sačuvan."
   },
   "staff": {
     "title": "Zaposleni",

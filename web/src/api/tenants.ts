@@ -6,6 +6,9 @@ export type Tenant = {
   id: string
   name: string
   slug: string
+  /** City and short description from the restaurant's profile; null when not filled in. */
+  city: string | null
+  description: string | null
 }
 
 /** All restaurants, sorted by name. */
