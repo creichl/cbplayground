@@ -111,6 +111,7 @@ This README describes the full product vision.
 │   ├── dotnet-tools.json         # local tool manifest (dotnet-ef)
 │   ├── Cbplayground.Api/
 │   │   ├── Auth/                 # roles, policies, tenant claim
+│   │   ├── Backups/              # daily backup of the database and the floor plans
 │   │   ├── Data/                 # AppDbContext, entities, development seed
 │   │   ├── Endpoints/            # endpoint groups, one file per area
 │   │   ├── Migrations/           # EF Core migrations
@@ -182,6 +183,22 @@ All `/api/admin` endpoints require the `RequireTenantAdmin` policy. Failed valid
 
 Uploaded floor plans are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
 
+### Backups
+
+Outside Development, the API backs up the database once a day at `Backup:TimeOfDay` (default `03:00`, local server time). Each backup is one zip file in `Backup:Path` (default `data/backups`, relative to `api/Cbplayground.Api`, ignored by git), named after its time, e.g. `cbplayground-20261031-030000.zip`. It contains the database file, copied consistently with the SQLite online backup while the API keeps running, and the uploaded floor plans in `uploads/`. Backups older than `Backup:RetentionDays` (default 30) are deleted after each run. If the newest backup is more than a day old when the API starts, for example because the API was down at the scheduled time, it backs up right away. A failed backup is logged as an error; the API keeps running.
+
+`Backup:Enabled` switches the backups on (`appsettings.json`) or off (`appsettings.Development.json`). To try them locally: `dotnet run -- --Backup:Enabled=true`.
+
+The backups lie on the same disk as the database. To survive the loss of the server, `Backup:Path` should be on another disk or be copied off the server regularly; that is part of the server setup, not of this repository.
+
+Restore a backup:
+
+1. Stop the API.
+2. Unzip the backup.
+3. Replace the database file (the `Data Source` of the connection string) with the database file from the zip, and delete the `-wal` and `-shm` files next to it if there are any.
+4. Replace the contents of the `Uploads:Path` folder with the `uploads/` folder from the zip.
+5. Start the API.
+
 There is no registration endpoint: staff users are created by a Tenant Admin (staff management, `/admin/staff`) or by the development seed.
 
 ### Sign-in, roles and tenants
@@ -235,7 +252,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints and the reservation settings with their duration rules.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules and the database backups.
 
 ### Run the web frontend
 

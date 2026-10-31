@@ -23,11 +23,17 @@ public class ApiFactory : WebApplicationFactory<Program>
     /// <summary>Temporary folder for the uploaded floor plans.</summary>
     public string UploadsPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-uploads-{Guid.NewGuid():N}");
 
+    /// <summary>Temporary folder for the database backups.</summary>
+    public string BackupPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-backups-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={databasePath}");
         builder.UseSetting("Uploads:Path", UploadsPath);
+        // No scheduled backups during the tests; BackupTests call DatabaseBackup directly.
+        builder.UseSetting("Backup:Enabled", "false");
+        builder.UseSetting("Backup:Path", BackupPath);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)
@@ -85,6 +91,10 @@ public class ApiFactory : WebApplicationFactory<Program>
         if (Directory.Exists(UploadsPath))
         {
             Directory.Delete(UploadsPath, recursive: true);
+        }
+        if (Directory.Exists(BackupPath))
+        {
+            Directory.Delete(BackupPath, recursive: true);
         }
     }
 }
