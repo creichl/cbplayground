@@ -85,6 +85,8 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapAreaEndpoints();
+app.MapTableEndpoints();
 
 app.Run();
 

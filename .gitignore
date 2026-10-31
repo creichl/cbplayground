@@ -10,3 +10,6 @@ dist/
 *.db
 *.db-shm
 *.db-wal
+
+# Uploaded floor plans (see Uploads:Path in appsettings.json)
+api/Cbplayground.Api/data/uploads/
