@@ -13,6 +13,9 @@ const errorKeys = {
   table_not_found: 'areas.errors.tableNotFound',
   seats_invalid: 'areas.errors.seatsInvalid',
   position_invalid: 'areas.errors.positionInvalid',
+  shape_invalid: 'areas.errors.shapeInvalid',
+  rotation_invalid: 'areas.errors.rotationInvalid',
+  table_scale_invalid: 'areas.errors.tableScaleInvalid',
 } as const
 
 /** The error code of a failed request, e.g. "table_number_taken", or null. */
