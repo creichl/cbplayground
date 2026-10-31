@@ -34,7 +34,12 @@ public class ApiFactory : WebApplicationFactory<Program>
         // No scheduled backups during the tests; BackupTests call DatabaseBackup directly.
         builder.UseSetting("Backup:Enabled", "false");
         builder.UseSetting("Backup:Path", BackupPath);
+        // The tests book far more than 10 times from the same client; RateLimitTests use the real limit.
+        builder.UseSetting("RateLimiting:PublicBookings:PermitLimit", PublicBookingLimit.ToString());
     }
+
+    /// <summary>Online bookings per client in 10 minutes.</summary>
+    protected virtual int PublicBookingLimit => 10_000;
 
     protected override IHost CreateHost(IHostBuilder builder)
     {
