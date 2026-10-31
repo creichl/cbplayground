@@ -24,7 +24,13 @@ builder.Services
         options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
     })
     .AddEntityFrameworkStores<AppDbContext>()
-    .AddClaimsPrincipalFactory<TenantClaimsPrincipalFactory>();
+    .AddClaimsPrincipalFactory<TenantClaimsPrincipalFactory>()
+    // Token providers for the password reset that a Tenant Admin does in the staff management.
+    .AddDefaultTokenProviders();
+
+// Check the security stamp on every request: a deactivated user (or one whose password was set anew)
+// is signed out on their next request, and role changes apply right away.
+builder.Services.Configure<SecurityStampValidatorOptions>(options => options.ValidationInterval = TimeSpan.Zero);
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -85,6 +91,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
+app.MapStaffEndpoints();
 
 app.Run();
 
