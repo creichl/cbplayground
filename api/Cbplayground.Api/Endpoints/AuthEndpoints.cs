@@ -10,6 +10,9 @@ namespace Cbplayground.Api.Endpoints;
 /// </summary>
 public static class AuthEndpoints
 {
+    /// <summary>The rate limiter policy of the sign-in, see Program.cs.</summary>
+    public const string LoginRateLimitPolicy = "login";
+
     public record LoginRequest(string? Email, string? Password);
 
     /// <summary>Why a login failed: "invalid_credentials", "locked_out", "deactivated" (the user) or "restaurant_deactivated".</summary>
@@ -59,7 +62,7 @@ public static class AuthEndpoints
 
             await signInManager.SignInAsync(user, isPersistent: false);
             return Results.Ok(await ToMeResponse(user, userManager, db));
-        });
+        }).RequireRateLimiting(LoginRateLimitPolicy);
 
         group.MapPost("/logout", async (SignInManager<ApplicationUser> signInManager) =>
         {

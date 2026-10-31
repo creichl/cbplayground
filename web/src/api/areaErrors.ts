@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { ApiError } from './client.ts'
+import { ApiError, httpErrorMessage } from './client.ts'
 
 const errorKeys = {
   area_name_invalid: 'areas.errors.areaNameInvalid',
@@ -31,7 +31,7 @@ export function errorMessage(error: unknown, t: TFunction) {
       return t('errors.network')
     }
     if (error.kind === 'http') {
-      return t('errors.http', { status: error.status })
+      return httpErrorMessage(error, t)
     }
     return t('errors.invalidResponse')
   }

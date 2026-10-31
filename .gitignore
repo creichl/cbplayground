@@ -16,3 +16,6 @@ api/Cbplayground.Api/data/uploads/
 
 # Database backups (see Backup:Path in appsettings.json)
 api/Cbplayground.Api/data/backups/
+
+# Data Protection keys of the sign-in cookie (see DataProtection:KeysPath in appsettings.json)
+api/Cbplayground.Api/data/keys/

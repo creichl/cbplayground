@@ -45,7 +45,8 @@
       "invalidCredentials": "E-Mail-Adresse oder Passwort ist falsch.",
       "lockedOut": "Zu viele Fehlversuche. Ihr Konto ist für einige Minuten gesperrt. Bitte versuchen Sie es später erneut.",
       "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants.",
-      "restaurantDeactivated": "Dieses Restaurant wurde deaktiviert. Bitte wenden Sie sich an den Plattformbetreiber."
+      "restaurantDeactivated": "Dieses Restaurant wurde deaktiviert. Bitte wenden Sie sich an den Plattformbetreiber.",
+      "tooManyRequests": "Zu viele Anmeldeversuche von dieser Verbindung. Bitte warten Sie eine Minute und versuchen Sie es erneut."
     },
     "demo": {
       "title": "Demo-Zugänge",
@@ -59,6 +60,9 @@
     "title": "Etwas ist schiefgelaufen",
     "network": "Der Server ist nicht erreichbar. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
     "http": "Der Server hat mit Fehler {{status}} geantwortet.",
+    "serverError": "Auf dem Server ist ein Fehler aufgetreten. Bitte versuchen Sie es später erneut.",
+    "invalidRequest": "Die Anfrage war ungültig. Bitte prüfen Sie Ihre Eingaben und versuchen Sie es erneut.",
+    "tooManyRequests": "Zu viele Anfragen von dieser Verbindung. Bitte warten Sie eine Minute und versuchen Sie es erneut.",
     "invalidResponse": "Der Server hat eine unerwartete Antwort gesendet.",
     "unexpected": "Ein unerwarteter Fehler ist aufgetreten."
   },

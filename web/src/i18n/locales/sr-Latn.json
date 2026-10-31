@@ -45,7 +45,8 @@
       "invalidCredentials": "Imejl adresa ili lozinka nisu ispravni.",
       "lockedOut": "Previše neuspešnih pokušaja. Vaš nalog je zaključan nekoliko minuta. Pokušajte ponovo kasnije.",
       "deactivated": "Vaš nalog je deaktiviran. Obratite se administratoru svog restorana.",
-      "restaurantDeactivated": "Ovaj restoran je deaktiviran. Obratite se operateru platforme."
+      "restaurantDeactivated": "Ovaj restoran je deaktiviran. Obratite se operateru platforme.",
+      "tooManyRequests": "Previše pokušaja prijave sa ove veze. Sačekajte minut i pokušajte ponovo."
     },
     "demo": {
       "title": "Demo nalozi",
@@ -59,6 +60,9 @@
     "title": "Došlo je do greške",
     "network": "Server nije dostupan. Proverite vezu i pokušajte ponovo.",
     "http": "Server je odgovorio greškom {{status}}.",
+    "serverError": "Došlo je do greške na serveru. Pokušajte ponovo kasnije.",
+    "invalidRequest": "Zahtev nije ispravan. Proverite unos i pokušajte ponovo.",
+    "tooManyRequests": "Previše zahteva sa ove veze. Sačekajte minut i pokušajte ponovo.",
     "invalidResponse": "Server je poslao neočekivan odgovor.",
     "unexpected": "Došlo je do neočekivane greške."
   },

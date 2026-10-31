@@ -45,7 +45,8 @@
       "invalidCredentials": "The email address or password is incorrect.",
       "lockedOut": "Too many failed attempts. Your account is locked for a few minutes; please try again later.",
       "deactivated": "Your account has been deactivated. Please contact your restaurant’s administrator.",
-      "restaurantDeactivated": "This restaurant has been deactivated. Please contact the platform operator."
+      "restaurantDeactivated": "This restaurant has been deactivated. Please contact the platform operator.",
+      "tooManyRequests": "Too many sign-in attempts from this connection. Please wait a minute and try again."
     },
     "demo": {
       "title": "Demo accounts",
@@ -59,6 +60,9 @@
     "title": "Something went wrong",
     "network": "The server could not be reached. Please check your connection and try again.",
     "http": "The server responded with error {{status}}.",
+    "serverError": "The server ran into an error. Please try again later.",
+    "invalidRequest": "The request was not valid. Please check your input and try again.",
+    "tooManyRequests": "Too many requests from this connection. Please wait a minute and try again.",
     "invalidResponse": "The server sent an unexpected response.",
     "unexpected": "An unexpected error occurred."
   },

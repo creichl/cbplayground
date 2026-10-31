@@ -3,7 +3,7 @@ import type { ParseKeys, TFunction } from 'i18next'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
-import { ApiError } from '../../api/client.ts'
+import { ApiError, httpErrorMessage } from '../../api/client.ts'
 import { type PublicRestaurant, todayIn, useAvailability, useCreateBooking, usePublicTables } from '../../api/publicBooking.ts'
 import { formatShortDate, formatTime } from '../../i18n/format.ts'
 import type { Language } from '../../i18n/index.ts'
@@ -127,7 +127,7 @@ function bookingErrorMessage(error: Error, t: TFunction) {
       return t('booking.errors.invalidBooking')
     }
     if (error.kind === 'http') {
-      return t('errors.http', { status: error.status })
+      return httpErrorMessage(error, t)
     }
     return t('errors.invalidResponse')
   }

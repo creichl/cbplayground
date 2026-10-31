@@ -3,7 +3,7 @@ import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router'
-import { ApiError } from '../api/client.ts'
+import { ApiError, httpErrorMessage } from '../api/client.ts'
 import {
   type GuestReservation,
   isNotFound,
@@ -31,7 +31,7 @@ function cancelErrorMessage(error: Error, t: TFunction) {
       return t('errors.network')
     }
     if (error.kind === 'http') {
-      return t('errors.http', { status: error.status })
+      return httpErrorMessage(error, t)
     }
     return t('errors.invalidResponse')
   }

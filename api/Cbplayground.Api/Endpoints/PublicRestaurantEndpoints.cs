@@ -20,6 +20,9 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the guest's reservation link (view and cancel), with the limit of the booking; see Program.cs.</summary>
     public const string ManageRateLimitPolicy = "public-manage";
 
+    /// <summary>The rate limiter policy of the calendar, the availability and the tables, see Program.cs.</summary>
+    public const string ReadRateLimitPolicy = "public-read";
+
     /// <summary>The restaurant for the booking page: its profile (every field null when empty) and how it is booked.</summary>
     public record RestaurantResponse(
         string Name,
@@ -177,7 +180,7 @@ public static class PublicRestaurantEndpoints
                 days.Add(new CalendarDay(date, status));
             }
             return Results.Ok(days);
-        });
+        }).RequireRateLimiting(ReadRateLimitPolicy);
 
         group.MapGet("/availability", async (DateOnly date, int guests, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
         {
@@ -194,7 +197,7 @@ public static class PublicRestaurantEndpoints
                     FormatTime(p.Period.End),
                     p.Slots.Select(s => new AvailabilityTime(FormatTime(s.Time), s.FreeTables.Count > 0)).ToList()))
                 .ToList()));
-        });
+        }).RequireRateLimiting(ReadRateLimitPolicy);
 
         // The online areas with all their tables; "available" tells which ones the guest can pick for this time.
         group.MapGet("/tables", async (DateOnly date, string? time, int guests, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
@@ -231,7 +234,7 @@ public static class PublicRestaurantEndpoints
                     .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, freeTableIds.Contains(t.Id)))
                     .ToList()))
                 .ToList());
-        });
+        }).RequireRateLimiting(ReadRateLimitPolicy);
 
         group.MapPost("/reservations", async (BookingRequest request, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {

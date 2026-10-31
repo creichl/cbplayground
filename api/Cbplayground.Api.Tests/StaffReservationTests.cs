@@ -181,6 +181,27 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal("in_the_past", await ErrorOf(move, HttpStatusCode.BadRequest));
     }
 
+    [Fact]
+    public async Task Notes_and_contact_can_be_changed_after_the_opening_hours_changed_but_the_time_cannot_be_moved_outside_them()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var date = TestRestaurants.NextOpenDay(factory);
+        var reservation = await CreatedAsync(frontDesk, date, "18:00", 2, restaurant.Tables["2"]);
+        // From now on open at lunchtime only.
+        var lunchOnly = Enum.GetValues<DayOfWeek>().Select(d => new { dayOfWeek = (int)d, start = "11:30", end = "14:30" }).ToArray();
+        (await admin.PutAsJsonAsync("/api/admin/opening-hours", new { periods = lunchOnly }, Token)).EnsureSuccessStatusCode();
+
+        var notes = await UpdateAsync(frontDesk, reservation.Id, date, "18:00", 2, restaurant.Tables["2"], notes: "Fensterplatz");
+        var moved = await UpdateAsync(frontDesk, reservation.Id, date, "18:30", 2, restaurant.Tables["2"]);
+
+        Assert.Equal(HttpStatusCode.OK, notes.StatusCode);
+        var changed = (await notes.Content.ReadFromJsonAsync<ReservationResponse>(Token))!;
+        Assert.Equal(("Fensterplatz", "+43 660 7654321", "18:00", "2"), (changed.Notes, changed.Phone, changed.Time, changed.TableNumber));
+        Assert.Equal("outside_opening_hours", await ErrorOf(moved, HttpStatusCode.BadRequest));
+    }
+
     [Theory]
     [InlineData(ReservationStatus.Requested, "Confirmed", true)]
     [InlineData(ReservationStatus.Requested, "Declined", true)]
