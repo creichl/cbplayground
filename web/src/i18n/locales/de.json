@@ -126,6 +126,11 @@
     },
     "table": {
       "listLabel": "Freie Tische – {{area}}",
+      "legend": {
+        "free": "Frei",
+        "selected": "Ihre Wahl",
+        "unavailable": "Nicht wählbar"
+      },
       "option_one": "Tisch {{number}} · {{count}} Platz",
       "option_other": "Tisch {{number}} · {{count}} Plätze",
       "noneFreeInArea": "In diesem Bereich ist zu dieser Zeit kein passender Tisch frei.",
@@ -623,7 +628,7 @@
     "emptyText": "Legen Sie einen Bereich an, z. B. die Gaststube oder die Terrasse, und laden Sie seinen Grundriss hoch.",
     "addTable": "Tisch hinzufügen",
     "dragHint": "Ziehen Sie Tische, um sie zu verschieben. Klicken Sie auf einen Tisch, um ihn zu bearbeiten.",
-    "noFloorPlanHint": "Ohne Grundriss werden die Tische hier als Liste gezeigt. Laden Sie einen Grundriss hoch, um sie darauf zu platzieren.",
+    "newTableHint": "Neue Tische erscheinen in der Mitte des Grundrisses.",
     "capacity": "Sitzplätze: {{seats}}, davon online buchbar: {{online}} ({{percent}} %)",
     "capacityOnlineBlocked": "Sitzplätze: {{seats}}, für Online-Buchungen gesperrt",
     "floorPlanAlt": "Grundriss",
@@ -644,7 +649,17 @@
       "onlineCapacityPercent": "Online-Kontingent",
       "onlineCapacityPercentHint": "Anteil der Sitzplätze, den Gäste online buchen können. Der Rest bleibt für Telefon- und Laufkundschaft frei.",
       "percentSuffix": " %",
+      "tableScale": "Tischgröße",
+      "tableScaleHint": "Größe der gezeichneten Tische in diesem Bereich, z. B. passend zum Grundriss.",
       "saved": "Der Bereich wurde gespeichert.",
+      "arrangeTitle": "Anordnung",
+      "arrangeHint": "Setzt alle Tische dieses Bereichs in Reihen, ohne Überlappung.",
+      "arrangeSaveFirst": "Speichern Sie zuerst die Tischgröße; die Anordnung verwendet die gespeicherte Größe.",
+      "arrange": "Automatisch anordnen",
+      "arrangeConfirmTitle": "Tische von „{{name}}“ automatisch anordnen?",
+      "arrangeConfirmText": "Alle Tische dieses Bereichs werden neu in Reihen gesetzt. Ihre bisherigen Positionen werden ersetzt.",
+      "arrangeConfirm": "Anordnen",
+      "arranged": "Die Tische wurden angeordnet.",
       "order": "Reihenfolge",
       "moveLeft": "Nach links",
       "moveRight": "Nach rechts",
@@ -657,6 +672,14 @@
       "title": "Tisch {{number}}",
       "number": "Tischnummer",
       "seats": "Sitzplätze",
+      "shape": "Form",
+      "shapes": {
+        "Round": "Rund",
+        "Square": "Quadratisch",
+        "Rectangle": "Rechteckig"
+      },
+      "rotate": "Um 90° drehen",
+      "rotateHint": "Nur bei rechteckigen Tischen: Der Tisch steht dann hochkant statt quer.",
       "saved": "Der Tisch wurde gespeichert.",
       "delete": "Tisch löschen",
       "deleteTitle": "Tisch {{number}} löschen?",
@@ -677,8 +700,16 @@
       "tableNotFound": "Diesen Tisch gibt es nicht mehr. Bitte laden Sie die Seite neu.",
       "seatsInvalid": "Ein Tisch braucht mindestens 1 Sitzplatz.",
       "positionInvalid": "Ein Tisch muss auf dem Grundriss liegen.",
+      "shapeInvalid": "Bitte wählen Sie rund, quadratisch oder rechteckig.",
+      "rotationInvalid": "Ein Tisch lässt sich nur um 0° oder 90° drehen.",
+      "tableScaleInvalid": "Bitte wählen Sie eine Tischgröße von 50 bis 200 %.",
       "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden"
     }
+  },
+  "floorPlan": {
+    "zoomIn": "Vergrößern",
+    "zoomOut": "Verkleinern",
+    "zoomReset": "Ansicht zurücksetzen"
   },
   "reservationSettings": {
     "title": "Reservierungseinstellungen",
@@ -954,8 +985,7 @@
       "time": "Uhrzeit",
       "now": "Jetzt",
       "until": "bis {{time}}",
-      "nextAt": "ab {{time}}",
-      "noFloorPlan": "Für diesen Bereich gibt es noch keinen Grundriss, daher werden seine Tische als Liste gezeigt."
+      "nextAt": "ab {{time}}"
     },
     "details": {
       "time": "Uhrzeit",

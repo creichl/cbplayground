@@ -1,4 +1,4 @@
-import { Button, Card, Center, FileButton, Grid, Group, Loader, Modal, SimpleGrid, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Button, Card, Center, FileButton, Grid, Group, Loader, Modal, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -86,8 +86,16 @@ function usePendingPositions() {
     setPending((current) => ({ ...current, [id]: { id, posX, posY } }))
   }, [])
 
-  return { pending, move }
+  /** Drops the unsaved positions of these tables, e.g. after they were arranged anew. */
+  const discard = useCallback((ids: string[]) => {
+    setPending((current) => Object.fromEntries(Object.entries(current).filter(([id]) => !ids.includes(id))))
+  }, [])
+
+  return { pending, move, discard }
 }
+
+/** Shape and rotation of the selected table as chosen in its panel, before they are saved. */
+type TablePreview = Pick<Table, 'id' | 'shape' | 'rotation'>
 
 /** The next free table number: one more than the highest numeric table number of the restaurant. */
 function nextTableNumber(tables: Table[]) {
@@ -96,8 +104,9 @@ function nextTableNumber(tables: Table[]) {
 }
 
 /**
- * Areas & tables: areas as tabs, the floor plan with its tables, and a panel with the selected table or area.
- * An area without floor plan lists its tables, so they can be managed before a floor plan is uploaded.
+ * Areas & tables: areas as tabs, the plan with its tables, and a panel with the selected table or area.
+ * An area without floor plan image shows its tables on the schematic plan; an image can be uploaded below it.
+ * Shape and rotation of the selected table and the area's table size show in the plan before they are saved.
  */
 export function AreasPage() {
   const { t } = useTranslation()
@@ -107,9 +116,12 @@ export function AreasPage() {
   const createTable = useCreateTable()
   const uploadFloorPlan = useUploadFloorPlan()
   const reorderAreas = useReorderAreas()
-  const { pending, move } = usePendingPositions()
+  const { pending, move, discard } = usePendingPositions()
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  // Not yet saved values of the panel, shown in the plan.
+  const [tablePreview, setTablePreview] = useState<TablePreview | null>(null)
+  const [tableScalePreview, setTableScalePreview] = useState<number | null>(null)
   const [createOpened, { open: openCreate, close: closeCreate }] = useDisclosure()
 
   if (areas.isPending || tables.isPending) {
@@ -135,12 +147,28 @@ export function AreasPage() {
   const area = areas.data.find((a) => a.id === selectedAreaId) ?? areas.data[0]
   const areaTables = area === undefined
     ? []
-    : tables.data.filter((table) => table.areaId === area.id).map((table) => ({ ...table, ...pending[table.id] }))
+    : tables.data
+        .filter((table) => table.areaId === area.id)
+        .map((table) => ({ ...table, ...pending[table.id], ...(tablePreview?.id === table.id ? tablePreview : undefined) }))
   const selectedTable = areaTables.find((table) => table.id === selectedTableId)
 
   function selectArea(areaId: string | null) {
     setSelectedAreaId(areaId)
     setSelectedTableId(null)
+    setTablePreview(null)
+    setTableScalePreview(null)
+  }
+
+  /** Selecting a table shows its panel instead of the area's, so an unsaved table size is dropped. */
+  function selectTable(tableId: string | null) {
+    if (tableId === selectedTableId) {
+      return
+    }
+    setSelectedTableId(tableId)
+    setTablePreview(null)
+    if (tableId !== null) {
+      setTableScalePreview(null)
+    }
   }
 
   function upload(area: Area, file: File) {
@@ -162,7 +190,7 @@ export function AreasPage() {
     createTable.mutate(
       { areaId: area.id, number: nextTableNumber(tables.data ?? []), seats: newTableSeats },
       {
-        onSuccess: (table) => setSelectedTableId(table.id),
+        onSuccess: (table) => selectTable(table.id),
         onError: (error) => notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) }),
       },
     )
@@ -213,60 +241,34 @@ export function AreasPage() {
             <Grid.Col span={{ base: 12, md: 8, xl: 9 }}>
               <Card>
                 <Stack gap="md">
-                  {area.floorPlanUrl === null ? (
-                    <>
-                      <Group>
-                        <Button onClick={() => addTable(area)} loading={createTable.isPending}>
-                          {t('areas.addTable')}
-                        </Button>
-                      </Group>
-                      {areaTables.length > 0 && (
-                        <>
-                          <Text size="sm" c="dimmed">
-                            {t('areas.noFloorPlanHint')}
-                          </Text>
-                          <SimpleGrid cols={{ base: 3, sm: 4, lg: 6 }} spacing="sm">
-                            {areaTables.map((table) => (
-                              <Button
-                                key={table.id}
-                                variant={table.id === selectedTableId ? 'filled' : 'default'}
-                                aria-pressed={table.id === selectedTableId}
-                                aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
-                                onClick={() => setSelectedTableId(table.id)}
-                              >
-                                {t('common.tableLabel', { number: table.number, seats: table.seats })}
-                              </Button>
-                            ))}
-                          </SimpleGrid>
-                        </>
-                      )}
-                      <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
-                    </>
-                  ) : (
-                    <>
-                      <Group justify="space-between">
-                        <Button onClick={() => addTable(area)} loading={createTable.isPending}>
-                          {t('areas.addTable')}
-                        </Button>
-                        <FileButton onChange={(file) => file !== null && upload(area, file)} accept={floorPlanTypes.join(',')}>
-                          {(props) => (
-                            <Button {...props} variant="default" loading={uploadFloorPlan.isPending}>
-                              {t('areas.floorPlan.replace')}
-                            </Button>
-                          )}
-                        </FileButton>
-                      </Group>
-                      <FloorPlanCanvas
-                        imageUrl={area.floorPlanUrl}
-                        tables={areaTables}
-                        selectedTableId={selectedTableId}
-                        onSelect={setSelectedTableId}
-                        onMove={move}
-                      />
-                      <Text size="xs" c="dimmed">
-                        {t('areas.dragHint')}
-                      </Text>
-                    </>
+                  <Group justify="space-between">
+                    <Button onClick={() => addTable(area)} loading={createTable.isPending}>
+                      {t('areas.addTable')}
+                    </Button>
+                    {area.floorPlanUrl !== null && (
+                      <FileButton onChange={(file) => file !== null && upload(area, file)} accept={floorPlanTypes.join(',')}>
+                        {(props) => (
+                          <Button {...props} variant="default" loading={uploadFloorPlan.isPending}>
+                            {t('areas.floorPlan.replace')}
+                          </Button>
+                        )}
+                      </FileButton>
+                    )}
+                  </Group>
+                  <FloorPlanCanvas
+                    key={area.id}
+                    imageUrl={area.floorPlanUrl}
+                    tableScale={tableScalePreview ?? area.tableScale}
+                    tables={areaTables}
+                    selectedTableId={selectedTableId}
+                    onSelect={selectTable}
+                    onMove={move}
+                  />
+                  <Text size="xs" c="dimmed">
+                    {area.floorPlanUrl === null ? t('areas.dragHint') : `${t('areas.dragHint')} ${t('areas.newTableHint')}`}
+                  </Text>
+                  {area.floorPlanUrl === null && (
+                    <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
                   )}
                   <Text fw={500}>
                     {area.onlineBookingEnabled
@@ -283,7 +285,12 @@ export function AreasPage() {
             <Grid.Col span={{ base: 12, md: 4, xl: 3 }}>
               <Card>
                 {selectedTable !== undefined ? (
-                  <TablePanel key={selectedTable.id} table={selectedTable} onClose={() => setSelectedTableId(null)} />
+                  <TablePanel
+                    key={selectedTable.id}
+                    table={selectedTable}
+                    onPreview={(shape, rotation) => setTablePreview({ id: selectedTable.id, shape, rotation })}
+                    onClose={() => selectTable(null)}
+                  />
                 ) : (
                   <AreaPanel
                     key={area.id}
@@ -294,6 +301,8 @@ export function AreasPage() {
                     onMove={(direction) => moveArea(area, direction)}
                     moving={reorderAreas.isPending}
                     onDeleted={() => selectArea(null)}
+                    onTableScaleChange={setTableScalePreview}
+                    onArranged={() => discard(areaTables.map((table) => table.id))}
                   />
                 )}
               </Card>

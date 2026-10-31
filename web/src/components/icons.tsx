@@ -110,3 +110,36 @@ export function UndoIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function UserIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0 -8 0" />
+      <path d="M6 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2" />
+    </Icon>
+  )
+}
+
+export function PlusIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M12 5v14M5 12h14" />
+    </Icon>
+  )
+}
+
+export function MinusIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M5 12h14" />
+    </Icon>
+  )
+}
+
+export function ZoomResetIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 8v-2a2 2 0 0 1 2 -2h2M4 16v2a2 2 0 0 0 2 2h2M16 4h2a2 2 0 0 1 2 2v2M16 20h2a2 2 0 0 0 2 -2v-2" />
+    </Icon>
+  )
+}
