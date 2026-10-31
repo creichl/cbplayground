@@ -102,14 +102,7 @@ public static class StaffReservationEndpoints
 
             var startLocal = start.ToDateTime(TimeOnly.MinValue);
             var endLocal = end.AddDays(1).ToDateTime(TimeOnly.MinValue);
-            var reservations = await QueryReservations(db)
-                .Where(r => r.Reservation.StartLocal >= startLocal && r.Reservation.StartLocal < endLocal)
-                .ToListAsync();
-            return Results.Ok(reservations
-                .OrderBy(r => r.Reservation.StartLocal)
-                .ThenBy(r => r.Table.Number.Length).ThenBy(r => r.Table.Number, StringComparer.Ordinal)
-                .Select(r => ToResponse(r.Reservation, r.Table, r.Area))
-                .ToList());
+            return Results.Ok(await LoadResponsesAsync(db, db.Reservations.Where(r => r.StartLocal >= startLocal && r.StartLocal < endLocal)));
         });
 
         group.MapGet("/availability", async (DateOnly date, int guests, int? durationMinutes, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
@@ -293,18 +286,22 @@ public static class StaffReservationEndpoints
         reservation.UpdatedAtUtc = nowUtc;
     }
 
-    private record ReservationRow(Reservation Reservation, Table Table, Area Area);
-
-    private static IQueryable<ReservationRow> QueryReservations(AppDbContext db) =>
-        db.Reservations
-            .Join(db.Tables, r => r.TableId, t => t.Id, (r, t) => new { r, t })
-            .Join(db.Areas, x => x.t.AreaId, a => a.Id, (x, a) => new ReservationRow(x.r, x.t, a));
-
-    private static async Task<ReservationResponse> LoadResponseAsync(AppDbContext db, Guid id)
+    /// <summary>The reservations with their table and area, sorted by start and table number.</summary>
+    private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
     {
-        var row = await QueryReservations(db).SingleAsync(r => r.Reservation.Id == id);
-        return ToResponse(row.Reservation, row.Table, row.Area);
+        var rows = await reservations
+            .Join(db.Tables, r => r.TableId, t => t.Id, (r, t) => new { Reservation = r, Table = t })
+            .Join(db.Areas, x => x.Table.AreaId, a => a.Id, (x, a) => new { x.Reservation, x.Table, Area = a })
+            .ToListAsync();
+        return rows
+            .OrderBy(r => r.Reservation.StartLocal)
+            .ThenBy(r => r.Table.Number.Length).ThenBy(r => r.Table.Number, StringComparer.Ordinal)
+            .Select(r => ToResponse(r.Reservation, r.Table, r.Area))
+            .ToList();
     }
+
+    private static async Task<ReservationResponse> LoadResponseAsync(AppDbContext db, Guid id) =>
+        (await LoadResponsesAsync(db, db.Reservations.Where(r => r.Id == id))).Single();
 
     private static ReservationResponse ToResponse(Reservation reservation, Table table, Area area) => new(
         reservation.Id,
