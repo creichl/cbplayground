@@ -15,6 +15,26 @@
     "retry": "Pokušajte ponovo",
     "backToStart": "Nazad na početnu stranu"
   },
+  "auth": {
+    "userMenu": "Meni naloga",
+    "logout": "Odjavi se"
+  },
+  "login": {
+    "title": "Prijava za zaposlene",
+    "subtitle": "Prijavite se svojom poslovnom imejl adresom.",
+    "email": "Imejl",
+    "password": "Lozinka",
+    "submit": "Prijavi se",
+    "validation": {
+      "email": "Unesite ispravnu imejl adresu.",
+      "password": "Unesite lozinku."
+    },
+    "errors": {
+      "invalidCredentials": "Imejl adresa ili lozinka nisu ispravni.",
+      "lockedOut": "Previše neuspešnih pokušaja. Vaš nalog je zaključan nekoliko minuta. Pokušajte ponovo kasnije.",
+      "deactivated": "Vaš nalog je deaktiviran. Obratite se administratoru svog restorana."
+    }
+  },
   "errors": {
     "title": "Došlo je do greške",
     "network": "Server nije dostupan. Proverite vezu i pokušajte ponovo.",
