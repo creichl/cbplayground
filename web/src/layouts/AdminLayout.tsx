@@ -8,6 +8,7 @@ import { UserMenu } from '../components/UserMenu.tsx'
 
 const navItems = [
   { to: '/admin', label: 'admin.nav.overview', end: true },
+  { to: '/admin/profile', label: 'admin.nav.profile', end: false },
   { to: '/admin/areas', label: 'admin.nav.areas', end: false },
   { to: '/admin/opening-hours', label: 'admin.nav.openingHours', end: false },
   { to: '/admin/reservation-settings', label: 'admin.nav.reservationSettings', end: false },

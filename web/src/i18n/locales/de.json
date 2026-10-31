@@ -36,6 +36,13 @@
       "invalidCredentials": "E-Mail-Adresse oder Passwort ist falsch.",
       "lockedOut": "Zu viele Fehlversuche. Ihr Konto ist für einige Minuten gesperrt. Bitte versuchen Sie es später erneut.",
       "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants."
+    },
+    "demo": {
+      "title": "Demo-Zugänge",
+      "text": "Nur in der Entwicklung sichtbar. Ein Klick auf einen Zugang füllt das Formular aus, das Passwort ist {{password}}.",
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk",
+      "superadmin": "Superadmin"
     }
   },
   "errors": {
@@ -49,7 +56,11 @@
     "title": "Restaurants",
     "subtitle": "Wählen Sie ein Restaurant, um einen Tisch zu reservieren.",
     "empty": "Es gibt noch keine Restaurants.",
-    "view": "Ansehen"
+    "reserve": "Tisch reservieren"
+  },
+  "guest": {
+    "staffLogin": "Für Restaurants: Anmelden",
+    "toManagement": "Zur Verwaltung"
   },
   "restaurant": {
     "bookingPlaceholder": "Hier können Sie bald online einen Tisch reservieren.",
@@ -61,11 +72,83 @@
     "toggleNavigation": "Navigation ein- oder ausblenden",
     "nav": {
       "overview": "Übersicht",
+      "profile": "Restaurantprofil",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter"
     }
+  },
+  "overview": {
+    "welcome": "Willkommen, {{name}}! Hier sehen Sie, was Ihrem Restaurant noch fehlt.",
+    "viewBookingPage": "Buchungsseite ansehen",
+    "checklist": {
+      "title": "Restaurant einrichten",
+      "progress": "{{done}} von {{total}} erledigt",
+      "allDone": "Alles erledigt: Ihr Restaurant ist vollständig eingerichtet.",
+      "done": "Erledigt",
+      "setUp": "Einrichten"
+    },
+    "steps": {
+      "profile": {
+        "title": "Restaurantprofil",
+        "description": "Adresse und Telefonnummer, damit Gäste Sie finden und erreichen."
+      },
+      "location": {
+        "title": "Standort",
+        "description": "Land und Region, für die Feiertage."
+      },
+      "openingHours": {
+        "title": "Öffnungszeiten",
+        "description": "Mindestens ein Zeitfenster, in dem Gäste buchen können."
+      },
+      "floorPlan": {
+        "title": "Bereich mit Grundriss",
+        "description": "Ein Bereich, z. B. die Gaststube, mit hochgeladenem Grundriss."
+      },
+      "tables": {
+        "title": "Tische",
+        "description": "Mindestens ein Tisch auf einem Grundriss."
+      },
+      "reservationSettings": {
+        "title": "Reservierungseinstellungen",
+        "description": "Wie Reservierungen bestätigt werden, wer den Tisch wählt und wie lange eine Reservierung dauert."
+      }
+    }
+  },
+  "profile": {
+    "title": "Restaurantprofil",
+    "subtitle": "Adresse, Kontaktdaten und eine Kurzbeschreibung. Gäste sehen sie auf Ihrer Buchungsseite.",
+    "address": {
+      "title": "Adresse"
+    },
+    "contact": {
+      "title": "Kontakt"
+    },
+    "description": {
+      "title": "Beschreibung"
+    },
+    "fields": {
+      "street": "Straße und Hausnummer",
+      "postalCode": "PLZ",
+      "city": "Ort",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "website": "Website",
+      "websiteDescription": "Die vollständige Adresse mit https://",
+      "description": "Kurzbeschreibung",
+      "descriptionDescription": "Höchstens {{max}} Zeichen."
+    },
+    "validation": {
+      "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
+      "website": "Bitte geben Sie eine vollständige Webadresse ein, die mit https:// oder http:// beginnt."
+    },
+    "errors": {
+      "title": "Das Profil konnte nicht gespeichert werden",
+      "tooLong": "Ein Feld ist länger als erlaubt."
+    },
+    "save": "Speichern",
+    "saved": "Das Profil wurde gespeichert."
   },
   "staff": {
     "title": "Mitarbeiter",

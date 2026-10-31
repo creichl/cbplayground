@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Center, Container, Group, Loader, PasswordInput, Stack, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Button, Card, Center, Container, Group, Loader, PasswordInput, Stack, Text, TextInput, Title, UnstyledButton } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useSearchParams } from 'react-router'
@@ -17,6 +17,16 @@ const loginErrors = {
 function isLoginError(code: string | null): code is keyof typeof loginErrors {
   return code !== null && code in loginErrors
 }
+
+/** The demo users of the development seed (see the README). Only shown in development. */
+const demoPassword = 'Demo1234!'
+const demoAccounts = [
+  { email: 'admin@zur-linde.local', role: 'login.demo.tenantAdmin', restaurant: 'Gasthaus zur Linde' },
+  { email: 'frontdesk@zur-linde.local', role: 'login.demo.frontDesk', restaurant: 'Gasthaus zur Linde' },
+  { email: 'admin@kafana-dunav.local', role: 'login.demo.tenantAdmin', restaurant: 'Kafana Dunav' },
+  { email: 'frontdesk@kafana-dunav.local', role: 'login.demo.frontDesk', restaurant: 'Kafana Dunav' },
+  { email: 'superadmin@cbplayground.local', role: 'login.demo.superadmin', restaurant: null },
+] as const
 
 /** Only paths inside the app, so the login cannot be used to redirect to another site. */
 function safeReturnTo(value: string | null) {
@@ -103,8 +113,40 @@ export function LoginPage() {
               </Stack>
             </form>
           </Card>
+
+          {import.meta.env.DEV && (
+            <DemoAccounts
+              onPick={(email) => {
+                form.setValues({ email, password: demoPassword })
+                form.clearErrors()
+              }}
+            />
+          )}
         </Stack>
       </Container>
     </Center>
+  )
+}
+
+/** Development only: the demo users; a click fills in the sign-in form. */
+function DemoAccounts({ onPick }: { onPick: (email: string) => void }) {
+  const { t } = useTranslation()
+
+  return (
+    <Alert color="yellow" variant="light" title={t('login.demo.title')}>
+      <Stack gap="xs">
+        <Text size="sm">{t('login.demo.text', { password: demoPassword })}</Text>
+        {demoAccounts.map((account) => (
+          <UnstyledButton key={account.email} onClick={() => onPick(account.email)}>
+            <Text size="sm" fw={600} c="brand.8">
+              {account.email}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {account.restaurant !== null ? `${t(account.role)} · ${account.restaurant}` : t(account.role)}
+            </Text>
+          </UnstyledButton>
+        ))}
+      </Stack>
+    </Alert>
   )
 }
