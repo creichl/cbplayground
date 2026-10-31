@@ -36,6 +36,13 @@
       "invalidCredentials": "The email address or password is incorrect.",
       "lockedOut": "Too many failed attempts. Your account is locked for a few minutes; please try again later.",
       "deactivated": "Your account has been deactivated. Please contact your restaurant’s administrator."
+    },
+    "demo": {
+      "title": "Demo accounts",
+      "text": "Only shown in development. Click an account to fill in the form; the password is {{password}}.",
+      "tenantAdmin": "Admin",
+      "frontDesk": "Front desk",
+      "superadmin": "Superadmin"
     }
   },
   "errors": {
@@ -49,7 +56,11 @@
     "title": "Restaurants",
     "subtitle": "Choose a restaurant to reserve a table.",
     "empty": "There are no restaurants yet.",
-    "view": "View"
+    "reserve": "Reserve a table"
+  },
+  "guest": {
+    "staffLogin": "For restaurants: Sign in",
+    "toManagement": "Go to management"
   },
   "restaurant": {
     "bookingPlaceholder": "Online table booking will be available here soon.",
@@ -61,11 +72,83 @@
     "toggleNavigation": "Show or hide navigation",
     "nav": {
       "overview": "Overview",
+      "profile": "Restaurant profile",
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
       "staff": "Staff"
     }
+  },
+  "overview": {
+    "welcome": "Welcome, {{name}}! Here you can see what your restaurant still needs.",
+    "viewBookingPage": "View booking page",
+    "checklist": {
+      "title": "Set up your restaurant",
+      "progress": "{{done}} of {{total}} done",
+      "allDone": "All done: your restaurant is fully set up.",
+      "done": "Done",
+      "setUp": "Set up"
+    },
+    "steps": {
+      "profile": {
+        "title": "Restaurant profile",
+        "description": "Address and phone number, so guests can find and reach you."
+      },
+      "location": {
+        "title": "Location",
+        "description": "Country and region, for the public holidays."
+      },
+      "openingHours": {
+        "title": "Opening hours",
+        "description": "At least one time window in which guests can book."
+      },
+      "floorPlan": {
+        "title": "Area with floor plan",
+        "description": "An area, e.g. the dining room, with its floor plan uploaded."
+      },
+      "tables": {
+        "title": "Tables",
+        "description": "At least one table placed on a floor plan."
+      },
+      "reservationSettings": {
+        "title": "Reservation settings",
+        "description": "How reservations are confirmed, who picks the table and how long a reservation lasts."
+      }
+    }
+  },
+  "profile": {
+    "title": "Restaurant profile",
+    "subtitle": "Address, contact details and a short description. Guests will see them on your booking page.",
+    "address": {
+      "title": "Address"
+    },
+    "contact": {
+      "title": "Contact"
+    },
+    "description": {
+      "title": "Description"
+    },
+    "fields": {
+      "street": "Street and number",
+      "postalCode": "Postal code",
+      "city": "City",
+      "phone": "Phone",
+      "email": "Email",
+      "website": "Website",
+      "websiteDescription": "The full address, including https://",
+      "description": "Short description",
+      "descriptionDescription": "At most {{max}} characters."
+    },
+    "validation": {
+      "email": "Please enter a valid email address.",
+      "website": "Please enter a full web address starting with https:// or http://."
+    },
+    "errors": {
+      "title": "The profile could not be saved",
+      "tooLong": "A field is longer than allowed."
+    },
+    "save": "Save",
+    "saved": "The profile has been saved."
   },
   "staff": {
     "title": "Staff",

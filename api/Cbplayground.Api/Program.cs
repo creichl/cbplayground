@@ -7,6 +7,7 @@ using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,10 +16,23 @@ var connectionString = builder.Configuration.GetConnectionString("Default")
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TenantScope>();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddSingleton<IHolidayProvider, HolidayProvider>();
 builder.Services.AddScoped<IOpeningCalendar, OpeningCalendar>();
 builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
+builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
+
+// Online bookings per client IP: at most "RateLimiting:PublicBookings:PermitLimit" (default 10) in 10 minutes, then 429.
+var publicBookingLimit = builder.Configuration.GetValue("RateLimiting:PublicBookings:PermitLimit", 10);
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    options.AddPolicy(PublicRestaurantEndpoints.BookingRateLimitPolicy, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = publicBookingLimit, Window = TimeSpan.FromMinutes(10) }));
+});
 
 // Daily backup of the database and the uploaded floor plans ("Backup" in appsettings.json, off in Development).
 builder.Services.AddSingleton<DatabaseBackup>();
@@ -86,19 +100,15 @@ if (app.Environment.IsDevelopment())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
 
-    if (!db.Tenants.Any())
-    {
-        db.Tenants.AddRange(
-            new Tenant { Name = "Gasthaus zur Linde", Slug = "zur-linde", CreatedAt = DateTime.UtcNow },
-            new Tenant { Name = "Kafana Dunav", Slug = "kafana-dunav", CreatedAt = DateTime.UtcNow });
-        db.SaveChanges();
-    }
-
+    // Demo restaurants with their setup, then the demo users of these restaurants. Both only add what is missing.
+    await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
     await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, app.Configuration);
+    await DevelopmentSeed.SeedReservationsAsync(app.Services);
 }
 
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
@@ -109,6 +119,9 @@ app.MapAreaEndpoints();
 app.MapTableEndpoints();
 app.MapOpeningHoursEndpoints();
 app.MapReservationSettingsEndpoints();
+app.MapProfileEndpoints();
+app.MapPublicRestaurantEndpoints();
+app.MapStaffReservationEndpoints();
 
 app.Run();
 

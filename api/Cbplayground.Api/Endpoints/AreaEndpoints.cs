@@ -1,5 +1,6 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
+using Cbplayground.Api.Reservations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cbplayground.Api.Endpoints;
@@ -69,17 +70,27 @@ public static class AreaEndpoints
             return Results.Ok(ToResponse(area));
         });
 
-        // Deletes the area together with its tables (cascade) and its floor plan image.
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
+        // Deletes the area together with its tables (cascade) and its floor plan image. Not while one of its tables
+        // has reservations that have not ended yet; the past, cancelled and declined ones are deleted with the tables.
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
+            await using var transaction = await db.Database.BeginTransactionAsync();
             var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
             if (area is null)
             {
                 return Results.NotFound();
             }
+            // The tables are loaded, so EF Core deletes the reservations before the tables and the tables before the area.
+            var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
+            if (!await TableDeletion.TryRemoveReservationsAsync(db, availability, tables.Select(t => t.Id).ToList()))
+            {
+                return ErrorResponse.Result("table_has_reservations", StatusCodes.Status409Conflict);
+            }
 
+            db.Tables.RemoveRange(tables);
             db.Areas.Remove(area);
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             DeleteFloorPlanFile(configuration, environment, area.FloorPlanFileName);
             return Results.NoContent();
         });
@@ -179,13 +190,17 @@ public static class AreaEndpoints
         area.Id,
         area.Name,
         area.SortOrder,
-        // The file name changes with every upload, so the query string tells the browser that the image is new.
-        area.FloorPlanFileName is null ? null : $"/api/areas/{area.Id}/floorplan?v={Path.GetFileNameWithoutExtension(area.FloorPlanFileName)}",
+        FloorPlanUrl(area),
         area.OnlineBookingEnabled,
         area.OnlineCapacityPercent);
 
+    /// <summary>The public URL of the area's floor plan image; null without floor plan.</summary>
+    internal static string? FloorPlanUrl(Area area) =>
+        // The file name changes with every upload, so the query string tells the browser that the image is new.
+        area.FloorPlanFileName is null ? null : $"/api/areas/{area.Id}/floorplan?v={Path.GetFileNameWithoutExtension(area.FloorPlanFileName)}";
+
     /// <summary>The folder of the uploaded images, "Uploads:Path" in the configuration, relative to the content root.</summary>
-    private static string FloorPlanDirectory(IConfiguration configuration, IWebHostEnvironment environment) =>
+    internal static string FloorPlanDirectory(IConfiguration configuration, IWebHostEnvironment environment) =>
         Path.GetFullPath(Path.Combine(environment.ContentRootPath, configuration["Uploads:Path"] ?? "data/uploads"));
 
     private static void DeleteFloorPlanFile(IConfiguration configuration, IWebHostEnvironment environment, string? fileName)

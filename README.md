@@ -113,9 +113,11 @@ This README describes the full product vision.
 │   │   ├── Auth/                 # roles, policies, tenant claim
 │   │   ├── Backups/              # daily backup of the database and the floor plans
 │   │   ├── Data/                 # AppDbContext, entities, development seed
+│   │   │   └── SeedAssets/       # floor plans of the demo restaurants (development seed)
 │   │   ├── Endpoints/            # endpoint groups, one file per area
 │   │   ├── Migrations/           # EF Core migrations
-│   │   └── OpeningHours/         # public holidays, opening calendar, supported countries
+│   │   ├── OpeningHours/         # public holidays, opening calendar, supported countries
+│   │   └── Reservations/         # availability, duration policy, reservation rules
 │   └── Cbplayground.Api.Tests/   # xUnit tests
 └── web/                          # React web frontend (Vite, TypeScript)
 ```
@@ -136,16 +138,49 @@ cd api/Cbplayground.Api
 dotnet run
 ```
 
-The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations, adds two demo restaurants if there are none yet and creates the demo staff users (see below) that do not exist yet. The connection string is in `appsettings.json`.
+The API listens on http://localhost:5025. In the Development environment (the default for `dotnet run`), it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` on startup, applies all migrations, sets up the two demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
+
+#### Demo data
+
+In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so both are ready to try right after the first start:
+
+| | Gasthaus zur Linde (`zur-linde`) | Kafana Dunav (`kafana-dunav`) |
+| --- | --- | --- |
+| Location | Germany, Bavaria (`DE-BY`) | Serbia (`RS`) |
+| Profile | Address in Munich, phone, email, website, description | Address in Novi Sad, phone, email, website, description |
+| Opening hours | Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays | Every day 12:00–24:00 |
+| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) |
+| Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes |
+
+So both confirmation modes and both table selection modes can be shown. The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms.
+
+The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
+
+- the location, if no country is set;
+- the profile, if all profile fields are empty;
+- the opening hours, if there are none;
+- the areas with their floor plans and tables, if there are no areas (an area without tables gets none);
+- the reservation settings with their duration rules, if they were never saved.
+
+A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created.
 
 Endpoints:
 
 - `GET /api/health`
-- `GET /api/tenants`: all restaurants, sorted by name
+- `GET /api/tenants`: all restaurants, sorted by name: `id`, `name`, `slug`, and `city` and `description` from the profile (`null` when empty)
 - `POST /api/auth/login`: body `{ "email", "password" }`. Signs in with a cookie and returns the same user as `me`. On failure: 401 with `{ "error": "invalid_credentials" | "locked_out" | "deactivated" }`.
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
+- `GET /api/admin/profile`: the profile of the Tenant Admin's restaurant, which guests will see: `street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`. Every field is optional and `null` when empty.
+- `PUT /api/admin/profile`: saves the profile, same body as `GET`, and returns it. Values are trimmed, empty values are stored as `null`. Maximum lengths: street 200, postal code 10, city 100, phone 30, email 254, website 200, description 500 characters. The email needs the form `name@domain.tld`, the website must be an absolute `http` or `https` URL. On failure: 400 with `{ "error": "invalid_street" | "invalid_postal_code" | "invalid_city" | "invalid_phone" | "invalid_email" | "invalid_website" | "invalid_description" }`.
+- `GET /api/admin/setup-status`: which steps of the restaurant's setup are done, each `true` or `false`:
+  - `profile`: street, postal code, city and phone are filled in;
+  - `location`: the country is set;
+  - `openingHours`: at least one opening period;
+  - `floorPlan`: at least one area with a floor plan;
+  - `tables`: at least one table;
+  - `reservationSettings`: the reservation settings have been saved once.
 - Staff management, Tenant Admins only, always for the signed-in admin's own restaurant (users of other restaurants get 404):
   - `GET /api/admin/staff`: the restaurant's users: `id`, `email`, `displayName`, `role`, `isActive`, sorted by name.
   - `POST /api/admin/staff`: body `{ "email", "displayName", "role", "password" }` with the role `TenantAdmin` or `FrontDesk` and the start password. Returns 201 with the new user.
@@ -157,7 +192,7 @@ Endpoints:
   - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`.
   - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking and has an online quota of 100 %.
   - `PUT /api/admin/areas/{id}`: body `{ "name", "onlineBookingEnabled", "onlineCapacityPercent" }` (0–100).
-  - `DELETE /api/admin/areas/{id}`: deletes the area with its tables and its floor plan image.
+  - `DELETE /api/admin/areas/{id}`: deletes the area with its tables and its floor plan image. 409 `table_has_reservations` while one of its tables has a reservation that has not ended yet (see below).
   - `PUT /api/admin/areas/order`: body `{ "areaIds": [...] }` with every area of the restaurant once, in the new order.
   - `PUT /api/admin/areas/{id}/floorplan`: the body is the image itself (PNG, JPEG or WebP, at most 10 MB). The type is detected from the content; the file name is chosen by the server. Replaces an existing floor plan.
 - `GET /api/areas/{id}/floorplan`: the floor plan image of an area. Public, because guests will see it to pick a table.
@@ -165,7 +200,7 @@ Endpoints:
   - `GET /api/admin/tables`: all tables of the restaurant: `id`, `areaId`, `number`, `seats`, `posX`, `posY`. The position is relative to the floor plan image, from 0 to 1.
   - `POST /api/admin/tables`: body `{ "areaId", "number", "seats" }`. The table is placed in the middle of the floor plan.
   - `PUT /api/admin/tables/{id}`: body `{ "number", "seats" }`.
-  - `DELETE /api/admin/tables/{id}`.
+  - `DELETE /api/admin/tables/{id}`. 409 `table_has_reservations` while the table has a reservation in the status `Requested`, `Confirmed`, `Arrived` or `Late` that has not ended yet. Its other reservations (past ones, cancelled and declined ones) are deleted together with the table: a reservation always keeps its table (the foreign key is `Restrict`), so the reservations that no longer matter are removed first, in the same transaction.
   - `PUT /api/admin/tables/positions`: body `[{ "id", "posX", "posY" }, ...]`. Saves the positions of several tables at once, all or none.
   - The table number (at most 20 characters) is unique within the restaurant, a table has at least 1 seat.
 - `GET /api/admin/opening-hours`: the regular opening hours of the whole week, `{ "periods": [{ "dayOfWeek", "start", "end" }] }`. `dayOfWeek` is 0 (Sunday) to 6 (Saturday), times are `HH:mm`, the end may be `24:00`.
@@ -179,7 +214,47 @@ Endpoints:
 
 `IReservationDurationPolicy.GetDurationAsync(guests)` returns the duration of a reservation for the current restaurant: the duration of the rule that contains the party size, otherwise the default duration.
 
+- Guest booking, without sign-in. The restaurant comes from the slug in the URL (unknown slug: 404) and is the tenant of the request, also when a user of another restaurant is signed in:
+  - `GET /api/public/restaurants/{slug}`: `name`, `timeZoneId`, `confirmationMode`, `tableSelectionMode`, `maxOnlinePartySize` (seats of the largest table that can be booked online, 0 if none), `openingHours` (the week, as in `GET /api/admin/opening-hours`) and `bookable` (false without location, opening hours or tables that can be booked online).
+  - `GET /api/public/restaurants/{slug}/calendar?month=YYYY-MM&guests=N`: one entry per day of the month, `{ "date", "status" }` with `closed` (closed, in the past or more than 90 days ahead), `full` or `available`, for the date picker. Errors: `invalid_month`, `invalid_party_size`.
+  - `GET /api/public/restaurants/{slug}/availability?date=YYYY-MM-DD&guests=N`: `date`, `guests`, `durationMinutes` and `periods`: per opening window `{ "start", "end", "times": [{ "time", "available" }] }`. No periods on closing days and closed public holidays.
+  - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tables": [{ "id", "number", "seats", "posX", "posY", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
+  - `POST /api/public/restaurants/{slug}/reservations`: body `{ "date", "time", "guests", "tableId", "name", "phone", "email", "notes", "language" }`. `tableId` is required when the guest chooses the table and ignored when the system assigns it; `phone` or `email` is required; `language` is `en`, `de`, `sr-Latn` or `sr-Cyrl`. Returns 201 with `referenceCode`, `status` (`Confirmed` in the instant mode, `Requested` in the request mode), `date`, `time`, `guests`, `durationMinutes`, `area` and `tableNumber`. Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_name`, `contact_required`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `table_required`, `outside_opening_hours`, `too_far_ahead`, `in_the_past`; 409 `slot_unavailable`, `table_unavailable`; 429 after 10 bookings from the same IP address within 10 minutes (`RateLimiting:PublicBookings:PermitLimit`, the address the API sees).
+- Reservations for the staff (Tenant Admins and Front desk users, `RequireStaff` policy), always of the signed-in user's restaurant; reservations of other restaurants are 404:
+  - `GET /api/staff/floor`: the areas in their order with their tables: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tables` (`id`, `number`, `seats`, `posX`, `posY`).
+  - `GET /api/staff/reservations?from=YYYY-MM-DD&to=YYYY-MM-DD`: the reservations starting on these days (without `from`/`to`: today in the restaurant's time zone; at most 366 days, otherwise `invalid_range`), sorted by start: `id`, `referenceCode`, `date`, `time`, `endTime`, `durationMinutes`, `guests`, `status`, `source` (`Online` | `Staff`), `tableId`, `tableNumber`, `areaId`, `areaName`, `name`, `phone`, `email`, `notes`, `language`, `createdAtUtc`, `updatedAtUtc`.
+  - `GET /api/staff/availability?date=YYYY-MM-DD&guests=N&durationMinutes=M`: like the public availability, but each time lists the free tables (`id`, `number`, `seats`, `areaId`, `areaName`, empty when none is free), without online quota and online block. `durationMinutes` is optional.
+  - `POST /api/staff/reservations`: body `{ "date", "time", "guests", "tableId", "durationMinutes", "name", "phone", "email", "notes", "language" }`, e.g. for a phone reservation. Always `Confirmed`, source `Staff`. Without `tableId` the system assigns a table; `durationMinutes` (15–480 in steps of 15) overrides the restaurant's duration; the name is required, phone and email are optional; without `language` the language of the restaurant's country (`de` for Germany and Austria, `sr-Latn` for Serbia, otherwise `en`). Returns 201 with the reservation as in the list.
+  - `PUT /api/staff/reservations/{id}`: same body; changes date, time, party size, table, duration, contact and notes with the same checks, without colliding with itself. Without `durationMinutes` the restaurant's duration for the party size applies again, without `language` the stored one stays. A start that is not changed may lie in the past, so a running reservation can still be changed.
+  - `POST /api/staff/reservations/{id}/status`: body `{ "status" }`. Returns the reservation.
+  - Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_duration`, `invalid_name`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `outside_opening_hours`, `in_the_past`, `invalid_status`; 409 `slot_unavailable`, `table_unavailable`, `invalid_status_transition`.
+
 All `/api/admin` endpoints require the `RequireTenantAdmin` policy. Failed validations answer with an error code, e.g. 400 `{ "error": "overlapping_periods" }` or 409 `{ "error": "table_number_taken" }`; the web frontend translates it.
+
+### Reservation rules
+
+The server enforces these rules for every channel; the constants are in `Reservations/ReservationRules.cs`, the availability in `Reservations/AvailabilityService.cs`.
+
+- **Times:** a reservation's start and end are stored in the restaurant's local time (`Tenant.TimeZoneId`), like the opening hours. "Now" and "today" are always taken in that time zone. A restaurant without location has no time zone and cannot be booked.
+- **Start times:** every quarter hour (:00, :15, :30, :45) within an opening window of the day. The reservation has to end by the end of the window: last start = end of the window − duration (`MustEndByClosingTime`; default still to be confirmed by the CEO). No reservations over midnight.
+- **Not in the past.** Online at most 90 days ahead (`MaxOnlineDaysAhead`); staff have no limit.
+- **Duration:** online the restaurant's duration for the party size (`IReservationDurationPolicy`); staff can override it per reservation.
+- **Free table:** no reservation in a blocking status overlaps `[start, end)`. Blocking: `Requested`, `Confirmed`, `Arrived`, `Late`; not blocking: `Cancelled`, `Declined`. Requests block their table (`RequestsBlockTables`; default still to be confirmed by the CEO).
+- **Online only:**
+  - only areas open for online booking;
+  - online quota per area: the seats (table seats) of all online reservations in the area that overlap the time, plus the new table, must not exceed floor(seats of the area × percent / 100);
+  - the party size must not exceed the largest table that can be booked online (`maxOnlinePartySize`); larger parties have to call.
+- **Staff:** the online quota and the online block do not apply; the opening hours do.
+- **Table assignment by the system:** the smallest free table with at least as many seats as guests; for equal sizes the order of the areas, then the table number. When the guest chooses, every free table with enough seats is offered, also much larger ones (no upper limit yet).
+- **No double bookings:** check and insert run in one transaction (SQLite `BEGIN IMMEDIATE`); of two simultaneous bookings of the last table one gets 409 `slot_unavailable`.
+- **Guest:** a name (at most 100 characters) plus a phone number **or** an email address online; staff only need the name. Notes at most 500 characters. Every reservation gets a reference code of 6 characters without the easily confused 0/O and 1/I/L, unique across all restaurants.
+- **Status changes:** `Requested` → `Confirmed` | `Declined`; `Confirmed` → `Arrived` | `Late` | `Cancelled`; `Late` → `Arrived` | `Cancelled`; `Arrived` → `Confirmed` (undo). Every other change is 409 `invalid_status_transition`.
+
+The public endpoints find the restaurant by its slug and set it as the tenant of the request (`Auth/TenantScope.cs`); `HttpTenantContext` prefers it to the tenant of the signed-in user. So the query filters, `IOpeningCalendar` and `IReservationDurationPolicy` work for guests, too.
+
+### Demo reservations
+
+In Development, every start adds demo reservations from today to today + 7 days for every restaurant that has tables, a location and opening hours, but no reservations from today on; where the tables come from does not matter. 30–60 % of the tables are booked at the peak times (12:00–13:00 and 18:00–20:00, or the whole opening window if it has neither) with names and phone numbers or email addresses of the restaurant's country. Today's reservations that have started are mostly `Arrived`, some `Late` or `Cancelled`; in a restaurant with the request mode some online reservations are `Requested`. To get new ones, delete the database or the reservations from today on.
 
 Uploaded floor plans are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
 
@@ -217,7 +292,7 @@ Deactivated users (`IsActive = false`) cannot sign in. The security stamp is che
 
 Tenant isolation: an entity that belongs to a restaurant implements `ITenantOwned` (a `Guid TenantId`). `AppDbContext` then filters every query on it by the signed-in user's restaurant and sets `TenantId` on new entities when saving. Creating, changing or deleting data of another restaurant throws an exception, and without a restaurant (nobody signed in, or the Superadmin) these queries return nothing. `IgnoreQueryFilters()` is reserved for Superadmin cases and has to be justified in the pull request.
 
-Demo users, created in Development only (from `Seed:Users` in `appsettings.Development.json`). The password of all of them is `Demo1234!`:
+Demo users, created in Development only (from `Seed:Users` in `appsettings.Development.json`) and listed on the login page of the development server. The password of all of them is `Demo1234!`:
 
 | Email | Role | Restaurant |
 | --- | --- | --- |
@@ -252,7 +327,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules and the database backups.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules, the restaurant profile, the setup status, the development seed, the database backups, and the reservations: availability, online quota, table assignment, the guest booking per slug, the staff endpoints, status changes, concurrent bookings of the last table, the rate limit, deleting tables with reservations and the demo reservations.
 
 ### Run the web frontend
 
@@ -266,7 +341,7 @@ npm run dev
 
 Open the URL Vite prints (usually http://localhost:5173). The Vite dev server forwards `/api` to the API on http://localhost:5025, so the API must be running.
 
-Routes: `/` lists the restaurants, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). Under `/admin/areas` a Tenant Admin manages the areas, uploads their floor plans, places the tables on them by drag and drop (mouse and touch) and sets the online quota per area. Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
+Routes: `/` lists the restaurants as cards with city, short description and a "Reserve a table" button, `/r/<slug>` is a restaurant's page (the guest booking will go there), `/login` is the staff sign-in, `/admin` is the admin area (Tenant Admins only) and `/frontdesk` the front desk (Tenant Admins and Front desk users). The header of the guest pages links to `/login` ("For restaurants: Sign in"); a signed-in Tenant Admin or Front desk user sees a link to their own area instead. In development (`npm run dev`), the login page lists the demo accounts, and a click fills in the form; the production build does not contain them. `/admin` greets the admin and shows the setup checklist (see `GET /api/admin/setup-status`) with its progress, a link to the right page for every open step and a button that opens the restaurant's booking page in a new tab. Under `/admin/profile` a Tenant Admin maintains the restaurant profile. Under `/admin/areas` a Tenant Admin manages the areas, uploads their floor plans, places the tables on them by drag and drop (mouse and touch) and sets the online quota per area. Without sign-in, `/admin` and `/frontdesk` lead to `/login` and back to the requested page afterwards; a user without access to an area is sent to their own area. After signing in, a Tenant Admin lands on `/admin`, a Front desk user on `/frontdesk`; there is no Superadmin UI yet, so the Superadmin lands on `/`.
 
 Before committing, run `npm run lint` (oxlint plus the translation key check) and `npm run build` (typecheck and production build).
 
