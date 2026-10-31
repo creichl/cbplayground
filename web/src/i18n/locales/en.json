@@ -126,6 +126,11 @@
     },
     "table": {
       "listLabel": "Free tables – {{area}}",
+      "legend": {
+        "free": "Free",
+        "selected": "Your choice",
+        "unavailable": "Not available"
+      },
       "option_one": "Table {{number}} · {{count}} seat",
       "option_other": "Table {{number}} · {{count}} seats",
       "noneFreeInArea": "There is no suitable free table in this area at this time.",
@@ -623,7 +628,7 @@
     "emptyText": "Create an area, e.g. the dining room or the terrace, and upload its floor plan.",
     "addTable": "Add table",
     "dragHint": "Drag tables to move them. Click a table to edit it.",
-    "noFloorPlanHint": "Without a floor plan, the tables are listed here. Upload a floor plan to place them on it.",
+    "newTableHint": "New tables appear in the middle of the floor plan.",
     "capacity": "Seats: {{seats}}, bookable online: {{online}} ({{percent}}%)",
     "capacityOnlineBlocked": "Seats: {{seats}}, blocked for online booking",
     "floorPlanAlt": "Floor plan",
@@ -644,7 +649,17 @@
       "onlineCapacityPercent": "Online quota",
       "onlineCapacityPercentHint": "Share of the seats guests can book online. The rest stays free for phone bookings and walk-ins.",
       "percentSuffix": "%",
+      "tableScale": "Table size",
+      "tableScaleHint": "Size of the drawn tables in this area, e.g. to match the floor plan image.",
       "saved": "The area has been saved.",
+      "arrangeTitle": "Arrangement",
+      "arrangeHint": "Places all tables of this area in rows, without overlaps.",
+      "arrangeSaveFirst": "Save the table size first; the arrangement uses the saved size.",
+      "arrange": "Arrange automatically",
+      "arrangeConfirmTitle": "Arrange the tables of “{{name}}” automatically?",
+      "arrangeConfirmText": "All tables of this area are placed anew in rows. Their current positions are replaced.",
+      "arrangeConfirm": "Arrange",
+      "arranged": "The tables have been arranged.",
       "order": "Order",
       "moveLeft": "Move left",
       "moveRight": "Move right",
@@ -657,6 +672,14 @@
       "title": "Table {{number}}",
       "number": "Table number",
       "seats": "Seats",
+      "shape": "Shape",
+      "shapes": {
+        "Round": "Round",
+        "Square": "Square",
+        "Rectangle": "Rectangular"
+      },
+      "rotate": "Turn by 90°",
+      "rotateHint": "Only for rectangular tables: it then stands upright instead of across.",
       "saved": "The table has been saved.",
       "delete": "Delete table",
       "deleteTitle": "Delete table {{number}}?",
@@ -677,8 +700,16 @@
       "tableNotFound": "This table no longer exists. Please reload the page.",
       "seatsInvalid": "A table needs at least 1 seat.",
       "positionInvalid": "A table must lie on the floor plan.",
+      "shapeInvalid": "Please choose round, square or rectangular.",
+      "rotationInvalid": "A table can only be turned by 0° or 90°.",
+      "tableScaleInvalid": "Please choose a table size from 50 to 200 %.",
       "positionsNotSaved": "The table positions could not be saved"
     }
+  },
+  "floorPlan": {
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "zoomReset": "Reset zoom"
   },
   "reservationSettings": {
     "title": "Reservation settings",
@@ -954,8 +985,7 @@
       "time": "Time",
       "now": "Now",
       "until": "until {{time}}",
-      "nextAt": "from {{time}}",
-      "noFloorPlan": "This area has no floor plan yet, so its tables are shown as a list."
+      "nextAt": "from {{time}}"
     },
     "details": {
       "time": "Time",

@@ -11,9 +11,16 @@ export type Area = {
   onlineBookingEnabled: boolean
   /** Share of the seats that can be booked online, 0–100. */
   onlineCapacityPercent: number
+  /** Scales the drawn tables of this area, whole percent from 50 to 200. */
+  tableScale: number
 }
 
-/** A table on an area's floor plan. The position is relative to the image, 0–1. */
+export type TableShape = 'Round' | 'Square' | 'Rectangle'
+
+/** Degrees; only visible on rectangular tables. */
+export type TableRotation = 0 | 90
+
+/** A table on an area's floor plan. The position is relative to the plan (image or schematic plan), 0–1. */
 export type Table = {
   id: string
   areaId: string
@@ -21,6 +28,8 @@ export type Table = {
   seats: number
   posX: number
   posY: number
+  shape: TableShape
+  rotation: TableRotation
 }
 
 export type TablePosition = Pick<Table, 'id' | 'posX' | 'posY'>
@@ -53,7 +62,7 @@ export function useCreateArea() {
 export function useUpdateArea() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...area }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent'>) =>
+    mutationFn: ({ id, ...area }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale'>) =>
       apiPut<Area>(`/admin/areas/${id}`, area),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
   })
@@ -90,7 +99,7 @@ export function useUploadFloorPlan() {
   })
 }
 
-/** Adds a table in the middle of the area's floor plan. */
+/** Adds a table: in the middle of the floor plan image, or on a free place of an area without image. */
 export function useCreateTable() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -102,7 +111,7 @@ export function useCreateTable() {
 export function useUpdateTable() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...table }: Pick<Table, 'id' | 'number' | 'seats'>) => apiPut<Table>(`/admin/tables/${id}`, table),
+    mutationFn: ({ id, ...table }: Pick<Table, 'id' | 'number' | 'seats' | 'shape' | 'rotation'>) => apiPut<Table>(`/admin/tables/${id}`, table),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tablesKey }),
   })
 }
@@ -123,6 +132,18 @@ export function useSaveTablePositions() {
     onSuccess: (saved) =>
       queryClient.setQueryData<Table[]>(tablesKey, (tables) =>
         tables?.map((table) => saved.find((s) => s.id === table.id) ?? table),
+      ),
+  })
+}
+
+/** Arranges all tables of the area anew (replaces their positions) and returns the area's tables. */
+export function useArrangeTables() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (areaId: string) => apiPost<Table[]>(`/admin/areas/${areaId}/arrange-tables`),
+    onSuccess: (arranged) =>
+      queryClient.setQueryData<Table[]>(tablesKey, (tables) =>
+        tables?.map((table) => arranged.find((a) => a.id === table.id) ?? table),
       ),
   })
 }

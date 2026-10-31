@@ -1,6 +1,7 @@
 import { type QueryClient, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
+import type { TableRotation, TableShape } from './areas.ts'
 import { useCurrentUser } from './auth.ts'
 import { apiGet, apiPost, apiPut } from './client.ts'
 
@@ -54,13 +55,15 @@ export type StaffAvailability = {
   periods: { start: string; end: string; times: { time: string; tables: FreeTable[] }[] }[]
 }
 
-/** A table on the staff floor; the position is relative to the floor plan image, 0–1. */
+/** A table on the staff floor; the position is relative to the plan (image or schematic plan), 0–1. */
 export type FloorTable = {
   id: string
   number: string
   seats: number
   posX: number
   posY: number
+  shape: TableShape
+  rotation: TableRotation
 }
 
 /** An area with its tables, as returned by GET /api/staff/floor. */
@@ -69,6 +72,8 @@ export type FloorArea = {
   name: string
   sortOrder: number
   floorPlanUrl: string | null
+  /** Scales the drawn tables, 50–200 %. */
+  tableScale: number
   tables: FloorTable[]
 }
 

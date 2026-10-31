@@ -1,5 +1,5 @@
 import { Button, Divider, Group, Popover, Stack, Text } from '@mantine/core'
-import { type ReactElement, useState } from 'react'
+import { cloneElement, type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
@@ -13,8 +13,8 @@ type ReservationPopoverProps = {
   nextReservation?: Reservation
   /** Offers to seat a walk-in at the reservation's table, which is free now. */
   onWalkIn?: () => void
-  /** The element that opens the popover on click; it must accept a ref. */
-  children: ReactElement
+  /** The element that opens the popover on click; it must accept a ref and onClick. */
+  children: ReactElement<{ onClick?: () => void }>
 }
 
 /** Details of a reservation with the status actions of the lists (see StatusActions). */
@@ -48,7 +48,8 @@ export function ReservationPopover({ reservation, nextReservation, onWalkIn, chi
       withArrow
       shadow="md"
     >
-      <Popover.Target>{children}</Popover.Target>
+      {/* A controlled popover does not open on its own, so the click toggles it here. */}
+      <Popover.Target>{cloneElement(children, { onClick: () => setOpened((current) => !current) })}</Popover.Target>
       <Popover.Dropdown>
         <Stack gap="sm">
           <Group justify="space-between" wrap="nowrap" align="flex-start">

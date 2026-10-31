@@ -129,6 +129,11 @@
     },
     "table": {
       "listLabel": "Slobodni stolovi – {{area}}",
+      "legend": {
+        "free": "Slobodan",
+        "selected": "Vaš izbor",
+        "unavailable": "Nije dostupan"
+      },
       "option_one": "Sto {{number}} · {{count}} mesto",
       "option_few": "Sto {{number}} · {{count}} mesta",
       "option_other": "Sto {{number}} · {{count}} mesta",
@@ -631,7 +636,7 @@
     "emptyText": "Kreirajte prostor, npr. salu ili terasu, i otpremite njegov tlocrt.",
     "addTable": "Dodaj sto",
     "dragHint": "Prevucite sto da biste ga pomerili. Kliknite na sto da biste ga izmenili.",
-    "noFloorPlanHint": "Bez tlocrta stolovi su ovde prikazani kao lista. Otpremite tlocrt da biste ih postavili na njega.",
+    "newTableHint": "Novi stolovi se pojavljuju na sredini tlocrta.",
     "capacity": "Mesta: {{seats}}, od toga online: {{online}} ({{percent}} %)",
     "capacityOnlineBlocked": "Mesta: {{seats}}, blokirano za online rezervacije",
     "floorPlanAlt": "Tlocrt",
@@ -652,7 +657,17 @@
       "onlineCapacityPercent": "Online kvota",
       "onlineCapacityPercentHint": "Udeo mesta koji gosti mogu da rezervišu online. Ostatak ostaje slobodan za telefonske rezervacije i goste bez rezervacije.",
       "percentSuffix": " %",
+      "tableScale": "Veličina stolova",
+      "tableScaleHint": "Veličina nacrtanih stolova u ovom prostoru, npr. da odgovara tlocrtu.",
       "saved": "Prostor je sačuvan.",
+      "arrangeTitle": "Raspored",
+      "arrangeHint": "Postavlja sve stolove ovog prostora u redove, bez preklapanja.",
+      "arrangeSaveFirst": "Prvo sačuvajte veličinu stolova; raspored koristi sačuvanu veličinu.",
+      "arrange": "Rasporedi automatski",
+      "arrangeConfirmTitle": "Automatski rasporediti stolove u „{{name}}“?",
+      "arrangeConfirmText": "Svi stolovi ovog prostora biće ponovo postavljeni u redove. Njihovi dosadašnji položaji biće zamenjeni.",
+      "arrangeConfirm": "Rasporedi",
+      "arranged": "Stolovi su raspoređeni.",
       "order": "Redosled",
       "moveLeft": "Pomeri levo",
       "moveRight": "Pomeri desno",
@@ -665,6 +680,14 @@
       "title": "Sto {{number}}",
       "number": "Broj stola",
       "seats": "Broj mesta",
+      "shape": "Oblik",
+      "shapes": {
+        "Round": "Okrugao",
+        "Square": "Kvadratan",
+        "Rectangle": "Pravougaon"
+      },
+      "rotate": "Okreni za 90°",
+      "rotateHint": "Samo za pravougaone stolove: sto tada stoji uspravno umesto poprečno.",
       "saved": "Sto je sačuvan.",
       "delete": "Obriši sto",
       "deleteTitle": "Obrisati sto {{number}}?",
@@ -685,8 +708,16 @@
       "tableNotFound": "Ovaj sto više ne postoji. Ponovo učitajte stranicu.",
       "seatsInvalid": "Sto mora da ima najmanje 1 mesto.",
       "positionInvalid": "Sto mora da bude na tlocrtu.",
+      "shapeInvalid": "Izaberite okrugao, kvadratan ili pravougaon oblik.",
+      "rotationInvalid": "Sto može da se okrene samo za 0° ili 90°.",
+      "tableScaleInvalid": "Izaberite veličinu stolova od 50 do 200 %.",
       "positionsNotSaved": "Položaji stolova nisu mogli da se sačuvaju"
     }
+  },
+  "floorPlan": {
+    "zoomIn": "Uvećaj",
+    "zoomOut": "Umanji",
+    "zoomReset": "Vrati prikaz"
   },
   "reservationSettings": {
     "title": "Podešavanja rezervacija",
@@ -975,8 +1006,7 @@
       "time": "Vreme",
       "now": "Sada",
       "until": "do {{time}}",
-      "nextAt": "od {{time}}",
-      "noFloorPlan": "Ovaj prostor još nema tlocrt, pa su njegovi stolovi prikazani kao lista."
+      "nextAt": "od {{time}}"
     },
     "details": {
       "time": "Vreme",

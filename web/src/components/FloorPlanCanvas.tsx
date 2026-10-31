@@ -1,16 +1,19 @@
-import { Box, Text } from '@mantine/core'
 import { type PointerEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Table } from '../api/areas.ts'
-import { TableMarker } from './TableMarker.tsx'
+import { FloorPlan } from './floor-plan/FloorPlan.tsx'
+import { TableShape } from './floor-plan/TableShape.tsx'
 
 type FloorPlanCanvasProps = {
-  imageUrl: string
+  /** The floor plan image; without one the tables lie on the schematic plan. */
+  imageUrl: string | null
+  /** The area's table scale, 50–200 %. */
+  tableScale: number
   /** The tables of the area, with their current (possibly not yet saved) positions. */
   tables: Table[]
   selectedTableId: string | null
   onSelect: (tableId: string | null) => void
-  /** Called once when a table is dropped at a new position (0–1, relative to the image). */
+  /** Called once when a table is dropped at a new position (0–1, relative to the plan). */
   onMove: (tableId: string, posX: number, posY: number) => void
 }
 
@@ -32,10 +35,10 @@ const dragThreshold = 4
 const clamp = (value: number) => Math.min(1, Math.max(0, value))
 
 /**
- * The floor plan with the tables as labelled markers ("12 · 4"). Tables are moved with pointer events,
- * so mouse, pen and touch work alike. Positions are fractions of the image size, so they fit at every window size.
+ * The area's plan (image or schematic plan) with the tables drawn in their shapes. Tables are moved with pointer events,
+ * so mouse, pen and touch work alike. Positions are fractions of the plan's size, so they fit at every window size and zoom.
  */
-export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, onMove }: FloorPlanCanvasProps) {
+export function FloorPlanCanvas({ imageUrl, tableScale, tables, selectedTableId, onSelect, onMove }: FloorPlanCanvasProps) {
   const { t } = useTranslation()
   const containerRef = useRef<HTMLDivElement>(null)
   const [drag, setDrag] = useState<Drag | null>(null)
@@ -44,6 +47,8 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
     if (event.button !== 0) {
       return
     }
+    // The table moves, not the plan.
+    event.stopPropagation()
     event.currentTarget.setPointerCapture(event.pointerId)
     setDrag({
       tableId: table.id,
@@ -89,41 +94,43 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
   }
 
   return (
-    <Box
-      ref={containerRef}
-      pos="relative"
-      style={{ userSelect: 'none', borderRadius: 'var(--mantine-radius-sm)', overflow: 'hidden' }}
-      onClick={(event) => {
-        // A click on the plan itself, not on a table, closes the table's properties.
-        if (event.target === event.currentTarget || event.target instanceof HTMLImageElement) {
-          onSelect(null)
-        }
-      }}
+    <FloorPlan
+      imageUrl={imageUrl}
+      imageAlt={t('areas.floorPlanAlt')}
+      tables={tables}
+      tableScale={tableScale}
+      planRef={containerRef}
+      onPlanClick={() => onSelect(null)}
     >
-      <img src={imageUrl} alt={t('areas.floorPlanAlt')} draggable={false} style={{ display: 'block', width: '100%' }} />
       {tables.map((table) => {
         const isDragged = drag?.tableId === table.id
         const posX = isDragged ? drag.posX : table.posX
         const posY = isDragged ? drag.posY : table.posY
         const selected = table.id === selectedTableId
         return (
-          <TableMarker
+          <TableShape
             key={table.id}
+            number={table.number}
+            seats={table.seats}
+            shape={table.shape}
+            rotation={table.rotation}
             posX={posX}
             posY={posY}
+            tableScale={tableScale}
+            fill={selected ? 'var(--mantine-color-brand-8)' : 'white'}
+            stroke={selected ? 'var(--mantine-color-brand-9)' : 'var(--mantine-color-brand-8)'}
+            color={selected ? 'white' : 'var(--mantine-color-dark-7)'}
+            strokeWidth={2}
             role="button"
             tabIndex={0}
             aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
             aria-pressed={selected}
-            shadow={isDragged ? 'md' : 'xs'}
-            bg={selected ? 'brand.8' : 'white'}
-            c={selected ? 'white' : 'dark'}
             style={{
               cursor: isDragged ? 'grabbing' : 'grab',
-              // Lets touch moves drag the table instead of scrolling the page.
+              // Lets touch moves drag the table instead of scrolling the page or moving the plan.
               touchAction: 'none',
               zIndex: isDragged || selected ? 2 : 1,
-              borderColor: 'var(--mantine-color-brand-8)',
+              filter: isDragged ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25))' : undefined,
             }}
             onPointerDown={(event) => handlePointerDown(event, table)}
             onPointerMove={handlePointerMove}
@@ -135,13 +142,9 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
                 onSelect(table.id)
               }
             }}
-          >
-            <Text size="sm" fw={600} inherit>
-              {t('common.tableLabel', { number: table.number, seats: table.seats })}
-            </Text>
-          </TableMarker>
+          />
         )
       })}
-    </Box>
+    </FloorPlan>
   )
 }
