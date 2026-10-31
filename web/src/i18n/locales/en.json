@@ -15,7 +15,8 @@
     "retry": "Try again",
     "backToStart": "Back to the start page",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "close": "Close"
   },
   "auth": {
     "userMenu": "Account menu",
@@ -138,5 +139,62 @@
     "label": "Error 404",
     "title": "Page not found",
     "text": "The page you are looking for does not exist or has been moved."
+  },
+  "areas": {
+    "addArea": "Add area",
+    "create": "Create",
+    "emptyTitle": "No areas yet",
+    "emptyText": "Create an area, e.g. the dining room or the terrace, and upload its floor plan.",
+    "addTable": "Add table",
+    "dragHint": "Drag tables to move them. Click a table to edit it.",
+    "capacity": "Seats: {{seats}}, bookable online: {{online}} ({{percent}}%)",
+    "capacityOnlineBlocked": "Seats: {{seats}}, blocked for online booking",
+    "floorPlanAlt": "Floor plan",
+    "tableMarker": "Table {{number}}, seats: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Upload a floor plan",
+      "emptyText": "Drop an image of this area's floor plan here. You then place the tables on it.",
+      "choose": "Choose image",
+      "hint": "PNG, JPEG or WebP, at most 10 MB",
+      "replace": "Replace floor plan"
+    },
+    "area": {
+      "title": "Area",
+      "name": "Name",
+      "namePlaceholder": "e.g. Terrace",
+      "onlineBookingEnabled": "Online booking",
+      "onlineBookingEnabledHint": "When off, guests cannot book this area online.",
+      "onlineCapacityPercent": "Online quota",
+      "onlineCapacityPercentHint": "Share of the seats guests can book online. The rest stays free for phone bookings and walk-ins.",
+      "saved": "The area has been saved.",
+      "order": "Order",
+      "moveLeft": "Move left",
+      "moveRight": "Move right",
+      "delete": "Delete area",
+      "deleteTitle": "Delete “{{name}}”?",
+      "deleteText": "The area’s tables ({{tables}}) and its floor plan will be deleted as well. This cannot be undone.",
+      "deleteConfirm": "Delete"
+    },
+    "table": {
+      "title": "Table {{number}}",
+      "number": "Table number",
+      "seats": "Seats",
+      "saved": "The table has been saved.",
+      "delete": "Delete table"
+    },
+    "errors": {
+      "areaNameInvalid": "Please enter a name of at most 100 characters.",
+      "areaNotFound": "This area no longer exists. Please reload the page.",
+      "areaOrderInvalid": "The order could not be saved because the areas have changed. Please reload the page.",
+      "percentInvalid": "Please enter a whole number from 0 to 100.",
+      "floorPlanTooLarge": "The image is larger than 10 MB.",
+      "floorPlanTypeInvalid": "Please choose a PNG, JPEG or WebP image.",
+      "tableNumberInvalid": "Please enter a table number of at most 20 characters.",
+      "tableNumberTaken": "Another table already has this number.",
+      "tableNotFound": "This table no longer exists. Please reload the page.",
+      "seatsInvalid": "A table needs at least 1 seat.",
+      "positionInvalid": "A table must lie on the floor plan.",
+      "positionsNotSaved": "The table positions could not be saved"
+    }
   }
 }

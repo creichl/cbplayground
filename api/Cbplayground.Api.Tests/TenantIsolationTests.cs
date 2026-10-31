@@ -5,8 +5,8 @@ using Microsoft.EntityFrameworkCore;
 namespace Cbplayground.Api.Tests;
 
 /// <summary>
-/// Checks the tenant isolation of AppDbContext with a tenant-owned test entity,
-/// because the app has no tenant-owned entity yet.
+/// Checks the tenant isolation of AppDbContext with a tenant-owned test entity, independent of the app's entities.
+/// The isolation of areas and tables through the API is tested in <see cref="AreaAndTableTests"/>.
 /// </summary>
 public sealed class TenantIsolationTests : IDisposable
 {

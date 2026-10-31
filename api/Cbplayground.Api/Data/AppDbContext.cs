@@ -10,6 +10,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 {
     public DbSet<Tenant> Tenants => Set<Tenant>();
 
+    public DbSet<Area> Areas => Set<Area>();
+
+    public DbSet<Table> Tables => Set<Table>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -31,6 +35,31 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(u => u.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Area>(area =>
+        {
+            area.Property(a => a.Name).HasMaxLength(100);
+            area.Property(a => a.FloorPlanFileName).HasMaxLength(100);
+            area.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(a => a.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Table>(table =>
+        {
+            table.Property(t => t.Number).HasMaxLength(20);
+            table.HasIndex(t => new { t.TenantId, t.Number }).IsUnique();
+            table.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(t => t.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Deleting an area deletes its tables.
+            table.HasOne<Area>()
+                .WithMany()
+                .HasForeignKey(t => t.AreaId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
 
         // The roles are fixed, so the migrations create them in every environment.

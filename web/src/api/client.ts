@@ -22,9 +22,13 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(method: 'GET' | 'POST' | 'PUT', path: string, body?: unknown): Promise<T> {
+async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
-  if (body !== undefined) {
+  // A file is sent as it is, everything else as JSON.
+  const isFile = body instanceof Blob
+  if (isFile) {
+    headers['Content-Type'] = body.type || 'application/octet-stream'
+  } else if (body !== undefined) {
     headers['Content-Type'] = 'application/json'
   }
 
@@ -33,7 +37,7 @@ async function request<T>(method: 'GET' | 'POST' | 'PUT', path: string, body?: u
     response = await fetch(`/api${path}`, {
       method,
       headers,
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: isFile ? body : body === undefined ? undefined : JSON.stringify(body),
     })
   } catch (error) {
     throw new ApiError('network', null, error instanceof Error ? error.message : String(error))
@@ -73,7 +77,12 @@ export function apiPost<T>(path: string, body?: unknown): Promise<T> {
   return request<T>('POST', path, body)
 }
 
-/** PUTs `body` as JSON to the API and returns the JSON answer (undefined for 204). Throws ApiError. */
+/** PUTs `body` to the API, as JSON or, for a File/Blob, as the raw file. Returns the JSON answer (undefined for 204). Throws ApiError. */
 export function apiPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>('PUT', path, body)
+}
+
+/** DELETEs a resource of the API. Throws ApiError. */
+export function apiDelete(path: string): Promise<void> {
+  return request<void>('DELETE', path)
 }

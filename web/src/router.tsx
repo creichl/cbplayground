@@ -3,6 +3,7 @@ import { RequireRole } from './components/RequireRole.tsx'
 import { AdminLayout } from './layouts/AdminLayout.tsx'
 import { FrontdeskLayout } from './layouts/FrontdeskLayout.tsx'
 import { GuestLayout } from './layouts/GuestLayout.tsx'
+import { AreasPage } from './pages/AreasPage.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
@@ -30,7 +31,7 @@ export const router = createBrowserRouter([
     ),
     children: [
       { index: true, element: <PlaceholderPage titleKey="admin.nav.overview" /> },
-      { path: 'areas', element: <PlaceholderPage titleKey="admin.nav.areas" /> },
+      { path: 'areas', element: <AreasPage /> },
       { path: 'opening-hours', element: <PlaceholderPage titleKey="admin.nav.openingHours" /> },
       { path: 'reservation-settings', element: <PlaceholderPage titleKey="admin.nav.reservationSettings" /> },
       { path: 'staff', element: <StaffPage /> },

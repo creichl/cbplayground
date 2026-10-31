@@ -92,6 +92,8 @@ app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapAdminEndpoints();
 app.MapStaffEndpoints();
+app.MapAreaEndpoints();
+app.MapTableEndpoints();
 
 app.Run();
 

@@ -15,7 +15,8 @@
     "retry": "Pokušajte ponovo",
     "backToStart": "Nazad na početnu stranu",
     "cancel": "Otkaži",
-    "save": "Sačuvaj"
+    "save": "Sačuvaj",
+    "close": "Zatvori"
   },
   "auth": {
     "userMenu": "Meni naloga",
@@ -138,5 +139,62 @@
     "label": "Greška 404",
     "title": "Stranica nije pronađena",
     "text": "Stranica koju tražite ne postoji ili je premeštena."
+  },
+  "areas": {
+    "addArea": "Dodaj prostor",
+    "create": "Kreiraj",
+    "emptyTitle": "Još nema prostora",
+    "emptyText": "Kreirajte prostor, npr. salu ili terasu, i otpremite njegov tlocrt.",
+    "addTable": "Dodaj sto",
+    "dragHint": "Prevucite sto da biste ga pomerili. Kliknite na sto da biste ga izmenili.",
+    "capacity": "Mesta: {{seats}}, od toga online: {{online}} ({{percent}} %)",
+    "capacityOnlineBlocked": "Mesta: {{seats}}, blokirano za online rezervacije",
+    "floorPlanAlt": "Tlocrt",
+    "tableMarker": "Sto {{number}}, mesta: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Otpremite tlocrt",
+      "emptyText": "Prevucite ovde sliku tlocrta ovog prostora. Na njoj zatim postavljate stolove.",
+      "choose": "Izaberi sliku",
+      "hint": "PNG, JPEG ili WebP, najviše 10 MB",
+      "replace": "Zameni tlocrt"
+    },
+    "area": {
+      "title": "Prostor",
+      "name": "Naziv",
+      "namePlaceholder": "npr. Terasa",
+      "onlineBookingEnabled": "Online rezervacija",
+      "onlineBookingEnabledHint": "Kada je isključeno, gosti ne mogu online da rezervišu ovaj prostor.",
+      "onlineCapacityPercent": "Online kvota",
+      "onlineCapacityPercentHint": "Udeo mesta koji gosti mogu da rezervišu online. Ostatak ostaje slobodan za telefonske rezervacije i goste bez rezervacije.",
+      "saved": "Prostor je sačuvan.",
+      "order": "Redosled",
+      "moveLeft": "Pomeri levo",
+      "moveRight": "Pomeri desno",
+      "delete": "Obriši prostor",
+      "deleteTitle": "Obrisati „{{name}}“?",
+      "deleteText": "Stolovi ovog prostora ({{tables}}) i njegov tlocrt biće takođe obrisani. Ovo ne može da se poništi.",
+      "deleteConfirm": "Obriši"
+    },
+    "table": {
+      "title": "Sto {{number}}",
+      "number": "Broj stola",
+      "seats": "Broj mesta",
+      "saved": "Sto je sačuvan.",
+      "delete": "Obriši sto"
+    },
+    "errors": {
+      "areaNameInvalid": "Unesite naziv od najviše 100 znakova.",
+      "areaNotFound": "Ovaj prostor više ne postoji. Ponovo učitajte stranicu.",
+      "areaOrderInvalid": "Redosled nije mogao da se sačuva jer su se prostori promenili. Ponovo učitajte stranicu.",
+      "percentInvalid": "Unesite ceo broj od 0 do 100.",
+      "floorPlanTooLarge": "Slika je veća od 10 MB.",
+      "floorPlanTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku.",
+      "tableNumberInvalid": "Unesite broj stola od najviše 20 znakova.",
+      "tableNumberTaken": "Drugi sto već ima ovaj broj.",
+      "tableNotFound": "Ovaj sto više ne postoji. Ponovo učitajte stranicu.",
+      "seatsInvalid": "Sto mora da ima najmanje 1 mesto.",
+      "positionInvalid": "Sto mora da bude na tlocrtu.",
+      "positionsNotSaved": "Položaji stolova nisu mogli da se sačuvaju"
+    }
   }
 }

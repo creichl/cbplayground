@@ -20,10 +20,14 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     private readonly string databasePath = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-{Guid.NewGuid():N}.db");
 
+    /// <summary>Temporary folder for the uploaded floor plans.</summary>
+    public string UploadsPath { get; } = Path.Combine(Path.GetTempPath(), $"cbplayground-tests-uploads-{Guid.NewGuid():N}");
+
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Default", $"Data Source={databasePath}");
+        builder.UseSetting("Uploads:Path", UploadsPath);
     }
 
     protected override IHost CreateHost(IHostBuilder builder)
@@ -78,5 +82,9 @@ public class ApiFactory : WebApplicationFactory<Program>
         base.Dispose(disposing);
         SqliteConnection.ClearAllPools();
         File.Delete(databasePath);
+        if (Directory.Exists(UploadsPath))
+        {
+            Directory.Delete(UploadsPath, recursive: true);
+        }
     }
 }
