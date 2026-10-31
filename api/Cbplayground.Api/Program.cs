@@ -2,6 +2,7 @@ using Cbplayground.Api.Auth;
 using Cbplayground.Api.Backups;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Cbplayground.Api.FloorPlans;
 using Cbplayground.Api.OpeningHours;
 using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.DataProtection;
@@ -156,6 +157,8 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     db.Database.Migrate();
+    // In every environment: arranges the areas without floor plan image whose tables lie on top of each other (in effect once after the update).
+    await StackedTables.ArrangeAsync(app.Services);
 
     if (app.Environment.IsDevelopment())
     {

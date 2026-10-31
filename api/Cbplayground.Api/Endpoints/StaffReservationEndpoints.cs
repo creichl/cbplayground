@@ -17,9 +17,9 @@ public static class StaffReservationEndpoints
     /// <summary>The longest range <c>GET /api/staff/reservations</c> returns.</summary>
     public const int MaxListDays = 366;
 
-    public record FloorTable(Guid Id, string Number, int Seats, double PosX, double PosY);
+    public record FloorTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation);
 
-    public record FloorArea(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, IReadOnlyList<FloorTable> Tables);
+    public record FloorArea(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, int TableScale, IReadOnlyList<FloorTable> Tables);
 
     public record ReservationResponse(
         Guid Id,
@@ -103,7 +103,8 @@ public static class StaffReservationEndpoints
                 area.Name,
                 area.SortOrder,
                 AreaEndpoints.FloorPlanUrl(area),
-                tables.Where(t => t.AreaId == area.Id).Select(t => new FloorTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY)).ToList()));
+                area.TableScale,
+                tables.Where(t => t.AreaId == area.Id).Select(t => new FloorTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation)).ToList()));
         });
 
         // Without from/to: today in the restaurant's time zone.
