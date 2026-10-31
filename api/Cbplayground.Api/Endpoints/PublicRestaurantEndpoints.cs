@@ -31,6 +31,7 @@ public static class PublicRestaurantEndpoints
         ConfirmationMode ConfirmationMode,
         TableSelectionMode TableSelectionMode,
         int MaxOnlinePartySize,
+        int BookingHorizonDays,
         IReadOnlyList<PeriodDto> OpeningHours,
         bool Bookable);
 
@@ -113,6 +114,7 @@ public static class PublicRestaurantEndpoints
                 settings.ConfirmationMode,
                 settings.TableSelectionMode,
                 maxOnlinePartySize,
+                settings.BookingHorizonDays,
                 openingHours,
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0);
         });

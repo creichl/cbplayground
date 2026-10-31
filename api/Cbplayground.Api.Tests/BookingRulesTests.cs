@@ -159,6 +159,7 @@ public class BookingRulesTests(BookingRulesTests.FixedClockApiFactory factory) :
         var beyond = OpenDayFrom(lastDay.AddDays(1));
         await SetRulesAsync(admin, s => s with { BookingHorizonDays = lastDay.DayNumber - Today.DayNumber });
 
+        Assert.Equal(lastDay.DayNumber - Today.DayNumber, (await anonymous.GetFromJsonAsync<RestaurantResponse>(PathOf(restaurant), Token))!.BookingHorizonDays);
         Assert.True(IsAvailable(await OnlineAvailabilityAsync(anonymous, restaurant, lastDay, 2), "18:00"));
         Assert.Equal("available", await CalendarStatusAsync(anonymous, restaurant, lastDay));
         Assert.Equal(HttpStatusCode.Created, (await BookOnlineAsync(anonymous, restaurant, lastDay, "18:00", 2)).StatusCode);
