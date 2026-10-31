@@ -1,3 +1,5 @@
+import type { TFunction } from 'i18next'
+
 /**
  * Why a request failed:
  * - network: the server could not be reached
@@ -20,6 +22,21 @@ export class ApiError extends Error {
     this.status = status
     this.code = code
   }
+}
+
+/** The error codes every endpoint may answer with, and their texts. */
+const commonErrorKeys = {
+  server_error: 'errors.serverError',
+  invalid_request: 'errors.invalidRequest',
+  too_many_requests: 'errors.tooManyRequests',
+} as const
+
+/** A failed HTTP request without a more specific text: the common error codes, otherwise the status. */
+export function httpErrorMessage(error: ApiError, t: TFunction) {
+  if (error.code !== null && error.code in commonErrorKeys) {
+    return t(commonErrorKeys[error.code as keyof typeof commonErrorKeys])
+  }
+  return t('errors.http', { status: error.status })
 }
 
 async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {

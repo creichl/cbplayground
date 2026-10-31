@@ -12,6 +12,7 @@ const loginErrors = {
   invalid_credentials: 'login.errors.invalidCredentials',
   locked_out: 'login.errors.lockedOut',
   deactivated: 'login.errors.deactivated',
+  too_many_requests: 'login.errors.tooManyRequests',
 } as const
 
 function isLoginError(code: string | null): code is keyof typeof loginErrors {

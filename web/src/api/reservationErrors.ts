@@ -1,5 +1,5 @@
 import type { TFunction } from 'i18next'
-import { ApiError } from './client.ts'
+import { ApiError, httpErrorMessage } from './client.ts'
 
 /** The error codes of /api/staff/reservations and /api/staff/availability, and their texts. */
 const errorKeys = {
@@ -34,7 +34,7 @@ export function reservationErrorMessage(error: unknown, t: TFunction) {
       return t('errors.network')
     }
     if (error.kind === 'http') {
-      return t('errors.http', { status: error.status })
+      return httpErrorMessage(error, t)
     }
     return t('errors.invalidResponse')
   }
