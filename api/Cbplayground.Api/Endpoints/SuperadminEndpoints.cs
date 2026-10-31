@@ -294,7 +294,8 @@ public static partial class SuperadminEndpoints
             tenant.CountryCode,
             tenant.RegionCode,
             tenant.IsActive,
-            tenant.CreatedAt,
+            // SQLite returns the stored UTC time without its kind; mark it, so the JSON carries the "Z".
+            DateTime.SpecifyKind(tenant.CreatedAt, DateTimeKind.Utc),
             adminCount,
             tableCount,
             upcomingReservationCount);
