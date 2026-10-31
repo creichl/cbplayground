@@ -1,7 +1,8 @@
-import { Box, Paper, Text } from '@mantine/core'
+import { Box, Text } from '@mantine/core'
 import { type PointerEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Table } from '../api/areas.ts'
+import { TableMarker } from './TableMarker.tsx'
 
 type FloorPlanCanvasProps = {
   imageUrl: string
@@ -106,28 +107,21 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
         const posY = isDragged ? drag.posY : table.posY
         const selected = table.id === selectedTableId
         return (
-          <Paper
+          <TableMarker
             key={table.id}
+            posX={posX}
+            posY={posY}
             role="button"
             tabIndex={0}
             aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
             aria-pressed={selected}
             shadow={isDragged ? 'md' : 'xs'}
-            radius="sm"
-            px={8}
-            py={2}
             bg={selected ? 'brand.8' : 'white'}
             c={selected ? 'white' : 'dark'}
-            withBorder
             style={{
-              position: 'absolute',
-              left: `${posX * 100}%`,
-              top: `${posY * 100}%`,
-              transform: 'translate(-50%, -50%)',
               cursor: isDragged ? 'grabbing' : 'grab',
               // Lets touch moves drag the table instead of scrolling the page.
               touchAction: 'none',
-              whiteSpace: 'nowrap',
               zIndex: isDragged || selected ? 2 : 1,
               borderColor: 'var(--mantine-color-brand-8)',
             }}
@@ -145,7 +139,7 @@ export function FloorPlanCanvas({ imageUrl, tables, selectedTableId, onSelect, o
             <Text size="sm" fw={600} inherit>
               {table.number} · {table.seats}
             </Text>
-          </Paper>
+          </TableMarker>
         )
       })}
     </Box>

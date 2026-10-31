@@ -8,6 +8,7 @@ import { UserMenu } from '../components/UserMenu.tsx'
 const tabs = [
   { to: '/frontdesk', label: 'frontdesk.nav.today', end: true },
   { to: '/frontdesk/reservations', label: 'frontdesk.nav.reservations', end: false },
+  { to: '/frontdesk/tables', label: 'frontdesk.nav.tables', end: false },
 ] as const
 
 /** Simplified staff layout without sidebar: the front desk works on a single screen, with slim tabs at the top. */

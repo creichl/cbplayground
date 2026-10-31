@@ -167,7 +167,8 @@
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
-      "staff": "Staff"
+      "staff": "Staff",
+      "tables": "Table overview"
     }
   },
   "overview": {
@@ -416,7 +417,8 @@
     "today": "Today",
     "nav": {
       "today": "Today",
-      "reservations": "Reservations"
+      "reservations": "Reservations",
+      "tables": "Table overview"
     }
   },
   "placeholder": {
@@ -653,6 +655,69 @@
       "invalidStatus": "This status is not known.",
       "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
       "notFound": "This reservation no longer exists. Please reload the page."
+    }
+  },
+  "tableOverview": {
+    "title": "Table overview",
+    "views": {
+      "timeline": "Timeline",
+      "floor": "Floor plan"
+    },
+    "date": {
+      "label": "Date",
+      "previous": "Previous day",
+      "next": "Next day",
+      "today": "Today"
+    },
+    "closed": "The restaurant is closed on this day.",
+    "noTables": "There are no tables yet.",
+    "status": {
+      "free": "Free",
+      "Requested": "Requested",
+      "Confirmed": "Reserved",
+      "Arrived": "Arrived",
+      "Late": "Late",
+      "Cancelled": "Cancelled",
+      "Declined": "Declined"
+    },
+    "legendInactive": "Cancelled or declined",
+    "party": "{{name}} ({{guests}})",
+    "timeline": {
+      "tableColumn": "Table · seats"
+    },
+    "floor": {
+      "time": "Time",
+      "now": "Now",
+      "until": "until {{time}}",
+      "nextAt": "from {{time}}",
+      "noFloorPlan": "This area has no floor plan yet, so its tables are shown as a list."
+    },
+    "details": {
+      "time": "Time",
+      "guests": "Guests",
+      "table": "Table",
+      "tableValue": "{{number}} · {{area}}",
+      "phone": "Phone",
+      "email": "Email",
+      "notes": "Notes",
+      "reference": "Reference",
+      "source": "Booked",
+      "sources": {
+        "Online": "Online by the guest",
+        "Staff": "By staff"
+      },
+      "next": "Next at this table: {{time}}, {{name}} ({{guests}})"
+    },
+    "actions": {
+      "Confirmed": "Accept",
+      "Declined": "Decline",
+      "Arrived": "Arrived",
+      "Late": "Late",
+      "Cancelled": "Cancelled"
+    },
+    "errors": {
+      "statusTitle": "The status could not be changed",
+      "statusChanged": "The reservation has been changed in the meantime. The view has been reloaded."
     }
   }
 }

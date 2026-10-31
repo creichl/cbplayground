@@ -15,6 +15,7 @@ import { ReservationSettingsPage } from './pages/ReservationSettingsPage.tsx'
 import { ReservationsPage } from './pages/ReservationsPage.tsx'
 import { RestaurantPage } from './pages/RestaurantPage.tsx'
 import { StaffPage } from './pages/StaffPage.tsx'
+import { TableOverviewPage } from './pages/TableOverviewPage.tsx'
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
@@ -36,6 +37,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <AdminOverviewPage /> },
       { path: 'reservations', element: <ReservationsPage /> },
+      { path: 'tables', element: <TableOverviewPage /> },
       { path: 'profile', element: <ProfilePage /> },
       { path: 'areas', element: <AreasPage /> },
       { path: 'opening-hours', element: <OpeningHoursPage /> },
@@ -54,6 +56,7 @@ export const router = createBrowserRouter([
     children: [
       { index: true, element: <FrontdeskTodayPage /> },
       { path: 'reservations', element: <ReservationsPage /> },
+      { path: 'tables', element: <TableOverviewPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

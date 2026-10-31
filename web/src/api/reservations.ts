@@ -9,7 +9,7 @@ export type ReservationStatus = 'Requested' | 'Confirmed' | 'Arrived' | 'Late' |
 /** Online: booked by the guest; Staff: entered by the restaurant, e.g. on the phone. */
 export type ReservationSource = 'Online' | 'Staff'
 
-/** A reservation, as returned by /api/staff/reservations. Dates are "YYYY-MM-DD", times "HH:mm" in the restaurant's local time. */
+/** A reservation, as returned by /api/staff/reservations. Dates are "YYYY-MM-DD", times "HH:mm" in the restaurant's local time; the end may be "24:00". */
 export type Reservation = {
   id: string
   referenceCode: string
@@ -50,13 +50,38 @@ export type StaffAvailability = {
   periods: { start: string; end: string; times: { time: string; tables: FreeTable[] }[] }[]
 }
 
+/** A table on the staff floor; the position is relative to the floor plan image, 0–1. */
+export type FloorTable = {
+  id: string
+  number: string
+  seats: number
+  posX: number
+  posY: number
+}
+
 /** An area with its tables, as returned by GET /api/staff/floor. */
 export type FloorArea = {
   id: string
   name: string
   sortOrder: number
   floorPlanUrl: string | null
-  tables: { id: string; number: string; seats: number; posX: number; posY: number }[]
+  tables: FloorTable[]
+}
+
+/** An opening window of a day, "HH:mm"; the end may be "24:00". */
+export type OpenPeriod = { start: string; end: string }
+
+/** Statuses in which a reservation occupies its table, as on the server. */
+export const blockingStatuses: readonly ReservationStatus[] = ['Requested', 'Confirmed', 'Arrived', 'Late']
+
+/** The status changes the server allows (Reservations/ReservationRules.cs), except the undo of "arrived". */
+export const statusActions: Record<ReservationStatus, readonly Exclude<ReservationStatus, 'Requested'>[]> = {
+  Requested: ['Confirmed', 'Declined'],
+  Confirmed: ['Arrived', 'Late', 'Cancelled'],
+  Late: ['Arrived', 'Cancelled'],
+  Arrived: [],
+  Cancelled: [],
+  Declined: [],
 }
 
 /**
@@ -119,9 +144,27 @@ export function useStaffAvailability(date: string | null, guests: number | null,
   })
 }
 
-/** The areas with their tables, for choosing a table. */
+/** The areas in their order with their tables, for choosing a table and for the table overview. Reloaded every minute. */
 export function useFloor() {
-  return useQuery({ queryKey: ['staff', 'floor'], queryFn: () => apiGet<FloorArea[]>('/staff/floor') })
+  return useQuery({
+    queryKey: ['staff', 'floor'],
+    queryFn: () => apiGet<FloorArea[]>('/staff/floor'),
+    refetchInterval: refreshIntervalMs,
+  })
+}
+
+/**
+ * The opening windows of `date`, holidays included; empty when the restaurant is closed.
+ * Taken from the staff availability, the only opening hours front desk users may read.
+ */
+export function useOpenPeriods(date: string) {
+  return useQuery({
+    queryKey: [...availabilityKey, 'open-periods', date],
+    queryFn: async () => {
+      const availability = await apiGet<{ periods: OpenPeriod[] }>(`/staff/availability?date=${date}&guests=1`)
+      return availability.periods.map(({ start, end }) => ({ start, end }))
+    },
+  })
 }
 
 /**
@@ -193,4 +236,15 @@ export function useUpdateReservation() {
       apiPut<Reservation>(`/staff/reservations/${encodeURIComponent(id)}`, reservation),
     onSuccess: (reservation) => applyChange(queryClient, reservation),
   })
+}
+
+/** Minutes since midnight of "HH:mm"; "24:00" is 1440. */
+export function toMinutes(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return hours * 60 + minutes
+}
+
+/** "HH:mm" of minutes since midnight. */
+export function formatMinutes(minutes: number) {
+  return `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
 }
