@@ -32,6 +32,11 @@ builder.Services.AddRateLimiter(options =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = publicBookingLimit, Window = TimeSpan.FromMinutes(10) }));
+    // The guest's reservation link (view and cancel) with the same limit, counted apart from the bookings.
+    options.AddPolicy(PublicRestaurantEndpoints.ManageRateLimitPolicy, httpContext =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = publicBookingLimit, Window = TimeSpan.FromMinutes(10) }));
 });
 
 // Daily backup of the database and the uploaded floor plans ("Backup" in appsettings.json, off in Development).

@@ -23,6 +23,21 @@ public static class ReservationRules
     /// </summary>
     public const bool RequestsBlockTables = true;
 
+    /// <summary>
+    /// How long before its start a guest can still cancel a reservation through the link; zero: until the start.
+    /// Default still to be confirmed by the CEO.
+    /// </summary>
+    public static readonly TimeSpan GuestCancellationDeadlineBeforeStart = TimeSpan.Zero;
+
+    /// <summary>The statuses from which the guest can cancel through the link.</summary>
+    public static readonly ReservationStatus[] GuestCancellableStatuses =
+        [ReservationStatus.Requested, ReservationStatus.Confirmed, ReservationStatus.Late];
+
+    /// <summary>Whether the guest can still cancel the reservation; <paramref name="localNow"/> is the restaurant's local time.</summary>
+    public static bool CanGuestCancel(Reservation reservation, DateTime localNow) =>
+        GuestCancellableStatuses.Contains(reservation.Status)
+        && localNow < reservation.StartLocal - GuestCancellationDeadlineBeforeStart;
+
     /// <summary>The statuses in which a reservation occupies its table.</summary>
     public static readonly ReservationStatus[] BlockingStatuses = RequestsBlockTables
         ? [ReservationStatus.Requested, ReservationStatus.Confirmed, ReservationStatus.Arrived, ReservationStatus.Late]

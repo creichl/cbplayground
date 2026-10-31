@@ -40,6 +40,7 @@ public static class StaffReservationEndpoints
         string? Email,
         string? Notes,
         string Language,
+        bool CancelledByGuest,
         DateTime CreatedAtUtc,
         DateTime UpdatedAtUtc);
 
@@ -323,6 +324,7 @@ public static class StaffReservationEndpoints
         reservation.GuestEmail,
         reservation.Notes,
         reservation.Language,
+        reservation.CancelledByGuest,
         reservation.CreatedAtUtc,
         reservation.UpdatedAtUtc);
 

@@ -206,6 +206,9 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("CancelledByGuest")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("TEXT");
 
@@ -232,6 +235,9 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired()
                         .HasMaxLength(10)
                         .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("ManageTokenHash")
+                        .HasColumnType("BLOB");
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
