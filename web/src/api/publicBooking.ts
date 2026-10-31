@@ -19,12 +19,14 @@ export type PublicRestaurant = {
   tableSelectionMode: TableSelectionMode
   /** The largest party that can be booked online; larger parties have to call. */
   maxOnlinePartySize: number
+  /** Online bookings reach at most this many days after today. */
+  bookingHorizonDays: number
   openingHours: OpeningPeriod[]
   /** False without location, opening hours or tables that can be booked online. */
   bookable: boolean
 }
 
-/** A day of the date picker. "closed" also covers days in the past and more than 90 days ahead. */
+/** A day of the date picker. "closed" also covers closing days, days in the past and days beyond the restaurant's booking horizon. */
 export type CalendarDay = { date: string; status: 'closed' | 'full' | 'available' }
 
 /** The start times of a day, per opening window. Times are "HH:mm". */

@@ -16,9 +16,6 @@ import { TimeSlotGrid } from '../components/booking/TimeSlotGrid.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import type { Language } from '../i18n/index.ts'
 
-/** Online bookings reach at most this many days ahead, as on the server. */
-const maxDaysAhead = 90
-
 type Step = 'guests' | 'date' | 'time' | 'table' | 'details'
 
 const stepTitles: Record<Step, ParseKeys> = {
@@ -44,6 +41,7 @@ const timeErrors: Record<string, ParseKeys> = {
   table_unavailable: 'booking.errors.tableTaken',
   outside_opening_hours: 'booking.errors.timeNotBookable',
   in_the_past: 'booking.errors.timeNotBookable',
+  too_short_notice: 'booking.errors.timeNotBookable',
   too_far_ahead: 'booking.errors.timeNotBookable',
 }
 
@@ -146,7 +144,7 @@ function BookingFlow({ slug, restaurant, timeZoneId }: BookingFlowProps) {
   const booking = useCreateBooking(slug)
 
   const today = todayIn(timeZoneId)
-  const lastDay = addDays(today, maxDaysAhead)
+  const lastDay = addDays(today, restaurant.bookingHorizonDays)
 
   // After a change of step, the focus moves to the new step's heading, so keyboard and screen reader users follow along.
   const headingRef = useRef<HTMLHeadingElement>(null)
