@@ -17,8 +17,16 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the online booking, see Program.cs.</summary>
     public const string BookingRateLimitPolicy = "public-booking";
 
+    /// <summary>The restaurant for the booking page: its profile (every field null when empty) and how it is booked.</summary>
     public record RestaurantResponse(
         string Name,
+        string? Street,
+        string? PostalCode,
+        string? City,
+        string? Phone,
+        string? Email,
+        string? Website,
+        string? Description,
         string? TimeZoneId,
         ConfirmationMode ConfirmationMode,
         TableSelectionMode TableSelectionMode,
@@ -94,6 +102,13 @@ public static class PublicRestaurantEndpoints
             var maxOnlinePartySize = await availability.GetMaxOnlinePartySizeAsync();
             return new RestaurantResponse(
                 tenant.Name,
+                tenant.Street,
+                tenant.PostalCode,
+                tenant.City,
+                tenant.Phone,
+                tenant.Email,
+                tenant.Website,
+                tenant.Description,
                 tenant.TimeZoneId,
                 settings.ConfirmationMode,
                 settings.TableSelectionMode,

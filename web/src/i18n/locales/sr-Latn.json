@@ -63,9 +63,99 @@
     "toManagement": "Na administraciju"
   },
   "restaurant": {
-    "bookingPlaceholder": "Ovde ćete uskoro moći da rezervišete sto onlajn.",
     "notFoundTitle": "Restoran nije pronađen",
     "notFoundText": "Na ovoj adresi nema restorana."
+  },
+  "booking": {
+    "guestsCount_one": "{{count}} osoba",
+    "guestsCount_few": "{{count}} osobe",
+    "guestsCount_other": "{{count}} osoba",
+    "tableNumber": "Sto {{number}}",
+    "summaryLabel": "Vaš izbor",
+    "changePart": "Promeni: {{part}}",
+    "continue": "Dalje",
+    "steps": {
+      "guests": "Koliko osoba?",
+      "date": "Koji dan?",
+      "time": "U koliko sati?",
+      "table": "Koji sto?",
+      "details": "Vaši kontakt podaci"
+    },
+    "restaurant": {
+      "openingHours": "Radno vreme",
+      "website": "Veb-sajt"
+    },
+    "partySize": {
+      "more": "Više",
+      "moreLabel": "Broj osoba",
+      "morePlaceholder": "Izaberite",
+      "moreThan": "Više od {{max}} osoba",
+      "callTitle": "Molimo vas da nas pozovete",
+      "callText": "Onlajn možete rezervisati za najviše {{max}} osoba. Za veće grupe pozovite nas:",
+      "noPhone": "Obratite se direktno restoranu."
+    },
+    "calendar": {
+      "full": "popunjeno",
+      "closed": "zatvoreno",
+      "previousMonth": "Prethodni mesec",
+      "nextMonth": "Sledeći mesec",
+      "legend": "Posivljeni dani su neradni ili se ne mogu rezervisati, precrtani su popunjeni."
+    },
+    "time": {
+      "morning": "Pre podne",
+      "midday": "Ručak",
+      "evening": "Veče",
+      "noTables": "Nema slobodnih stolova – sledeći slobodni dani:",
+      "noFreeDays": "Nažalost, u narednim nedeljama nema slobodnog dana. Izaberite drugi datum ili nas pozovite."
+    },
+    "table": {
+      "listLabel": "Slobodni stolovi – {{area}}",
+      "option_one": "Sto {{number}} · {{count}} mesto",
+      "option_few": "Sto {{number}} · {{count}} mesta",
+      "option_other": "Sto {{number}} · {{count}} mesta",
+      "noneFreeInArea": "U ovom delu u to vreme nema odgovarajućeg slobodnog stola.",
+      "noneFree": "Nažalost, u to vreme više nema slobodnog stola.",
+      "otherTime": "Izaberite drugo vreme"
+    },
+    "details": {
+      "name": "Ime",
+      "phone": "Telefon",
+      "email": "Imejl",
+      "notes": "Napomena (opciono)",
+      "notesDescription": "Npr. dečja stolica ili alergije. Najviše {{max}} znakova.",
+      "contactHint": "Da bi restoran mogao da vas kontaktira, unesite broj telefona ili imejl adresu – dovoljno je jedno od to dvoje.",
+      "contactRequired": "Unesite broj telefona ili imejl adresu.",
+      "nameRequired": "Unesite svoje ime.",
+      "invalidPhone": "Unesite ispravan broj telefona (najmanje 6 cifara).",
+      "invalidEmail": "Unesite ispravnu imejl adresu.",
+      "invalidNotes": "Napomena je predugačka.",
+      "submit": "Rezerviši",
+      "submitRequest": "Pošalji zahtev"
+    },
+    "errors": {
+      "slotTaken": "Nažalost, ovo vreme je upravo zauzeto. Izaberite drugo – slobodna vremena su ažurirana.",
+      "tableTaken": "Nažalost, ovaj sto je upravo zauzet. Ponovo izaberite vreme – slobodna vremena su ažurirana.",
+      "timeNotBookable": "Ovo vreme više nije moguće rezervisati. Izaberite drugo.",
+      "tooManyBookings": "Previše rezervacija sa ove veze. Pokušajte ponovo za nekoliko minuta.",
+      "invalidBooking": "Rezervacija nije mogla da se završi. Proverite svoj izbor."
+    },
+    "confirmation": {
+      "confirmedTitle": "Vaš sto je rezervisan",
+      "confirmedText": "Radujemo se vašoj poseti.",
+      "requestTitle": "Zahtev je poslat",
+      "requestText": "Vaša rezervacija još nije potvrđena. Restoran će pregledati vaš zahtev i javiti vam se.",
+      "referenceCode": "Vaš referentni kod",
+      "restaurant": "Restoran",
+      "date": "Datum",
+      "time": "Vreme",
+      "guests": "Osobe",
+      "area": "Deo",
+      "table": "Sto"
+    },
+    "notBookable": {
+      "title": "Onlajn rezervacija nije moguća",
+      "text": "Ovaj restoran trenutno ne prima onlajn rezervacije. Pozovite:"
+    }
   },
   "admin": {
     "label": "Administracija",
