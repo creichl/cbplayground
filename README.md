@@ -24,7 +24,8 @@ This README describes the full product vision.
 ### Table placement
 
 - Tables are placed on an area's floor plan.
-- Each table has attributes such as its number, its position on the plan and its seat count (number of guests).
+- Each table has attributes such as its number, its position on the plan, its seat count (number of guests), its shape (round, square, rectangular) and its rotation (0° or 90°).
+- An area without uploaded floor plan image is drawn as a schematic plan from its tables; the system arranges the tables, the restaurant may move them afterwards and have them arranged anew (see [Schematic floor plan](#schematic-floor-plan)).
 
 ### Opening hours & holidays
 
@@ -137,6 +138,7 @@ This README describes the full product vision.
 │   │   ├── Data/                 # AppDbContext, entities, development seed
 │   │   │   └── SeedAssets/       # floor plans of the demo restaurants (development seed)
 │   │   ├── Endpoints/            # endpoint groups, one file per area
+│   │   ├── FloorPlans/           # schematic floor plan: table sizes and automatic arrangement
 │   │   ├── Migrations/           # EF Core migrations
 │   │   ├── OpeningHours/         # public holidays, opening calendar, supported countries
 │   │   └── Reservations/         # availability, duration policy, reservation rules
@@ -171,10 +173,10 @@ In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo res
 | Location | Germany, Bavaria (`DE-BY`) | Serbia (`RS`) |
 | Profile | Address in Munich, phone, email, website, description | Address in Novi Sad, phone, email, website, description |
 | Opening hours | Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays | Every day 12:00–24:00 |
-| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) |
+| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) and "Bašta" (6 tables, 2–8 seats, no floor plan image) |
 | Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes |
 
-So both confirmation modes and both table selection modes can be shown. The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms.
+So both confirmation modes and both table selection modes can be shown. The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms. The tables have shapes that fit the rooms (square, rectangular for 6 and 8 seats, round ones on the terrace and a few elsewhere; Sala's table 4 is turned by 90°). The three areas with a floor plan image have a table scale of 80 %: at 100 % the drawn tables are large for these rooms, and some come too close to each other. "Bašta" has no floor plan image and a table scale of 100 %; its tables (round, square and rectangular) are arranged by `TableLayout`, so it shows the schematic floor plan.
 
 The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
 
@@ -184,7 +186,7 @@ The seed is idempotent and never overwrites what an admin maintained. For each r
 - the areas with their floor plans and tables, if there are no areas (an area without tables gets none);
 - the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, if they were never saved.
 
-A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
+A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. Because areas are only added to a restaurant without areas, an existing development database does not get "Bašta"; it only appears after deleting the development database. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
 
 Endpoints:
 
@@ -221,20 +223,21 @@ Endpoints:
   - `POST /api/admin/staff/{id}/password`: body `{ "password" }`. Sets a new password (204) and ends the user's other sessions.
   - Errors: 400 with `{ "error": "invalid_email" | "invalid_name" | "invalid_role" | "password_too_weak" }`, 409 with `{ "error": "email_taken" | "last_admin" | "cannot_deactivate_self" }`. The last active Tenant Admin of a restaurant cannot be deactivated or given another role, and nobody can deactivate themselves.
 - Areas (Tenant Admins only):
-  - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`.
-  - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking and has an online quota of 100 %.
-  - `PUT /api/admin/areas/{id}`: body `{ "name", "onlineBookingEnabled", "onlineCapacityPercent" }` (0–100).
+  - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`, `tableScale`.
+  - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking, has an online quota of 100 % and a table scale of 100 %.
+  - `PUT /api/admin/areas/{id}`: body `{ "name", "onlineBookingEnabled", "onlineCapacityPercent", "tableScale" }`. `onlineCapacityPercent` 0–100 (otherwise 400 `online_capacity_percent_invalid`). `tableScale` is optional, whole percent from 50 to 200 (otherwise 400 `table_scale_invalid`); without it the stored value stays. It scales the drawn tables of this area, so they match an uploaded floor plan.
+  - `POST /api/admin/areas/{id}/arrange-tables`: arranges all tables of the area anew with `TableLayout` (see [Schematic floor plan](#schematic-floor-plan)), also in an area with a floor plan image, and returns the area's tables as `GET /api/admin/tables` lists them. Unknown area or one of another restaurant: 404.
   - `DELETE /api/admin/areas/{id}`: deletes the area with its tables and its floor plan image. 409 `table_has_reservations` while one of its tables has a reservation that has not ended yet (see below).
   - `PUT /api/admin/areas/order`: body `{ "areaIds": [...] }` with every area of the restaurant once, in the new order.
   - `PUT /api/admin/areas/{id}/floorplan`: the body is the image itself (PNG, JPEG or WebP, at most 10 MB). The type is detected from the content; the file name is chosen by the server. Replaces an existing floor plan.
 - `GET /api/areas/{id}/floorplan`: the floor plan image of an area. Public, because guests will see it to pick a table.
 - Tables (Tenant Admins only):
-  - `GET /api/admin/tables`: all tables of the restaurant: `id`, `areaId`, `number`, `seats`, `posX`, `posY`. The position is relative to the floor plan image, from 0 to 1.
-  - `POST /api/admin/tables`: body `{ "areaId", "number", "seats" }`. The table is placed in the middle of the floor plan.
-  - `PUT /api/admin/tables/{id}`: body `{ "number", "seats" }`.
+  - `GET /api/admin/tables`: all tables of the restaurant: `id`, `areaId`, `number`, `seats`, `posX`, `posY`, `shape`, `rotation`. The position is the table's centre relative to the floor plan, from 0 to 1 (see [Schematic floor plan](#schematic-floor-plan) for an area without image). `shape` is `Round`, `Square` or `Rectangle`, never `null`; `rotation` is `0` or `90` (degrees), stored for every table but only visible on rectangular ones.
+  - `POST /api/admin/tables`: body `{ "areaId", "number", "seats", "shape", "rotation" }`; `shape` and `rotation` are optional. Without `shape` a table with 1–4 seats is `Square`, from 5 seats `Rectangle`; without `rotation` 0. In an area with floor plan image the table is placed in the middle of the image, in an area without one on the first free place of the arrangement, so it does not overlap another table.
+  - `PUT /api/admin/tables/{id}`: body `{ "number", "seats", "shape", "rotation" }`. Without `shape` or `rotation` the stored values stay; changing the seats does not change the shape.
   - `DELETE /api/admin/tables/{id}`. 409 `table_has_reservations` while the table has a reservation in the status `Requested`, `Confirmed`, `Arrived` or `Late` that has not ended yet. Its other reservations (past ones, cancelled and declined ones) are deleted together with the table: a reservation always keeps its table (the foreign key is `Restrict`), so the reservations that no longer matter are removed first, in the same transaction.
   - `PUT /api/admin/tables/positions`: body `[{ "id", "posX", "posY" }, ...]`. Saves the positions of several tables at once, all or none.
-  - The table number (at most 20 characters) is unique within the restaurant, a table has at least 1 seat.
+  - The table number (at most 20 characters) is unique within the restaurant, a table has at least 1 seat. Errors: 400 `table_number_invalid`, `seats_invalid`, `shape_invalid` (not `Round`, `Square` or `Rectangle`), `rotation_invalid` (not 0 or 90), `position_invalid`; 409 `table_number_taken`.
 - `GET /api/admin/opening-hours`: the regular opening hours of the whole week, `{ "periods": [{ "dayOfWeek", "start", "end" }] }`. `dayOfWeek` is 0 (Sunday) to 6 (Saturday), times are `HH:mm`, the end may be `24:00`.
 - `PUT /api/admin/opening-hours`: replaces the whole week (same body, 204). Errors: `invalid_day`, `invalid_time`, `start_not_before_end`, `overlapping_periods`.
 - `GET /api/admin/location`: `countryCode` (`DE`, `AT`, `RS`), `regionCode` (federal state for Germany, e.g. `DE-BY`, otherwise `null`) and `timeZoneId` (derived from the country); all `null` until set.
@@ -257,13 +260,13 @@ Endpoints:
   - `GET /api/public/restaurants/{slug}`: `name`, the profile (`street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`, each `null` when empty), `timeZoneId`, `confirmationMode`, `tableSelectionMode`, `maxOnlinePartySize` (seats of the largest table that can be booked online, 0 if none, at most the restaurant's own limit), `bookingHorizonDays`, `openingHours` (the week, as in `GET /api/admin/opening-hours`) and `bookable` (false without location, opening hours or tables that can be booked online).
   - `GET /api/public/restaurants/{slug}/calendar?month=YYYY-MM&guests=N`: one entry per day of the month, `{ "date", "status" }` with `closed` (closed, also on closing days, in the past or beyond the booking horizon), `full` or `available`, for the date picker. Errors: `invalid_month`, `invalid_party_size`.
   - `GET /api/public/restaurants/{slug}/availability?date=YYYY-MM-DD&guests=N`: `date`, `guests`, `durationMinutes` and `periods`: per opening window `{ "start", "end", "times": [{ "time", "available" }] }`. No periods on closing days and closed public holidays; on days with special hours exactly these windows.
-  - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tables": [{ "id", "number", "seats", "posX", "posY", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
+  - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tableScale", "tables": [{ "id", "number", "seats", "posX", "posY", "shape", "rotation", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
   - `POST /api/public/restaurants/{slug}/reservations`: body `{ "date", "time", "guests", "tableId", "name", "phone", "email", "notes", "language" }`. `tableId` is required when the guest chooses the table and ignored when the system assigns it; `phone` or `email` is required; `language` is `en`, `de`, `sr-Latn` or `sr-Cyrl`. Returns 201 with `referenceCode`, `status` (`Confirmed` in the instant mode, `Requested` in the request mode), `date`, `time`, `guests`, `durationMinutes`, `area`, `tableNumber` and `manageToken`, the token of the guest's link to view and cancel the reservation (32 random bytes, URL-safe Base64). Only its SHA-256 is stored (`Reservation.ManageTokenHash`), so it is returned only here. Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_name`, `contact_required`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `table_required`, `outside_opening_hours`, `too_short_notice` (within the lead time), `too_far_ahead`, `in_the_past`; 409 `slot_unavailable`, `table_unavailable`; 429 `too_many_requests` after 10 bookings from the same client IP within 10 minutes (`RateLimiting:PublicBookings:PermitLimit`).
   - `GET /api/public/restaurants/{slug}/reservations/{referenceCode}?token=…`: the guest's view of an online reservation: `referenceCode`, `status`, `date`, `time`, `endTime`, `guests`, `durationMinutes`, `area`, `tableNumber`, `name`, `cancelledByGuest` and `canCancel` (whether the guest can still cancel). A wrong code, a wrong token or a reservation of another restaurant are all 404, without telling which; reservations entered by staff have no token and are never found.
   - `POST /api/public/restaurants/{slug}/reservations/{referenceCode}/cancel`: body `{ "token" }`. Cancels the reservation (`Cancelled`, `cancelledByGuest` true) and returns it as above. Errors: 404 as above; 409 `cancellation_not_possible` when it is not `Requested`, `Confirmed` or `Late` or has started (see the reservation rules).
   - Both compare the token in constant time and have their own rate limit with the limit of the bookings (429 `too_many_requests` after 10 requests from the same client IP within 10 minutes).
 - Reservations for the staff (Tenant Admins and Front desk users, `RequireStaff` policy), always of the signed-in user's restaurant; reservations of other restaurants are 404:
-  - `GET /api/staff/floor`: the areas in their order with their tables: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tables` (`id`, `number`, `seats`, `posX`, `posY`).
+  - `GET /api/staff/floor`: the areas in their order with their tables: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tableScale`, `tables` (`id`, `number`, `seats`, `posX`, `posY`, `shape`, `rotation`).
   - `GET /api/staff/reservations?from=YYYY-MM-DD&to=YYYY-MM-DD`: the reservations starting on these days (without `from`/`to`: today in the restaurant's time zone; at most 366 days, otherwise `invalid_range`), sorted by start: `id`, `referenceCode`, `date`, `time`, `endTime`, `durationMinutes`, `guests`, `status`, `source` (`Online` | `Staff` | `WalkIn`), `tableId`, `tableNumber`, `areaId`, `areaName`, `name`, `phone`, `email`, `notes`, `language`, `completedTime` (`HH:mm` when the guest left, status `Completed`; otherwise `null`), `cancelledByGuest` (the guest cancelled through the link), `createdAtUtc`, `updatedAtUtc`.
   - `GET /api/staff/availability?date=YYYY-MM-DD&guests=N&durationMinutes=M`: like the public availability, but each time lists the free tables (`id`, `number`, `seats`, `areaId`, `areaName`, empty when none is free), without online quota, online block, lead time, booking horizon and the largest online party; the buffer applies. `durationMinutes` is optional.
   - `POST /api/staff/reservations`: body `{ "date", "time", "guests", "tableId", "durationMinutes", "name", "phone", "email", "notes", "language" }`, e.g. for a phone reservation. Always `Confirmed`, source `Staff`. Without `tableId` the system assigns a table; `durationMinutes` (15–480 in steps of 15) overrides the restaurant's duration; the name is required, phone and email are optional; without `language` the language of the restaurant's country (`de` for Germany and Austria, `sr-Latn` for Serbia, otherwise `en`). Returns 201 with the reservation as in the list.
@@ -298,6 +301,24 @@ The server enforces these rules for every channel; the constants are in `Reserva
   - A change back to a status that occupies the table (the undo of `Cancelled`, `NoShow` and `Completed`) needs the table to be free from the start to the original end; otherwise 409 `table_unavailable`.
 
 The public endpoints find the restaurant by its slug and set it as the tenant of the request (`Auth/TenantScope.cs`); `HttpTenantContext` prefers it to the tenant of the signed-in user. So the query filters, `IOpeningCalendar` and `IReservationDurationPolicy` work for guests, too.
+
+### Schematic floor plan
+
+An area without floor plan image is drawn as a schematic plan from its tables. The rules and constants are in `api/Cbplayground.Api/FloorPlans/TableLayout.cs`; the web draws with the same constants.
+
+- The schematic plan has the fixed aspect ratio **3:2** (width:height). Positions are the table's centre relative to the plan, 0–1 in both directions, as on an image.
+- The drawn size of a table depends on its shape and seats. The sizes below are fractions of the plan **width** at a table scale of 100 %; the area's `tableScale` multiplies all of them (50–200 %):
+
+| Shape | Width × height at 0° | Example |
+| --- | --- | --- |
+| `Round` | diameter 0.0175 × seats, at least 0.05 | 4 seats: 0.07, 8 seats: 0.14 |
+| `Square` | side 0.0175 × seats, at least 0.05 | 2 seats: 0.05, 4 seats: 0.07 |
+| `Rectangle` | long side 0.0175 × seats, at least 0.08; short side 0.06 | 6 seats: 0.105 × 0.06, 8 seats: 0.14 × 0.06 |
+
+- At 90° a rectangular table stands upright (width and height swapped). Around every table there is room for the chairs, 0.02 of the plan width on each side (scaled as well). A height in plan widths is a fraction of the plan height × 1.5.
+- **Arrangement** (`TableLayout.Arrange`, used by `POST /api/admin/areas/{id}/arrange-tables`): the tables go into rows from top left to bottom right in the order of their numbers, as `GET /api/admin/tables` sorts them (length first, then ordinal). The rows differ by at most one table; every row spreads its tables evenly over the width, the rows are spread evenly over the height, so larger tables get more room. The number of rows is the one that leaves the largest gaps. The tables keep their chair room and a gap to each other and to the edge, and lie completely within 0–1. With many tables the gap shrinks to zero, then the chair room; tables only overlap when they do not fit side by side even without it. The arrangement always uses the 3:2 plan, also in an area with an image.
+- **A new table** in an area without image goes to the first place of the arrangement (of all tables, the new one included) where it does not overlap an existing table and its chairs; if there is none, to the first such place top left to bottom right, then to one where at least the tables do not overlap. In an area with an image it is placed in the middle.
+- **After the update:** before, every new table was placed at 0.5/0.5, so the tables of an area without image lay on top of each other. On every start, in every environment, the API arranges each area without image in which at least two tables have exactly the same position (`FloorPlans/StackedTables.cs`). Areas with an image and areas whose tables are spread are left alone, so in effect this happens once.
 
 ### Demo reservations
 
@@ -406,7 +427,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, the restaurant profile, the setup status, the Superadmin's restaurant management (including deactivated restaurants and the 403 for restaurant staff), the development seed, the database backups, and the reservations: availability, online quota, table assignment, the guest booking per slug, the staff endpoints, status changes with their time rules and undos, walk-ins, concurrent bookings of the last table, the rate limits, deleting tables with reservations, the demo reservations and the booking rules (lead time with a fixed clock, booking horizon, buffer, largest online party), as well as the start with an empty database outside Development, staying signed in after a restart, the health check, forwarded headers and the `invalid_request` and `server_error` answers.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and a temporary uploads folder, and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation, the staff management, areas, tables and floor plan uploads, the public holidays, the opening calendar, the opening hours endpoints, the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, the restaurant profile, the setup status, table shapes and rotation, the table scale, the automatic arrangement of the tables (`TableLayout` directly, the `arrange-tables` endpoint and the arrangement of stacked tables on start), the Superadmin's restaurant management (including deactivated restaurants and the 403 for restaurant staff), the development seed, the database backups, and the reservations: availability, online quota, table assignment, the guest booking per slug, the staff endpoints, status changes with their time rules and undos, walk-ins, concurrent bookings of the last table, the rate limits, deleting tables with reservations, the demo reservations and the booking rules (lead time with a fixed clock, booking horizon, buffer, largest online party), as well as the start with an empty database outside Development, staying signed in after a restart, the health check, forwarded headers and the `invalid_request` and `server_error` answers.
 
 ### Run the web frontend
 
