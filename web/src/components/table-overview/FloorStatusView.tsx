@@ -2,6 +2,7 @@ import { Box, Button, Card, Group, Paper, Popover, SimpleGrid, Slider, Stack, Te
 import { type CSSProperties, type KeyboardEvent, type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, type FloorTable, formatMinutes, type Reservation, toMinutes } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
 import { TableMarker } from '../TableMarker.tsx'
 import { ReservationPopover } from './ReservationPopover.tsx'
@@ -29,13 +30,14 @@ const step = 15
  * and the next reservation at each table. Areas without floor plan show their tables as a grid.
  */
 export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes, onWalkIn }: FloorStatusViewProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const [time, setTime] = useState(initialTime)
   const active = reservations.filter(occupiesTable)
+  const label = (minutes: number) => formatTime(formatMinutes(minutes), i18n.resolvedLanguage ?? 'en')
 
   const marks: { value: number; label: string }[] = []
   for (let minutes = Math.ceil(start / 120) * 120; minutes <= end; minutes += 120) {
-    marks.push({ value: minutes, label: formatMinutes(minutes) })
+    marks.push({ value: minutes, label: label(minutes) })
   }
 
   return (
@@ -47,7 +49,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
               {t('tableOverview.floor.time')}
             </Text>
             <Text size="xl" fw={650}>
-              {formatMinutes(time)}
+              {label(time)}
             </Text>
           </Stack>
           <Slider
@@ -60,7 +62,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
             step={step}
             value={time}
             onChange={setTime}
-            label={formatMinutes}
+            label={label}
             marks={marks}
             aria-label={t('tableOverview.floor.time')}
           />
@@ -137,7 +139,8 @@ function occupiesAt(reservation: Reservation, minutes: number) {
  * A table that is free now offers to seat a walk-in.
  */
 function TableStatus({ table, reservations, time, nowMinutes, onWalkIn, onPlan }: TableStatusProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const atTable = reservations.filter((reservation) => reservation.tableId === table.id)
   const current = atTable.find((reservation) => occupiesAt(reservation, time))
   const next = atTable.find((reservation) => toMinutes(reservation.time) > time)
@@ -171,13 +174,13 @@ function TableStatus({ table, reservations, time, nowMinutes, onWalkIn, onPlan }
     children: (
       <>
         <Text size="sm" fw={600} inherit>
-          {table.number} · {table.seats}
+          {t('common.tableLabel', { number: table.number, seats: table.seats })}
         </Text>
         {shown !== undefined && (
           <Text size="xs">
             {current !== undefined
-              ? t('tableOverview.floor.until', { time: occupiedUntil(current) })
-              : t('tableOverview.floor.nextAt', { time: shown.time })}
+              ? t('tableOverview.floor.until', { time: formatTime(occupiedUntil(current), language) })
+              : t('tableOverview.floor.nextAt', { time: formatTime(shown.time, language) })}
           </Text>
         )}
       </>
@@ -210,7 +213,7 @@ function FreeTablePopover({ table, onWalkIn, children }: { table: FloorTable; on
       <Popover.Target>{children}</Popover.Target>
       <Popover.Dropdown>
         <Stack gap="sm">
-          <Text fw={600}>{t('tableOverview.freeTable', { number: table.number, seats: table.seats })}</Text>
+          <Text fw={600}>{t('tableOverview.freeTable', { number: table.number, count: table.seats })}</Text>
           <Button
             variant="light"
             onClick={() => {

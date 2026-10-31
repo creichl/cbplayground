@@ -14,6 +14,7 @@ import {
   useRestaurantNow,
   useSetReservationStatus,
 } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { availableActions, guestName, type StatusAction, statusColors, statusLabels, undoStatus } from './status.ts'
 
 type StatusActionsProps = {
@@ -36,7 +37,7 @@ function statusErrorMessage(error: unknown, t: TFunction) {
  * (see status.ts). Cancelling and no-show ask first. After every change a notification offers to undo it.
  */
 export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange }: StatusActionsProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const now = useRestaurantNow()
   const setStatus = useSetReservationStatus()
@@ -107,7 +108,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
             size={compact ? 'sm' : 'md'}
             variant={action.status === 'Confirmed' && reservation.status === 'Requested' ? 'filled' : action.color === 'gray' ? 'default' : 'light'}
             color={action.color}
-            leftSection={<span aria-hidden="true">{action.icon}</span>}
+            leftSection={<action.icon size={16} />}
             loading={setStatus.isPending && setStatus.variables.status === action.status}
             disabled={setStatus.isPending}
             onClick={() => (action.confirm ? confirm(action) : change(action.status))}
@@ -136,8 +137,8 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
           <Text size="sm">
             {t(confirming?.status === 'NoShow' ? 'reservations.noShowConfirm.text' : 'reservations.cancelConfirm.text', {
               name: guestName(reservation, t),
-              time: reservation.time,
-              guests: reservation.guests,
+              time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
+              count: reservation.guests,
             })}
           </Text>
           <Group justify="flex-end">

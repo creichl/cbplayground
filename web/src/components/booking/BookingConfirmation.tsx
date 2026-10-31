@@ -2,8 +2,9 @@ import { Anchor, Button, Card, CheckIcon, Code, CopyButton, Group, Stack, Table,
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type BookingResult, managePath, type PublicRestaurant } from '../../api/publicBooking.ts'
+import { formatLongDate, formatTime } from '../../i18n/format.ts'
 import { calendarFile, downloadCalendarFile } from './calendarFile.ts'
-import { formatAddress, formatDate, formatTime } from './format.ts'
+import { formatAddress } from './format.ts'
 
 type BookingConfirmationProps = {
   result: BookingResult
@@ -28,7 +29,7 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId }: Bo
 
   const rows = [
     { label: t('booking.confirmation.restaurant'), value: restaurant.name },
-    { label: t('booking.confirmation.date'), value: formatDate(result.date, language, { dateStyle: 'full' }) },
+    { label: t('booking.confirmation.date'), value: formatLongDate(result.date, language) },
     { label: t('booking.confirmation.time'), value: formatTime(result.time, language) },
     { label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: result.guests }) },
     { label: t('booking.confirmation.area'), value: result.area },

@@ -5,12 +5,17 @@ import { isNotFound, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
 import { RestaurantHeader } from '../components/booking/RestaurantHeader.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The booking page of a restaurant: the restaurant at the top, then the guest books a table in a few steps. */
 export function RestaurantPage() {
   const { t } = useTranslation()
   const { slug = '' } = useParams()
   const restaurant = usePublicRestaurant(slug)
+  useDocumentTitle(
+    restaurant.isError && isNotFound(restaurant.error) ? t('restaurant.notFoundTitle') : t('home.reserve'),
+    restaurant.data?.name ?? null,
+  )
 
   if (restaurant.isPending) {
     return (

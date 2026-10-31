@@ -1,8 +1,9 @@
 import { ActionIcon, Alert, Box, Button, Card, Center, Group, Loader, SegmentedControl, Stack, Text, Title } from '@mantine/core'
 import { DatePickerInput } from '@mantine/dates'
 import dayjs from 'dayjs'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router'
 import {
   type OpenPeriod,
   type Reservation,
@@ -10,26 +11,20 @@ import {
   useFloor,
   useOpenPeriods,
   useReservations,
+  useRestaurantNow,
 } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons.tsx'
 import { statusColors, statusLabels } from '../components/reservations/status.ts'
 import { WalkInDrawer } from '../components/reservations/WalkInDrawer.tsx'
 import { FloorStatusView } from '../components/table-overview/FloorStatusView.tsx'
 import { Timeline } from '../components/table-overview/Timeline.tsx'
+import { datePickerFormatter } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 type View = 'timeline' | 'floor'
 
 const dateFormat = 'YYYY-MM-DD'
-
-/** The current time, updated every 30 seconds, so the line at the current time moves on. */
-function useNow() {
-  const [now, setNow] = useState(() => new Date())
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(new Date()), 30_000)
-    return () => window.clearInterval(timer)
-  }, [])
-  return now
-}
 
 /**
  * The shown time range of the day in minutes, on full hours: the opening hours, widened to every reservation of the day.
@@ -48,52 +43,73 @@ function dayRange(openPeriods: OpenPeriod[], reservations: Reservation[]) {
 
 /** Table overview for the front desk and the admin: all tables with their reservations of a day, as a timeline or on the floor plans. */
 export function TableOverviewPage() {
-  const { t } = useTranslation()
-  const now = useNow()
-  const today = dayjs(now).format(dateFormat)
-  const [date, setDate] = useState(today)
-  const [view, setView] = useState<View>('timeline')
+  const { t, i18n } = useTranslation()
+  useDocumentTitle(t('tableOverview.title'))
+  // "Today" and the current time are those of the restaurant, not of the device.
+  const now = useRestaurantNow()
+  const today = now?.date ?? null
+  const [searchParams, setSearchParams] = useSearchParams()
+  // Day and view are kept in the address, so a reload or a shared link shows the same.
+  const requested = searchParams.get('date')
+  const date = requested !== null && dayjs(requested).format(dateFormat) === requested ? requested : today
+  const view: View = searchParams.get('view') === 'floor' ? 'floor' : 'timeline'
   // undefined: no walk-in drawer; null: walk-in at the suggested table; otherwise at this table.
   const [walkInTable, setWalkInTable] = useState<string | null | undefined>(undefined)
   const floor = useFloor()
   const reservations = useReservations(date)
   const openPeriods = useOpenPeriods(date)
 
-  const shiftDate = (days: number) => setDate(dayjs(date).add(days, 'day').format(dateFormat))
+  const show = (day: string | null, shownView: View) => {
+    const params: Record<string, string> = {}
+    if (day !== null && day !== today) {
+      params.date = day
+    }
+    if (shownView !== 'timeline') {
+      params.view = shownView
+    }
+    setSearchParams(params)
+  }
+  const shiftDate = (days: number) => date !== null && show(dayjs(date).add(days, 'day').format(dateFormat), view)
 
   const header = (
     <Group justify="space-between" gap="md">
       <Title order={2}>{t('tableOverview.title')}</Title>
       <Group gap="sm">
         {/* A walk-in is seated now, so only on today. */}
-        {date === today && (
+        {today !== null && date === today && (
           <Button variant="light" onClick={() => setWalkInTable(null)}>
             {t('reservations.walkIn.button')}
           </Button>
         )}
         <SegmentedControl
           value={view}
-          onChange={(value) => setView(value as View)}
+          onChange={(value) => show(date, value as View)}
           data={[
             { value: 'timeline', label: t('tableOverview.views.timeline') },
             { value: 'floor', label: t('tableOverview.views.floor') },
           ]}
         />
         <Group gap={4} wrap="nowrap">
-          <ActionIcon variant="default" size="input-sm" onClick={() => shiftDate(-1)} aria-label={t('tableOverview.date.previous')}>
-            ‹
+          <ActionIcon
+            variant="default"
+            size="input-sm"
+            onClick={() => shiftDate(-1)}
+            aria-label={t('tableOverview.date.previous')}
+            disabled={date === null}
+          >
+            <ChevronLeftIcon />
           </ActionIcon>
-          <Button variant="default" onClick={() => setDate(today)} disabled={date === today}>
+          <Button variant="default" onClick={() => show(today, view)} disabled={date === today}>
             {t('tableOverview.date.today')}
           </Button>
-          <ActionIcon variant="default" size="input-sm" onClick={() => shiftDate(1)} aria-label={t('tableOverview.date.next')}>
-            ›
+          <ActionIcon variant="default" size="input-sm" onClick={() => shiftDate(1)} aria-label={t('tableOverview.date.next')} disabled={date === null}>
+            <ChevronRightIcon />
           </ActionIcon>
         </Group>
         <DatePickerInput
           value={date}
-          onChange={(value) => value !== null && setDate(value)}
-          valueFormat="dd, D MMM YYYY"
+          onChange={(value) => value !== null && show(value, view)}
+          valueFormatter={datePickerFormatter(i18n.resolvedLanguage ?? 'en')}
           aria-label={t('tableOverview.date.label')}
           miw={170}
         />
@@ -101,7 +117,7 @@ export function TableOverviewPage() {
     </Group>
   )
 
-  if (floor.isPending || reservations.isPending || openPeriods.isPending) {
+  if (date === null || now === null || floor.isPending || reservations.isPending || openPeriods.isPending) {
     return (
       <Stack gap="lg">
         {header}
@@ -131,7 +147,7 @@ export function TableOverviewPage() {
   const hasTables = floor.data.some((area) => area.tables.length > 0)
   const range = dayRange(openPeriods.data, reservations.data)
   const closed = openPeriods.data.length === 0
-  const nowMinutes = date === today ? now.getHours() * 60 + now.getMinutes() : null
+  const nowMinutes = date === today ? now.minutes : null
   // The floor plan starts at the current time if it lies within the day's range, otherwise at the first opening time.
   const firstOpening = openPeriods.data.length > 0 ? toMinutes(openPeriods.data[0].start) : range?.start ?? 0
   const initialTime =

@@ -1,7 +1,8 @@
 import { Box, Text, UnstyledButton } from '@mantine/core'
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type FloorArea, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
+import { type FloorArea, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { guestName, isActive, occupiedUntil, statusColors, statusLabels } from '../reservations/status.ts'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
@@ -49,7 +50,8 @@ function closedRanges(openPeriods: OpenPeriod[], start: number, end: number) {
  * an hour grid and a line at the current time. Scrolls horizontally; the table column stays in place.
  */
 export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes }: TimelineProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const scrollRef = useRef<HTMLDivElement>(null)
   const x = (minutes: number) => ((minutes - start) / 60) * hourWidth
   const width = x(end)
@@ -110,7 +112,7 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
           <Box pos="relative" style={{ width, flexShrink: 0 }}>
             {hours.map((hour) => (
               <Text key={hour} size="xs" c="dimmed" style={{ position: 'absolute', left: x(hour * 60) + 4, top: 6 }}>
-                {String(hour).padStart(2, '0')}:00
+                {formatTime(formatMinutes(hour * 60), language)}
               </Text>
             ))}
           </Box>
@@ -136,7 +138,7 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
                     style={{ ...labelCell, display: 'flex', alignItems: 'center' }}
                   >
                     <Text size="sm" fw={600} truncate>
-                      {table.number} · {table.seats}
+                      {t('common.tableLabel', { number: table.number, seats: table.seats })}
                     </Text>
                   </Box>
                   <Box pos="relative" style={{ width, flexShrink: 0, backgroundImage: gridLines }}>
@@ -149,10 +151,14 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
                         // A guest who left ends at the time they left.
                         const until = occupiedUntil(reservation)
                         const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
+                        const times = t('common.timeRange', {
+                          start: formatTime(reservation.time, language),
+                          end: formatTime(until, language),
+                        })
                         return (
                           <ReservationPopover key={reservation.id} reservation={reservation}>
                             <UnstyledButton
-                              aria-label={`${party}, ${reservation.time}–${until}, ${t(statusLabels[reservation.status])}`}
+                              aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
                               px={6}
                               style={{
                                 position: 'absolute',

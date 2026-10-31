@@ -21,6 +21,7 @@ import {
   useSaveReservationSettings,
 } from '../api/reservationSettings.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 const confirmationOptions: { value: ConfirmationMode; label: ParseKeys; description: ParseKeys }[] = [
   { value: 'Instant', label: 'reservationSettings.confirmation.instant.label', description: 'reservationSettings.confirmation.instant.description' },
@@ -80,6 +81,7 @@ function isWholeNumber(value: NumberValue): value is number {
 /** Reservation settings of the restaurant: confirmation, table assignment, duration and the booking rules. */
 export function ReservationSettingsPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('reservationSettings.title'))
   const settings = useReservationSettings()
 
   return (
@@ -335,7 +337,7 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
                 />
                 {isWholeNumber(previewGuests) && previewGuests >= 1 && isWholeNumber(previewMinutes) && (
                   <Text size="sm">
-                    {t('reservationSettings.duration.previewResult', { guests: previewGuests, minutes: previewMinutes })}{' '}
+                    {t('reservationSettings.duration.previewResult', { guests: previewGuests, count: previewMinutes })}{' '}
                     <Text span c="dimmed" size="sm">
                       {previewRule !== undefined
                         ? t('reservationSettings.duration.previewRule', { min: previewRule.minGuests, max: previewRule.maxGuests })

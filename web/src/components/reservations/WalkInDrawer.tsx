@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client.ts'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import { useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { guestName } from './status.ts'
 
 /** The longest note the server accepts. */
@@ -28,7 +29,7 @@ function walkInErrorMessage(error: unknown, t: TFunction) {
  * changed), then optionally name, phone and a note. The reservation starts as arrived.
  */
 export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
   const createWalkIn = useCreateWalkIn()
   const [guestsValue, setGuestsValue] = useState<number | string>(2)
@@ -53,7 +54,7 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
         onSuccess: (walkIn) => {
           notifications.show({
             color: 'green',
-            message: t('reservations.walkIn.seated', { name: guestName(walkIn, t), table: walkIn.tableNumber, time: walkIn.time }),
+            message: t('reservations.walkIn.seated', { name: guestName(walkIn, t), table: walkIn.tableNumber, time: formatTime(walkIn.time, i18n.resolvedLanguage ?? 'en') }),
           })
           onClose()
         },
@@ -100,19 +101,19 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
             </Alert>
           ) : tables.length === 0 ? (
             <Alert color="orange" variant="light">
-              {t('reservations.walkIn.noTable', { guests })}
+              {t('reservations.walkIn.noTable', { count: guests })}
             </Alert>
           ) : (
             <Stack gap={4}>
               <Select
                 label={t('reservations.form.table')}
-                description={t('reservations.walkIn.tableDescription', { minutes: freeTables.data.durationMinutes })}
+                description={t('reservations.walkIn.tableDescription', { count: freeTables.data.durationMinutes })}
                 data={tables.map((table, index) => ({
                   value: table.id,
                   label: t(index === 0 ? 'reservations.form.tableOptionSuggested' : 'reservations.form.tableOption', {
                     number: table.number,
                     area: table.areaName,
-                    seats: table.seats,
+                    count: table.seats,
                   }),
                 }))}
                 value={tableId}
@@ -122,7 +123,7 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
               />
               {wantedTableTaken && (
                 <Text size="sm" c="orange.8">
-                  {t('reservations.walkIn.wantedTableTaken', { guests })}
+                  {t('reservations.walkIn.wantedTableTaken', { count: guests })}
                 </Text>
               )}
             </Stack>

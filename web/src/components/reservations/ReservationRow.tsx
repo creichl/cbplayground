@@ -1,6 +1,8 @@
 import { Badge, Group, Paper, Stack, Text, Tooltip, UnstyledButton } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
+import { formatShortDate, formatTime } from '../../i18n/format.ts'
+import { NoteIcon } from '../icons.tsx'
 import { StatusActions } from './StatusActions.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 import { guestName, isActive, occupiedUntil, sourceLabels } from './status.ts'
@@ -16,6 +18,8 @@ type ReservationRowProps = {
 /** One reservation: time, guest, party size, table, source, who cancelled, notes, status and the quick status actions. */
 export function ReservationRow({ reservation, onOpen, withDate = false }: ReservationRowProps) {
   const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
+  const time = formatTime(reservation.time, language)
   const inactive = !isActive(reservation)
   const name = guestName(reservation, t)
 
@@ -24,13 +28,11 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
       <Stack gap={0} style={{ flexShrink: 0 }} miw={56}>
         {withDate && (
           <Text size="xs" c="dimmed">
-            {new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: 'short', day: 'numeric', month: 'short' }).format(
-              new Date(`${reservation.date}T00:00`),
-            )}
+            {formatShortDate(reservation.date, language)}
           </Text>
         )}
         <Text fw={700} size="lg">
-          {reservation.time}
+          {time}
         </Text>
       </Stack>
       <Stack gap={2} miw={0} style={{ flex: 1 }}>
@@ -44,10 +46,10 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
         </Group>
         <Text size="sm" c="dimmed">
           {t('reservations.row.summary', {
-            guests: reservation.guests,
+            count: reservation.guests,
             table: reservation.tableNumber,
             area: reservation.areaName,
-            end: occupiedUntil(reservation),
+            end: formatTime(occupiedUntil(reservation), language),
           })}
         </Text>
         {reservation.cancelledByGuest && (
@@ -57,12 +59,12 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
         )}
         {reservation.notes !== null && (
           <Tooltip label={reservation.notes} multiline maw={320} withinPortal>
-            <Text size="sm" truncate="end">
-              <span aria-label={t('reservations.row.notes')} role="img">
-                📝
-              </span>{' '}
-              {reservation.notes}
-            </Text>
+            <Group gap={6} wrap="nowrap">
+              <NoteIcon size={16} style={{ flexShrink: 0 }} aria-label={t('reservations.row.notes')} aria-hidden={false} role="img" />
+              <Text size="sm" truncate="end">
+                {reservation.notes}
+              </Text>
+            </Group>
           </Tooltip>
         )}
       </Stack>
@@ -75,7 +77,7 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
         {onOpen !== undefined ? (
           <UnstyledButton
             onClick={() => onOpen(reservation)}
-            aria-label={t('reservations.row.open', { name, time: reservation.time })}
+            aria-label={t('reservations.row.open', { name, time })}
             miw={0}
             style={{ flex: '1 1 260px' }}
           >

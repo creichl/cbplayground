@@ -55,6 +55,8 @@ import {
 } from '../api/specialDays.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
+import { datePickerFormatter, formatDate, formatShortDate, formatTime } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The week as shown, starting on Monday. */
 const weekdays = [
@@ -129,12 +131,6 @@ function validateWeek(values: WeekValues, t: TFunction): FormErrors {
   const errors: FormErrors = {}
   values.days.forEach((day, d) => validatePeriods(day.periods, `days.${d}.periods`, errors, t))
   return errors
-}
-
-/** A calendar date "YYYY-MM-DD" in local time, so the day does not shift. */
-function toLocalDate(date: string) {
-  const [year, month, day] = date.split('-').map(Number)
-  return new Date(year, month - 1, day)
 }
 
 const openingHoursErrors = {
@@ -400,14 +396,6 @@ function HolidayList() {
     return <Text c="dimmed">{t('openingHours.holidays.empty')}</Text>
   }
 
-  const dateFormat = new Intl.DateTimeFormat(i18n.resolvedLanguage, {
-    weekday: 'short',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  })
-  const formatDate = (date: string) => dateFormat.format(toLocalDate(date))
-
   return (
     <Stack gap="sm">
       {setOpen.error !== null && <ErrorAlert error={setOpen.error} />}
@@ -417,7 +405,7 @@ function HolidayList() {
             <Table.Tr key={holiday.date}>
               <Table.Td w={220}>
                 <Text size="sm" c="dimmed">
-                  {formatDate(holiday.date)}
+                  {formatDate(holiday.date, i18n.resolvedLanguage ?? 'en')}
                 </Text>
               </Table.Td>
               <Table.Td>
@@ -474,7 +462,7 @@ function SpecialDayModal({
   onClose: () => void
   onSaved: (result: SpecialDaySaveResult) => void
 }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const save = useSaveSpecialDay()
   const form = useForm<SpecialDayValues>({
     mode: 'controlled',
@@ -540,7 +528,7 @@ function SpecialDayModal({
             allowSingleDateInRange
             label={t('openingHours.specialDays.dates')}
             description={t('openingHours.specialDays.datesDescription')}
-            valueFormat="dd, DD.MM.YYYY"
+            valueFormatter={datePickerFormatter(i18n.resolvedLanguage ?? 'en')}
             {...form.getInputProps('range')}
           />
           <Radio.Group label={t('openingHours.specialDays.kind')} {...form.getInputProps('kind')}>
@@ -614,7 +602,7 @@ function SpecialDayModal({
 /** The reservations that lie in a saved closing period or outside its special hours; they stay as they are. */
 function AffectedReservationsAlert({ result, onClose }: { result: SpecialDaySaveResult; onClose: () => void }) {
   const { t, i18n } = useTranslation()
-  const dateFormat = new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: 'short', day: 'numeric', month: 'short' })
+  const language = i18n.resolvedLanguage ?? 'en'
   const closed = result.specialDay.kind === 'Closed'
 
   return (
@@ -638,7 +626,7 @@ function AffectedReservationsAlert({ result, onClose }: { result: SpecialDaySave
               <Table.Tr key={reservation.id}>
                 <Table.Td>
                   <Text size="sm">
-                    {dateFormat.format(toLocalDate(reservation.date))}, {reservation.time}
+                    {formatShortDate(reservation.date, language)}, {formatTime(reservation.time, language)}
                   </Text>
                 </Table.Td>
                 <Table.Td>
@@ -678,11 +666,11 @@ function SpecialDaysSection() {
   const [deleting, setDeleting] = useState<SpecialDay | null>(null)
   const [affected, setAffected] = useState<SpecialDaySaveResult | null>(null)
 
-  const dateFormat = new Intl.DateTimeFormat(i18n.resolvedLanguage, { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric' })
+  const language = i18n.resolvedLanguage ?? 'en'
   const formatRange = (specialDay: SpecialDay) =>
     specialDay.from === specialDay.to
-      ? dateFormat.format(toLocalDate(specialDay.from))
-      : `${dateFormat.format(toLocalDate(specialDay.from))} – ${dateFormat.format(toLocalDate(specialDay.to))}`
+      ? formatDate(specialDay.from, language)
+      : `${formatDate(specialDay.from, language)} – ${formatDate(specialDay.to, language)}`
 
   return (
     <Stack gap="md">
@@ -719,7 +707,9 @@ function SpecialDaysSection() {
                         {t(`openingHours.specialDays.kinds.${specialDay.kind}`)}
                       </Badge>
                       {specialDay.periods.length > 0 && (
-                        <Text size="sm">{specialDay.periods.map((p) => `${p.start}–${p.end}`).join(', ')}</Text>
+                        <Text size="sm">{specialDay.periods
+                            .map((p) => t('common.timeRange', { start: formatTime(p.start, language), end: formatTime(p.end, language) }))
+                            .join(', ')}</Text>
                       )}
                     </Group>
                   </Table.Td>
@@ -793,6 +783,7 @@ function SpecialDaysSection() {
  */
 export function OpeningHoursPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('admin.nav.openingHours'))
   const hours = useOpeningHours()
   const location = useRestaurantLocation()
 

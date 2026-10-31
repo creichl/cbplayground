@@ -1,4 +1,4 @@
-import { Button, Card, Center, FileButton, Grid, Group, Loader, Modal, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Button, Card, Center, FileButton, Grid, Group, Loader, Modal, SimpleGrid, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -24,6 +24,7 @@ import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { FloorPlanCanvas } from '../components/FloorPlanCanvas.tsx'
 import { FloorPlanDropzone } from '../components/FloorPlanDropzone.tsx'
 import { TablePanel } from '../components/TablePanel.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** Wait this long after the last move before saving, so several moves go into one request. */
 const savePositionsDelay = 800
@@ -94,9 +95,13 @@ function nextTableNumber(tables: Table[]) {
   return String(Math.max(0, ...numbers) + 1)
 }
 
-/** Areas & tables: areas as tabs, the floor plan with its tables, and a panel with the selected table or area. */
+/**
+ * Areas & tables: areas as tabs, the floor plan with its tables, and a panel with the selected table or area.
+ * An area without floor plan lists its tables, so they can be managed before a floor plan is uploaded.
+ */
 export function AreasPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('admin.nav.areas'))
   const areas = useAreas()
   const tables = useTables()
   const createTable = useCreateTable()
@@ -209,7 +214,34 @@ export function AreasPage() {
               <Card>
                 <Stack gap="md">
                   {area.floorPlanUrl === null ? (
-                    <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
+                    <>
+                      <Group>
+                        <Button onClick={() => addTable(area)} loading={createTable.isPending}>
+                          {t('areas.addTable')}
+                        </Button>
+                      </Group>
+                      {areaTables.length > 0 && (
+                        <>
+                          <Text size="sm" c="dimmed">
+                            {t('areas.noFloorPlanHint')}
+                          </Text>
+                          <SimpleGrid cols={{ base: 3, sm: 4, lg: 6 }} spacing="sm">
+                            {areaTables.map((table) => (
+                              <Button
+                                key={table.id}
+                                variant={table.id === selectedTableId ? 'filled' : 'default'}
+                                aria-pressed={table.id === selectedTableId}
+                                aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
+                                onClick={() => setSelectedTableId(table.id)}
+                              >
+                                {t('common.tableLabel', { number: table.number, seats: table.seats })}
+                              </Button>
+                            ))}
+                          </SimpleGrid>
+                        </>
+                      )}
+                      <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
+                    </>
                   ) : (
                     <>
                       <Group justify="space-between">

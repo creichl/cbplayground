@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '../api/auth.ts'
 import { type Language, languages } from '../i18n/index.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 import { heightMessageType } from '../layouts/EmbedLayout.tsx'
 
 /** Height of the iframe until the embed reports its own, and for websites that leave out the script. */
@@ -31,6 +32,7 @@ function embedSnippet(origin: string, slug: string, embedUrl: string, title: str
 /** Admin page "Website embed": the snippet in the chosen language to copy, the direct link and a live preview. */
 export function EmbedSnippetPage() {
   const { t, i18n } = useTranslation()
+  useDocumentTitle(t('admin.nav.embed'))
   const currentUser = useCurrentUser()
   // The admin area is only shown to a signed-in Tenant Admin, who always has a restaurant.
   const tenant = currentUser.data?.tenant ?? null

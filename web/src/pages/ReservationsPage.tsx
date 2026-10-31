@@ -4,11 +4,15 @@ import dayjs from 'dayjs'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import { useRestaurantToday } from '../api/reservations.ts'
+import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons.tsx'
 import { ReservationDay } from '../components/reservations/ReservationDay.tsx'
+import { datePickerFormatter } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The reservations of any day, with date navigation. Used by the front desk and the admin. */
 export function ReservationsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  useDocumentTitle(t('reservations.title'))
   const today = useRestaurantToday()
   const [searchParams, setSearchParams] = useSearchParams()
   // The day is kept in the address, so a reload or a shared link shows the same day.
@@ -24,19 +28,19 @@ export function ReservationsPage() {
         <Title order={2}>{t('reservations.title')}</Title>
         <Group gap="xs" wrap="nowrap" style={{ flex: '1 1 auto', maxWidth: 460 }}>
           <ActionIcon variant="default" size={42} onClick={() => shift(-1)} aria-label={t('reservations.previousDay')} disabled={date === null}>
-            ‹
+            <ChevronLeftIcon />
           </ActionIcon>
           <DatePickerInput
             aria-label={t('reservations.date')}
             value={date}
             onChange={(value) => value !== null && show(value)}
-            valueFormat="dd, DD.MM.YYYY"
+            valueFormatter={datePickerFormatter(i18n.resolvedLanguage ?? 'en')}
             size="md"
             miw={0}
             style={{ flex: 1 }}
           />
           <ActionIcon variant="default" size={42} onClick={() => shift(1)} aria-label={t('reservations.nextDay')} disabled={date === null}>
-            ›
+            <ChevronRightIcon />
           </ActionIcon>
           <Button variant="light" size="md" onClick={() => today !== null && show(today)} disabled={date === today}>
             {t('reservations.today')}

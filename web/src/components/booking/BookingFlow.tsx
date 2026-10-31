@@ -5,10 +5,10 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { ApiError } from '../../api/client.ts'
 import { type PublicRestaurant, todayIn, useAvailability, useCreateBooking, usePublicTables } from '../../api/publicBooking.ts'
+import { formatShortDate, formatTime } from '../../i18n/format.ts'
 import type { Language } from '../../i18n/index.ts'
 import { BookingCalendar } from './BookingCalendar.tsx'
 import { BookingConfirmation } from './BookingConfirmation.tsx'
-import { formatDate, formatTime } from './format.ts'
 import { GuestDetailsForm, type GuestDetailsValues } from './GuestDetailsForm.tsx'
 import { PartySizePicker } from './PartySizePicker.tsx'
 import { TablePicker } from './TablePicker.tsx'
@@ -311,7 +311,7 @@ function BookingSteps({ slug, restaurant, timeZoneId }: BookingFlowProps & { tim
     summary.push({ step: 'guests', label: t('booking.guestsCount', { count: guests }) })
   }
   if (date !== null) {
-    summary.push({ step: 'date', label: formatDate(date, language, { weekday: 'short', day: 'numeric', month: 'short' }) })
+    summary.push({ step: 'date', label: formatShortDate(date, language) })
   }
   if (time !== null) {
     summary.push({ step: 'time', label: formatTime(time, language) })

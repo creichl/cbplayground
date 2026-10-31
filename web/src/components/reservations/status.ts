@@ -1,6 +1,8 @@
 import type { MantineColor } from '@mantine/core'
 import type { ParseKeys, TFunction } from 'i18next'
+import type { ComponentType } from 'react'
 import { type Reservation, type ReservationSource, type ReservationStatus, type RestaurantNow, toMinutes } from '../../api/reservations.ts'
+import { BanIcon, CheckIcon, ClockIcon, DoorExitIcon, type IconProps, UndoIcon, XIcon } from '../icons.tsx'
 
 /**
  * The one place for the statuses of a reservation: their labels, colours and the status actions of the staff.
@@ -74,22 +76,23 @@ export type StatusAction = {
   label: ParseKeys
   /** Shown with the icon on narrow screens such as tablets. */
   shortLabel: ParseKeys
-  icon: string
+  /** Decorative, next to the label. */
+  icon: ComponentType<IconProps>
   color: MantineColor
   /** Asks first, because the guest is no longer expected: cancelling and no-show. */
   confirm: boolean
 }
 
 const actions = {
-  accept: { status: 'Confirmed', label: 'reservations.actions.accept', shortLabel: 'reservations.actionsShort.accept', icon: '✓', color: 'green', confirm: false },
-  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: '✕', color: 'gray', confirm: false },
-  arrived: { status: 'Arrived', label: 'reservations.actions.arrived', shortLabel: 'reservations.actionsShort.arrived', icon: '✓', color: 'green', confirm: false },
-  late: { status: 'Late', label: 'reservations.actions.late', shortLabel: 'reservations.actionsShort.late', icon: '⏱', color: 'orange', confirm: false },
-  noShow: { status: 'NoShow', label: 'reservations.actions.noShow', shortLabel: 'reservations.actionsShort.noShow', icon: '⊘', color: 'grape', confirm: true },
-  completed: { status: 'Completed', label: 'reservations.actions.completed', shortLabel: 'reservations.actionsShort.completed', icon: '➜', color: 'teal', confirm: false },
-  cancel: { status: 'Cancelled', label: 'reservations.actions.cancel', shortLabel: 'reservations.actionsShort.cancel', icon: '✕', color: 'red', confirm: true },
-  undoToConfirmed: { status: 'Confirmed', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: '↶', color: 'gray', confirm: false },
-  undoToArrived: { status: 'Arrived', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: '↶', color: 'gray', confirm: false },
+  accept: { status: 'Confirmed', label: 'reservations.actions.accept', shortLabel: 'reservations.actionsShort.accept', icon: CheckIcon, color: 'green', confirm: false },
+  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: XIcon, color: 'gray', confirm: false },
+  arrived: { status: 'Arrived', label: 'reservations.actions.arrived', shortLabel: 'reservations.actionsShort.arrived', icon: CheckIcon, color: 'green', confirm: false },
+  late: { status: 'Late', label: 'reservations.actions.late', shortLabel: 'reservations.actionsShort.late', icon: ClockIcon, color: 'orange', confirm: false },
+  noShow: { status: 'NoShow', label: 'reservations.actions.noShow', shortLabel: 'reservations.actionsShort.noShow', icon: BanIcon, color: 'grape', confirm: true },
+  completed: { status: 'Completed', label: 'reservations.actions.completed', shortLabel: 'reservations.actionsShort.completed', icon: DoorExitIcon, color: 'teal', confirm: false },
+  cancel: { status: 'Cancelled', label: 'reservations.actions.cancel', shortLabel: 'reservations.actionsShort.cancel', icon: XIcon, color: 'red', confirm: true },
+  undoToConfirmed: { status: 'Confirmed', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
+  undoToArrived: { status: 'Arrived', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
 } as const satisfies Record<string, StatusAction>
 
 /** The buttons of each status. The undo of "late" is offered in the notification after the change. */

@@ -8,6 +8,7 @@ import { countryCodes, regionCodes, type CountryCode, type RegionCode } from '..
 import { useCreateTenant, useSuperadminTenants } from '../api/superadmin.ts'
 import { superadminErrorMessage } from '../api/superadminErrors.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** The longest slug the API accepts. */
 const maxSlugLength = 50
@@ -136,6 +137,7 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
 /** The Superadmin's start page: all restaurants with their status and key figures, a search and "Create restaurant". */
 export function SuperadminTenantsPage() {
   const { t } = useTranslation()
+  useDocumentTitle(t('superadmin.title'))
   const tenants = useSuperadminTenants()
   const [search, setSearch] = useState('')
   const [creating, setCreating] = useState(false)

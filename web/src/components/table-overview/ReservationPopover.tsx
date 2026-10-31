@@ -2,6 +2,7 @@ import { Button, Divider, Group, Popover, Stack, Text } from '@mantine/core'
 import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
+import { formatTime } from '../../i18n/format.ts'
 import { StatusActions } from '../reservations/StatusActions.tsx'
 import { StatusBadge } from '../reservations/StatusBadge.tsx'
 import { guestName } from '../reservations/status.ts'
@@ -18,14 +19,15 @@ type ReservationPopoverProps = {
 
 /** Details of a reservation with the status actions of the lists (see StatusActions). */
 export function ReservationPopover({ reservation, nextReservation, onWalkIn, children }: ReservationPopoverProps) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   const [opened, setOpened] = useState(false)
   // While the question before cancelling is open, a click into it must not close the popover with the question.
   const [confirming, setConfirming] = useState(false)
 
   const details: [string, string | null][] = [
-    [t('tableOverview.details.time'), `${reservation.time}–${reservation.endTime}`],
-    [t('tableOverview.details.left'), reservation.status === 'Completed' ? reservation.completedTime : null],
+    [t('tableOverview.details.time'), t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) })],
+    [t('tableOverview.details.left'), reservation.status === 'Completed' && reservation.completedTime !== null ? formatTime(reservation.completedTime, language) : null],
     [t('tableOverview.details.guests'), String(reservation.guests)],
     [t('tableOverview.details.table'), t('tableOverview.details.tableValue', { number: reservation.tableNumber, area: reservation.areaName })],
     [t('tableOverview.details.phone'), reservation.phone],
@@ -77,7 +79,7 @@ export function ReservationPopover({ reservation, nextReservation, onWalkIn, chi
             <>
               <Divider />
               <Text size="sm" c="dimmed">
-                {t('tableOverview.details.next', { time: nextReservation.time, name: guestName(nextReservation, t), guests: nextReservation.guests })}
+                {t('tableOverview.details.next', { time: formatTime(nextReservation.time, language), name: guestName(nextReservation, t), guests: nextReservation.guests })}
               </Text>
             </>
           )}

@@ -12,10 +12,11 @@ import {
   useGuestReservation,
   usePublicRestaurant,
 } from '../api/publicBooking.ts'
-import { formatDate, formatTime } from '../components/booking/format.ts'
 import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
+import { formatLongDate, formatTime } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 
 /** A failed cancellation in the guest's language. */
 function cancelErrorMessage(error: Error, t: TFunction) {
@@ -49,6 +50,10 @@ export function GuestReservationPage() {
   const token = searchParams.get('t') ?? ''
   const restaurant = usePublicRestaurant(slug)
   const reservation = useGuestReservation(slug, code, token)
+  useDocumentTitle(
+    isNotFound(restaurant.error) || isNotFound(reservation.error) ? t('guestReservation.notFoundTitle') : t('guestReservation.title'),
+    restaurant.data?.name ?? null,
+  )
 
   if (restaurant.isPending || reservation.isPending) {
     return (
@@ -105,10 +110,10 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
 
   const rows = [
     { label: t('booking.confirmation.restaurant'), value: restaurant.name },
-    { label: t('booking.confirmation.date'), value: formatDate(reservation.date, language, { dateStyle: 'full' }) },
+    { label: t('booking.confirmation.date'), value: formatLongDate(reservation.date, language) },
     {
       label: t('booking.confirmation.time'),
-      value: `${formatTime(reservation.time, language)}–${formatTime(reservation.endTime, language)}`,
+      value: t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) }),
     },
     { label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: reservation.guests }) },
     { label: t('booking.confirmation.area'), value: reservation.area },
@@ -204,7 +209,7 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
         <Stack gap="md">
           <Text size="sm">
             {t('guestReservation.confirm.text', {
-              date: formatDate(reservation.date, language, { dateStyle: 'full' }),
+              date: formatLongDate(reservation.date, language),
               time: formatTime(reservation.time, language),
               guests: t('booking.guestsCount', { count: reservation.guests }),
             })}

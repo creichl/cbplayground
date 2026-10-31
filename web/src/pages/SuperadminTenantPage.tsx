@@ -1,6 +1,7 @@
 import { ActionIcon, Alert, Anchor, Badge, Button, Card, Group, Menu, Modal, PasswordInput, SimpleGrid, Skeleton, Stack, Table, Text, TextInput, Title, VisuallyHidden } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
+import dayjs from 'dayjs'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
@@ -16,6 +17,9 @@ import {
 } from '../api/superadmin.ts'
 import { superadminErrorMessage } from '../api/superadminErrors.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { ChevronLeftIcon, DotsVerticalIcon } from '../components/icons.tsx'
+import { formatDate } from '../i18n/format.ts'
+import { useDocumentTitle } from '../i18n/title.ts'
 import { NotFoundPage } from './NotFoundPage.tsx'
 
 /** A failed save inside a modal: the specific message for a known error code, otherwise the general error. */
@@ -304,7 +308,7 @@ function AdminsCard({ tenant }: { tenant: SuperadminTenant }) {
                       <Menu position="bottom-end" withinPortal>
                         <Menu.Target>
                           <ActionIcon variant="subtle" color="gray" aria-label={t('staff.actionsFor', { name: admin.displayName })}>
-                            ⋮
+                            <DotsVerticalIcon />
                           </ActionIcon>
                         </Menu.Target>
                         <Menu.Dropdown>
@@ -331,6 +335,7 @@ export function SuperadminTenantPage() {
   const { t, i18n } = useTranslation()
   const { id } = useParams()
   const tenants = useSuperadminTenants()
+  useDocumentTitle(tenants.data?.find((candidate) => candidate.id === id)?.name ?? t('superadmin.title'))
   const [editing, setEditing] = useState(false)
   const [confirmingActive, setConfirmingActive] = useState(false)
 
@@ -354,8 +359,9 @@ export function SuperadminTenantPage() {
 
   return (
     <Stack gap="lg">
-      <Anchor component={Link} to="/superadmin" size="sm">
-        ‹ {t('superadmin.backToList')}
+      <Anchor component={Link} to="/superadmin" size="sm" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+        <ChevronLeftIcon size={16} />
+        {t('superadmin.backToList')}
       </Anchor>
 
       <Group justify="space-between" align="flex-end">
@@ -397,7 +403,7 @@ export function SuperadminTenantPage() {
             <Fact label={t('superadmin.fields.slug')}>{tenant.slug}</Fact>
             <Fact label={t('superadmin.fields.location')}>{location}</Fact>
             <Fact label={t('superadmin.fields.createdAt')}>
-              {new Intl.DateTimeFormat(i18n.resolvedLanguage, { dateStyle: 'medium' }).format(new Date(tenant.createdAt))}
+              {formatDate(dayjs(tenant.createdAt).format('YYYY-MM-DD'), i18n.resolvedLanguage ?? 'en')}
             </Fact>
             <Fact label={t('superadmin.fields.tables')}>{tenant.tableCount}</Fact>
             <Fact label={t('superadmin.fields.upcomingReservations')}>{tenant.upcomingReservationCount}</Fact>
