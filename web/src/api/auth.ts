@@ -13,7 +13,7 @@ export type CurrentUser = {
   tenant: { id: string; name: string; slug: string } | null
 }
 
-const currentUserKey = ['auth', 'me'] as const
+export const currentUserKey = ['auth', 'me'] as const
 
 /** Drops all cached data except the current user, so nothing of the previous user stays visible. */
 function removeUserData(queryClient: QueryClient) {

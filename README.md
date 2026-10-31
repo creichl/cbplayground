@@ -144,8 +144,15 @@ Endpoints:
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
+- Staff management, Tenant Admins only, always for the signed-in admin's own restaurant (users of other restaurants get 404):
+  - `GET /api/admin/staff`: the restaurant's users: `id`, `email`, `displayName`, `role`, `isActive`, sorted by name.
+  - `POST /api/admin/staff`: body `{ "email", "displayName", "role", "password" }` with the role `TenantAdmin` or `FrontDesk` and the start password. Returns 201 with the new user.
+  - `PUT /api/admin/staff/{id}`: body `{ "displayName", "role" }`. Returns the user.
+  - `POST /api/admin/staff/{id}/deactivate` and `/activate`. Return the user.
+  - `POST /api/admin/staff/{id}/password`: body `{ "password" }`. Sets a new password (204) and ends the user's other sessions.
+  - Errors: 400 with `{ "error": "invalid_email" | "invalid_name" | "invalid_role" | "password_too_weak" }`, 409 with `{ "error": "email_taken" | "last_admin" | "cannot_deactivate_self" }`. The last active Tenant Admin of a restaurant cannot be deactivated or given another role, and nobody can deactivate themselves.
 
-There is no registration endpoint: staff users are created by a Tenant Admin (staff management is a later ticket) or by the development seed.
+There is no registration endpoint: staff users are created by a Tenant Admin (staff management, `/admin/staff`) or by the development seed.
 
 ### Sign-in, roles and tenants
 
@@ -159,7 +166,7 @@ Every user has exactly one role:
 | `TenantAdmin` | one restaurant | `RequireTenantAdmin`, `RequireStaff` |
 | `FrontDesk` | one restaurant | `RequireStaff` |
 
-Deactivated users (`IsActive = false`) cannot sign in. After 5 failed sign-in attempts an account is locked for 5 minutes.
+Deactivated users (`IsActive = false`) cannot sign in. The security stamp is checked on every request, so deactivating a user or setting their password ends their sessions on their next request, and a role change applies right away. After 5 failed sign-in attempts an account is locked for 5 minutes.
 
 Tenant isolation: an entity that belongs to a restaurant implements `ITenantOwned` (a `Guid TenantId`). `AppDbContext` then filters every query on it by the signed-in user's restaurant and sets `TenantId` on new entities when saving. Creating, changing or deleting data of another restaurant throws an exception, and without a restaurant (nobody signed in, or the Superadmin) these queries return nothing. `IgnoreQueryFilters()` is reserved for Superadmin cases and has to be justified in the pull request.
 
@@ -180,7 +187,7 @@ cd api
 dotnet test
 ```
 
-The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and cover sign-in, sign-out, `me`, the 401/403 answers and the tenant isolation.
+The tests need no running API and no Docker: they start the API in memory against a temporary SQLite file and cover sign-in, sign-out, `me`, the 401/403 answers, the tenant isolation and the staff management.
 
 ### Run the web frontend
 
