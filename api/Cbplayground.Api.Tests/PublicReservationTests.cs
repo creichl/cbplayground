@@ -219,6 +219,24 @@ public class PublicReservationTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task The_table_list_shows_the_shape_and_rotation_of_the_tables_and_the_table_scale_of_the_areas()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom, tableSelectionMode: TableSelectionMode.GuestChooses);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var areaId = restaurant.Areas["Gaststube"];
+        (await admin.PutAsJsonAsync($"/api/admin/areas/{areaId}", new { name = "Gaststube", onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 120 }, Token)).EnsureSuccessStatusCode();
+        (await admin.PutAsJsonAsync($"/api/admin/tables/{restaurant.Tables["3"]}", new { number = "3", seats = 6, shape = "Round", rotation = 90 }, Token)).EnsureSuccessStatusCode();
+        using var anonymous = factory.CreateHttpsClient();
+        var date = TestRestaurants.NextOpenDay(factory);
+
+        var areas = await anonymous.GetFromJsonAsync<List<PublicArea>>(PathOf(restaurant, $"/tables?date={date:yyyy-MM-dd}&time=18:00&guests=2"), Token);
+
+        var area = Assert.Single(areas!);
+        Assert.Equal(120, area.TableScale);
+        Assert.Equal([("1", TableShape.Square, 0), ("2", TableShape.Square, 0), ("3", TableShape.Round, 90)], area.Tables.Select(t => (t.Number, t.Shape, t.Rotation)));
+    }
+
+    [Fact]
     public async Task The_table_list_is_only_for_restaurants_where_the_guest_chooses()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);

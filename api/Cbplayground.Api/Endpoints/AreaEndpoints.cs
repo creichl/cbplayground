@@ -1,5 +1,6 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
+using Cbplayground.Api.FloorPlans;
 using Cbplayground.Api.Reservations;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,11 +15,12 @@ public static class AreaEndpoints
     public const int MaxNameLength = 100;
     public const long MaxFloorPlanBytes = 10 * 1024 * 1024;
 
-    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent);
+    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent, int TableScale);
 
     public record CreateAreaRequest(string? Name);
 
-    public record UpdateAreaRequest(string? Name, bool OnlineBookingEnabled, int OnlineCapacityPercent);
+    /// <summary>Without <see cref="TableScale"/> the stored value stays.</summary>
+    public record UpdateAreaRequest(string? Name, bool OnlineBookingEnabled, int OnlineCapacityPercent, int? TableScale);
 
     /// <summary>All area ids of the restaurant in their new order.</summary>
     public record ReorderAreasRequest(List<Guid>? AreaIds);
@@ -62,12 +64,34 @@ public static class AreaEndpoints
             {
                 return ErrorResponse.Result("online_capacity_percent_invalid", StatusCodes.Status400BadRequest);
             }
+            if (request.TableScale is < 50 or > 200)
+            {
+                return ErrorResponse.Result("table_scale_invalid", StatusCodes.Status400BadRequest);
+            }
 
             area.Name = name!;
             area.OnlineBookingEnabled = request.OnlineBookingEnabled;
             area.OnlineCapacityPercent = request.OnlineCapacityPercent;
+            area.TableScale = request.TableScale ?? area.TableScale;
             await db.SaveChangesAsync();
             return Results.Ok(ToResponse(area));
+        });
+
+        // Arranges all tables of the area anew (TableLayout), also in an area with floor plan image.
+        group.MapPost("/{id:guid}/arrange-tables", async (Guid id, AppDbContext db) =>
+        {
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            if (area is null)
+            {
+                return Results.NotFound();
+            }
+
+            var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
+            TableLayout.Arrange(tables, area.TableScale);
+            await db.SaveChangesAsync();
+            return Results.Ok(tables
+                .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
+                .Select(TableEndpoints.ToResponse));
         });
 
         // Deletes the area together with its tables (cascade) and its floor plan image. Not while one of its tables
@@ -192,7 +216,8 @@ public static class AreaEndpoints
         area.SortOrder,
         FloorPlanUrl(area),
         area.OnlineBookingEnabled,
-        area.OnlineCapacityPercent);
+        area.OnlineCapacityPercent,
+        area.TableScale);
 
     /// <summary>The public URL of the area's floor plan image; null without floor plan.</summary>
     internal static string? FloorPlanUrl(Area area) =>

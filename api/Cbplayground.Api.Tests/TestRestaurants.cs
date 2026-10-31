@@ -82,7 +82,7 @@ public static class TestRestaurants
             areaIds[area.Name] = area.Id;
             foreach (var (number, seats) in areas[i].Tables)
             {
-                var table = new Table { AreaId = area.Id, Number = number, Seats = seats, PosX = 0.5, PosY = 0.5 };
+                var table = new Table { AreaId = area.Id, Number = number, Seats = seats, Shape = Table.DefaultShape(seats), PosX = 0.5, PosY = 0.5 };
                 db.Tables.Add(table);
                 await db.SaveChangesAsync();
                 tableIds[number] = table.Id;
