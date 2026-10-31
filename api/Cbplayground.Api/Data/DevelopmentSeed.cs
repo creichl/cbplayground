@@ -195,7 +195,7 @@ public static class DevelopmentSeed
         {
             return value < 0.15 ? ReservationStatus.Late : value < 0.22 ? ReservationStatus.Cancelled : ReservationStatus.Arrived;
         }
-        if (source == ReservationSource.Online && confirmationMode == ConfirmationMode.Request && value < 0.4)
+        if (source == ReservationSource.Online && confirmationMode == ConfirmationMode.Request && value < 0.5)
         {
             return ReservationStatus.Requested;
         }
