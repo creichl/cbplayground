@@ -1,11 +1,14 @@
 import { createBrowserRouter } from 'react-router'
 import { RequireRole } from './components/RequireRole.tsx'
 import { AdminLayout } from './layouts/AdminLayout.tsx'
+import { EmbedLayout } from './layouts/EmbedLayout.tsx'
 import { FrontdeskLayout } from './layouts/FrontdeskLayout.tsx'
 import { GuestLayout } from './layouts/GuestLayout.tsx'
 import { SuperadminLayout } from './layouts/SuperadminLayout.tsx'
 import { AdminOverviewPage } from './pages/AdminOverviewPage.tsx'
 import { AreasPage } from './pages/AreasPage.tsx'
+import { EmbedBookingPage } from './pages/EmbedBookingPage.tsx'
+import { EmbedSnippetPage } from './pages/EmbedSnippetPage.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
@@ -22,6 +25,10 @@ import { TableOverviewPage } from './pages/TableOverviewPage.tsx'
 
 export const router = createBrowserRouter([
   { path: 'login', element: <LoginPage /> },
+  {
+    element: <EmbedLayout />,
+    children: [{ path: 'embed/:slug', element: <EmbedBookingPage /> }],
+  },
   {
     element: <GuestLayout />,
     children: [
@@ -59,6 +66,7 @@ export const router = createBrowserRouter([
       { path: 'opening-hours', element: <OpeningHoursPage /> },
       { path: 'reservation-settings', element: <ReservationSettingsPage /> },
       { path: 'staff', element: <StaffPage /> },
+      { path: 'embed', element: <EmbedSnippetPage /> },
       { path: '*', element: <NotFoundPage /> },
     ],
   },

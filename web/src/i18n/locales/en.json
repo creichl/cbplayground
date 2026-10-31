@@ -158,6 +158,25 @@
       "text": "This restaurant does not take online reservations at the moment. Please call:"
     }
   },
+  "embed": {
+    "notFound": "Online booking is not available for this restaurant.",
+    "poweredBy": "Powered by cbplayground",
+    "admin": {
+      "title": "Website embed",
+      "intro": "Add the online booking to your own website: copy the snippet and paste it where the booking should appear.",
+      "language": "Language of the booking",
+      "languageDescription": "Guests can switch the language in the booking at any time.",
+      "snippet": "Snippet",
+      "snippetHint": "The script fits the height of the booking to every step. Without the script, the booking is {{height}} px high and scrolls on its own.",
+      "copy": "Copy snippet",
+      "copied": "Copied",
+      "directLink": "Direct link to the booking page",
+      "directLinkHint": "For links, emails or social media.",
+      "preview": "Preview",
+      "previewHint": "The booking as it appears on your website. Bookings made here are real reservations.",
+      "frameTitle": "Reserve a table – {{name}}"
+    }
+  },
   "admin": {
     "label": "Admin",
     "toggleNavigation": "Show or hide navigation",
@@ -169,7 +188,8 @@
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
       "staff": "Staff",
-      "tables": "Table overview"
+      "tables": "Table overview",
+      "embed": "Website embed"
     }
   },
   "superadmin": {

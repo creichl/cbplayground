@@ -135,19 +135,22 @@ export function useNextFreeDays(slug: string, date: string, lastDate: string, gu
   }
 }
 
-export function useAvailability(slug: string, date: string, guests: number) {
+/** The start times of a day; only loads while `enabled`. */
+export function useAvailability(slug: string, date: string, guests: number, enabled = true) {
   return useQuery({
     queryKey: [...publicKey(slug), 'availability', date, guests],
     queryFn: () => apiGet<Availability>(`/public/restaurants/${encodeURIComponent(slug)}/availability?date=${date}&guests=${guests}`),
+    enabled,
   })
 }
 
-/** The areas with their tables for a time; only for restaurants in which the guest chooses the table. */
-export function usePublicTables(slug: string, date: string, time: string, guests: number) {
+/** The areas with their tables for a time; only for restaurants in which the guest chooses the table. Only loads while `enabled`. */
+export function usePublicTables(slug: string, date: string, time: string, guests: number, enabled = true) {
   return useQuery({
     queryKey: [...publicKey(slug), 'tables', date, time, guests],
     queryFn: () =>
       apiGet<PublicArea[]>(`/public/restaurants/${encodeURIComponent(slug)}/tables?date=${date}&time=${time}&guests=${guests}`),
+    enabled,
   })
 }
 
