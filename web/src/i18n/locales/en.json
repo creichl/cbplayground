@@ -35,7 +35,8 @@
     "errors": {
       "invalidCredentials": "The email address or password is incorrect.",
       "lockedOut": "Too many failed attempts. Your account is locked for a few minutes; please try again later.",
-      "deactivated": "Your account has been deactivated. Please contact your restaurant’s administrator."
+      "deactivated": "Your account has been deactivated. Please contact your restaurant’s administrator.",
+      "restaurantDeactivated": "This restaurant has been deactivated. Please contact the platform operator."
     },
     "demo": {
       "title": "Demo accounts",
@@ -169,6 +170,80 @@
       "reservationSettings": "Reservation settings",
       "staff": "Staff",
       "tables": "Table overview"
+    }
+  },
+  "superadmin": {
+    "label": "Platform",
+    "title": "Restaurants",
+    "subtitle": "All restaurants on the platform, active and deactivated.",
+    "search": "Search restaurants",
+    "searchPlaceholder": "Search by name or slug",
+    "empty": "There are no restaurants yet.",
+    "noMatch": "No restaurant matches your search.",
+    "backToList": "All restaurants",
+    "masterData": "Master data",
+    "noLocation": "Not set yet",
+    "inactiveHint": "This restaurant is deactivated: it is hidden from guests, its booking page shows “not found” and its staff cannot sign in.",
+    "slugRules": "Lowercase letters, digits and hyphens. Booking page: {{example}}",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "fields": {
+      "name": "Name",
+      "slug": "Slug",
+      "status": "Status",
+      "admins": "Admins",
+      "tables": "Tables",
+      "upcomingReservations": "Upcoming reservations",
+      "location": "Country / region",
+      "createdAt": "Created on"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Deactivated"
+    },
+    "validation": {
+      "name": "Please enter a name."
+    },
+    "create": {
+      "button": "Create restaurant",
+      "title": "Create restaurant",
+      "submit": "Create",
+      "locationHint": "Optional. The restaurant’s admin can set it later."
+    },
+    "edit": {
+      "button": "Edit",
+      "title": "Edit restaurant",
+      "slugHint": "Changing the slug changes the address of the booking page; old links and embedded booking widgets stop working."
+    },
+    "activateConfirm": {
+      "title": "Activate {{name}}?",
+      "text": "Guests will see the restaurant and its booking page again, and its staff can sign in again."
+    },
+    "deactivateConfirm": {
+      "title": "Deactivate {{name}}?",
+      "text": "The restaurant disappears from the start page, its booking page shows “not found”, and its staff are signed out and cannot sign in. No data is deleted; you can activate it again at any time."
+    },
+    "admins": {
+      "title": "Admins",
+      "empty": "This restaurant has no admin yet. Create one so the restaurant can be set up.",
+      "passwordText": "Pass the new password on to the admin yourself. Their current sessions will be signed out.",
+      "create": {
+        "button": "Add admin",
+        "title": "Add admin for {{name}}",
+        "submit": "Add"
+      }
+    },
+    "notifications": {
+      "created": "{{name}} has been created.",
+      "updated": "The changes to {{name}} have been saved.",
+      "activated": "{{name}} has been activated.",
+      "deactivated": "{{name}} has been deactivated.",
+      "adminCreated": "{{name}} has been added as admin."
+    },
+    "errors": {
+      "invalidName": "Please enter a name of at most 100 characters.",
+      "invalidSlug": "The slug may only contain lowercase letters, digits and single hyphens (not at the start or end), at most 50 characters.",
+      "slugTaken": "This slug is already used by another restaurant."
     }
   },
   "overview": {

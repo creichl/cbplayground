@@ -247,8 +247,8 @@ public static class StaffEndpoints
     private static IResult Conflict(string error) =>
         Results.Json(new StaffError(error), statusCode: StatusCodes.Status409Conflict);
 
-    /// <summary>Translates the Identity error codes into the error codes of this API.</summary>
-    private static IResult IdentityError(IdentityResult result)
+    /// <summary>Translates the Identity error codes into the error codes of this API. Also used by <see cref="SuperadminEndpoints"/>.</summary>
+    internal static IResult IdentityError(IdentityResult result)
     {
         var codes = result.Errors.Select(e => e.Code).ToList();
         if (codes.Contains(nameof(IdentityErrorDescriber.DuplicateEmail)) || codes.Contains(nameof(IdentityErrorDescriber.DuplicateUserName)))

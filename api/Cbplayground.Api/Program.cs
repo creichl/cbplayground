@@ -81,6 +81,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 });
 
 builder.Services.AddAuthorizationBuilder()
+    .AddPolicy(Policies.RequireSuperadmin, policy => policy.RequireRole(Roles.Superadmin))
     .AddPolicy(Policies.RequireTenantAdmin, policy => policy.RequireRole(Roles.TenantAdmin))
     .AddPolicy(Policies.RequireStaff, policy => policy.RequireRole(Roles.TenantAdmin, Roles.FrontDesk));
 
@@ -113,6 +114,7 @@ app.UseRateLimiter();
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapTenantEndpoints();
 app.MapAuthEndpoints();
+app.MapSuperadminEndpoints();
 app.MapAdminEndpoints();
 app.MapStaffEndpoints();
 app.MapAreaEndpoints();

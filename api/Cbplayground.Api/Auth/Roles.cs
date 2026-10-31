@@ -11,6 +11,9 @@ public static class Roles
 /// <summary>Names of the authorization policies, see Program.cs.</summary>
 public static class Policies
 {
+    /// <summary>The Superadmin only: the platform operator, who manages the restaurants.</summary>
+    public const string RequireSuperadmin = "RequireSuperadmin";
+
     /// <summary>Tenant Admins only.</summary>
     public const string RequireTenantAdmin = "RequireTenantAdmin";
 
