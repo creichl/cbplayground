@@ -1,48 +1,33 @@
-import { useEffect, useState } from 'react'
+import { MantineProvider } from '@mantine/core'
+import { DatesProvider } from '@mantine/dates'
+import { Notifications } from '@mantine/notifications'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
+import { RouterProvider } from 'react-router/dom'
+import { dayjsLocales, type Language } from './i18n/index.ts'
+import { router } from './router.tsx'
+import { theme } from './theme.ts'
 
-type Tenant = {
-  id: string
-  name: string
-  slug: string
-}
+const queryClient = new QueryClient({
+  defaultOptions: {
+    // One retry is enough to bridge a short hiccup without keeping the user waiting on a real error.
+    queries: { retry: 1 },
+  },
+})
 
 function App() {
-  const [tenants, setTenants] = useState<Tenant[] | null>(null)
-  const [error, setError] = useState<string | null>(null)
-
-  useEffect(() => {
-    fetch('/api/tenants')
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`)
-        }
-        return response.json() as Promise<Tenant[]>
-      })
-      .then(setTenants)
-      .catch((err: unknown) => {
-        setError(err instanceof Error ? err.message : String(err))
-      })
-  }, [])
+  const { i18n } = useTranslation()
+  const language = (i18n.resolvedLanguage ?? 'en') as Language
 
   return (
-    <main>
-      <h1>Restaurants</h1>
-      {error !== null ? (
-        <p>Could not load restaurants: {error}</p>
-      ) : tenants === null ? (
-        <p>Loading…</p>
-      ) : tenants.length === 0 ? (
-        <p>No restaurants yet.</p>
-      ) : (
-        <ul>
-          {tenants.map((tenant) => (
-            <li key={tenant.id}>
-              {tenant.name} ({tenant.slug})
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+    <QueryClientProvider client={queryClient}>
+      <MantineProvider theme={theme}>
+        <DatesProvider settings={{ locale: dayjsLocales[language] }}>
+          <Notifications />
+          <RouterProvider router={router} />
+        </DatesProvider>
+      </MantineProvider>
+    </QueryClientProvider>
   )
 }
 

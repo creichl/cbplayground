@@ -1,0 +1,59 @@
+{
+  "app": {
+    "name": "cbplayground"
+  },
+  "language": {
+    "label": "Sprache",
+    "names": {
+      "en": "English",
+      "de": "Deutsch",
+      "sr-Latn": "Srpski (latinica)",
+      "sr-Cyrl": "Српски (ћирилица)"
+    }
+  },
+  "common": {
+    "retry": "Erneut versuchen",
+    "backToStart": "Zurück zur Startseite"
+  },
+  "errors": {
+    "title": "Etwas ist schiefgelaufen",
+    "network": "Der Server ist nicht erreichbar. Bitte prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",
+    "http": "Der Server hat mit Fehler {{status}} geantwortet.",
+    "invalidResponse": "Der Server hat eine unerwartete Antwort gesendet.",
+    "unexpected": "Ein unerwarteter Fehler ist aufgetreten."
+  },
+  "home": {
+    "title": "Restaurants",
+    "subtitle": "Wählen Sie ein Restaurant, um einen Tisch zu reservieren.",
+    "empty": "Es gibt noch keine Restaurants.",
+    "view": "Ansehen"
+  },
+  "restaurant": {
+    "bookingPlaceholder": "Hier können Sie bald online einen Tisch reservieren.",
+    "notFoundTitle": "Restaurant nicht gefunden",
+    "notFoundText": "Unter dieser Adresse gibt es kein Restaurant."
+  },
+  "admin": {
+    "label": "Admin",
+    "toggleNavigation": "Navigation ein- oder ausblenden",
+    "nav": {
+      "overview": "Übersicht",
+      "areas": "Bereiche & Tische",
+      "openingHours": "Öffnungszeiten",
+      "reservationSettings": "Reservierungseinstellungen",
+      "staff": "Mitarbeiter"
+    }
+  },
+  "frontdesk": {
+    "label": "Front desk",
+    "today": "Heute"
+  },
+  "placeholder": {
+    "text": "Dieser Bereich wird gerade aufgebaut."
+  },
+  "notFound": {
+    "label": "Fehler 404",
+    "title": "Seite nicht gefunden",
+    "text": "Die gesuchte Seite gibt es nicht oder sie wurde verschoben."
+  }
+}
