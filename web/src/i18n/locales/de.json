@@ -157,6 +157,25 @@
       "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
     }
   },
+  "embed": {
+    "notFound": "Die Online-Buchung ist für dieses Restaurant nicht verfügbar.",
+    "poweredBy": "Powered by cbplayground",
+    "admin": {
+      "title": "Website-Einbindung",
+      "intro": "Binden Sie die Online-Buchung in Ihre eigene Website ein: Kopieren Sie das Snippet und fügen Sie es dort ein, wo die Buchung erscheinen soll.",
+      "language": "Sprache der Buchung",
+      "languageDescription": "Gäste können die Sprache in der Buchung jederzeit wechseln.",
+      "snippet": "Snippet",
+      "snippetHint": "Das Script passt die Höhe der Buchung jedem Schritt an. Ohne Script ist die Buchung {{height}} px hoch und scrollt selbst.",
+      "copy": "Snippet kopieren",
+      "copied": "Kopiert",
+      "directLink": "Direktlink zur Buchungsseite",
+      "directLinkHint": "Für Links, E-Mails oder soziale Medien.",
+      "preview": "Vorschau",
+      "previewHint": "So erscheint die Buchung auf Ihrer Website. Buchungen in der Vorschau sind echte Reservierungen.",
+      "frameTitle": "Tisch reservieren – {{name}}"
+    }
+  },
   "admin": {
     "label": "Admin",
     "toggleNavigation": "Navigation ein- oder ausblenden",
@@ -168,7 +187,8 @@
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter",
-      "tables": "Tischübersicht"
+      "tables": "Tischübersicht",
+      "embed": "Website-Einbindung"
     }
   },
   "overview": {

@@ -157,6 +157,25 @@
       "text": "Ovaj restoran trenutno ne prima onlajn rezervacije. Pozovite:"
     }
   },
+  "embed": {
+    "notFound": "Onlajn rezervacija za ovaj restoran nije dostupna.",
+    "poweredBy": "Pokreće cbplayground",
+    "admin": {
+      "title": "Ugradnja na sajt",
+      "intro": "Ugradite onlajn rezervaciju na svoj sajt: kopirajte kod i nalepite ga tamo gde rezervacija treba da se pojavi.",
+      "language": "Jezik rezervacije",
+      "languageDescription": "Gosti u svakom trenutku mogu da promene jezik u rezervaciji.",
+      "snippet": "Kod za ugradnju",
+      "snippetHint": "Skripta prilagođava visinu rezervacije svakom koraku. Bez skripte rezervacija je visoka {{height}} px i sama se pomera.",
+      "copy": "Kopiraj kod",
+      "copied": "Kopirano",
+      "directLink": "Direktan link do stranice za rezervaciju",
+      "directLinkHint": "Za linkove, imejlove ili društvene mreže.",
+      "preview": "Pregled",
+      "previewHint": "Ovako rezervacija izgleda na vašem sajtu. Rezervacije napravljene ovde su prave rezervacije.",
+      "frameTitle": "Rezervišite sto – {{name}}"
+    }
+  },
   "admin": {
     "label": "Administracija",
     "toggleNavigation": "Prikaži ili sakrij navigaciju",
@@ -168,7 +187,8 @@
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni",
-      "tables": "Pregled stolova"
+      "tables": "Pregled stolova",
+      "embed": "Ugradnja na sajt"
     }
   },
   "overview": {
