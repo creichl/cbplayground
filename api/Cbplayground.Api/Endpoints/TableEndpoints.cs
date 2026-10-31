@@ -1,5 +1,6 @@
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
+using Cbplayground.Api.Reservations;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cbplayground.Api.Endpoints;
@@ -67,16 +68,23 @@ public static class TableEndpoints
             return Results.Ok(ToResponse(table));
         });
 
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db) =>
+        // A table with reservations that have not ended yet cannot be deleted; its past, cancelled and declined ones are deleted with it.
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability) =>
         {
+            await using var transaction = await db.Database.BeginTransactionAsync();
             var table = await db.Tables.SingleOrDefaultAsync(t => t.Id == id);
             if (table is null)
             {
                 return Results.NotFound();
             }
+            if (!await TableDeletion.TryRemoveReservationsAsync(db, availability, [table.Id]))
+            {
+                return ErrorResponse.Result("table_has_reservations", StatusCodes.Status409Conflict);
+            }
 
             db.Tables.Remove(table);
             await db.SaveChangesAsync();
+            await transaction.CommitAsync();
             return Results.NoContent();
         });
 
