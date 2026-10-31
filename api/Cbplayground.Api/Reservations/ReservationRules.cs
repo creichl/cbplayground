@@ -28,19 +28,45 @@ public static class ReservationRules
         ? [ReservationStatus.Requested, ReservationStatus.Confirmed, ReservationStatus.Arrived, ReservationStatus.Late]
         : [ReservationStatus.Confirmed, ReservationStatus.Arrived, ReservationStatus.Late];
 
-    /// <summary>The status changes staff may make; every other change is refused.</summary>
+    /// <summary>
+    /// The status changes staff may make; every other change is refused. A change back to a status that occupies the table
+    /// (e.g. the undo of a cancellation) also needs the table to be free (<see cref="NeedsFreeTable"/>), and some changes are
+    /// only possible at certain times (<see cref="IsAllowedNow"/>).
+    /// </summary>
     public static readonly IReadOnlyDictionary<ReservationStatus, ReservationStatus[]> AllowedTransitions = new Dictionary<ReservationStatus, ReservationStatus[]>
     {
         [ReservationStatus.Requested] = [ReservationStatus.Confirmed, ReservationStatus.Declined],
-        [ReservationStatus.Confirmed] = [ReservationStatus.Arrived, ReservationStatus.Late, ReservationStatus.Cancelled],
-        [ReservationStatus.Late] = [ReservationStatus.Arrived, ReservationStatus.Cancelled],
-        // Undo of an "arrived" set by mistake.
-        [ReservationStatus.Arrived] = [ReservationStatus.Confirmed],
+        [ReservationStatus.Confirmed] = [ReservationStatus.Arrived, ReservationStatus.Late, ReservationStatus.NoShow, ReservationStatus.Cancelled],
+        // Confirmed: undo of a "late" set by mistake.
+        [ReservationStatus.Late] = [ReservationStatus.Arrived, ReservationStatus.NoShow, ReservationStatus.Cancelled, ReservationStatus.Confirmed],
+        // Confirmed: undo of an "arrived" set by mistake.
+        [ReservationStatus.Arrived] = [ReservationStatus.Completed, ReservationStatus.Confirmed],
+        // The undos of "guest left", "no-show" and "cancelled".
+        [ReservationStatus.Completed] = [ReservationStatus.Arrived],
+        [ReservationStatus.NoShow] = [ReservationStatus.Confirmed],
+        [ReservationStatus.Cancelled] = [ReservationStatus.Confirmed],
     };
-
     /// <summary>The languages of the user interface; a reservation stores the guest's one.</summary>
     public static readonly string[] Languages = ["en", "de", "sr-Latn", "sr-Cyrl"];
 
     public static bool IsTransitionAllowed(ReservationStatus from, ReservationStatus to) =>
         AllowedTransitions.TryGetValue(from, out var targets) && targets.Contains(to);
+
+    /// <summary>
+    /// Whether the change makes the reservation occupy its table again (or longer, from <see cref="ReservationStatus.Completed"/>),
+    /// so its table has to be free from its start to its end.
+    /// </summary>
+    public static bool NeedsFreeTable(ReservationStatus from, ReservationStatus to) =>
+        (!BlockingStatuses.Contains(from) || from == ReservationStatus.Completed) && BlockingStatuses.Contains(to);
+
+    /// <summary>
+    /// Whether the change is possible at <paramref name="nowLocal"/>: "arrived" and "late" only on the day of the reservation,
+    /// "no-show" only from its start on. <paramref name="startLocal"/> and <paramref name="nowLocal"/> are in the restaurant's local time.
+    /// </summary>
+    public static bool IsAllowedNow(ReservationStatus to, DateTime startLocal, DateTime nowLocal) => to switch
+    {
+        ReservationStatus.Arrived or ReservationStatus.Late => startLocal.Date == nowLocal.Date,
+        ReservationStatus.NoShow => startLocal <= nowLocal,
+        _ => true,
+    };
 }

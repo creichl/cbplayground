@@ -12,7 +12,8 @@ import {
   useReservations,
 } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
-import { statusColors } from '../components/reservations/status.ts'
+import { statusColors, statusLabels } from '../components/reservations/status.ts'
+import { WalkInDrawer } from '../components/reservations/WalkInDrawer.tsx'
 import { FloorStatusView } from '../components/table-overview/FloorStatusView.tsx'
 import { Timeline } from '../components/table-overview/Timeline.tsx'
 
@@ -52,6 +53,8 @@ export function TableOverviewPage() {
   const today = dayjs(now).format(dateFormat)
   const [date, setDate] = useState(today)
   const [view, setView] = useState<View>('timeline')
+  // undefined: no walk-in drawer; null: walk-in at the suggested table; otherwise at this table.
+  const [walkInTable, setWalkInTable] = useState<string | null | undefined>(undefined)
   const floor = useFloor()
   const reservations = useReservations(date)
   const openPeriods = useOpenPeriods(date)
@@ -62,6 +65,12 @@ export function TableOverviewPage() {
     <Group justify="space-between" gap="md">
       <Title order={2}>{t('tableOverview.title')}</Title>
       <Group gap="sm">
+        {/* A walk-in is seated now, so only on today. */}
+        {date === today && (
+          <Button variant="light" onClick={() => setWalkInTable(null)}>
+            {t('reservations.walkIn.button')}
+          </Button>
+        )}
         <SegmentedControl
           value={view}
           onChange={(value) => setView(value as View)}
@@ -164,12 +173,14 @@ export function TableOverviewPage() {
                   end={range.end}
                   initialTime={initialTime}
                   nowMinutes={nowMinutes}
+                  onWalkIn={setWalkInTable}
                 />
               )}
             </>
           )}
         </>
       )}
+      {walkInTable !== undefined && <WalkInDrawer tableId={walkInTable ?? undefined} onClose={() => setWalkInTable(undefined)} />}
     </Stack>
   )
 }
@@ -178,9 +189,9 @@ export function TableOverviewPage() {
 function StatusLegend() {
   const { t } = useTranslation()
   const items = [
-    { label: t('tableOverview.status.free'), color: null, inactive: false },
-    ...(['Requested', 'Confirmed', 'Arrived', 'Late'] as const).map((status) => ({
-      label: t(`tableOverview.status.${status}`),
+    { label: t('tableOverview.free'), color: null, inactive: false },
+    ...(['Requested', 'Confirmed', 'Late', 'Arrived', 'Completed'] as const).map((status) => ({
+      label: t(statusLabels[status]),
       color: statusColors[status],
       inactive: false,
     })),

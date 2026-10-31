@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { ApiError } from './client.ts'
 
-/** The error codes of /api/staff/reservations and /api/staff/availability, and their texts. */
+/** The error codes of /api/staff/reservations, /api/staff/availability and the walk-in endpoints, and their texts. */
 const errorKeys = {
   invalid_date: 'reservations.errors.invalidDate',
   invalid_time: 'reservations.errors.invalidTime',
@@ -19,6 +19,7 @@ const errorKeys = {
   table_unavailable: 'reservations.errors.tableUnavailable',
   invalid_status: 'reservations.errors.invalidStatus',
   invalid_status_transition: 'reservations.errors.invalidStatusTransition',
+  status_not_allowed_now: 'reservations.errors.statusNotAllowedNow',
 } as const
 
 /** A failed reservation request in the user's language. */

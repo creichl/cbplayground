@@ -15,7 +15,24 @@ public record TestArea(string Name, bool OnlineBookingEnabled, int OnlineCapacit
 public record TestRestaurant(Guid Id, string Slug, string AdminEmail, string FrontDeskEmail, IReadOnlyDictionary<string, Guid> Tables, IReadOnlyDictionary<string, Guid> Areas)
 {
     /// <summary>The tests' local "now": the restaurants are in Austria (Europe/Vienna).</summary>
-    public static DateOnly Today => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "Europe/Vienna"));
+    public static DateOnly Today => DateOnly.FromDateTime(Now);
+
+    /// <summary>The tests' local time (Europe/Vienna).</summary>
+    public static DateTime Now => TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, "Europe/Vienna");
+
+    /// <summary>
+    /// A start today that has already begun: half an hour ago, but not before midnight, to the minute.
+    /// For the status changes that are only possible on the day of a reservation or after its start.
+    /// </summary>
+    public static DateTime StartedToday
+    {
+        get
+        {
+            var now = Now;
+            var start = now.AddMinutes(-30) < now.Date ? now.Date : now.AddMinutes(-30);
+            return new DateTime(start.Year, start.Month, start.Day, start.Hour, start.Minute, 0);
+        }
+    }
 }
 
 /// <summary>
@@ -107,7 +124,8 @@ public static class TestRestaurants
 
     /// <summary>Adds a reservation directly, e.g. one in the past, which the API does not accept.</summary>
     public static async Task<Guid> AddReservationAsync(ApiFactory factory, TestRestaurant restaurant, string tableNumber, DateTime startLocal,
-        int durationMinutes = 120, ReservationStatus status = ReservationStatus.Confirmed, ReservationSource source = ReservationSource.Staff)
+        int durationMinutes = 120, ReservationStatus status = ReservationStatus.Confirmed, ReservationSource source = ReservationSource.Staff,
+        DateTime? completedAtLocal = null)
     {
         using var scope = factory.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = restaurant.Id;
@@ -123,6 +141,7 @@ public static class TestRestaurants
             GuestPhone = "+43 660 1234567",
             Status = status,
             Source = source,
+            CompletedAtLocal = completedAtLocal,
             ReferenceCode = $"{Guid.NewGuid():N}"[..6].ToUpperInvariant(),
             Language = "de",
             CreatedAtUtc = DateTime.UtcNow,
@@ -131,6 +150,19 @@ public static class TestRestaurants
         db.Reservations.Add(reservation);
         await db.SaveChangesAsync();
         return reservation.Id;
+    }
+
+    /// <summary>
+    /// Opens the restaurant on <paramref name="date"/> even if it is a public holiday, e.g. for tests that need it open today.
+    /// On other days the override has no effect.
+    /// </summary>
+    public static async Task OpenOnHolidayAsync(ApiFactory factory, TestRestaurant restaurant, DateOnly date)
+    {
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = restaurant.Id;
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        db.HolidayOverrides.Add(new HolidayOverride { Date = date, IsOpen = true });
+        await db.SaveChangesAsync();
     }
 
     public static async Task<HttpClient> SignInAsync(ApiFactory factory, string email)

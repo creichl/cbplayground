@@ -1,45 +1,31 @@
-import { Badge, Button, Divider, Group, Popover, Stack, Text } from '@mantine/core'
-import { notifications } from '@mantine/notifications'
+import { Button, Divider, Group, Popover, Stack, Text } from '@mantine/core'
 import { type ReactElement, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { errorCode, errorMessage } from '../../api/areaErrors.ts'
-import { type Reservation, type ReservationStatus, statusActions, useSetReservationStatus } from '../../api/reservations.ts'
-import { statusColors } from '../reservations/status.ts'
+import type { Reservation } from '../../api/reservations.ts'
+import { StatusActions } from '../reservations/StatusActions.tsx'
+import { StatusBadge } from '../reservations/StatusBadge.tsx'
+import { guestName } from '../reservations/status.ts'
 
 type ReservationPopoverProps = {
   reservation: Reservation
   /** The following reservation at the same table, shown as a hint. */
   nextReservation?: Reservation
+  /** Offers to seat a walk-in at the reservation's table, which is free now. */
+  onWalkIn?: () => void
   /** The element that opens the popover on click; it must accept a ref. */
   children: ReactElement
 }
 
-/** Cancelling and declining are shown in red, the other actions in the colour of their status. */
-const actionColors: Record<ReservationStatus, string> = { ...statusColors, Cancelled: 'red', Declined: 'red' }
-
-/** Details of a reservation with the status changes that are possible from its current status. */
-export function ReservationPopover({ reservation, nextReservation, children }: ReservationPopoverProps) {
+/** Details of a reservation with the status actions of the lists (see StatusActions). */
+export function ReservationPopover({ reservation, nextReservation, onWalkIn, children }: ReservationPopoverProps) {
   const { t } = useTranslation()
   const [opened, setOpened] = useState(false)
-  const setStatus = useSetReservationStatus()
-
-  function changeStatus(status: ReservationStatus) {
-    setStatus.mutate(
-      { id: reservation.id, status },
-      {
-        onSuccess: () => setOpened(false),
-        onError: (error) =>
-          notifications.show({
-            color: 'red',
-            title: t('tableOverview.errors.statusTitle'),
-            message: errorCode(error) === 'invalid_status_transition' ? t('tableOverview.errors.statusChanged') : errorMessage(error, t),
-          }),
-      },
-    )
-  }
+  // While the question before cancelling is open, a click into it must not close the popover with the question.
+  const [confirming, setConfirming] = useState(false)
 
   const details: [string, string | null][] = [
     [t('tableOverview.details.time'), `${reservation.time}–${reservation.endTime}`],
+    [t('tableOverview.details.left'), reservation.status === 'Completed' ? reservation.completedTime : null],
     [t('tableOverview.details.guests'), String(reservation.guests)],
     [t('tableOverview.details.table'), t('tableOverview.details.tableValue', { number: reservation.tableNumber, area: reservation.areaName })],
     [t('tableOverview.details.phone'), reservation.phone],
@@ -50,15 +36,22 @@ export function ReservationPopover({ reservation, nextReservation, children }: R
   ]
 
   return (
-    <Popover opened={opened} onChange={setOpened} width={300} position="bottom" withArrow shadow="md">
+    <Popover
+      opened={opened}
+      onChange={setOpened}
+      closeOnClickOutside={!confirming}
+      closeOnEscape={!confirming}
+      width={320}
+      position="bottom"
+      withArrow
+      shadow="md"
+    >
       <Popover.Target>{children}</Popover.Target>
       <Popover.Dropdown>
         <Stack gap="sm">
           <Group justify="space-between" wrap="nowrap" align="flex-start">
-            <Text fw={600}>{reservation.name}</Text>
-            <Badge color={statusColors[reservation.status]} variant="light" style={{ flexShrink: 0 }}>
-              {t(`tableOverview.status.${reservation.status}`)}
-            </Badge>
+            <Text fw={600}>{guestName(reservation, t)}</Text>
+            <StatusBadge status={reservation.status} />
           </Group>
           <Stack gap={4}>
             {details
@@ -74,29 +67,27 @@ export function ReservationPopover({ reservation, nextReservation, children }: R
                 </Group>
               ))}
           </Stack>
-          {statusActions[reservation.status].length > 0 && (
-            <Group gap="xs">
-              {statusActions[reservation.status].map((status) => (
-                <Button
-                  key={status}
-                  size="sm"
-                  variant="light"
-                  color={actionColors[status]}
-                  loading={setStatus.isPending && setStatus.variables?.status === status}
-                  disabled={setStatus.isPending}
-                  onClick={() => changeStatus(status)}
-                >
-                  {t(`tableOverview.actions.${status}`)}
-                </Button>
-              ))}
-            </Group>
-          )}
+          <StatusActions reservation={reservation} compact onDone={() => setOpened(false)} onConfirmingChange={setConfirming} />
           {nextReservation !== undefined && (
             <>
               <Divider />
               <Text size="sm" c="dimmed">
-                {t('tableOverview.details.next', { time: nextReservation.time, name: nextReservation.name, guests: nextReservation.guests })}
+                {t('tableOverview.details.next', { time: nextReservation.time, name: guestName(nextReservation, t), guests: nextReservation.guests })}
               </Text>
+            </>
+          )}
+          {onWalkIn !== undefined && (
+            <>
+              <Divider />
+              <Button
+                variant="light"
+                onClick={() => {
+                  setOpened(false)
+                  onWalkIn()
+                }}
+              >
+                {t('tableOverview.walkInHere')}
+              </Button>
             </>
           )}
         </Stack>

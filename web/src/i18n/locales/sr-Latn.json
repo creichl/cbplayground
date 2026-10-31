@@ -656,6 +656,8 @@
       "reservations": "Rezervacije",
       "guests": "Gosti",
       "arrived": "Stigli",
+      "seated": "Gosti za stolom",
+      "noShows": "Nisu došli",
       "openRequests": "Otvoreni zahtevi"
     },
     "list": {
@@ -670,29 +672,65 @@
     },
     "source": {
       "online": "Onlajn",
-      "phone": "Telefon"
+      "phone": "Telefon",
+      "walkIn": "Bez rezervacije"
     },
     "status": {
       "requested": "Zatraženo",
       "confirmed": "Potvrđeno",
       "arrived": "Stigli",
       "late": "Kasne",
+      "completed": "Otišli",
+      "noShow": "Nisu došli",
       "cancelled": "Otkazano",
       "declined": "Odbijeno"
     },
     "actions": {
       "accept": "Prihvati",
       "decline": "Odbij",
+      "arrived": "Označi da su stigli",
+      "late": "Kasne",
+      "noShow": "Nisu došli",
+      "completed": "Gosti otišli",
+      "cancel": "Otkaži",
+      "undo": "Poništi"
+    },
+    "actionsShort": {
+      "accept": "Prihvati",
+      "decline": "Odbij",
       "arrived": "Stigli",
       "late": "Kasne",
-      "cancelled": "Otkazano",
-      "undoArrived": "Poništi dolazak"
+      "noShow": "Nisu došli",
+      "completed": "Otišli",
+      "cancel": "Otkaži",
+      "undo": "Poništi"
     },
     "cancelConfirm": {
       "title": "Otkazati rezervaciju?",
-      "text": "Rezervacija za {{name}} u {{time}} (osoba: {{guests}}) biće otkazana. Ovo se ne može poništiti.",
+      "text": "Rezervacija za {{name}} u {{time}} (osoba: {{guests}}) biće otkazana, a sto oslobođen.",
       "back": "Nazad",
       "confirm": "Otkaži rezervaciju"
+    },
+    "noShowConfirm": {
+      "title": "Označiti da gosti nisu došli?",
+      "text": "{{name}} ({{time}}, osoba: {{guests}}) nisu došli. Sto će biti oslobođen.",
+      "confirm": "Nisu došli"
+    },
+    "toast": {
+      "changed": "{{name}}: {{status}}"
+    },
+    "walkIn": {
+      "button": "Bez rezervacije",
+      "title": "Smesti gosta bez rezervacije",
+      "defaultName": "Gost bez rezervacije",
+      "tableDescription": "Slobodan od sada na {{minutes}} minuta. Predlog je unapred izabran; možete izabrati drugi slobodan sto.",
+      "noTable": "Trenutno nema slobodnog stola (osoba: {{guests}}).",
+      "wantedTableTaken": "Izabrani sto trenutno nije slobodan (osoba: {{guests}}); unapred je izabran drugi slobodan sto.",
+      "nameDescription": "Nije obavezno. Bez imena gost se prikazuje kao „Gost bez rezervacije“.",
+      "seat": "Smesti gosta",
+      "seated": "{{name}} za stolom {{table}} od {{time}}.",
+      "notSeated": "Gost nije smešten",
+      "closed": "Restoran trenutno nije otvoren."
     },
     "pending": {
       "title": "Otvoreni zahtevi ({{number}})",
@@ -749,7 +787,10 @@
       "tableUnavailable": "Ovaj sto je u to vreme zauzet ili ima premalo mesta. Izaberite drugi sto ili drugo vreme.",
       "invalidStatus": "Ovaj status nije poznat.",
       "invalidStatusTransition": "Status ne može da se promeni na ovaj način. Možda je neko drugi izmenio rezervaciju; lista je ponovo učitana.",
-      "notFound": "Ova rezervacija više ne postoji. Ponovo učitajte stranicu."
+      "notFound": "Ova rezervacija više ne postoji. Ponovo učitajte stranicu.",
+      "statusNotAllowedNow": "To sada nije moguće za ovu rezervaciju: „Stigli“ i „Kasne“ samo na dan rezervacije, „Nisu došli“ tek od vremena početka.",
+      "tableTaken": "Sto je u međuvremenu zauzet, pa ovo ne može da se poništi.",
+      "statusTitle": "Status nije mogao da se promeni"
     }
   },
   "tableOverview": {
@@ -766,16 +807,10 @@
     },
     "closed": "Restoran je zatvoren ovog dana.",
     "noTables": "Još nema stolova.",
-    "status": {
-      "free": "Slobodan",
-      "Requested": "Zatražena",
-      "Confirmed": "Rezervisan",
-      "Arrived": "Stigli",
-      "Late": "Kasne",
-      "Cancelled": "Otkazana",
-      "Declined": "Odbijena"
-    },
-    "legendInactive": "Otkazane ili odbijene",
+    "free": "Slobodan",
+    "freeTable": "Sto {{number}} · mesta: {{seats}} · slobodan",
+    "walkInHere": "Smesti gosta bez rezervacije ovde",
+    "legendInactive": "Otkazane, odbijene ili gosti nisu došli",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Sto · mesta"
@@ -789,6 +824,7 @@
     },
     "details": {
       "time": "Vreme",
+      "left": "Otišli",
       "guests": "Gosti",
       "table": "Sto",
       "tableValue": "{{number}} · {{area}}",
@@ -799,20 +835,10 @@
       "source": "Rezervisao",
       "sources": {
         "Online": "Gost onlajn",
-        "Staff": "Osoblje"
+        "Staff": "Osoblje",
+        "WalkIn": "Bez rezervacije"
       },
       "next": "Sledeća za ovim stolom: {{time}}, {{name}} ({{guests}})"
-    },
-    "actions": {
-      "Confirmed": "Prihvati",
-      "Declined": "Odbij",
-      "Arrived": "Stigli",
-      "Late": "Kasne",
-      "Cancelled": "Otkazana"
-    },
-    "errors": {
-      "statusTitle": "Status nije mogao da se promeni",
-      "statusChanged": "Rezervacija je u međuvremenu promenjena. Prikaz je ponovo učitan."
     }
   }
 }
