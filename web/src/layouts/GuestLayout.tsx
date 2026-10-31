@@ -30,15 +30,12 @@ export function GuestLayout() {
   )
 }
 
-/**
- * Discreet entry for restaurant staff: the sign-in, or the own area when already signed in.
- * The Superadmin has no area of their own yet, so there is nothing to link to.
- */
+/** Discreet entry for staff: the sign-in, or the own area (also the Superadmin's) when already signed in. */
 function StaffLink() {
   const { t } = useTranslation()
   const currentUser = useCurrentUser()
 
-  if (currentUser.data === undefined || currentUser.data?.role === 'Superadmin') {
+  if (currentUser.data === undefined) {
     return null
   }
 

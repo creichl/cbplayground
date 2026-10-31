@@ -35,7 +35,8 @@
     "errors": {
       "invalidCredentials": "E-Mail-Adresse oder Passwort ist falsch.",
       "lockedOut": "Zu viele Fehlversuche. Ihr Konto ist für einige Minuten gesperrt. Bitte versuchen Sie es später erneut.",
-      "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants."
+      "deactivated": "Ihr Konto wurde deaktiviert. Bitte wenden Sie sich an die Administration Ihres Restaurants.",
+      "restaurantDeactivated": "Dieses Restaurant wurde deaktiviert. Bitte wenden Sie sich an den Plattformbetreiber."
     },
     "demo": {
       "title": "Demo-Zugänge",
@@ -169,6 +170,80 @@
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter",
       "tables": "Tischübersicht"
+    }
+  },
+  "superadmin": {
+    "label": "Plattform",
+    "title": "Restaurants",
+    "subtitle": "Alle Restaurants der Plattform, aktive und deaktivierte.",
+    "search": "Restaurants durchsuchen",
+    "searchPlaceholder": "Nach Name oder Slug suchen",
+    "empty": "Es gibt noch keine Restaurants.",
+    "noMatch": "Kein Restaurant passt zu Ihrer Suche.",
+    "backToList": "Alle Restaurants",
+    "masterData": "Stammdaten",
+    "noLocation": "Noch nicht festgelegt",
+    "inactiveHint": "Dieses Restaurant ist deaktiviert: Gäste sehen es nicht, seine Buchungsseite zeigt „nicht gefunden“ und seine Mitarbeiter können sich nicht anmelden.",
+    "slugRules": "Kleinbuchstaben, Ziffern und Bindestriche. Buchungsseite: {{example}}",
+    "activate": "Aktivieren",
+    "deactivate": "Deaktivieren",
+    "fields": {
+      "name": "Name",
+      "slug": "Slug",
+      "status": "Status",
+      "admins": "Admins",
+      "tables": "Tische",
+      "upcomingReservations": "Künftige Reservierungen",
+      "location": "Land / Region",
+      "createdAt": "Angelegt am"
+    },
+    "status": {
+      "active": "Aktiv",
+      "inactive": "Deaktiviert"
+    },
+    "validation": {
+      "name": "Bitte geben Sie einen Namen ein."
+    },
+    "create": {
+      "button": "Restaurant anlegen",
+      "title": "Restaurant anlegen",
+      "submit": "Anlegen",
+      "locationHint": "Optional. Der Admin des Restaurants kann es später festlegen."
+    },
+    "edit": {
+      "button": "Bearbeiten",
+      "title": "Restaurant bearbeiten",
+      "slugHint": "Ein neuer Slug ändert die Adresse der Buchungsseite; alte Links und eingebettete Buchungs-Widgets funktionieren dann nicht mehr."
+    },
+    "activateConfirm": {
+      "title": "{{name}} aktivieren?",
+      "text": "Gäste sehen das Restaurant und seine Buchungsseite wieder, und seine Mitarbeiter können sich wieder anmelden."
+    },
+    "deactivateConfirm": {
+      "title": "{{name}} deaktivieren?",
+      "text": "Das Restaurant verschwindet von der Startseite, seine Buchungsseite zeigt „nicht gefunden“, und seine Mitarbeiter werden abgemeldet und können sich nicht mehr anmelden. Es werden keine Daten gelöscht; Sie können es jederzeit wieder aktivieren."
+    },
+    "admins": {
+      "title": "Admins",
+      "empty": "Dieses Restaurant hat noch keinen Admin. Legen Sie einen an, damit das Restaurant eingerichtet werden kann.",
+      "passwordText": "Geben Sie das neue Passwort selbst an den Admin weiter. Bestehende Sitzungen werden abgemeldet.",
+      "create": {
+        "button": "Admin anlegen",
+        "title": "Admin für {{name}} anlegen",
+        "submit": "Anlegen"
+      }
+    },
+    "notifications": {
+      "created": "{{name}} wurde angelegt.",
+      "updated": "Die Änderungen an {{name}} wurden gespeichert.",
+      "activated": "{{name}} wurde aktiviert.",
+      "deactivated": "{{name}} wurde deaktiviert.",
+      "adminCreated": "{{name}} wurde als Admin angelegt."
+    },
+    "errors": {
+      "invalidName": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
+      "invalidSlug": "Der Slug darf nur Kleinbuchstaben, Ziffern und einzelne Bindestriche (nicht am Anfang oder Ende) enthalten, höchstens 50 Zeichen.",
+      "slugTaken": "Dieser Slug wird bereits von einem anderen Restaurant verwendet."
     }
   },
   "overview": {
