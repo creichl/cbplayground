@@ -126,8 +126,8 @@
       "lastAdmin": "Das ist der letzte aktive Admin des Restaurants. Machen Sie zuerst einen anderen Mitarbeiter zum Admin.",
       "cannotDeactivateSelf": "Sie können Ihr eigenes Konto nicht deaktivieren.",
       "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
-      }
-    },
+    }
+  },
   "openingHours": {
     "save": "Speichern",
     "saved": "Gespeichert.",
@@ -301,5 +301,65 @@
       "positionInvalid": "Ein Tisch muss auf dem Grundriss liegen.",
       "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden"
     }
+  },
+  "reservationSettings": {
+    "title": "Reservierungseinstellungen",
+    "subtitle": "Wie Reservierungen bestätigt werden, wie Tische vergeben werden und wie lange eine Reservierung dauert. Die Einstellungen gelten für neue Reservierungen.",
+    "confirmation": {
+      "title": "Bestätigung",
+      "instant": {
+        "label": "Sofortbestätigung",
+        "description": "Die Reservierung ist bestätigt, sobald der Gast bucht."
+      },
+      "request": {
+        "label": "Anfrage",
+        "description": "Der Gast schickt eine Anfrage; das Restaurant muss sie freigeben, bevor sie bestätigt ist."
+      }
+    },
+    "tableSelection": {
+      "title": "Tischzuweisung",
+      "guestChooses": {
+        "label": "Gast wählt den Tisch",
+        "description": "Der Gast wählt beim Buchen einen freien Tisch auf dem Raumplan."
+      },
+      "systemAssigns": {
+        "label": "System weist den Tisch zu",
+        "description": "Der Gast wählt nur Datum, Uhrzeit und Personenzahl; das System wählt einen passenden freien Tisch."
+      }
+    },
+    "duration": {
+      "title": "Dauer",
+      "default": "Standarddauer",
+      "defaultDescription": "Gilt, wenn keine Regel zur Personenzahl passt.",
+      "minutesSuffix": " min",
+      "rules": "Regeln nach Personenzahl",
+      "rulesDescription": "Optional. Die Bereiche dürfen sich nicht überschneiden; für Personenzahlen zwischen den Regeln gilt die Standarddauer.",
+      "from": "Von (Gäste)",
+      "to": "Bis (Gäste)",
+      "minutes": "Minuten",
+      "addRule": "+ Regel",
+      "deleteRule": "Regel löschen",
+      "noRules": "Noch keine Regeln: Jede Reservierung dauert die Standarddauer.",
+      "previewGuests": "Vorschau für Personenzahl",
+      "previewResult": "Bei einer Personenzahl von {{guests}} dauert eine Reservierung {{minutes}} Minuten.",
+      "previewRule": "(Regel {{min}}–{{max}})",
+      "previewDefault": "(Standarddauer)"
+    },
+    "validation": {
+      "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
+      "minGuests": "Geben Sie mindestens 1 Gast ein.",
+      "minGreaterThanMax": "„Bis“ darf nicht kleiner als „von“ sein.",
+      "overlap": "Dieser Bereich überschneidet sich mit einer anderen Regel."
+    },
+    "errors": {
+      "title": "Die Einstellungen wurden nicht gespeichert",
+      "invalidMode": "Bitte wählen Sie einen Bestätigungsmodus und eine Tischzuweisung.",
+      "invalidDuration": "Die Dauer muss zwischen 15 und 480 Minuten in Schritten von 15 liegen.",
+      "invalidMinGuests": "Eine Regel muss bei mindestens 1 Gast beginnen.",
+      "minGreaterThanMax": "In einer Regel darf „von“ nicht größer als „bis“ sein.",
+      "overlappingRules": "Die Bereiche der Regeln überschneiden sich."
+    },
+    "save": "Speichern",
+    "saved": "Die Reservierungseinstellungen wurden gespeichert."
   }
 }

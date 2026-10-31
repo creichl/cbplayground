@@ -2,6 +2,7 @@ using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
 using Cbplayground.Api.OpeningHours;
+using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddSingleton<IHolidayProvider, HolidayProvider>();
 builder.Services.AddScoped<IOpeningCalendar, OpeningCalendar>();
+builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
 
 // AddIdentity registers the services only; there is no public registration endpoint (no MapIdentityApi).
 builder.Services
@@ -98,6 +100,7 @@ app.MapStaffEndpoints();
 app.MapAreaEndpoints();
 app.MapTableEndpoints();
 app.MapOpeningHoursEndpoints();
+app.MapReservationSettingsEndpoints();
 
 app.Run();
 

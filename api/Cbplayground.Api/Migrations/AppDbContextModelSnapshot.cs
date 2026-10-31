@@ -127,6 +127,31 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("Areas");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.DurationRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MaxGuests")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MinGuests")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("DurationRules");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.Property<Guid>("Id")
@@ -173,6 +198,34 @@ namespace Cbplayground.Api.Migrations
                     b.HasIndex("TenantId", "DayOfWeek", "Start");
 
                     b.ToTable("OpeningPeriods");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ConfirmationMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("DefaultDurationMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("TableSelectionMode")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("ReservationSettings");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.Table", b =>
@@ -418,6 +471,15 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.DurationRule", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
@@ -428,6 +490,15 @@ namespace Cbplayground.Api.Migrations
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.OpeningPeriod", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
                         .WithMany()
