@@ -65,6 +65,19 @@ public sealed class OpeningCalendarTests : IDisposable
         db.SaveChanges();
     }
 
+    private void AddSpecialDay(Guid tenantId, DateOnly from, DateOnly to, SpecialDayKind kind, params (TimeOnly Start, TimeOnly End)[] periods)
+    {
+        using var db = CreateContext(tenantId);
+        db.SpecialDays.Add(new SpecialDay
+        {
+            From = from,
+            To = to,
+            Kind = kind,
+            Periods = periods.Select(p => new SpecialDayPeriod { Start = p.Start, End = p.End }).ToList(),
+        });
+        db.SaveChanges();
+    }
+
     private static readonly OpenPeriod[] ThursdayHours =
     [
         new(new TimeOnly(11, 30), new TimeOnly(14, 30)),
@@ -136,5 +149,53 @@ public sealed class OpeningCalendarTests : IDisposable
 
         Assert.Empty(await OpenPeriodsAsync(bavarian, new DateOnly(2026, 6, 12)));
         Assert.Single(await OpenPeriodsAsync(berliner, new DateOnly(2026, 6, 12)));
+    }
+
+    [Fact]
+    public async Task A_closing_period_closes_every_day_in_it_and_no_other()
+    {
+        AddSpecialDay(bavarian, OrdinaryThursday, OrdinaryThursday.AddDays(7), SpecialDayKind.Closed);
+
+        Assert.Empty(await OpenPeriodsAsync(bavarian, OrdinaryThursday));
+        Assert.Empty(await OpenPeriodsAsync(bavarian, OrdinaryThursday.AddDays(7)));
+        Assert.Equal(ThursdayHours, await OpenPeriodsAsync(bavarian, OrdinaryThursday.AddDays(14)));
+    }
+
+    [Fact]
+    public async Task Special_hours_replace_the_regular_hours_also_on_a_day_without_them()
+    {
+        var friday = new DateOnly(2026, 6, 12);
+        AddSpecialDay(bavarian, OrdinaryThursday, friday, SpecialDayKind.SpecialHours,
+            (new TimeOnly(18, 0), OpeningPeriod.EndOfDay), (new TimeOnly(10, 0), new TimeOnly(12, 0)));
+
+        OpenPeriod[] specialHours = [new(new TimeOnly(10, 0), new TimeOnly(12, 0)), new(new TimeOnly(18, 0), OpeningPeriod.EndOfDay)];
+        Assert.Equal(specialHours, await OpenPeriodsAsync(bavarian, OrdinaryThursday));
+        Assert.Equal(specialHours, await OpenPeriodsAsync(bavarian, friday));
+    }
+
+    [Fact]
+    public async Task Special_hours_take_precedence_over_a_closed_holiday()
+    {
+        AddSpecialDay(bavarian, CorpusChristi, CorpusChristi, SpecialDayKind.SpecialHours, (new TimeOnly(12, 0), new TimeOnly(15, 0)));
+
+        Assert.Equal([new OpenPeriod(new TimeOnly(12, 0), new TimeOnly(15, 0))], await OpenPeriodsAsync(bavarian, CorpusChristi));
+    }
+
+    [Fact]
+    public async Task A_closing_day_takes_precedence_over_a_holiday_opened_by_an_override()
+    {
+        SetOverride(bavarian, CorpusChristi, isOpen: true);
+        AddSpecialDay(bavarian, CorpusChristi.AddDays(-3), CorpusChristi.AddDays(3), SpecialDayKind.Closed);
+
+        Assert.Empty(await OpenPeriodsAsync(bavarian, CorpusChristi));
+    }
+
+    [Fact]
+    public async Task Special_days_of_another_tenant_do_not_apply()
+    {
+        AddSpecialDay(berliner, OrdinaryThursday, OrdinaryThursday, SpecialDayKind.Closed);
+
+        Assert.Equal(ThursdayHours, await OpenPeriodsAsync(bavarian, OrdinaryThursday));
+        Assert.Empty(await OpenPeriodsAsync(berliner, OrdinaryThursday));
     }
 }
