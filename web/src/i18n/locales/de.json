@@ -13,7 +13,10 @@
   },
   "common": {
     "retry": "Erneut versuchen",
-    "backToStart": "Zurück zur Startseite"
+    "backToStart": "Zurück zur Startseite",
+    "save": "Speichern",
+    "close": "Schließen",
+    "cancel": "Abbrechen"
   },
   "auth": {
     "userMenu": "Kontomenü",
@@ -62,6 +65,63 @@
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter"
+    }
+  },
+  "areas": {
+    "addArea": "Bereich hinzufügen",
+    "create": "Anlegen",
+    "emptyTitle": "Noch keine Bereiche",
+    "emptyText": "Legen Sie einen Bereich an, z. B. die Gaststube oder die Terrasse, und laden Sie seinen Grundriss hoch.",
+    "addTable": "Tisch hinzufügen",
+    "dragHint": "Ziehen Sie Tische, um sie zu verschieben. Klicken Sie auf einen Tisch, um ihn zu bearbeiten.",
+    "capacity": "Sitzplätze: {{seats}}, davon online buchbar: {{online}} ({{percent}} %)",
+    "capacityOnlineBlocked": "Sitzplätze: {{seats}}, für Online-Buchungen gesperrt",
+    "floorPlanAlt": "Grundriss",
+    "tableMarker": "Tisch {{number}}, Sitzplätze: {{seats}}",
+    "floorPlan": {
+      "emptyTitle": "Grundriss hochladen",
+      "emptyText": "Ziehen Sie ein Bild des Grundrisses dieses Bereichs hierher. Darauf platzieren Sie anschließend die Tische.",
+      "choose": "Bild auswählen",
+      "hint": "PNG, JPEG oder WebP, höchstens 10 MB",
+      "replace": "Grundriss ersetzen"
+    },
+    "area": {
+      "title": "Bereich",
+      "name": "Name",
+      "namePlaceholder": "z. B. Terrasse",
+      "onlineBookingEnabled": "Online-Buchung",
+      "onlineBookingEnabledHint": "Ausgeschaltet können Gäste diesen Bereich nicht online buchen.",
+      "onlineCapacityPercent": "Online-Kontingent",
+      "onlineCapacityPercentHint": "Anteil der Sitzplätze, den Gäste online buchen können. Der Rest bleibt für Telefon- und Laufkundschaft frei.",
+      "saved": "Der Bereich wurde gespeichert.",
+      "order": "Reihenfolge",
+      "moveLeft": "Nach links",
+      "moveRight": "Nach rechts",
+      "delete": "Bereich löschen",
+      "deleteTitle": "„{{name}}“ löschen?",
+      "deleteText": "Die Tische des Bereichs ({{tables}}) und sein Grundriss werden ebenfalls gelöscht. Das lässt sich nicht rückgängig machen.",
+      "deleteConfirm": "Löschen"
+    },
+    "table": {
+      "title": "Tisch {{number}}",
+      "number": "Tischnummer",
+      "seats": "Sitzplätze",
+      "saved": "Der Tisch wurde gespeichert.",
+      "delete": "Tisch löschen"
+    },
+    "errors": {
+      "areaNameInvalid": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
+      "areaNotFound": "Diesen Bereich gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "areaOrderInvalid": "Die Reihenfolge konnte nicht gespeichert werden, weil sich die Bereiche geändert haben. Bitte laden Sie die Seite neu.",
+      "percentInvalid": "Bitte geben Sie eine ganze Zahl von 0 bis 100 ein.",
+      "floorPlanTooLarge": "Das Bild ist größer als 10 MB.",
+      "floorPlanTypeInvalid": "Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild.",
+      "tableNumberInvalid": "Bitte geben Sie eine Tischnummer mit höchstens 20 Zeichen ein.",
+      "tableNumberTaken": "Ein anderer Tisch hat bereits diese Nummer.",
+      "tableNotFound": "Diesen Tisch gibt es nicht mehr. Bitte laden Sie die Seite neu.",
+      "seatsInvalid": "Ein Tisch braucht mindestens 1 Sitzplatz.",
+      "positionInvalid": "Ein Tisch muss auf dem Grundriss liegen.",
+      "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden"
     }
   },
   "frontdesk": {
