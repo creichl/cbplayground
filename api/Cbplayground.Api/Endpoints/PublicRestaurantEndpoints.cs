@@ -17,6 +17,9 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the online booking, see Program.cs.</summary>
     public const string BookingRateLimitPolicy = "public-booking";
 
+    /// <summary>The rate limiter policy of the guest's reservation link (view and cancel), with the limit of the booking; see Program.cs.</summary>
+    public const string ManageRateLimitPolicy = "public-manage";
+
     /// <summary>The restaurant for the booking page: its profile (every field null when empty) and how it is booked.</summary>
     public record RestaurantResponse(
         string Name,
@@ -65,6 +68,7 @@ public static class PublicRestaurantEndpoints
         string? Notes,
         string? Language);
 
+    /// <summary>A booked table. <see cref="ManageToken"/> belongs in the guest's link to view and cancel the reservation; it is only returned here.</summary>
     public record BookingResponse(
         string ReferenceCode,
         ReservationStatus Status,
@@ -73,7 +77,29 @@ public static class PublicRestaurantEndpoints
         int Guests,
         int DurationMinutes,
         string Area,
-        string TableNumber);
+        string TableNumber,
+        string ManageToken);
+
+    /// <summary>
+    /// A reservation as the guest sees it through the link. <see cref="CanCancel"/> tells whether the guest can still cancel it
+    /// (<see cref="ReservationRules.CanGuestCancel"/>).
+    /// </summary>
+    public record GuestReservationResponse(
+        string ReferenceCode,
+        ReservationStatus Status,
+        DateOnly Date,
+        string Time,
+        string EndTime,
+        int Guests,
+        int DurationMinutes,
+        string Area,
+        string TableNumber,
+        string Name,
+        bool CancelledByGuest,
+        bool CanCancel);
+
+    /// <summary>The guest cancels with the token of the link. Errors: 404 (wrong code or token), 409 "cancellation_not_possible".</summary>
+    public record CancelRequest(string? Token);
 
     public static void MapPublicRestaurantEndpoints(this IEndpointRouteBuilder app)
     {
@@ -249,6 +275,7 @@ public static class PublicRestaurantEndpoints
             }
 
             var now = DateTime.UtcNow;
+            var manageToken = ManageToken.Create();
             var reservation = new Reservation
             {
                 TableId = table.Id,
@@ -264,6 +291,7 @@ public static class PublicRestaurantEndpoints
                 Source = ReservationSource.Online,
                 ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
                 Language = request.Language,
+                ManageTokenHash = manageToken.Hash,
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now,
             };
@@ -272,9 +300,73 @@ public static class PublicRestaurantEndpoints
             await transaction.CommitAsync(cancellationToken);
 
             return Results.Json(
-                new BookingResponse(reservation.ReferenceCode, reservation.Status, date, FormatTime(time), reservation.PartySize, duration, table.AreaName, table.Number),
+                new BookingResponse(reservation.ReferenceCode, reservation.Status, date, FormatTime(time), reservation.PartySize, duration, table.AreaName,
+                    table.Number, manageToken.Token),
                 statusCode: StatusCodes.Status201Created);
         }).RequireRateLimiting(BookingRateLimitPolicy);
+
+        // The guest's link. A wrong code and a wrong token are both 404, so neither tells which one is wrong.
+        group.MapGet("/reservations/{referenceCode}", async (string referenceCode, string? token, AppDbContext db, IAvailabilityService availability) =>
+        {
+            var reservation = await FindForGuestAsync(db, referenceCode, token);
+            if (reservation is null)
+            {
+                return Results.NotFound();
+            }
+            return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
+        }).RequireRateLimiting(ManageRateLimitPolicy);
+
+        group.MapPost("/reservations/{referenceCode}/cancel", async (string referenceCode, CancelRequest request, AppDbContext db, IAvailabilityService availability) =>
+        {
+            var reservation = await FindForGuestAsync(db, referenceCode, request.Token);
+            if (reservation is null)
+            {
+                return Results.NotFound();
+            }
+            if (await availability.GetLocalNowAsync() is not { } now || !ReservationRules.CanGuestCancel(reservation, now))
+            {
+                return ErrorResponse.Result("cancellation_not_possible", StatusCodes.Status409Conflict);
+            }
+
+            reservation.Status = ReservationStatus.Cancelled;
+            reservation.CancelledByGuest = true;
+            reservation.UpdatedAtUtc = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
+        }).RequireRateLimiting(ManageRateLimitPolicy);
+    }
+
+    /// <summary>
+    /// The reservation of the current restaurant with this reference code, if the token matches its stored hash (compared in
+    /// constant time); otherwise null. Reservations without a token (entered by staff) are never found.
+    /// </summary>
+    private static async Task<Reservation?> FindForGuestAsync(AppDbContext db, string referenceCode, string? token)
+    {
+        var hash = ManageToken.Hash(token);
+        var code = referenceCode.ToUpperInvariant();
+        var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.ReferenceCode == code);
+        return reservation is not null && ManageToken.Matches(reservation.ManageTokenHash, hash) ? reservation : null;
+    }
+
+    private static async Task<GuestReservationResponse> ToGuestResponseAsync(AppDbContext db, IAvailabilityService availability, Reservation reservation)
+    {
+        var table = await db.Tables.SingleAsync(t => t.Id == reservation.TableId);
+        var area = await db.Areas.SingleAsync(a => a.Id == table.AreaId);
+        var now = await availability.GetLocalNowAsync();
+        return new GuestReservationResponse(
+            reservation.ReferenceCode,
+            reservation.Status,
+            DateOnly.FromDateTime(reservation.StartLocal),
+            FormatTime(TimeOnly.FromDateTime(reservation.StartLocal)),
+            // A reservation can end at midnight at the latest (no reservations over midnight).
+            reservation.EndLocal.Date > reservation.StartLocal.Date ? FormatTime(OpeningPeriod.EndOfDay) : FormatTime(TimeOnly.FromDateTime(reservation.EndLocal)),
+            reservation.PartySize,
+            reservation.DurationMinutes,
+            area.Name,
+            table.Number,
+            reservation.GuestName,
+            reservation.CancelledByGuest,
+            now is not null && ReservationRules.CanGuestCancel(reservation, now.Value));
     }
 
     private static async Task<ReservationSettings> LoadSettingsAsync(AppDbContext db) =>

@@ -84,7 +84,8 @@
     },
     "restaurant": {
       "openingHours": "Radno vreme",
-      "website": "Veb-sajt"
+      "website": "Veb-sajt",
+      "addressOnMap": "{{address}} – otvori na mapi"
     },
     "partySize": {
       "more": "Više",
@@ -151,7 +152,18 @@
       "time": "Vreme",
       "guests": "Osobe",
       "area": "Deo",
-      "table": "Sto"
+      "table": "Sto",
+      "addToCalendar": "Dodaj u kalendar",
+      "manageLink": "Upravljaj rezervacijom",
+      "manageLinkLabel": "Link do vaše rezervacije",
+      "manageLinkHint": "Sačuvajte link da biste kasnije mogli da otkažete.",
+      "copy": "Kopiraj",
+      "copied": "Kopirano"
+    },
+    "calendarEvent": {
+      "title": "Rezervacija stola – {{restaurant}}",
+      "description": "{{guests}}\nReferentni kod: {{code}}\nPregled ili otkazivanje rezervacije: {{link}}",
+      "fileName": "rezervacija"
     },
     "notBookable": {
       "title": "Onlajn rezervacija nije moguća",
@@ -175,6 +187,32 @@
       "preview": "Pregled",
       "previewHint": "Ovako rezervacija izgleda na vašem sajtu. Rezervacije napravljene ovde su prave rezervacije.",
       "frameTitle": "Rezervišite sto – {{name}}"
+      }
+    },
+  "guestReservation": {
+    "title": "Vaša rezervacija",
+    "notFoundTitle": "Rezervacija nije pronađena",
+    "notFoundText": "Link je neispravan ili nepotpun. Proverite da li ste otvorili ceo link iz svoje rezervacije.",
+    "name": "Ime",
+    "referenceCode": "Referentni kod",
+    "cancel": "Otkaži rezervaciju",
+    "cancelledTitle": "Vaša rezervacija je otkazana",
+    "cancelledText": "Sto je ponovo slobodan za druge goste. Nadamo se da ćemo vas videti neki drugi put.",
+    "bookAgain": "Rezerviši ponovo",
+    "cancelledByGuest": "Otkazali ste ovu rezervaciju.",
+    "cancelledByRestaurant": "Restoran je otkazao ovu rezervaciju.",
+    "declined": "Restoran nažalost nije mogao da prihvati ovaj zahtev.",
+    "cannotCancel": "Rezervaciju je moguće otkazati onlajn samo do njenog početka. Pozovite restoran.",
+    "contact": "Kontakt restorana",
+    "confirm": {
+      "title": "Otkazati rezervaciju?",
+      "text": "Vaša rezervacija {{date}} u {{time}} ({{guests}}) biće otkazana. Ovo se ne može poništiti.",
+      "back": "Nazad",
+      "confirm": "Otkaži rezervaciju"
+    },
+    "errors": {
+      "notPossible": "Ovu rezervaciju više nije moguće otkazati onlajn. Pozovite restoran.",
+      "tooManyRequests": "Previše zahteva sa ove veze. Pokušajte ponovo za nekoliko minuta."
     }
   },
   "admin": {
@@ -749,6 +787,7 @@
       "cancelled": "Otkazano",
       "declined": "Odbijeno"
     },
+    "cancelledByGuest": "Otkazao gost",
     "actions": {
       "accept": "Prihvati",
       "decline": "Odbij",

@@ -41,6 +41,7 @@ public static class StaffReservationEndpoints
         string? Notes,
         string Language,
         string? CompletedTime,
+        bool CancelledByGuest,
         DateTime CreatedAtUtc,
         DateTime UpdatedAtUtc);
 
@@ -245,6 +246,8 @@ public static class StaffReservationEndpoints
             }
 
             reservation.CompletedAtLocal = status == ReservationStatus.Completed ? TruncateToMinute(now) : null;
+            // A status set by the staff, e.g. the undo of a guest's cancellation, is no longer the guest's cancellation.
+            reservation.CancelledByGuest = false;
             reservation.Status = status;
             reservation.UpdatedAtUtc = DateTime.UtcNow;
             await db.SaveChangesAsync(cancellationToken);
@@ -428,6 +431,7 @@ public static class StaffReservationEndpoints
         reservation.Notes,
         reservation.Language,
         reservation.CompletedAtLocal is { } completed ? FormatLocalTime(completed, reservation.StartLocal) : null,
+        reservation.CancelledByGuest,
         reservation.CreatedAtUtc,
         reservation.UpdatedAtUtc);
 

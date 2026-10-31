@@ -31,6 +31,8 @@ export type Reservation = {
   language: string
   /** When the guest left ("HH:mm", status Completed); null otherwise. */
   completedTime: string | null
+  /** The guest cancelled through the link of their online booking. */
+  cancelledByGuest: boolean
   createdAtUtc: string
   updatedAtUtc: string
 }

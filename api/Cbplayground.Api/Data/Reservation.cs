@@ -86,6 +86,15 @@ public class Reservation : ITenantOwned
     /// <summary>The guest's language (e.g. "de", "sr-Latn"), for the emails to the guest.</summary>
     public required string Language { get; set; }
 
+    /// <summary>
+    /// SHA-256 of the token in the guest's link to manage the reservation (<see cref="Reservations.ManageToken"/>); the token
+    /// itself is never stored. Only online bookings have one, so only they can be viewed and cancelled by the guest.
+    /// </summary>
+    public byte[]? ManageTokenHash { get; set; }
+
+    /// <summary>True when the guest cancelled the reservation through the link; staff see it in their lists.</summary>
+    public bool CancelledByGuest { get; set; }
+
     public DateTime CreatedAtUtc { get; set; }
 
     public DateTime UpdatedAtUtc { get; set; }

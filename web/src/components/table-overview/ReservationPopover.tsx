@@ -53,6 +53,11 @@ export function ReservationPopover({ reservation, nextReservation, onWalkIn, chi
             <Text fw={600}>{guestName(reservation, t)}</Text>
             <StatusBadge status={reservation.status} />
           </Group>
+          {reservation.cancelledByGuest && (
+            <Text size="sm" c="red" fw={500}>
+              {t('reservations.cancelledByGuest')}
+            </Text>
+          )}
           <Stack gap={4}>
             {details
               .filter((detail): detail is [string, string] => detail[1] !== null)

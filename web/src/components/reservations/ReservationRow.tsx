@@ -13,7 +13,7 @@ type ReservationRowProps = {
   withDate?: boolean
 }
 
-/** One reservation: time, guest, party size, table, source, notes, status and the quick status actions. */
+/** One reservation: time, guest, party size, table, source, who cancelled, notes, status and the quick status actions. */
 export function ReservationRow({ reservation, onOpen, withDate = false }: ReservationRowProps) {
   const { t, i18n } = useTranslation()
   const inactive = !isActive(reservation)
@@ -50,6 +50,11 @@ export function ReservationRow({ reservation, onOpen, withDate = false }: Reserv
             end: occupiedUntil(reservation),
           })}
         </Text>
+        {reservation.cancelledByGuest && (
+          <Text size="sm" c="red" fw={500}>
+            {t('reservations.cancelledByGuest')}
+          </Text>
+        )}
         {reservation.notes !== null && (
           <Tooltip label={reservation.notes} multiline maw={320} withinPortal>
             <Text size="sm" truncate="end">
