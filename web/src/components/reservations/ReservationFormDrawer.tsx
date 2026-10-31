@@ -16,6 +16,7 @@ import {
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
+import { sourceLabels } from './status.ts'
 
 /** The longest note the server accepts. */
 const maxNotesLength = 500
@@ -206,7 +207,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
           <Group gap="xs">
             <StatusBadge status={reservation.status} />
             <Badge size="lg" variant="outline" color="gray">
-              {t(reservation.source === 'Online' ? 'reservations.source.online' : 'reservations.source.phone')}
+              {t(sourceLabels[reservation.source])}
             </Badge>
             <Text size="sm" c="dimmed">
               {t('reservations.form.reference', { code: reservation.referenceCode })}

@@ -16,6 +16,9 @@ public record PeriodSlots(OpenPeriod Period, IReadOnlyList<TimeSlot> Slots);
 /// <summary>The result of <see cref="IAvailabilityService.CheckAsync"/>: the error code, or the table for the reservation.</summary>
 public record BookingCheck(string? Error, FreeTable? Table);
 
+/// <summary>The result of <see cref="IAvailabilityService.CheckWalkInAsync"/>: the error code, or the start (now) and the free tables.</summary>
+public record WalkInCheck(string? Error, DateTime Start, IReadOnlyList<FreeTable> FreeTables);
+
 /// <summary>
 /// When the current restaurant has a table free. Online bookings only get tables of areas open for online booking and
 /// within the area's online quota; staff bookings get every table. The opening hours apply to both.
@@ -36,13 +39,25 @@ public interface IAvailabilityService
     /// <summary>
     /// Checks a reservation and picks its table: <paramref name="tableId"/> if given and free, otherwise the smallest free table
     /// that seats the party (then by area order and table number). <paramref name="ignoreReservationId"/> is the reservation
-    /// being changed, so it does not collide with itself. <paramref name="checkPast"/> false skips the "in the past" check.
+    /// being changed, so it does not collide with itself. <paramref name="checkPast"/> false skips the "in the past" check,
+    /// <paramref name="checkOpeningHours"/> false the check of the start time against the opening hours.
     /// </summary>
     Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
-        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, CancellationToken cancellationToken = default);
+        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
+        CancellationToken cancellationToken = default);
 
     /// <summary>The largest party that can be booked online: the seats of the largest table that can be booked online; 0 if none.</summary>
     Task<int> GetMaxOnlinePartySizeAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The tables free for a walk-in of <paramref name="guests"/> from now (to the minute) for <paramref name="durationMinutes"/>,
+    /// in the order the system assigns them. Now has to lie within an opening window; the end may lie after it. The online quota
+    /// does not apply. Errors: "invalid_party_size", "outside_opening_hours".
+    /// </summary>
+    Task<WalkInCheck> CheckWalkInAsync(int guests, int durationMinutes, CancellationToken cancellationToken = default);
+
+    /// <summary>Whether the table is free from <paramref name="startLocal"/> to <paramref name="endLocal"/>, apart from the reservation <paramref name="ignoreReservationId"/>.</summary>
+    Task<bool> IsTableFreeAsync(Guid tableId, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId, CancellationToken cancellationToken = default);
 }
 
 public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, IOpeningCalendar openingCalendar) : IAvailabilityService
@@ -75,7 +90,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
 
         var tooFarAhead = channel == ReservationSource.Online && IsTooFarAhead(date, now);
         var tables = await LoadTablesAsync(cancellationToken);
-        var busy = await LoadBusyTablesAsync(date, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyTablesAsync(DayStart(date), DayStart(date).AddDays(1), ignoreReservationId, cancellationToken);
 
         var result = new List<PeriodSlots>();
         foreach (var period in periods)
@@ -94,7 +109,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     }
 
     public async Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
-        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, CancellationToken cancellationToken = default)
+        Guid? tableId, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
+        CancellationToken cancellationToken = default)
     {
         var tables = await LoadTablesAsync(cancellationToken);
         if (guests < 1 || guests > MaxPartySize(tables, channel))
@@ -118,12 +134,12 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
 
         var periods = await openingCalendar.GetOpenPeriodsAsync(date, cancellationToken);
-        if (!periods.Any(period => StartTimes(date, period, durationMinutes).Contains(start)))
+        if (checkOpeningHours && !periods.Any(period => StartTimes(date, period, durationMinutes).Contains(start)))
         {
             return Error("outside_opening_hours");
         }
 
-        var busy = await LoadBusyTablesAsync(date, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyTablesAsync(DayStart(date), DayStart(date).AddDays(1), ignoreReservationId, cancellationToken);
         var free = FreeTables(tables, busy, start, start.AddMinutes(durationMinutes), guests, channel);
         if (tableId is not null)
         {
@@ -136,7 +152,42 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     public async Task<int> GetMaxOnlinePartySizeAsync(CancellationToken cancellationToken = default) =>
         MaxPartySize(await LoadTablesAsync(cancellationToken), ReservationSource.Online);
 
+    public async Task<WalkInCheck> CheckWalkInAsync(int guests, int durationMinutes, CancellationToken cancellationToken = default)
+    {
+        var tables = await LoadTablesAsync(cancellationToken);
+        if (guests < 1 || guests > MaxPartySize(tables, ReservationSource.Staff))
+        {
+            return new WalkInCheck("invalid_party_size", default, []);
+        }
+        if (await GetLocalNowAsync(cancellationToken) is not { } now)
+        {
+            return new WalkInCheck("outside_opening_hours", default, []);
+        }
+
+        var start = new DateTime(now.Year, now.Month, now.Day, now.Hour, now.Minute, 0);
+        var date = DateOnly.FromDateTime(start);
+        var time = TimeOnly.FromDateTime(start);
+        var periods = await openingCalendar.GetOpenPeriodsAsync(date, cancellationToken);
+        if (!periods.Any(period => period.Start <= time && (period.End == OpeningPeriod.EndOfDay || time < period.End)))
+        {
+            return new WalkInCheck("outside_opening_hours", default, []);
+        }
+
+        var end = start.AddMinutes(durationMinutes);
+        var busy = await LoadBusyTablesAsync(start, end, null, cancellationToken);
+        return new WalkInCheck(null, start, FreeTables(tables, busy, start, end, guests, ReservationSource.Staff));
+    }
+
+    public async Task<bool> IsTableFreeAsync(Guid tableId, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId,
+        CancellationToken cancellationToken = default)
+    {
+        var busy = await LoadBusyTablesAsync(startLocal, endLocal, ignoreReservationId, cancellationToken);
+        return busy.All(r => r.TableId != tableId);
+    }
+
     private static BookingCheck Error(string error) => new(error, null);
+
+    private static DateTime DayStart(DateOnly date) => date.ToDateTime(TimeOnly.MinValue);
 
     private static bool IsTooFarAhead(DateOnly date, DateTime now) =>
         date > DateOnly.FromDateTime(now).AddDays(ReservationRules.MaxOnlineDaysAhead);
@@ -172,16 +223,25 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             .ToList();
     }
 
-    /// <summary>The reservations of <paramref name="date"/> that occupy their table.</summary>
-    private async Task<List<BusyTable>> LoadBusyTablesAsync(DateOnly date, Guid? ignoreReservationId, CancellationToken cancellationToken)
+    /// <summary>
+    /// The reservations that occupy their table between <paramref name="from"/> and <paramref name="to"/>. A reservation whose guest
+    /// has left (<see cref="ReservationStatus.Completed"/>) occupies it only until the guest left, at most until its end.
+    /// </summary>
+    private async Task<List<BusyTable>> LoadBusyTablesAsync(DateTime from, DateTime to, Guid? ignoreReservationId, CancellationToken cancellationToken)
     {
-        var dayStart = date.ToDateTime(TimeOnly.MinValue);
-        var dayEnd = dayStart.AddDays(1);
-        return await db.Reservations
-            .Where(r => r.StartLocal < dayEnd && r.EndLocal > dayStart && r.Id != ignoreReservationId
-                && ReservationRules.BlockingStatuses.Contains(r.Status))
-            .Join(db.Tables, r => r.TableId, t => t.Id, (r, t) => new BusyTable(r.TableId, t.AreaId, t.Seats, r.StartLocal, r.EndLocal, r.Source))
+        var rows = await db.Reservations
+            .Where(r => r.StartLocal < to && r.EndLocal > from && r.Id != ignoreReservationId
+                && (ReservationRules.BlockingStatuses.Contains(r.Status) || r.Status == ReservationStatus.Completed))
+            .Join(db.Tables, r => r.TableId, t => t.Id, (r, t) => new { Reservation = r, t.AreaId, t.Seats })
             .ToListAsync(cancellationToken);
+        return rows
+            .Select(x => new BusyTable(x.Reservation.TableId, x.AreaId, x.Seats, x.Reservation.StartLocal,
+                x.Reservation.Status == ReservationStatus.Completed && x.Reservation.CompletedAtLocal < x.Reservation.EndLocal
+                    ? x.Reservation.CompletedAtLocal.Value
+                    : x.Reservation.EndLocal,
+                x.Reservation.Source))
+            .Where(r => r.Start < r.End && r.Start < to && r.End > from)
+            .ToList();
     }
 
     /// <summary>The tables free from <paramref name="start"/> to <paramref name="end"/> that seat the party, smallest first.</summary>
