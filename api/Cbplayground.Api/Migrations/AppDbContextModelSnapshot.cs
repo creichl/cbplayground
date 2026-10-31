@@ -117,6 +117,9 @@ namespace Cbplayground.Api.Migrations
                     b.Property<int>("SortOrder")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("TableScale")
+                        .HasColumnType("INTEGER");
+
                     b.Property<Guid>("TenantId")
                         .HasColumnType("TEXT");
 
@@ -406,8 +409,16 @@ namespace Cbplayground.Api.Migrations
                     b.Property<double>("PosY")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("Rotation")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("Seats")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Shape")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.Property<Guid>("TenantId")
                         .HasColumnType("TEXT");

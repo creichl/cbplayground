@@ -100,6 +100,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         modelBuilder.Entity<Table>(table =>
         {
             table.Property(t => t.Number).HasMaxLength(20);
+            table.Property(t => t.Shape).HasConversion<string>().HasMaxLength(20);
             table.HasIndex(t => new { t.TenantId, t.Number }).IsUnique();
             table.HasOne<Tenant>()
                 .WithMany()
