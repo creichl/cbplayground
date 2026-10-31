@@ -37,6 +37,13 @@ function storedLanguage(): Language | null {
   }
 }
 
+// The language in the address (?lang=…), e.g. from an embed snippet. It wins over the stored and the browser's language
+// and is not stored itself.
+function urlLanguage(): Language | null {
+  const value = new URLSearchParams(window.location.search).get('lang')
+  return isLanguage(value) ? value : null
+}
+
 // Picks the first supported language from the browser's preferred languages.
 // Serbian without a script subtag gets its usual script for the region
 // (Intl likely subtags: "sr" and "sr-RS" are Cyrillic, "sr-ME" is Latin).
@@ -80,7 +87,7 @@ void i18n.use(initReactI18next).init({
     'sr-Latn': { translation: srLatn },
     'sr-Cyrl': { translation: srCyrl },
   },
-  lng: storedLanguage() ?? browserLanguage() ?? 'en',
+  lng: urlLanguage() ?? storedLanguage() ?? browserLanguage() ?? 'en',
   fallbackLng: 'en',
   supportedLngs: languages,
   initAsync: false,

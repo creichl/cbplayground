@@ -15,6 +15,7 @@ const navItems = [
   { to: '/admin/opening-hours', label: 'admin.nav.openingHours', end: false },
   { to: '/admin/reservation-settings', label: 'admin.nav.reservationSettings', end: false },
   { to: '/admin/staff', label: 'admin.nav.staff', end: false },
+  { to: '/admin/embed', label: 'admin.nav.embed', end: false },
 ] as const
 
 /** Admin layout: sidebar on desktop, burger menu on small screens. */
