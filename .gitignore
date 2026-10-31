@@ -13,3 +13,6 @@ dist/
 
 # Uploaded floor plans (see Uploads:Path in appsettings.json)
 api/Cbplayground.Api/data/uploads/
+
+# Database backups (see Backup:Path in appsettings.json)
+api/Cbplayground.Api/data/backups/

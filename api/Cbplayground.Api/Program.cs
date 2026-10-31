@@ -1,4 +1,5 @@
 using Cbplayground.Api.Auth;
+using Cbplayground.Api.Backups;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
 using Cbplayground.Api.OpeningHours;
@@ -18,6 +19,13 @@ builder.Services.AddScoped<ITenantContext, HttpTenantContext>();
 builder.Services.AddSingleton<IHolidayProvider, HolidayProvider>();
 builder.Services.AddScoped<IOpeningCalendar, OpeningCalendar>();
 builder.Services.AddScoped<IReservationDurationPolicy, ReservationDurationPolicy>();
+
+// Daily backup of the database and the uploaded floor plans ("Backup" in appsettings.json, off in Development).
+builder.Services.AddSingleton<DatabaseBackup>();
+if (builder.Configuration.GetValue("Backup:Enabled", true))
+{
+    builder.Services.AddHostedService<DatabaseBackupService>();
+}
 
 // AddIdentity registers the services only; there is no public registration endpoint (no MapIdentityApi).
 builder.Services
