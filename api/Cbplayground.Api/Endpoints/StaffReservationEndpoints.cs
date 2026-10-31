@@ -40,6 +40,7 @@ public static class StaffReservationEndpoints
         string? Email,
         string? Notes,
         string Language,
+        string? CompletedTime,
         DateTime CreatedAtUtc,
         DateTime UpdatedAtUtc);
 
@@ -62,8 +63,22 @@ public static class StaffReservationEndpoints
         string? Notes,
         string? Language);
 
-    /// <summary>Errors: "invalid_status" (400), "invalid_status_transition" (409).</summary>
+    /// <summary>
+    /// Errors: "invalid_status" (400); (409): "invalid_status_transition", "status_not_allowed_now" ("arrived" and "late" only on
+    /// the day of the reservation, "no-show" only from its start), "table_unavailable" (an undo while the table is taken).
+    /// </summary>
     public record StatusRequest(string? Status);
+
+    /// <summary>
+    /// A guest without a reservation, seated now. Without <see cref="TableId"/> the system assigns a table, without
+    /// <see cref="DurationMinutes"/> the restaurant's duration for the party size applies, without <see cref="Name"/> it is
+    /// <see cref="Reservation.WalkInName"/>. Errors (400): "invalid_party_size", "invalid_duration", "invalid_name", "invalid_phone",
+    /// "invalid_notes", "outside_opening_hours"; (409): "slot_unavailable", "table_unavailable".
+    /// </summary>
+    public record WalkInRequest(int Guests, Guid? TableId, int? DurationMinutes, string? Name, string? Phone, string? Notes);
+
+    /// <summary>The tables free for a walk-in from <see cref="Time"/> (now) for <see cref="DurationMinutes"/>, the suggested one first.</summary>
+    public record WalkInTablesResponse(string Time, int DurationMinutes, IReadOnlyList<FreeTable> Tables);
 
     public record StaffAvailabilityTime(string Time, IReadOnlyList<FreeTable> Tables);
 
@@ -197,7 +212,8 @@ public static class StaffReservationEndpoints
             return Results.Ok(await LoadResponseAsync(db, reservation.Id));
         });
 
-        group.MapPost("/reservations/{id:guid}/status", async (Guid id, StatusRequest request, AppDbContext db) =>
+        group.MapPost("/reservations/{id:guid}/status", async (Guid id, StatusRequest request, AppDbContext db, IAvailabilityService availability,
+            CancellationToken cancellationToken) =>
         {
             if (request.Status is null || !Enum.GetNames<ReservationStatus>().Contains(request.Status))
             {
@@ -205,7 +221,8 @@ public static class StaffReservationEndpoints
             }
             var status = Enum.Parse<ReservationStatus>(request.Status);
 
-            var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id);
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
             if (reservation is null)
             {
                 return Results.NotFound();
@@ -214,11 +231,97 @@ public static class StaffReservationEndpoints
             {
                 return ErrorResponse.Result("invalid_status_transition", StatusCodes.Status409Conflict);
             }
+            var now = await availability.GetLocalNowAsync(cancellationToken) ?? DateTime.UtcNow;
+            if (!ReservationRules.IsAllowedNow(status, reservation.StartLocal, now))
+            {
+                return ErrorResponse.Result("status_not_allowed_now", StatusCodes.Status409Conflict);
+            }
+            if (ReservationRules.NeedsFreeTable(reservation.Status, status)
+                && !await availability.IsTableFreeAsync(reservation.TableId, reservation.StartLocal, reservation.EndLocal, reservation.Id, cancellationToken))
+            {
+                return ErrorResponse.Result("table_unavailable", StatusCodes.Status409Conflict);
+            }
 
+            reservation.CompletedAtLocal = status == ReservationStatus.Completed ? TruncateToMinute(now) : null;
             reservation.Status = status;
             reservation.UpdatedAtUtc = DateTime.UtcNow;
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
             return Results.Ok(await LoadResponseAsync(db, reservation.Id));
+        });
+
+        group.MapGet("/walk-in-tables", async (int guests, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
+            CancellationToken cancellationToken) =>
+        {
+            if (guests < 1)
+            {
+                return ErrorResponse.Result("invalid_party_size", StatusCodes.Status400BadRequest);
+            }
+            var duration = await durationPolicy.GetDurationAsync(guests, cancellationToken);
+            var check = await availability.CheckWalkInAsync(guests, duration, cancellationToken);
+            if (check.Error is not null)
+            {
+                return BadRequest(check.Error);
+            }
+            return Results.Ok(new WalkInTablesResponse(FormatTime(TimeOnly.FromDateTime(check.Start)), duration, check.FreeTables));
+        });
+
+        // A guest without a reservation: seated now, so the reservation starts as arrived.
+        group.MapPost("/walk-ins", async (WalkInRequest request, ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability,
+            IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
+        {
+            if (request.Guests < 1)
+            {
+                return BadRequest("invalid_party_size");
+            }
+            if (request.DurationMinutes is { } minutes && !ReservationSettingsEndpoints.IsValidDuration(minutes))
+            {
+                return BadRequest("invalid_duration");
+            }
+            var name = string.IsNullOrWhiteSpace(request.Name) ? Reservation.WalkInName : request.Name;
+            var (guest, guestError) = GuestDetails.Parse(name, request.Phone, null, request.Notes, contactRequired: false);
+            if (guest is null)
+            {
+                return BadRequest(guestError!);
+            }
+            var duration = request.DurationMinutes ?? await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
+            var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
+
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var check = await availability.CheckWalkInAsync(request.Guests, duration, cancellationToken);
+            if (check.Error is not null)
+            {
+                return BadRequest(check.Error);
+            }
+            var table = request.TableId is null ? check.FreeTables.FirstOrDefault() : check.FreeTables.FirstOrDefault(t => t.Id == request.TableId);
+            if (table is null)
+            {
+                return CheckError(request.TableId is null ? "slot_unavailable" : "table_unavailable");
+            }
+
+            var now = DateTime.UtcNow;
+            var reservation = new Reservation
+            {
+                GuestName = guest.Name,
+                Status = ReservationStatus.Arrived,
+                Source = ReservationSource.WalkIn,
+                ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
+                Language = DefaultLanguage(countryCode),
+                CreatedAtUtc = now,
+                TableId = table.Id,
+                StartLocal = check.Start,
+                EndLocal = check.Start.AddMinutes(duration),
+                DurationMinutes = duration,
+                PartySize = request.Guests,
+                GuestPhone = guest.Phone,
+                Notes = guest.Notes,
+                UpdatedAtUtc = now,
+            };
+            db.Reservations.Add(reservation);
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+
+            return Results.Created($"/api/staff/reservations/{reservation.Id}", await LoadResponseAsync(db, reservation.Id));
         });
     }
 
@@ -308,8 +411,7 @@ public static class StaffReservationEndpoints
         reservation.ReferenceCode,
         DateOnly.FromDateTime(reservation.StartLocal),
         FormatTime(TimeOnly.FromDateTime(reservation.StartLocal)),
-        // A reservation can end at midnight at the latest (no reservations over midnight).
-        reservation.EndLocal.Date > reservation.StartLocal.Date ? FormatTime(OpeningPeriod.EndOfDay) : FormatTime(TimeOnly.FromDateTime(reservation.EndLocal)),
+        FormatLocalTime(reservation.EndLocal, reservation.StartLocal),
         reservation.DurationMinutes,
         reservation.PartySize,
         reservation.Status,
@@ -323,8 +425,15 @@ public static class StaffReservationEndpoints
         reservation.GuestEmail,
         reservation.Notes,
         reservation.Language,
+        reservation.CompletedAtLocal is { } completed ? FormatLocalTime(completed, reservation.StartLocal) : null,
         reservation.CreatedAtUtc,
         reservation.UpdatedAtUtc);
+
+    /// <summary>"HH:mm" of a time on the day of <paramref name="startLocal"/>; a later day is shown as "24:00" (the day's lists end at midnight).</summary>
+    private static string FormatLocalTime(DateTime local, DateTime startLocal) =>
+        local.Date > startLocal.Date ? FormatTime(OpeningPeriod.EndOfDay) : FormatTime(TimeOnly.FromDateTime(local));
+
+    private static DateTime TruncateToMinute(DateTime value) => new(value.Year, value.Month, value.Day, value.Hour, value.Minute, 0);
 
     private static IResult BadRequest(string error) => ErrorResponse.Result(error, StatusCodes.Status400BadRequest);
 
