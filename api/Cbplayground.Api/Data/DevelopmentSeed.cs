@@ -10,7 +10,7 @@ using static Cbplayground.Api.Data.TableShape;
 namespace Cbplayground.Api.Data;
 
 /// <summary>
-/// Demo data for local development: the two demo restaurants with their setup (<see cref="SeedRestaurantsAsync"/>),
+/// Demo data for local development: the three demo restaurants with their setup (<see cref="SeedRestaurantsAsync"/>),
 /// the demo staff users from the "Seed:Users" section of appsettings.Development.json (<see cref="SeedUsersAsync"/>)
 /// and demo reservations for today and the next 7 days (<see cref="SeedReservationsAsync(IServiceProvider)"/>).
 /// </summary>
@@ -18,7 +18,7 @@ public static class DevelopmentSeed
 {
     public record SeedUser(string Email, string Password, string DisplayName, string Role, string? TenantSlug = null);
 
-    /// <summary>Folder of the seed floor plans, relative to the content root.</summary>
+    /// <summary>Folder of the seed floor plans, logos and cover images, relative to the content root.</summary>
     private static readonly string SeedAssetsPath = Path.Combine("Data", "SeedAssets");
 
     /// <summary>Size of the seed floor plans in pixels; the table positions below are given in pixels of these images.</summary>
@@ -36,6 +36,9 @@ public static class DevelopmentSeed
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
+    /// <summary>A demo branding; <see cref="LogoFile"/> and <see cref="CoverFile"/> are files in <see cref="SeedAssetsPath"/>.</summary>
+    private record DemoBranding(string BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string LogoFile, string CoverFile);
+
     private record DemoRestaurant(
         string Name,
         string Slug,
@@ -45,10 +48,14 @@ public static class DevelopmentSeed
         DemoPeriod[] OpeningHours,
         DemoArea[] Areas,
         ReservationSettings Settings,
-        DurationRule[] DurationRules);
+        DurationRule[] DurationRules,
+        DemoBranding Branding);
 
     private static readonly DayOfWeek[] TuesdayToSunday =
         [DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
+
+    private static readonly DayOfWeek[] WednesdayToSunday =
+        [DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
 
     private static readonly DemoRestaurant[] Restaurants =
     [
@@ -96,7 +103,9 @@ public static class DevelopmentSeed
             [
                 new DurationRule { MinGuests = 1, MaxGuests = 2, DurationMinutes = 90 },
                 new DurationRule { MinGuests = 3, MaxGuests = 6, DurationMinutes = 120 },
-            ]),
+            ],
+            // A warm green, like the linden tree.
+            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.png")),
         new(
             Name: "Kafana Dunav",
             Slug: "kafana-dunav",
@@ -136,20 +145,69 @@ public static class DevelopmentSeed
                 TableSelectionMode = TableSelectionMode.GuestChooses,
                 DefaultDurationMinutes = 120,
             },
-            DurationRules: []),
+            DurationRules: [],
+            // Danube blue.
+            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.png")),
+        new(
+            Name: "Rooftop Belvedere",
+            Slug: "rooftop-belvedere",
+            CountryCode: Locations.Austria,
+            RegionCode: null,
+            Profile: new(
+                Street: "Prinz-Eugen-Straße 18",
+                PostalCode: "1040",
+                City: "Wien",
+                Phone: "+43 1 5054321",
+                Email: "info@rooftop-belvedere.example",
+                Website: "https://www.rooftop-belvedere.example",
+                Description: "Rooftop-Bar über den Dächern Wiens mit Blick über die ganze Stadt: Signature-Cocktails, Sharing-Plates zum Teilen und lange Sommerabende unter freiem Himmel."),
+            // Wednesday to Sunday 17:00–24:00.
+            OpeningHours: [.. WednesdayToSunday.Select(day => new DemoPeriod(day, new TimeOnly(17, 0), OpeningPeriod.EndOfDay))],
+            // Only areas without floor plan image: the drawn plan, next to Kafana Dunav's "Sala" with image.
+            Areas:
+            [
+                new("Rooftop", null, 70, 100,
+                [
+                    new("R1", 2, Round), new("R2", 2, Round), new("R3", 4, Square), new("R4", 4, Round),
+                    new("R5", 4, Square), new("R6", 6, Rectangle), new("R7", 2, Round), new("R8", 6, Round),
+                ]),
+                new("Lounge", null, 100, 100,
+                [
+                    new("L1", 2, Round), new("L2", 4, Square), new("L3", 4, Round), new("L4", 6, Rectangle), new("L5", 8, Rectangle),
+                ]),
+            ],
+            Settings: new ReservationSettings
+            {
+                ConfirmationMode = ConfirmationMode.Instant,
+                TableSelectionMode = TableSelectionMode.GuestChooses,
+                DefaultDurationMinutes = 120,
+            },
+            DurationRules: [],
+            // Dark and elegant with a champagne gold accent.
+            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.png")),
     ];
 
     /// <summary>
     /// Creates the demo restaurants that do not exist yet and completes their setup. Each part is only added
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
-    /// location (no country), profile (all profile fields empty), opening hours (none), areas with floor plans and tables
-    /// (no areas), reservation settings with duration rules (never saved).
+    /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
+    /// opening hours (none), areas with floor plans and tables (no areas), reservation settings with duration rules (never saved).
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
         var options = services.GetRequiredService<DbContextOptions<AppDbContext>>();
         var environment = services.GetRequiredService<IWebHostEnvironment>();
         var configuration = services.GetRequiredService<IConfiguration>();
+        var uploads = ImageUploads.UploadsDirectory(configuration, environment);
+        Directory.CreateDirectory(uploads);
+
+        // A new file name for every copy, as for an upload, so replacing or deleting the image deletes only its own copy.
+        string CopySeedAsset(string file)
+        {
+            var fileName = $"{Guid.NewGuid():N}{Path.GetExtension(file)}";
+            File.Copy(Path.Combine(environment.ContentRootPath, SeedAssetsPath, file), Path.Combine(uploads, fileName));
+            return fileName;
+        }
 
         foreach (var demo in Restaurants)
         {
@@ -179,6 +237,14 @@ public static class DevelopmentSeed
                     tenant.Website = demo.Profile.Website;
                     tenant.Description = demo.Profile.Description;
                 }
+                if (tenant is { BrandColor: null, ThemeMode: null, FontStyle: null, LogoFileName: null, CoverFileName: null })
+                {
+                    tenant.BrandColor = demo.Branding.BrandColor;
+                    tenant.ThemeMode = demo.Branding.ThemeMode;
+                    tenant.FontStyle = demo.Branding.FontStyle;
+                    tenant.LogoFileName = CopySeedAsset(demo.Branding.LogoFile);
+                    tenant.CoverFileName = CopySeedAsset(demo.Branding.CoverFile);
+                }
                 await db.SaveChangesAsync();
                 tenantId = tenant.Id;
             }
@@ -193,18 +259,10 @@ public static class DevelopmentSeed
 
                 if (!await db.Areas.AnyAsync())
                 {
-                    var uploads = AreaEndpoints.FloorPlanDirectory(configuration, environment);
-                    Directory.CreateDirectory(uploads);
                     for (var i = 0; i < demo.Areas.Length; i++)
                     {
                         var demoArea = demo.Areas[i];
-                        string? fileName = null;
-                        if (demoArea.FloorPlanFile is not null)
-                        {
-                            // A new file name for every copy, as for an upload, so deleting the area deletes only its own copy.
-                            fileName = $"{Guid.NewGuid():N}{Path.GetExtension(demoArea.FloorPlanFile)}";
-                            File.Copy(Path.Combine(environment.ContentRootPath, SeedAssetsPath, demoArea.FloorPlanFile), Path.Combine(uploads, fileName));
-                        }
+                        var fileName = demoArea.FloorPlanFile is null ? null : CopySeedAsset(demoArea.FloorPlanFile);
 
                         var area = new Area
                         {

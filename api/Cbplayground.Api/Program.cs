@@ -216,6 +216,7 @@ app.MapOpeningHoursEndpoints();
 app.MapSpecialDayEndpoints();
 app.MapReservationSettingsEndpoints();
 app.MapProfileEndpoints();
+app.MapBrandingEndpoints();
 app.MapPublicRestaurantEndpoints();
 app.MapStaffReservationEndpoints();
 

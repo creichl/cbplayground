@@ -134,9 +134,9 @@ This README describes the full product vision.
 │   ├── dotnet-tools.json         # local tool manifest (dotnet-ef)
 │   ├── Cbplayground.Api/
 │   │   ├── Auth/                 # roles, policies, tenant claim
-│   │   ├── Backups/              # daily backup of the database and the floor plans
+│   │   ├── Backups/              # daily backup of the database and the uploaded images
 │   │   ├── Data/                 # AppDbContext, entities, development seed
-│   │   │   └── SeedAssets/       # floor plans of the demo restaurants (development seed)
+│   │   │   └── SeedAssets/       # floor plans, logos and cover images of the demo restaurants (development seed)
 │   │   ├── Endpoints/            # endpoint groups, one file per area
 │   │   ├── FloorPlans/           # schematic floor plan: table sizes and automatic arrangement
 │   │   ├── Migrations/           # EF Core migrations
@@ -162,36 +162,38 @@ cd api/Cbplayground.Api
 dotnet run
 ```
 
-The API listens on http://localhost:5025. In every environment it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` (and its folder) on startup and applies all migrations. In the Development environment (the default for `dotnet run`), it also sets up the two demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
+The API listens on http://localhost:5025. In every environment it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` (and its folder) on startup and applies all migrations. In the Development environment (the default for `dotnet run`), it also sets up the three demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
 
 #### Demo data
 
-In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so both are ready to try right after the first start:
+In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so all three are ready to try right after the first start:
 
-| | Gasthaus zur Linde (`zur-linde`) | Kafana Dunav (`kafana-dunav`) |
-| --- | --- | --- |
-| Location | Germany, Bavaria (`DE-BY`) | Serbia (`RS`) |
-| Profile | Address in Munich, phone, email, website, description | Address in Novi Sad, phone, email, website, description |
-| Opening hours | Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays | Every day 12:00–24:00 |
-| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) and "Bašta" (6 tables, 2–8 seats, no floor plan image) |
-| Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes |
+| | Gasthaus zur Linde (`zur-linde`) | Kafana Dunav (`kafana-dunav`) | Rooftop Belvedere (`rooftop-belvedere`) |
+| --- | --- | --- | --- |
+| Location | Germany, Bavaria (`DE-BY`) | Serbia (`RS`) | Austria (`AT`) |
+| Profile | Address in Munich, phone, email, website, description | Address in Novi Sad, phone, email, website, description | Address in Vienna, phone, email, website, description |
+| Opening hours | Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays | Every day 12:00–24:00 | Wednesday to Sunday 17:00–24:00 |
+| Areas | "Gaststube" (10 tables, 2–8 seats) and "Terrasse" (6 tables, online quota 50 %) | "Sala" (12 tables, 2–8 seats) and "Bašta" (6 tables, 2–8 seats, no floor plan image) | "Rooftop" (8 tables, 2–6 seats, online quota 70 %) and "Lounge" (5 tables, 2–8 seats), both without floor plan image |
+| Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes | Instant confirmation, the guest picks the table, 120 minutes |
+| Branding | Light, `Rustic`, warm green `#5a7d3a`, logo and cover image | Light, `Classic`, Danube blue `#1f5f8b`, logo and cover image | Dark, `Elegant`, champagne gold `#c9a96e`, logo and cover image |
 
-So both confirmation modes and both table selection modes can be shown. The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms. The tables have shapes that fit the rooms (square, rectangular for 6 and 8 seats, round ones on the terrace and a few elsewhere; Sala's table 4 is turned by 90°). The three areas with a floor plan image have a table scale of 80 %: at 100 % the drawn tables are large for these rooms, and some come too close to each other. "Bašta" has no floor plan image and a table scale of 100 %; its tables (round, square and rectangular) are arranged by `TableLayout`, so it shows the schematic floor plan.
+So both confirmation modes and both table selection modes can be shown, and the guest's table choice once on drawn plans only (Rooftop Belvedere) and once on a floor plan image (Kafana Dunav's "Sala"). The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms. The tables have shapes that fit the rooms (square, rectangular for 6 and 8 seats, round ones on the terrace and a few elsewhere; Sala's table 4 is turned by 90°). The three areas with a floor plan image have a table scale of 80 %: at 100 % the drawn tables are large for these rooms, and some come too close to each other. "Bašta" has no floor plan image and a table scale of 100 %; its tables (round, square and rectangular) are arranged by `TableLayout`, so it shows the schematic floor plan. The same holds for both areas of Rooftop Belvedere. The logos (a drawn emblem with the name) and cover images (an illustrated scene) are PNG files in the same folder, made for this project (generated, no photos or graphics from elsewhere); the seed copies them into `Uploads:Path` under a new file name as well.
 
 The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
 
 - the location, if no country is set;
 - the profile, if all profile fields are empty;
+- the branding with logo and cover image, if all branding fields (colour, theme, font style, logo, cover image) are empty;
 - the opening hours, if there are none;
 - the areas with their floor plans and tables, if there are no areas (an area without tables gets none);
 - the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, if they were never saved.
 
-A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. Because areas are only added to a restaurant without areas, an existing development database does not get "Bašta"; it only appears after deleting the development database. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
+A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. Because areas are only added to a restaurant without areas, an existing development database does not get "Bašta"; it only appears after deleting the development database. A new demo restaurant such as Rooftop Belvedere is created in an existing database too (by its slug), with its areas, because it has none yet; the existing restaurants get their branding on the next start as long as nobody has set any of it. After deleting the development database, all three restaurants and their branding are certain to be complete. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
 
 Endpoints:
 
 - `GET /api/health`: 200 `{ "status": "ok" }` when the database can be reached, otherwise 503 `{ "error": "unhealthy" }`.
-- `GET /api/tenants`: all active restaurants, sorted by name: `id`, `name`, `slug`, and `city` and `description` from the profile (`null` when empty). Deactivated restaurants are left out.
+- `GET /api/tenants`: all active restaurants, sorted by name: `id`, `name`, `slug`, `city` and `description` from the profile, and `logoUrl`, `coverUrl` and `brandColor` from the branding (each `null` when empty), for the cards of the start page. Deactivated restaurants are left out.
 - `POST /api/auth/login`: body `{ "email", "password" }`. Signs in with a cookie and returns the same user as `me`. On failure: 401 with `{ "error": "invalid_credentials" | "locked_out" | "deactivated" | "restaurant_deactivated" }` (`deactivated`: the user, `restaurant_deactivated`: the user's restaurant); 429 `too_many_requests` after 10 attempts from the same client IP within a minute (`RateLimiting:Login:PermitLimit`).
 - `POST /api/auth/logout`: signs out (204).
 - `GET /api/auth/me`: the signed-in user: `id`, `email`, `displayName`, `role`, `tenant { id, name, slug }` (`null` for the Superadmin); 401 without sign-in.
@@ -208,6 +210,10 @@ Endpoints:
 - `GET /api/admin/tenant`: the restaurant of the signed-in Tenant Admin.
 - `GET /api/admin/profile`: the profile of the Tenant Admin's restaurant, which guests will see: `street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`. Every field is optional and `null` when empty.
 - `PUT /api/admin/profile`: saves the profile, same body as `GET`, and returns it. Values are trimmed, empty values are stored as `null`. Maximum lengths: street 200, postal code 10, city 100, phone 30, email 254, website 200, description 500 characters. The email needs the form `name@domain.tld`, the website must be an absolute `http` or `https` URL. On failure: 400 with `{ "error": "invalid_street" | "invalid_postal_code" | "invalid_city" | "invalid_phone" | "invalid_email" | "invalid_website" | "invalid_description" }`.
+- `GET /api/admin/branding`: the branding of the Tenant Admin's restaurant: `brandColor` (`#rrggbb` or `null` for the platform's colour), `themeMode` (`Light` | `Dark`, `Light` when not set), `fontStyle` (`Modern` | `Classic` | `Elegant` | `Rustic` | `Urban`, `Modern` when not set; which fonts stand behind it is up to the web), `logoUrl` and `coverUrl` (`null` without image). The fields are stored on `Tenant` and are `null` until set.
+- `PUT /api/admin/branding`: body `{ "brandColor", "themeMode", "fontStyle" }`, returns the branding as `GET`. The colour is stored in lower case; empty values are stored as `null` (the default). On failure: 400 with `{ "error": "invalid_brand_color" | "invalid_theme_mode" | "invalid_font_style" }`.
+- `PUT /api/admin/branding/logo` and `PUT /api/admin/branding/cover`: the body is the image itself, PNG, JPEG or WebP (no SVG), the logo at most 2 MB, the cover image at most 10 MB. The type is detected from the content and the file name is chosen by the server (`ImageUploads`, shared with the floor plans); the file is stored in `Uploads:Path`. Replaces an existing image and deletes its file. Returns the branding. Errors as for the floor plans: 415 `floor_plan_type_invalid`, 413 `logo_too_large` (logo) or `floor_plan_too_large` (cover image, the same 10 MB as a floor plan).
+- `DELETE /api/admin/branding/logo` and `DELETE /api/admin/branding/cover`: removes the image and its file, returns the branding.
 - `GET /api/admin/setup-status`: which steps of the restaurant's setup are done, each `true` or `false`:
   - `profile`: street, postal code, city and phone are filled in;
   - `location`: the country is set;
@@ -257,7 +263,8 @@ Endpoints:
 `IReservationDurationPolicy.GetDurationAsync(guests)` returns the duration of a reservation for the current restaurant: the duration of the rule that contains the party size, otherwise the default duration.
 
 - Guest booking, without sign-in. The restaurant comes from the slug in the URL (unknown slug or deactivated restaurant: 404) and is the tenant of the request, also when a user of another restaurant is signed in. `calendar`, `availability` and `tables` share a limit of 120 calls per client IP and minute (`RateLimiting:PublicReads:PermitLimit`), then 429 `too_many_requests`:
-  - `GET /api/public/restaurants/{slug}`: `name`, the profile (`street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`, each `null` when empty), `timeZoneId`, `confirmationMode`, `tableSelectionMode`, `maxOnlinePartySize` (seats of the largest table that can be booked online, 0 if none, at most the restaurant's own limit), `bookingHorizonDays`, `openingHours` (the week, as in `GET /api/admin/opening-hours`) and `bookable` (false without location, opening hours or tables that can be booked online).
+  - `GET /api/public/restaurants/{slug}`: `name`, the profile (`street`, `postalCode`, `city`, `phone`, `email`, `website`, `description`, each `null` when empty), `timeZoneId`, `confirmationMode`, `tableSelectionMode`, `maxOnlinePartySize` (seats of the largest table that can be booked online, 0 if none, at most the restaurant's own limit), `bookingHorizonDays`, `openingHours` (the week, as in `GET /api/admin/opening-hours`), `bookable` (false without location, opening hours or tables that can be booked online) and `branding` (`{ "brandColor", "themeMode", "fontStyle", "logoUrl", "coverUrl" }`, as in `GET /api/admin/branding`).
+  - `GET /api/public/restaurants/{slug}/logo` and `/cover`: the restaurant's logo or cover image, 404 without one. The URLs in the branding carry the image's version (`?v=`, its file name, which changes with every upload); with the current version the image may be cached for a year (`Cache-Control: public, max-age=31536000, immutable`), otherwise it is revalidated (`no-cache`).
   - `GET /api/public/restaurants/{slug}/calendar?month=YYYY-MM&guests=N`: one entry per day of the month, `{ "date", "status" }` with `closed` (closed, also on closing days, in the past or beyond the booking horizon), `full` or `available`, for the date picker. Errors: `invalid_month`, `invalid_party_size`.
   - `GET /api/public/restaurants/{slug}/availability?date=YYYY-MM-DD&guests=N`: `date`, `guests`, `durationMinutes` and `periods`: per opening window `{ "start", "end", "times": [{ "time", "available" }] }`. No periods on closing days and closed public holidays; on days with special hours exactly these windows.
   - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tableScale", "tables": [{ "id", "number", "seats", "posX", "posY", "shape", "rotation", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
@@ -326,11 +333,11 @@ In Development, every start adds demo reservations from today to today + 7 days 
 
 The demo reservations have no guest link (no manage token), so they cannot be opened on the guest's page "Your reservation". To see a reservation with a link after its start (cancelling is no longer possible): while a demo restaurant is open, e.g. Kafana Dunav (12:00–22:00 start times, Europe/Belgrade), book the next free quarter hour of today online, keep the link from the confirmation and open it again once that time has passed in the restaurant's time zone.
 
-Uploaded floor plans are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
+Uploaded floor plans, logos and cover images are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
 
 ### Backups
 
-Outside Development, the API backs up the database once a day at `Backup:TimeOfDay` (default `03:00`, local server time). Each backup is one zip file in `Backup:Path` (default `data/backups`, relative to `api/Cbplayground.Api`, ignored by git), named after its time, e.g. `cbplayground-20261031-030000.zip`. It contains the database file, copied consistently with the SQLite online backup while the API keeps running, and the uploaded floor plans in `uploads/`. Backups older than `Backup:RetentionDays` (default 30) are deleted after each run. If the newest backup is more than a day old when the API starts, for example because the API was down at the scheduled time, it backs up right away. A failed backup is logged as an error; the API keeps running.
+Outside Development, the API backs up the database once a day at `Backup:TimeOfDay` (default `03:00`, local server time). Each backup is one zip file in `Backup:Path` (default `data/backups`, relative to `api/Cbplayground.Api`, ignored by git), named after its time, e.g. `cbplayground-20261031-030000.zip`. It contains the database file, copied consistently with the SQLite online backup while the API keeps running, and the uploaded images (floor plans, logos and cover images) in `uploads/`. Backups older than `Backup:RetentionDays` (default 30) are deleted after each run. If the newest backup is more than a day old when the API starts, for example because the API was down at the scheduled time, it backs up right away. A failed backup is logged as an error; the API keeps running.
 
 `Backup:Enabled` switches the backups on (`appsettings.json`) or off (`appsettings.Development.json`). To try them locally: `dotnet run -- --Backup:Enabled=true`.
 
@@ -355,7 +362,7 @@ All settings are in `appsettings.json` and can be overridden per environment (`a
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `ConnectionStrings:Default` | `Data Source=data/cbplayground.db` | The SQLite database. Its folder is created and all migrations are applied on startup, in every environment; demo data only in Development. |
-| `Uploads:Path` | `data/uploads` | The uploaded floor plans. |
+| `Uploads:Path` | `data/uploads` | The uploaded floor plans, logos and cover images. |
 | `Backup:Enabled`, `Backup:Path`, `Backup:TimeOfDay`, `Backup:RetentionDays` | `true`, `data/backups`, `03:00`, `30` | The daily backups, see [Backups](#backups). |
 | `DataProtection:KeysPath` | `data/keys` | The keys of the sign-in cookie (ASP.NET Core Data Protection, application name `cbplayground`). Kept on disk so staff stay signed in when the API restarts; ignored by git and not backed up. The folder must be writable and should only be readable by the API's user. Deleting it signs everybody out. |
 | `RateLimiting:Login:PermitLimit` | `10` | Sign-in attempts per client IP and minute. |
@@ -401,6 +408,10 @@ Demo users, created in Development only (from `Seed:Users` in `appsettings.Devel
 | `frontdesk@zur-linde.local` | FrontDesk | Gasthaus zur Linde |
 | `admin@kafana-dunav.local` | TenantAdmin | Kafana Dunav |
 | `frontdesk@kafana-dunav.local` | FrontDesk | Kafana Dunav |
+| `admin@rooftop-belvedere.local` | TenantAdmin | Rooftop Belvedere |
+| `frontdesk@rooftop-belvedere.local` | FrontDesk | Rooftop Belvedere |
+
+The login page of the development server does not list the two Rooftop Belvedere users yet; they sign in like the others.
 
 ### Opening hours and public holidays
 

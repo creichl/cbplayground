@@ -1,5 +1,7 @@
 using System.IO.Compression;
+using System.Net.Http.Json;
 using Cbplayground.Api.Backups;
+using Cbplayground.Api.Endpoints;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -32,6 +34,25 @@ public sealed class BackupTests : IDisposable
         using var command = connection.CreateCommand();
         command.CommandText = "SELECT COUNT(*) FROM Tenants";
         Assert.Equal(2L, command.ExecuteScalar());
+    }
+
+    [Fact]
+    public async Task Create_ContainsTheLogoAndTheCoverOfTheRestaurants()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        byte[] png = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1];
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 2];
+        using var admin = factory.CreateHttpsClient();
+        (await admin.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, ct)).EnsureSuccessStatusCode();
+        (await admin.PutAsync("/api/admin/branding/logo", new ByteArrayContent(png), ct)).EnsureSuccessStatusCode();
+        var cover = await admin.PutAsync("/api/admin/branding/cover", new ByteArrayContent(jpeg), ct);
+        var branding = (await cover.Content.ReadFromJsonAsync<BrandingEndpoints.BrandingResponse>(ct))!;
+
+        var file = Backup.Create(new DateTime(2026, 11, 1, 3, 0, 0));
+
+        ZipFile.ExtractToDirectory(file, extractPath);
+        Assert.Equal(png, File.ReadAllBytes(Path.Combine(extractPath, "uploads", branding.LogoUrl!.Split("?v=")[1] + ".png")));
+        Assert.Equal(jpeg, File.ReadAllBytes(Path.Combine(extractPath, "uploads", branding.CoverUrl!.Split("?v=")[1] + ".jpg")));
     }
 
     [Fact]
