@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.RegularExpressions;
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
@@ -63,10 +64,10 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         {
             var image = await linde.GetAsync(area.FloorPlanUrl, Ct);
             Assert.Equal(HttpStatusCode.OK, image.StatusCode);
-            Assert.Equal("image/png", image.Content.Headers.ContentType?.MediaType);
+            Assert.Equal("image/webp", image.Content.Headers.ContentType?.MediaType);
         }
-        // Three floor plans, logo and cover image of each of the three restaurants and a photo of each of the six areas, copied once.
-        Assert.Equal(15, Directory.GetFiles(factory.UploadsPath).Length);
+        // Five floor plans, logo and cover image of each of the three restaurants and a photo of each of the six areas, copied once.
+        Assert.Equal(17, Directory.GetFiles(factory.UploadsPath).Length);
 
         var hours = (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Ct))!;
         Assert.Equal(12, hours.Periods!.Count);
@@ -77,7 +78,12 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(TableSelectionMode.SystemAssigns, settings.TableSelectionMode);
         Assert.Equal([new DurationRuleDto(1, 2, 90), new DurationRuleDto(3, 6, 120)], settings.DurationRules);
 
-        Assert.All(areas, a => Assert.Equal(80, a.TableScale));
+        // On the floor plan images, the table scale fits the plan's scale; the tables lie within the plan without overlapping.
+        Assert.Equal([90, 85], areas.Select(a => a.TableScale));
+        foreach (var area in areas)
+        {
+            AssertArrangedWithoutOverlap(tables.Where(t => t.AreaId == area.Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), area.TableScale);
+        }
         Assert.Equal(TableShape.Rectangle, tables.Single(t => t.Number == "8").Shape);
         Assert.Equal(TableShape.Round, tables.Single(t => t.Number == "T1").Shape);
 
@@ -87,6 +93,8 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var dunavTables = (await dunav.GetFromJsonAsync<List<TableResponse>>("/api/admin/tables", Ct))!;
         Assert.Equal(18, dunavTables.Count);
         Assert.Equal(12, dunavTables.Count(t => t.AreaId == dunavAreas[0].Id));
+        Assert.Equal(80, dunavAreas[0].TableScale);
+        AssertArrangedWithoutOverlap(dunavTables.Where(t => t.AreaId == dunavAreas[0].Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), dunavAreas[0].TableScale);
 
         // "Bašta" has no floor plan image; its tables of mixed size and shape are arranged without overlapping.
         var basta = dunavAreas[1];
@@ -142,7 +150,7 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
     }
 
     [Fact]
-    public async Task The_seed_adds_Rooftop_Belvedere_with_drawn_areas_and_a_dark_branding()
+    public async Task The_seed_adds_Rooftop_Belvedere_with_floor_plan_images_and_a_dark_branding()
     {
         await SeedAsync();
         await SeedAsync();
@@ -169,14 +177,16 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var listItem = Assert.Single((await guest.GetFromJsonAsync<List<TenantEndpoints.TenantListItem>>("/api/tenants", Ct))!, t => t.Slug == "rooftop-belvedere");
         Assert.Equal((rooftop.Branding.LogoUrl, rooftop.Branding.CoverUrl, "#c9a96e"), (listItem.LogoUrl, listItem.CoverUrl, listItem.BrandColor));
 
-        // Only areas without floor plan image, their tables of mixed shape arranged without overlapping.
+        // Both areas with a floor plan image and the table scale of its plan; their tables of mixed shape lie within the plan without overlapping.
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var tenant = await db.Tenants.SingleAsync(t => t.Slug == "rooftop-belvedere", Ct);
         scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = tenant.Id;
         var areas = await db.Areas.OrderBy(a => a.SortOrder).ToListAsync(Ct);
         Assert.Equal(["Rooftop", "Lounge"], areas.Select(a => a.Name));
-        Assert.All(areas, a => Assert.Null(a.FloorPlanFileName));
+        Assert.All(areas, a => Assert.EndsWith(".webp", a.FloorPlanFileName));
+        Assert.All(areas, a => Assert.True(File.Exists(Path.Combine(factory.UploadsPath, a.FloorPlanFileName!))));
+        Assert.Equal([68, 85], areas.Select(a => a.TableScale));
         Assert.All(areas, a => Assert.NotNull(a.PhotoFileName));
         Assert.Equal("Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.", areas[0].Description);
         Assert.Equal([70, 100], areas.Select(a => a.OnlineCapacityPercent));
@@ -194,27 +204,9 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
             AssertArrangedWithoutOverlap(tables.Where(t => t.AreaId == area.Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), area.TableScale);
         }
 
-        // The rooftop with stairs and entrance at a side, the bar at the back, planters and the view; the lounge indoors with
-        // windows, two sofas, a small bar and the entrance. Seeded twice, but each element only once.
+        // The images show the rooms, so the areas have no room elements; the rooftop keeps its room style.
         Assert.Equal([RoomStyle.Rooftop, RoomStyle.Indoor], areas.Select(a => a.RoomStyle));
-        var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync(Ct);
-        var rooftopRoom = elements.Where(e => e.AreaId == areas[0].Id).ToList();
-        var loungeRoom = elements.Where(e => e.AreaId == areas[1].Id).ToList();
-        Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Stairs);
-        var rooftopEntrance = Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Entrance);
-        Assert.Contains(rooftopEntrance.Rotation, new[] { 90, 270 });
-        var rooftopBar = Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Bar);
-        Assert.Equal(0, rooftopBar.PosY - rooftopBar.Height / 2, 10);
-        Assert.Contains(rooftopRoom, e => e.Kind == RoomElementKind.Plant);
-        Assert.Equal("Blick auf den Stephansdom", Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Label).Label);
-        Assert.DoesNotContain(rooftopRoom, e => e.Kind == RoomElementKind.Window);
-        Assert.Contains(loungeRoom, e => e.Kind == RoomElementKind.Window);
-        Assert.Equal(2, loungeRoom.Count(e => e.Kind == RoomElementKind.Sofa));
-        Assert.Single(loungeRoom, e => e.Kind == RoomElementKind.Bar);
-        Assert.Single(loungeRoom, e => e.Kind == RoomElementKind.Entrance);
-        Assert.Equal(elements.Count, rooftopRoom.Count + loungeRoom.Count);
-        RoomLayoutTests.AssertClearOfElements(rooftopTables, rooftopRoom, 100, TableLayout.ChairSpace);
-        RoomLayoutTests.AssertClearOfElements(loungeTables, loungeRoom, 100, TableLayout.ChairSpace);
+        Assert.Empty(await db.RoomElements.ToListAsync(Ct));
         var settings = await db.ReservationSettings.SingleAsync(Ct);
         Assert.Equal(120, settings.DefaultDurationMinutes);
         Assert.Equal(1, await db.Tenants.CountAsync(t => t.Slug == "rooftop-belvedere", Ct));
@@ -257,6 +249,27 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == "rooftop-belvedere", Ct)).Id;
         Assert.NotEmpty(await db.Reservations.ToListAsync(Ct));
+    }
+
+    [Fact]
+    public void Every_seed_asset_has_complete_credits()
+    {
+        var folder = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
+        var credits = File.ReadAllText(Path.Combine(folder, "CREDITS.md"));
+        var sections = Regex.Split(credits, @"^(?=## `)", RegexOptions.Multiline).Skip(1).ToList();
+
+        // One section per file, and no section without its file.
+        Assert.Equal(
+            Directory.GetFiles(folder).Select(Path.GetFileName).Where(f => f != "CREDITS.md").Order(),
+            sections.Select(section => Regex.Match(section, @"^## `([^`]+)`").Groups[1].Value).Order());
+        foreach (var section in sections)
+        {
+            foreach (var field in new[] { "- Source: ", "- Licence: ", "- Retrieved: ", "- Changes: " })
+            {
+                Assert.Contains(field, section);
+            }
+            Assert.True(section.Contains("- Author: ") || section.Contains("- Photographer: "), section);
+        }
     }
 
     /// <summary>The tables and their chairs do not touch a blocking element or the room in front of an entrance.</summary>

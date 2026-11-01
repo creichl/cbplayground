@@ -24,6 +24,13 @@ var connectionString = SqliteConnectionStrings.Resolve(
     builder.Environment.ContentRootPath);
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
+// "dotnet run -- --reset-demo-data": deletes the database and the uploaded images before anything opens them, so this start
+// migrates and seeds from scratch. Only in Development; elsewhere it aborts the start without deleting anything.
+if (args.Contains(DemoDataReset.Argument))
+{
+    DemoDataReset.Run(builder.Environment, connectionString, ImageUploads.UploadsDirectory(builder.Configuration, builder.Environment));
+}
+
 // The keys that protect the sign-in cookie, kept on disk so staff stay signed in when the API restarts.
 // Not part of the backups (see DatabaseBackup).
 var dataProtectionKeysPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["DataProtection:KeysPath"] ?? "data/keys"));
