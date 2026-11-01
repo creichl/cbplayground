@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cbplayground.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261101105631_AddAreaPhotoAndDescription")]
+    [Migration("20261101121025_AddAreaPhotoAndDescription")]
     partial class AddAreaPhotoAndDescription
     {
         /// <inheritdoc />
@@ -123,6 +123,11 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<string>("PhotoFileName")
                         .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("RoomStyle")
+                        .IsRequired()
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("SortOrder")
@@ -340,6 +345,54 @@ namespace Cbplayground.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("ReservationSettings");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.RoomElement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AreaId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Height")
+                        .HasColumnType("REAL");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Label")
+                        .HasMaxLength(40)
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("PosX")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("PosY")
+                        .HasColumnType("REAL");
+
+                    b.Property<int>("Rotation")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Width")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("RoomElements");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.SpecialDay", b =>
@@ -750,6 +803,21 @@ namespace Cbplayground.Api.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.RoomElement", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Area", null)
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
 

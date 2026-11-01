@@ -53,7 +53,7 @@ public static class PublicRestaurantEndpoints
 
     public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
 
-    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables);
+    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements);
 
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
@@ -239,6 +239,7 @@ public static class PublicRestaurantEndpoints
             var tables = (await db.Tables.ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .ToList();
+            var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync();
             return Results.Ok(areas.Select(area => new PublicArea(
                 area.Id,
                 area.Name,
@@ -249,7 +250,9 @@ public static class PublicRestaurantEndpoints
                 tables
                     .Where(t => t.AreaId == area.Id)
                     .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation, freeTableIds.Contains(t.Id)))
-                    .ToList()))
+                    .ToList(),
+                area.RoomStyle,
+                elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList()))
                 .ToList());
         }).RequireRateLimiting(ReadRateLimitPolicy);
 

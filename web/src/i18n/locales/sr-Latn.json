@@ -10,6 +10,12 @@
       "de": "Deutsch",
       "sr-Latn": "Srpski (latinica)",
       "sr-Cyrl": "Српски (ћирилица)"
+    },
+    "short": {
+      "en": "EN",
+      "de": "DE",
+      "sr-Latn": "SR",
+      "sr-Cyrl": "СР"
     }
   },
   "common": {
@@ -68,8 +74,18 @@
   },
   "home": {
     "title": "Restorani",
-    "subtitle": "Izaberite restoran i rezervišite sto.",
-    "empty": "Još nema restorana.",
+    "heading": "Rezervišite sto – direktno kod restorana",
+    "subtitle": "Izaberite restoran i rezervišite sto onlajn u nekoliko koraka.",
+    "search": "Pretraga po nazivu ili mestu",
+    "loading": "Učitavanje restorana …",
+    "results_one": "Pronađen je {{count}} restoran",
+    "results_few": "Pronađena su {{count}} restorana",
+    "results_other": "Pronađeno je {{count}} restorana",
+    "emptyTitle": "Još nema restorana",
+    "empty": "Uskoro ćete ovde naći restorane u kojima možete direktno da rezervišete sto.",
+    "noMatchTitle": "Nijedan restoran ne odgovara upitu „{{query}}“",
+    "noMatch": "Proverite unos ili pokušajte sa drugim nazivom ili mestom.",
+    "resetSearch": "Poništi pretragu",
     "reserve": "Rezerviši sto"
   },
   "guest": {

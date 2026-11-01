@@ -9,7 +9,7 @@ public class TableLayoutTests
     private const double Tolerance = 1e-9;
 
     /// <summary>Tables "1" to <paramref name="count"/> of mixed sizes and shapes, not in the order of their numbers.</summary>
-    private static List<Table> MixedTables(int count)
+    internal static List<Table> MixedTables(int count)
     {
         int[] seats = [2, 4, 6, 8, 4, 2, 3, 5, 4, 6];
         TableShape[] shapes = [TableShape.Round, TableShape.Square, TableShape.Rectangle];
@@ -26,7 +26,7 @@ public class TableLayoutTests
     }
 
     /// <summary>The table's rectangle (round tables: the enclosing square) as fractions of the plan, grown by <paramref name="space"/> (in plan widths) on every side.</summary>
-    private static (double Left, double Top, double Right, double Bottom) Bounds(Table table, int tableScale, double space = 0)
+    internal static (double Left, double Top, double Right, double Bottom) Bounds(Table table, int tableScale, double space = 0)
     {
         var (width, height) = TableLayout.TableSize(table.Shape, table.Seats, table.Rotation, tableScale);
         var halfWidth = width / 2 + space;
@@ -42,14 +42,14 @@ public class TableLayoutTests
             && first.Top < second.Bottom - Tolerance && second.Top < first.Bottom - Tolerance;
     }
 
-    private static void AssertInside(Table table, int tableScale, double space = 0)
+    internal static void AssertInside(Table table, int tableScale, double space = 0)
     {
         var (left, top, right, bottom) = Bounds(table, tableScale, space);
         Assert.True(left >= -Tolerance && top >= -Tolerance && right <= 1 + Tolerance && bottom <= 1 + Tolerance,
             $"Table {table.Number} at {table.PosX}/{table.PosY} is not inside the plan.");
     }
 
-    private static void AssertNoOverlap(IReadOnlyList<Table> tables, int tableScale, double space = 0)
+    internal static void AssertNoOverlap(IReadOnlyList<Table> tables, int tableScale, double space = 0)
     {
         for (var i = 0; i < tables.Count; i++)
         {

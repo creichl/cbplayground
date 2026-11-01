@@ -16,8 +16,25 @@ public static class AreaEndpoints
     public const long MaxFloorPlanBytes = 10 * 1024 * 1024;
     public const long MaxPhotoBytes = 10 * 1024 * 1024;
 
+    /// <summary>The most room elements an area can have.</summary>
+    public const int MaxRoomElements = 60;
+
     /// <summary><see cref="Description"/> and the URLs are null when empty.</summary>
-    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, string? Description, string? PhotoUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent, int TableScale);
+    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, string? Description, string? PhotoUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent, int TableScale, RoomStyle RoomStyle);
+
+    public record RoomElementResponse(Guid Id, RoomElementKind Kind, double PosX, double PosY, double Width, double Height, int Rotation, string? Label);
+
+    /// <summary>The room of an area: its style and its elements in their order.</summary>
+    public record RoomResponse(RoomStyle RoomStyle, IReadOnlyList<RoomElementResponse> Elements);
+
+    /// <summary>A room element as it is saved; <see cref="Id"/> is ignored, every saved element gets a new one.</summary>
+    public record RoomElementRequest(Guid? Id, string? Kind, double PosX, double PosY, double Width, double Height, int Rotation, string? Label);
+
+    /// <summary>Replaces the style and all elements of the room; without <see cref="Elements"/> the room has none.</summary>
+    public record UpdateRoomRequest(string? RoomStyle, List<RoomElementRequest>? Elements);
+
+    /// <summary>The suggested room and the tables of the area arranged in it.</summary>
+    public record SuggestedRoomResponse(RoomStyle RoomStyle, IReadOnlyList<RoomElementResponse> Elements, IReadOnlyList<TableEndpoints.TableResponse> Tables);
 
     public record CreateAreaRequest(string? Name);
 
@@ -92,6 +109,7 @@ public static class AreaEndpoints
         });
 
         // Arranges all tables of the area anew (TableLayout), also in an area with floor plan image.
+        // Without image the tables keep away from the room elements; on an image the image shows the room, so they are ignored.
         group.MapPost("/{id:guid}/arrange-tables", async (Guid id, AppDbContext db) =>
         {
             var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
@@ -101,11 +119,101 @@ public static class AreaEndpoints
             }
 
             var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
-            TableLayout.Arrange(tables, area.TableScale);
+            TableLayout.Arrange(tables, area.TableScale, await ElementsForLayoutAsync(db, area));
             await db.SaveChangesAsync();
-            return Results.Ok(tables
-                .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
-                .Select(TableEndpoints.ToResponse));
+            return Results.Ok(InNumberOrder(tables));
+        });
+
+        group.MapGet("/{id:guid}/room", async (Guid id, AppDbContext db) =>
+        {
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            if (area is null)
+            {
+                return Results.NotFound();
+            }
+
+            var elements = await db.RoomElements.Where(e => e.AreaId == id).OrderBy(e => e.SortOrder).ToListAsync();
+            return Results.Ok(new RoomResponse(area.RoomStyle, elements.Select(ToResponse).ToList()));
+        });
+
+        // Replaces the style and all elements of the room, all or nothing. The tables stay where they are.
+        group.MapPut("/{id:guid}/room", async (Guid id, UpdateRoomRequest request, AppDbContext db) =>
+        {
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            if (area is null)
+            {
+                return Results.NotFound();
+            }
+
+            if (ParseEnum<RoomStyle>(request.RoomStyle) is not { } roomStyle)
+            {
+                return ErrorResponse.Result("invalid_room_style", StatusCodes.Status400BadRequest);
+            }
+            var requested = request.Elements ?? [];
+            if (requested.Count > MaxRoomElements)
+            {
+                return ErrorResponse.Result("too_many_room_elements", StatusCodes.Status400BadRequest);
+            }
+            var elements = new List<RoomElement>();
+            foreach (var element in requested)
+            {
+                if (ParseEnum<RoomElementKind>(element.Kind) is not { } kind)
+                {
+                    return ErrorResponse.Result("invalid_room_element", StatusCodes.Status400BadRequest);
+                }
+                if (element.PosX is < 0 or > 1 || element.PosY is < 0 or > 1
+                    || element.Width is <= 0 or > 1 || element.Height is <= 0 or > 1
+                    || element.Rotation is not (0 or 90 or 180 or 270))
+                {
+                    return ErrorResponse.Result("invalid_room_element_position", StatusCodes.Status400BadRequest);
+                }
+                var label = string.IsNullOrWhiteSpace(element.Label) ? null : element.Label.Trim();
+                if (label?.Length > RoomElement.MaxLabelLength || (kind == RoomElementKind.Label && label is null))
+                {
+                    return ErrorResponse.Result("invalid_room_element_label", StatusCodes.Status400BadRequest);
+                }
+                elements.Add(new RoomElement
+                {
+                    AreaId = area.Id,
+                    Kind = kind,
+                    PosX = element.PosX,
+                    PosY = element.PosY,
+                    Width = element.Width,
+                    Height = element.Height,
+                    Rotation = element.Rotation,
+                    Label = label,
+                    SortOrder = elements.Count,
+                });
+            }
+
+            area.RoomStyle = roomStyle;
+            db.RoomElements.RemoveRange(await db.RoomElements.Where(e => e.AreaId == id).ToListAsync());
+            db.RoomElements.AddRange(elements);
+            await db.SaveChangesAsync();
+            return Results.Ok(new RoomResponse(area.RoomStyle, elements.Select(ToResponse).ToList()));
+        });
+
+        // Replaces the elements by the suggestion for the room style and the number of tables (RoomSuggestion), then arranges
+        // the tables anew around them; in an area with floor plan image without regard to the elements, as arrange-tables.
+        group.MapPost("/{id:guid}/suggest-room", async (Guid id, AppDbContext db) =>
+        {
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            if (area is null)
+            {
+                return Results.NotFound();
+            }
+
+            var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
+            var elements = RoomSuggestion.Suggest(area.RoomStyle, tables.Count);
+            foreach (var element in elements)
+            {
+                element.AreaId = area.Id;
+            }
+            db.RoomElements.RemoveRange(await db.RoomElements.Where(e => e.AreaId == id).ToListAsync());
+            db.RoomElements.AddRange(elements);
+            TableLayout.Arrange(tables, area.TableScale, area.FloorPlanFileName is null ? elements : null);
+            await db.SaveChangesAsync();
+            return Results.Ok(new SuggestedRoomResponse(area.RoomStyle, elements.Select(ToResponse).ToList(), InNumberOrder(tables)));
         });
 
         // Deletes the area together with its tables (cascade), its floor plan image and its photo. Not while one of its tables
@@ -235,6 +343,22 @@ public static class AreaEndpoints
 
     private static bool IsValidName(string? name) => !string.IsNullOrEmpty(name) && name.Length <= MaxNameLength;
 
+    /// <summary>The value of that name, in any case, as the JSON enums; null for anything else, numbers included.</summary>
+    private static TEnum? ParseEnum<TEnum>(string? value) where TEnum : struct, Enum =>
+        Enum.GetValues<TEnum>().Select(v => (TEnum?)v).FirstOrDefault(v => string.Equals(v.ToString(), value, StringComparison.OrdinalIgnoreCase));
+
+    private static List<TableEndpoints.TableResponse> InNumberOrder(List<Table> tables) => tables
+        .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
+        .Select(TableEndpoints.ToResponse)
+        .ToList();
+
+    /// <summary>The room elements the tables of the area keep away from: none in an area with floor plan image, where the image shows the room.</summary>
+    internal static async Task<List<RoomElement>> ElementsForLayoutAsync(AppDbContext db, Area area) =>
+        area.FloorPlanFileName is null ? await db.RoomElements.Where(e => e.AreaId == area.Id).ToListAsync() : [];
+
+    internal static RoomElementResponse ToResponse(RoomElement element) =>
+        new(element.Id, element.Kind, element.PosX, element.PosY, element.Width, element.Height, element.Rotation, element.Label);
+
     private static AreaResponse ToResponse(Area area) => new(
         area.Id,
         area.Name,
@@ -244,7 +368,8 @@ public static class AreaEndpoints
         PhotoUrl(area),
         area.OnlineBookingEnabled,
         area.OnlineCapacityPercent,
-        area.TableScale);
+        area.TableScale,
+        area.RoomStyle);
 
     /// <summary>The public URL of the area's floor plan image; null without floor plan.</summary>
     internal static string? FloorPlanUrl(Area area) =>

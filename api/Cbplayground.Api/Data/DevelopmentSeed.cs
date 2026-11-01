@@ -33,9 +33,11 @@ public static class DevelopmentSeed
 
     /// <summary>
     /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. <see cref="PhotoFile"/> is a photo in
-    /// <see cref="SeedAssetsPath"/>, <see cref="Description"/> is in the restaurant's language.
+    /// <see cref="SeedAssetsPath"/>, <see cref="Description"/> is in the restaurant's language. <see cref="Room"/> creates the
+    /// elements of its room, new ones on every call.
     /// </summary>
-    private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, int TableScale, DemoTable[] Tables, string Description, string PhotoFile);
+    private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, int TableScale, DemoTable[] Tables,
+        string Description, string PhotoFile, RoomStyle RoomStyle = RoomStyle.Indoor, Func<List<RoomElement>>? Room = null);
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
@@ -141,14 +143,16 @@ public static class DevelopmentSeed
                 ],
                 Description: "Topla sala sa domaćom atmosferom, za porodične ručkove i veća društva.",
                 PhotoFile: "sala-photo.jpg"),
-                // The garden has no floor plan image: the API draws it from the tables.
+                // The garden has no floor plan image: the web draws its room, the suggested garden with the river at the top.
                 new("Bašta", null, 100, 100,
                 [
                     new("B1", 2, Round), new("B2", 4, Square), new("B3", 4, Round),
                     new("B4", 6, Rectangle), new("B5", 8, Rectangle), new("B6", 2, Square),
                 ],
                 Description: "Bašta u hladu lipa, pogled na Dunav",
-                PhotoFile: "basta-photo.jpg"),
+                PhotoFile: "basta-photo.jpg",
+                RoomStyle.Garden,
+                () => [.. RoomSuggestion.Suggest(RoomStyle.Garden, 6), Label("Dunav", 0.27, top: true)]),
             ],
             Settings: new ReservationSettings
             {
@@ -177,19 +181,34 @@ public static class DevelopmentSeed
             // Only areas without floor plan image: the drawn plan, next to Kafana Dunav's "Sala" with image.
             Areas:
             [
+                // The suggested rooftop: stairs with the entrance, the bar at the back, planters; the view over the front parapet.
                 new("Rooftop", null, 70, 100,
                 [
                     new("R1", 2, Round), new("R2", 2, Round), new("R3", 4, Square), new("R4", 4, Round),
                     new("R5", 4, Square), new("R6", 6, Rectangle), new("R7", 2, Round), new("R8", 6, Round),
                 ],
                 Description: "Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.",
-                PhotoFile: "rooftop-photo.jpg"),
+                PhotoFile: "rooftop-photo.jpg",
+                RoomStyle.Rooftop,
+                () => [.. RoomSuggestion.Suggest(RoomStyle.Rooftop, 8), Label("Blick auf den Stephansdom", 0.5, top: false)]),
+                // Windows at the top, a sofa at each side wall, a small bar in the bottom right corner and the entrance beside it.
                 new("Lounge", null, 100, 100,
                 [
                     new("L1", 2, Round), new("L2", 4, Square), new("L3", 4, Round), new("L4", 6, Rectangle), new("L5", 8, Rectangle),
                 ],
                 Description: "Lounge hinter Panoramafenstern mit bequemen Sesseln, auch bei Regen mit Blick über die Dächer.",
-                PhotoFile: "lounge-photo.jpg"),
+                PhotoFile: "lounge-photo.jpg",
+                RoomStyle.Indoor,
+                () =>
+                [
+                    RoomSuggestion.AtWall(RoomElementKind.Entrance, 0, 0.35),
+                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.2),
+                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.5),
+                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.8),
+                    RoomSuggestion.AtWall(RoomElementKind.Sofa, 90, 0.45),
+                    RoomSuggestion.AtWall(RoomElementKind.Sofa, 270, 0.45),
+                    RoomSuggestion.AtWall(RoomElementKind.Bar, 0, 0.9, length: 0.2),
+                ]),
             ],
             Settings: new ReservationSettings
             {
@@ -202,12 +221,21 @@ public static class DevelopmentSeed
             Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg")),
     ];
 
+    /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
+    private static RoomElement Label(string text, double x, bool top)
+    {
+        var label = RoomSuggestion.Element(RoomElementKind.Label, 0, x, 0);
+        label.PosY = top ? label.Height / 2 : 1 - label.Height / 2;
+        label.Label = text;
+        return label;
+    }
+
     /// <summary>
     /// Creates the demo restaurants that do not exist yet and completes their setup. Each part is only added
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
-    /// opening hours (none), areas with floor plans, tables, photo and description (no areas), reservation settings with duration rules
-    /// (never saved). An existing demo area gets its photo and description when it has neither.
+    /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
+    /// rules (never saved). An existing demo area gets its photo and description when it has neither.
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
@@ -290,8 +318,16 @@ public static class DevelopmentSeed
                             PhotoFileName = CopySeedAsset(demoArea.PhotoFile),
                             OnlineCapacityPercent = demoArea.OnlineCapacityPercent,
                             TableScale = demoArea.TableScale,
+                            RoomStyle = demoArea.RoomStyle,
                         };
                         db.Areas.Add(area);
+                        var elements = demoArea.Room?.Invoke() ?? [];
+                        for (var e = 0; e < elements.Count; e++)
+                        {
+                            elements[e].AreaId = area.Id;
+                            elements[e].SortOrder = e;
+                        }
+                        db.RoomElements.AddRange(elements);
                         var tables = demoArea.Tables.Select(t => new Table
                         {
                             AreaId = area.Id,
@@ -304,7 +340,7 @@ public static class DevelopmentSeed
                         }).ToList();
                         if (fileName is null)
                         {
-                            TableLayout.Arrange(tables, area.TableScale);
+                            TableLayout.Arrange(tables, area.TableScale, elements);
                         }
                         db.Tables.AddRange(tables);
                     }

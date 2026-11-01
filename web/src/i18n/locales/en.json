@@ -10,6 +10,12 @@
       "de": "Deutsch",
       "sr-Latn": "Srpski (latinica)",
       "sr-Cyrl": "Српски (ћирилица)"
+    },
+    "short": {
+      "en": "EN",
+      "de": "DE",
+      "sr-Latn": "SR",
+      "sr-Cyrl": "СР"
     }
   },
   "common": {
@@ -68,8 +74,17 @@
   },
   "home": {
     "title": "Restaurants",
-    "subtitle": "Choose a restaurant to reserve a table.",
-    "empty": "There are no restaurants yet.",
+    "heading": "Reserve a table – directly with the restaurant",
+    "subtitle": "Choose a restaurant and book your table online in a few steps.",
+    "search": "Search by name or city",
+    "loading": "Loading restaurants …",
+    "results_one": "{{count}} restaurant found",
+    "results_other": "{{count}} restaurants found",
+    "emptyTitle": "No restaurants yet",
+    "empty": "Soon you will find restaurants here where you can reserve a table directly.",
+    "noMatchTitle": "No restaurant matches “{{query}}”",
+    "noMatch": "Check the spelling or try another name or city.",
+    "resetSearch": "Reset search",
     "reserve": "Reserve a table"
   },
   "guest": {

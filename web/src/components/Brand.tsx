@@ -14,7 +14,8 @@ export function Brand({ to, area }: BrandProps) {
 
   return (
     <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
-      <Anchor component={Link} to={to} underline="never" fw={700} size="md" c="brand.9">
+      {/* 44 px high, so it is easy to tap. */}
+      <Anchor component={Link} to={to} underline="never" fw={700} size="md" c="brand.9" lh="44px" display="block">
         {t('app.name')}
       </Anchor>
       {area !== undefined && (

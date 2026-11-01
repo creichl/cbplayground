@@ -14,6 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<Table> Tables => Set<Table>();
 
+    public DbSet<RoomElement> RoomElements => Set<RoomElement>();
+
     public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
 
     public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
@@ -98,6 +100,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             area.Property(a => a.FloorPlanFileName).HasMaxLength(100);
             area.Property(a => a.Description).HasMaxLength(Area.MaxDescriptionLength);
             area.Property(a => a.PhotoFileName).HasMaxLength(100);
+            area.Property(a => a.RoomStyle).HasConversion<string>().HasMaxLength(20);
             area.HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(a => a.TenantId)
@@ -117,6 +120,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             table.HasOne<Area>()
                 .WithMany()
                 .HasForeignKey(t => t.AreaId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RoomElement>(element =>
+        {
+            element.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            element.Property(e => e.Label).HasMaxLength(RoomElement.MaxLabelLength);
+            element.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(e => e.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Deleting an area deletes its room elements.
+            element.HasOne<Area>()
+                .WithMany()
+                .HasForeignKey(e => e.AreaId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
 

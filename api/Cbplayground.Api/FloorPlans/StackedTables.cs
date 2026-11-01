@@ -7,7 +7,8 @@ namespace Cbplayground.Api.FloorPlans;
 /// <summary>
 /// Before the schematic floor plan, every new table was placed at 0.5/0.5, and in an area without floor plan image the tables
 /// could not be moved, so they all lay on top of each other. On every start, in every environment, this arranges each area
-/// without floor plan image in which at least two tables have exactly the same position (<see cref="TableLayout.Arrange"/>).
+/// without floor plan image in which at least two tables have exactly the same position (<see cref="TableLayout.Arrange"/>, around
+/// the area's room elements).
 /// Idempotent: an arranged area has no stacked tables any more; areas with an image and areas whose tables are spread are left alone.
 /// </summary>
 public static class StackedTables
@@ -31,12 +32,13 @@ public static class StackedTables
             var areas = await db.Areas.Where(a => a.FloorPlanFileName == null).ToListAsync();
             var areaIds = areas.Select(a => a.Id).ToList();
             var tables = await db.Tables.Where(t => areaIds.Contains(t.AreaId)).ToListAsync();
+            var elements = await db.RoomElements.Where(e => areaIds.Contains(e.AreaId)).ToListAsync();
             foreach (var area in areas)
             {
                 var areaTables = tables.Where(t => t.AreaId == area.Id).ToList();
                 if (areaTables.GroupBy(t => (t.PosX, t.PosY)).Any(g => g.Count() > 1))
                 {
-                    TableLayout.Arrange(areaTables, area.TableScale);
+                    TableLayout.Arrange(areaTables, area.TableScale, elements.Where(e => e.AreaId == area.Id).ToList());
                 }
             }
             await db.SaveChangesAsync();

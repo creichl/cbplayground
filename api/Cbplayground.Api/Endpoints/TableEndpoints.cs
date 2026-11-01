@@ -15,7 +15,7 @@ public static class TableEndpoints
 
     /// <summary>
     /// A new table is placed in the middle of the floor plan image, or, in an area without one, on the first free place of the
-    /// arrangement (<see cref="TableLayout.FreePosition"/>). Without <see cref="Shape"/> it gets the default for its seats,
+    /// arrangement beside the room elements (<see cref="TableLayout.FreePosition"/>). Without <see cref="Shape"/> it gets the default for its seats,
     /// without <see cref="Rotation"/> 0.
     /// </summary>
     public record CreateTableRequest(Guid AreaId, string? Number, int Seats, string? Shape, int? Rotation);
@@ -62,7 +62,7 @@ public static class TableEndpoints
             if (area.FloorPlanFileName is null)
             {
                 var existing = await db.Tables.Where(t => t.AreaId == area.Id).ToListAsync();
-                (table.PosX, table.PosY) = TableLayout.FreePosition(existing, table, area.TableScale);
+                (table.PosX, table.PosY) = TableLayout.FreePosition(existing, table, area.TableScale, await AreaEndpoints.ElementsForLayoutAsync(db, area));
             }
             db.Tables.Add(table);
             await db.SaveChangesAsync();

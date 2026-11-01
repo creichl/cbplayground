@@ -1,4 +1,20 @@
+using System.Text.Json.Serialization;
+
 namespace Cbplayground.Api.Data;
+
+/// <summary>
+/// The kind of room of an area, which sets floor and boundary of the drawn plan: <see cref="Indoor"/> parquet and walls,
+/// <see cref="Terrace"/> stone slabs and a railing, <see cref="Garden"/> gravel or lawn and a hedge, <see cref="Rooftop"/> a wooden
+/// deck and a glass parapet.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<RoomStyle>))]
+public enum RoomStyle
+{
+    Indoor,
+    Terrace,
+    Garden,
+    Rooftop,
+}
 
 /// <summary>An area of a restaurant, e.g. the dining room or the terrace, with its own floor plan.</summary>
 public class Area : ITenantOwned
@@ -31,4 +47,7 @@ public class Area : ITenantOwned
 
     /// <summary>Size of the drawn tables of this area in percent, 50–200, so they match an uploaded floor plan.</summary>
     public int TableScale { get; set; } = 100;
+
+    /// <summary>The kind of room. Stored also for an area with floor plan image, but only drawn without one.</summary>
+    public RoomStyle RoomStyle { get; set; } = RoomStyle.Indoor;
 }
