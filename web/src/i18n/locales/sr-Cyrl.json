@@ -93,6 +93,9 @@
     "staffLogin": "За ресторане: пријава",
     "toManagement": "На администрацију"
   },
+  "site": {
+    "copyright": "© {{year}} cbplayground"
+  },
   "restaurant": {
     "notFoundTitle": "Ресторан није пронађен",
     "notFoundText": "На овој адреси нема ресторана."
@@ -1227,5 +1230,40 @@
       },
       "next": "Следећа за овим столом: {{time}}, {{name}} ({{guests}})"
     }
+  },
+  "styleguide": {
+    "title": "Стилски водич",
+    "intro": "Токени и компоненте дизајн-система за странице за госте. Само у развоју.",
+    "branding": "Брендинг",
+    "withoutBranding": "Без брендинга",
+    "mode": "Режим",
+    "light": "Светли",
+    "dark": "Тамни",
+    "colors": "Боје",
+    "primaryScale": "Нијансе акцентне боје",
+    "typography": "Типографија",
+    "radii": "Заобљења",
+    "radiusCard": "картице",
+    "radiusField": "поља и дугмад",
+    "radiusChip": "чипови",
+    "shadows": "Сенке",
+    "shadowCard": "картица",
+    "shadowFloat": "лебдеће",
+    "shadowDialog": "дијалог",
+    "motion": "Покрет",
+    "motionHint": "Искључено када уређај тражи смањено кретање.",
+    "motionFast": "Прелаз мишем и притисак",
+    "motionMedium": "Фотографије и затварање",
+    "motionSlow": "Панели, дијалози и појављивање",
+    "focus": "Фокус",
+    "focusHint": "Притисните Tab: све чиме се управља приказује прстен од 2 px на размаку од 2 px.",
+    "components": "Компоненте",
+    "openDialog": "Отвори дијалог",
+    "openSheet": "Отвори панел",
+    "openSheetSide": "Отвори панел са стране",
+    "showToast": "Прикажи обавештење",
+    "photoLoaded": "Фотографија",
+    "photoPlaceholder": "Место за фотографију док се учитава",
+    "photoFallback": "Фотографија која не може да се учита"
   }
 }

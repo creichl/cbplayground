@@ -1,0 +1,234 @@
+/*
+ * The design system of the guest pages: Tailwind CSS 4 with the tokens below, next to Mantine (admin, front desk,
+ * Superadmin, login and, for now, the restaurant's guest pages). See README, "Design system".
+ *
+ * Every style lives in a cascade layer with a fixed order, so Tailwind's preflight (base) never wins over Mantine and
+ * Mantine never wins over the utilities of the new components. Later layers win, whatever the selector.
+ */
+@layer theme, base, mantine, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/preflight.css' layer(base);
+@import '@mantine/core/styles.layer.css';
+@import '@mantine/dates/styles.layer.css';
+@import '@mantine/notifications/styles.layer.css';
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Dark mode follows the class "dark" (set by BrandTheme for themeMode = Dark), not the operating system. */
+@custom-variant dark (&:where(.dark, .dark *));
+/* Touch screens: controls get at least 44 px. */
+@custom-variant touch (@media (pointer: coarse));
+
+/*
+ * Colours, light. Neutrals from Tailwind's Stone: a warm grey that sits well with food, wood and linen and with the warm
+ * accent colours of restaurants (green, gold, red), where the cooler Zinc looks technical.
+ * primary* are the platform's colour from theme.ts (its ten shades as 50–900, the primary shade 8 as primary); BrandTheme
+ * overrides them for a restaurant with primaryVariables() from brandTheme.ts.
+ */
+:root {
+  --background: var(--color-white);
+  --foreground: var(--color-stone-900);
+  --card: var(--color-white);
+  --card-foreground: var(--color-stone-900);
+  --popover: var(--color-white);
+  --popover-foreground: var(--color-stone-900);
+  --secondary: var(--color-stone-100);
+  --secondary-foreground: var(--color-stone-900);
+  --muted: var(--color-stone-100);
+  --muted-foreground: var(--color-stone-600);
+  --accent: var(--color-stone-100);
+  --accent-foreground: var(--color-stone-900);
+  --border: var(--color-stone-200);
+  --input: var(--color-stone-300);
+  --destructive: var(--color-red-700);
+  --success: var(--color-green-700);
+  --warning: var(--color-amber-700);
+
+  --primary: #127c6e;
+  --primary-foreground: #ffffff;
+  /* The primary surface under the pointer: darker under white text, lighter under dark text (filledHover). */
+  --primary-hover: #107063;
+  /* The accent colour as text and focus ring on the background, at least 4.5:1. */
+  --primary-text: #127c6e;
+  --primary-50: #e9f7f5;
+  --primary-100: #d8ece9;
+  --primary-200: #acd8d1;
+  --primary-300: #7dc3b8;
+  --primary-400: #57b1a3;
+  --primary-500: #3fa697;
+  --primary-600: #30a090;
+  --primary-700: #218b7c;
+  --primary-800: #127c6e;
+  --primary-900: #006b5e;
+  --ring: var(--primary-text);
+
+  --font-display-weight: 700;
+
+  /* Shadows: soft and in layers, tinted with the warm grey. */
+  --elevation-card: 0 1px 2px rgb(28 25 23 / 0.05), 0 2px 6px rgb(28 25 23 / 0.06);
+  --elevation-float: 0 2px 4px rgb(28 25 23 / 0.04), 0 8px 16px -4px rgb(28 25 23 / 0.1), 0 16px 32px -8px rgb(28 25 23 / 0.08);
+  --elevation-dialog: 0 4px 8px rgb(28 25 23 / 0.04), 0 16px 32px -8px rgb(28 25 23 / 0.14), 0 32px 64px -16px rgb(28 25 23 / 0.2);
+
+  /* Motion: hover and press, fades, sheets and dialogs. */
+  --motion-fast: 150ms;
+  --motion-medium: 200ms;
+  --motion-slow: 300ms;
+}
+
+/* Colours, dark: depth from lighter surfaces instead of shadows. */
+.dark {
+  color-scheme: dark;
+  --background: var(--color-stone-950);
+  --foreground: var(--color-stone-50);
+  --card: var(--color-stone-900);
+  --card-foreground: var(--color-stone-50);
+  --popover: var(--color-stone-800);
+  --popover-foreground: var(--color-stone-50);
+  --secondary: var(--color-stone-800);
+  --secondary-foreground: var(--color-stone-50);
+  --muted: var(--color-stone-800);
+  --muted-foreground: var(--color-stone-400);
+  --accent: var(--color-stone-800);
+  --accent-foreground: var(--color-stone-50);
+  --border: var(--color-stone-800);
+  --input: var(--color-stone-700);
+  --destructive: var(--color-red-400);
+  --success: var(--color-green-400);
+  --warning: var(--color-amber-400);
+
+  --elevation-card: 0 0 #0000;
+  --elevation-float: 0 0 #0000;
+  --elevation-dialog: 0 0 #0000;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion-fast: 0s;
+    --motion-medium: 0s;
+    --motion-slow: 0s;
+  }
+}
+
+/* The tokens as Tailwind utilities (bg-background, text-primary-foreground, font-display, shadow-card …). */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-text: var(--primary-text);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+
+  --shadow-card: var(--elevation-card);
+  --shadow-float: var(--elevation-float);
+  --shadow-dialog: var(--elevation-dialog);
+
+  --default-transition-duration: var(--motion-fast);
+  --default-transition-timing-function: var(--ease-out);
+
+  --animate-fade-in: fade-in var(--motion-slow) var(--ease-out);
+  --animate-fade-out: fade-out var(--motion-medium) var(--ease-in);
+  --animate-dialog-in: dialog-in var(--motion-slow) var(--ease-out);
+  --animate-dialog-out: dialog-out var(--motion-medium) var(--ease-in);
+  --animate-pop-in: pop-in var(--motion-fast) var(--ease-out);
+  --animate-pop-out: pop-out var(--motion-fast) var(--ease-in);
+}
+
+@theme {
+  /* Text and headings: the platform's fonts (theme.ts); BrandTheme sets the font pair of a restaurant. */
+  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-display: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  /* Type scale 12/14/16/18/20/24/30/36/48/60 px: text at 1.5, large headings at 1.1–1.25, a little tighter. */
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-lg--line-height: 1.5;
+  --text-xl--line-height: 1.5;
+  --text-2xl--line-height: 1.25;
+  --text-3xl--line-height: 1.2;
+  --text-3xl--letter-spacing: -0.01em;
+  --text-4xl--line-height: 1.15;
+  --text-4xl--letter-spacing: -0.015em;
+  --text-5xl--line-height: 1.1;
+  --text-5xl--letter-spacing: -0.02em;
+  --text-6xl--line-height: 1.1;
+  --text-6xl--letter-spacing: -0.02em;
+
+  /* Content at most 1200 px wide (max-w-page). */
+  --container-page: 75rem;
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+  }
+  @keyframes fade-out {
+    to {
+      opacity: 0;
+    }
+  }
+  @keyframes dialog-in {
+    from {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+  @keyframes dialog-out {
+    to {
+      opacity: 0;
+      scale: 0.96;
+    }
+  }
+  @keyframes pop-in {
+    from {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+  @keyframes pop-out {
+    to {
+      opacity: 0;
+      scale: 0.97;
+    }
+  }
+}
+
+/* Headings in the display font of the font pair, in its heading weight (Cormorant Garamond only comes in 600). */
+@utility font-display {
+  font-family: var(--font-display);
+  font-weight: var(--font-display-weight);
+}
+
+/* The focus ring of everything that can be operated: 2 px in the ring colour, 2 px away, only for the keyboard. */
+@utility focus-ring {
+  &:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
