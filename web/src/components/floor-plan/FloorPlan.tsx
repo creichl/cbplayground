@@ -25,6 +25,8 @@ type FloorPlanProps = {
   onPlanClick?: () => void
   /** The plan's element, to which the positions of the tables are relative. */
   planRef?: Ref<HTMLDivElement>
+  /** Where the zoom buttons are: below the plan (default) or inside it, in its lower right corner. */
+  zoomControls?: 'below' | 'inside'
   /** The tables, as TableShape, and in the editor the room elements' handles. */
   children: ReactNode
 }
@@ -50,8 +52,8 @@ const middle = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2
 /**
  * The area's plan with its tables: the floor plan image, or without one the drawn room in the ratio 3:2 (as in the API's
  * arrangement, see Room) below the tables. It fits the width and keeps its aspect ratio. It zooms and pans with pinch and
- * drag (pointer events) and with the buttons + / − / reset below it. Tables that stick out over the plan's edge, and the
- * room's boundary, get room around it.
+ * drag (pointer events) and with the buttons + / − / reset below it or in its corner. Tables that stick out over the plan's
+ * edge, and the room's boundary, get room around it.
  */
 export function FloorPlan({
   imageUrl,
@@ -63,6 +65,7 @@ export function FloorPlan({
   ariaHidden,
   onPlanClick,
   planRef,
+  zoomControls = 'below',
   children,
 }: FloorPlanProps) {
   const { t } = useTranslation()
@@ -173,6 +176,38 @@ export function FloorPlan({
     )
   }
 
+  const controls = (
+    <>
+      <ActionIcon
+        variant="default"
+        size={zoomControls === 'inside' ? 44 : 'lg'}
+        aria-label={t('floorPlan.zoomOut')}
+        disabled={view.scale <= 1}
+        onClick={() => zoomBy(1 / zoomStep)}
+      >
+        <MinusIcon />
+      </ActionIcon>
+      <ActionIcon
+        variant="default"
+        size={zoomControls === 'inside' ? 44 : 'lg'}
+        aria-label={t('floorPlan.zoomIn')}
+        disabled={view.scale >= maxScale}
+        onClick={() => zoomBy(zoomStep)}
+      >
+        <PlusIcon />
+      </ActionIcon>
+      <ActionIcon
+        variant="default"
+        size={zoomControls === 'inside' ? 44 : 'lg'}
+        aria-label={t('floorPlan.zoomReset')}
+        disabled={view.scale === 1}
+        onClick={() => setView(initialView)}
+      >
+        <ZoomResetIcon />
+      </ActionIcon>
+    </>
+  )
+
   return (
     <Stack gap="xs">
       <Box
@@ -234,18 +269,26 @@ export function FloorPlan({
             {children}
           </div>
         </div>
+        {zoomControls === 'inside' && (
+          // Not part of the plan's gestures: a press on a button neither pans the plan nor counts as a click on it.
+          <Group
+            gap={4}
+            pos="absolute"
+            right={8}
+            bottom={8}
+            wrap="nowrap"
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => event.stopPropagation()}
+          >
+            {controls}
+          </Group>
+        )}
       </Box>
-      <Group gap={6} justify="flex-end">
-        <ActionIcon variant="default" size="lg" aria-label={t('floorPlan.zoomOut')} disabled={view.scale <= 1} onClick={() => zoomBy(1 / zoomStep)}>
-          <MinusIcon />
-        </ActionIcon>
-        <ActionIcon variant="default" size="lg" aria-label={t('floorPlan.zoomIn')} disabled={view.scale >= maxScale} onClick={() => zoomBy(zoomStep)}>
-          <PlusIcon />
-        </ActionIcon>
-        <ActionIcon variant="default" size="lg" aria-label={t('floorPlan.zoomReset')} disabled={view.scale === 1} onClick={() => setView(initialView)}>
-          <ZoomResetIcon />
-        </ActionIcon>
-      </Group>
+      {zoomControls === 'below' && (
+        <Group gap={6} justify="flex-end">
+          {controls}
+        </Group>
+      )}
     </Stack>
   )
 }

@@ -25,7 +25,8 @@
     "save": "Speichern",
     "close": "Schließen",
     "timeRange": "{{start}}–{{end}}",
-    "tableLabel": "{{number}} · {{seats}}"
+    "tableLabel": "{{number}} · {{seats}}",
+    "midnight": "Mitternacht"
   },
   "auth": {
     "userMenu": "Kontomenü",
@@ -103,21 +104,25 @@
     "changePart": "Ändern: {{part}}",
     "continue": "Weiter",
     "steps": {
-      "guests": "Wie viele Personen?",
-      "date": "An welchem Tag?",
-      "time": "Um wie viel Uhr?",
-      "table": "Welcher Tisch?",
+      "time": "Tisch reservieren",
+      "table": "Wählen Sie Ihren Tisch",
       "details": "Ihre Kontaktdaten"
     },
     "restaurant": {
       "openingHours": "Öffnungszeiten",
       "website": "Website",
-      "addressOnMap": "{{address}} – auf der Karte öffnen"
+      "route": "Route",
+      "infoTitle": "Info & Kontakt",
+      "closedToday": "Heute geschlossen",
+      "openUntil": "Jetzt geöffnet bis {{time}}",
+      "opensAt": "Heute geöffnet ab {{time}}",
+      "closedNow": "Jetzt geschlossen",
+      "today": "{{day}} (heute)",
+      "more": "Mehr",
+      "less": "Weniger",
+      "routeTo": "Route zu {{address}}"
     },
     "partySize": {
-      "more": "Mehr",
-      "moreLabel": "Anzahl Personen",
-      "morePlaceholder": "Bitte wählen",
       "moreThan_one": "Mehr als {{count}} Person",
       "moreThan_other": "Mehr als {{count}} Personen",
       "callTitle": "Bitte rufen Sie uns an",
@@ -137,7 +142,8 @@
       "midday": "Mittag",
       "evening": "Abend",
       "noTables": "Keine freien Tische – nächste freie Tage:",
-      "noFreeDays": "In den nächsten Wochen ist leider kein Tag mehr frei. Bitte wählen Sie ein anderes Datum oder rufen Sie uns an."
+      "noFreeDays": "In den nächsten Wochen ist leider kein Tag mehr frei. Bitte wählen Sie ein anderes Datum oder rufen Sie uns an.",
+      "freeTimes": "Freie Zeiten"
     },
     "table": {
       "listLabel": "Freie Tische – {{area}}",
@@ -150,7 +156,15 @@
       "option_other": "Tisch {{number}} · {{count}} Plätze",
       "noneFreeInArea": "In diesem Bereich ist zu dieser Zeit kein passender Tisch frei.",
       "noneFree": "Zu dieser Zeit ist leider kein Tisch mehr frei.",
-      "otherTime": "Andere Uhrzeit wählen"
+      "otherTime": "Andere Uhrzeit wählen",
+      "areasLabel": "Bereiche",
+      "hint": "Tippen Sie auf einen freien Tisch im Plan oder wählen Sie einen aus der Liste darunter.",
+      "noPreference": "Keine Vorliebe",
+      "fullyBooked": "Ausgebucht",
+      "selection_one": "Tisch {{number}} · bis {{count}} Person · {{area}}",
+      "selection_other": "Tisch {{number}} · bis {{count}} Personen · {{area}}",
+      "freeCount_one": "{{count}} Tisch frei",
+      "freeCount_other": "{{count}} Tische frei"
     },
     "details": {
       "name": "Name",
@@ -159,14 +173,17 @@
       "notes": "Anmerkung (optional)",
       "notesDescription_one": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
       "notesDescription_other": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
-      "contactHint": "Damit das Restaurant Sie erreichen kann, geben Sie bitte eine Telefonnummer oder eine E-Mail-Adresse an – eines von beiden genügt.",
+      "contactHint": "Telefon oder E-Mail – eines von beiden genügt.",
       "contactRequired": "Bitte geben Sie eine Telefonnummer oder eine E-Mail-Adresse an.",
       "nameRequired": "Bitte geben Sie Ihren Namen an.",
       "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer an (mindestens 6 Ziffern).",
       "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse an.",
       "invalidNotes": "Die Anmerkung ist zu lang.",
       "submit": "Jetzt reservieren",
-      "submitRequest": "Anfrage senden"
+      "submitRequest": "Anfrage senden",
+      "contactTitle": "Wie erreicht Sie das Restaurant?",
+      "requestHint": "Das ist eine Anfrage: Das Restaurant prüft sie und meldet sich bei Ihnen.",
+      "cancelHint": "Nach der Buchung erhalten Sie einen Link, über den Sie Ihre Reservierung ansehen und bis zum Beginn stornieren können."
     },
     "errors": {
       "slotTaken": "Diese Uhrzeit wurde leider gerade vergeben. Bitte wählen Sie eine andere – die freien Zeiten sind aktualisiert.",
@@ -192,7 +209,8 @@
       "manageLinkLabel": "Link zu Ihrer Reservierung",
       "manageLinkHint": "Link speichern, um später zu stornieren.",
       "copy": "Kopieren",
-      "copied": "Kopiert"
+      "copied": "Kopiert",
+      "tableInArea": "Tisch {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Tischreservierung – {{restaurant}}",
@@ -202,6 +220,14 @@
     "notBookable": {
       "title": "Online-Reservierung nicht möglich",
       "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
+    },
+    "reserveTable": "Tisch reservieren",
+    "change": "Ändern",
+    "bar": {
+      "guests": "Personen",
+      "date": "Datum",
+      "time": "Uhrzeit",
+      "timePlaceholder": "Uhrzeit wählen"
     }
   },
   "embed": {
@@ -232,7 +258,7 @@
     "cancel": "Stornieren",
     "cancelledTitle": "Ihre Reservierung wurde storniert",
     "cancelledText": "Der Tisch ist wieder für andere Gäste frei. Wir freuen uns, Sie ein andermal begrüßen zu dürfen.",
-    "bookAgain": "Neu reservieren",
+    "bookAgain": "Erneut buchen",
     "cancelledByGuest": "Sie haben diese Reservierung storniert.",
     "cancelledByRestaurant": "Das Restaurant hat diese Reservierung storniert.",
     "declined": "Das Restaurant konnte diese Anfrage leider nicht annehmen.",
@@ -247,6 +273,16 @@
     "errors": {
       "notPossible": "Diese Reservierung lässt sich online nicht mehr stornieren. Bitte rufen Sie das Restaurant an.",
       "tooManyRequests": "Zu viele Anfragen von dieser Verbindung. Bitte versuchen Sie es in einigen Minuten erneut."
+    },
+    "status": {
+      "requested": "Anfrage gesendet",
+      "requestedText": "Das Restaurant prüft Ihre Anfrage und meldet sich bei Ihnen.",
+      "confirmed": "Reservierung bestätigt",
+      "confirmedText": "Wir freuen uns auf Ihren Besuch.",
+      "arrived": "Schön, dass Sie da sind",
+      "late": "Als verspätet vermerkt",
+      "cancelled": "Reservierung storniert",
+      "declined": "Anfrage abgelehnt"
     }
   },
   "admin": {

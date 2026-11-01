@@ -1,5 +1,5 @@
 import { generateColors } from '@mantine/colors-generator'
-import { AppShell, createTheme, DEFAULT_THEME, luminance, type MantineColorShade, Portal } from '@mantine/core'
+import { createTheme, darken, DEFAULT_THEME, lighten, luminance, type MantineColorShade, Portal } from '@mantine/core'
 import type { Branding, FontStyle, ThemeMode } from './api/branding.ts'
 
 // The theme of a restaurant's guest pages (/r/<slug>, its reservations and /embed/<slug>), built from its branding on top of
@@ -104,13 +104,21 @@ export function contrastRatio(a: string, b: string) {
 }
 
 /**
+ * The colour of a filled button in the accent colour under the pointer. It keeps the contrast with the text on it: darker
+ * under white text, lighter under black (Mantine's own hover shade can be lighter under white text).
+ */
+export function filledHover(brandColor: string) {
+  const whiteText = contrastRatio(brandColor, DEFAULT_THEME.white) >= contrastRatio(brandColor, DEFAULT_THEME.black)
+  return whiteText ? darken(brandColor, 0.1) : lighten(brandColor, 0.1)
+}
+
+/**
  * The theme of a restaurant: a palette made from the accent colour, whose own shade is the primary shade (so buttons and the
  * chosen table carry exactly that colour), the text on it chosen by contrast, and the fonts of its style. Without accent
  * colour the platform's colour stays. `portalTarget` is where dropdowns and dialogs open, inside the themed area.
  */
 export function createBrandTheme(style: BrandStyle, portalTarget: HTMLElement | null) {
   const fonts = fontPairs[style.fontStyle]
-  const dark = style.themeMode === 'Dark'
   let colors = {}
   if (style.brandColor !== null) {
     // The generator keeps the colour itself as one of the ten shades, the one closest to its lightness.
@@ -125,12 +133,6 @@ export function createBrandTheme(style: BrandStyle, portalTarget: HTMLElement | 
     fontFamily: fontStack(fonts.body),
     headings: { fontFamily: fontStack(fonts.heading), fontWeight: fonts.headingWeight },
     components: {
-      AppShell: AppShell.extend({
-        styles: {
-          // The platform's light grey behind the cards; in the dark mode the page's own background.
-          main: { backgroundColor: dark ? 'var(--mantine-color-body)' : 'var(--mantine-color-gray-0)' },
-        },
-      }),
       Portal: Portal.extend({ defaultProps: { target: portalTarget ?? undefined } }),
     },
   })

@@ -1,6 +1,21 @@
-import { MantineProvider } from '@mantine/core'
+import { type CSSVariablesResolver, MantineProvider } from '@mantine/core'
 import { type CSSProperties, type ReactNode, useEffect, useId, useMemo, useState } from 'react'
-import { type BrandStyle, colorSchemeOf, createBrandTheme, defaultBrandStyle, loadFonts } from '../brandTheme.ts'
+import { type BrandStyle, colorSchemeOf, createBrandTheme, defaultBrandStyle, filledHover, loadFonts } from '../brandTheme.ts'
+
+/**
+ * Mantine's secondary ("dimmed") text and its error text fall short of the AA contrast of 4.5:1 (gray.6 and red.6 on white,
+ * dark.2 and red.8 on dark.7). On the guest pages they are darker or lighter: gray.7 and red.9 on white and gray.0, dark.1
+ * and red.4 on dark.7 and dark.6. Filled buttons in the accent colour keep their text's contrast under the pointer
+ * (filledHover).
+ */
+function cssVariablesResolver(brandColor: string | null): CSSVariablesResolver {
+  const hover: Record<string, string> = brandColor !== null ? { '--mantine-color-brand-filled-hover': filledHover(brandColor) } : {}
+  return () => ({
+    variables: hover,
+    light: { '--mantine-color-dimmed': 'var(--mantine-color-gray-7)', '--mantine-color-error': 'var(--mantine-color-red-9)', ...hover },
+    dark: { '--mantine-color-dimmed': 'var(--mantine-color-dark-1)', '--mantine-color-error': 'var(--mantine-color-red-4)', ...hover },
+  })
+}
 
 type BrandThemeProps = {
   /** The restaurant's branding; null while it is not known yet. */
@@ -36,6 +51,7 @@ export function BrandTheme({ brandStyle, fullHeight, style, children }: BrandThe
       cssVariablesSelector={`[data-brand-theme="${id}"]`}
       getRootElement={() => root ?? undefined}
       withGlobalClasses={false}
+      cssVariablesResolver={cssVariablesResolver(brandColor)}
     >
       <div
         ref={setRoot}

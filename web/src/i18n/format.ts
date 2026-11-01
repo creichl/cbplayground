@@ -1,5 +1,6 @@
 import type { DateFormatter } from '@mantine/dates'
 import dayjs from 'dayjs'
+import i18n from './index.ts'
 
 // The one place where dates and times are formatted for the UI, so every page shows them alike in the user's language.
 // Dates are local calendar dates "YYYY-MM-DD", times "HH:mm"; both are built in local time so the day does not shift.
@@ -24,12 +25,17 @@ export function formatLongDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { dateStyle: 'full' }).format(toDate(date))
 }
 
-/** A time "HH:mm" in the user's language, e.g. "19:00" or "7:00 PM". The closing time "24:00" stays 24:00 on a 24-hour clock. */
+/**
+ * A time "HH:mm" in the user's language, e.g. "19:00" or "7:00 PM". The closing time "24:00" stays 24:00 on a 24-hour clock
+ * (de, sr-Latn, sr-Cyrl) and is "midnight" on a 12-hour clock (en), never "12:00 AM".
+ */
 export function formatTime(time: string, language: string) {
   const [hours, minutes] = time.split(':').map(Number)
   const format = new Intl.DateTimeFormat(language, { hour: 'numeric', minute: '2-digit' })
-  if (hours === 24 && format.resolvedOptions().hourCycle === 'h23') {
-    return new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit', hourCycle: 'h24' }).format(new Date(2000, 0, 1, 0, 0))
+  if (hours === 24) {
+    return format.resolvedOptions().hourCycle === 'h23'
+      ? new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit', hourCycle: 'h24' }).format(new Date(2000, 0, 1, 0, 0))
+      : i18n.t('common.midnight', { lng: language })
   }
   return format.format(new Date(2000, 0, 1, hours, minutes))
 }
