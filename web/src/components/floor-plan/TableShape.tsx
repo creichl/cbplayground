@@ -1,7 +1,8 @@
-import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react'
+import { useMantineColorScheme } from '@mantine/core'
+import { type CSSProperties, type HTMLAttributes, type ReactNode, type Ref, type SVGProps, useId } from 'react'
 import type { TableRotation, TableShape as Shape } from '../../api/areas.ts'
 import { UserIcon } from '../icons.tsx'
-import { chairDepth, chairs, chairSpace, chairWidth, tableSize } from './layout.ts'
+import { chairDepth, chairs, chairSpace, chairWidth, tableRim, tableSize } from './layout.ts'
 
 /** The smallest area in pixels that reacts to a tap, also around a small table. */
 const minHitSize = 40
@@ -29,9 +30,12 @@ type TableShapeProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
 }
 
 /**
- * A table on a floor plan, drawn in its shape and size with a chair per seat, its number and its seats. The size follows
- * the seats and the area's table scale relative to the plan width (see layout.ts). The parent is the plan (see FloorPlan).
- * Around a small table an invisible area of at least 40 pixels takes the clicks and taps.
+ * A table on a floor plan as a piece of furniture in plan view: the table top in its shape and size with a light sheen, its
+ * edge and its shadow, and a chair per seat (seat and backrest, the backrest away from the table, radial around round
+ * tables), with its number and its seats. `fill`, `stroke` and `color` carry the table's state: the top and the seats in
+ * `fill`, the edge and the backrests in `stroke`. A thin rim outside the edge (`tableRim`) keeps the edge apart from any
+ * floor. The size follows the seats and the area's table scale relative to the plan width (see layout.ts). The parent is
+ * the plan (see FloorPlan). Around a small table an invisible area of at least 40 pixels takes the clicks and taps.
  */
 export function TableShape({
   number,
@@ -49,8 +53,36 @@ export function TableShape({
   style,
   ...others
 }: TableShapeProps) {
+  const dark = useMantineColorScheme().colorScheme === 'dark'
+  // Gradients need an id that is unique on the page; useId may contain characters that do not work in url().
+  const sheenId = `table-sheen-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   // Drawn at 100 %; the box around it carries the table scale.
   const { width, height } = tableSize(shape, seats, rotation, 100)
+  const seatsAround = chairs(shape, seats, width, height)
+  const top = (props: SVGProps<SVGCircleElement & SVGRectElement>) =>
+    shape === 'Round' ? (
+      <circle r={width / 2} {...props} />
+    ) : (
+      <rect x={-width / 2} y={-height / 2} width={width} height={height} rx={Math.min(width, height) / 10} {...props} />
+    )
+  // The light comes from the top left; the shadow falls to the bottom right, in plan widths.
+  const shadow = (x: number, y: number, opacity: number) => (
+    // The opacity on every shape, not on the group: a group's opacity costs an extra layer when drawing.
+    <g transform={`translate(${x} ${y})`} fill="#000000" fillOpacity={opacity * (dark ? 2.2 : 1)}>
+      {seatsAround.map((chair, i) => (
+        <rect
+          key={i}
+          x={-chairWidth / 2}
+          y={-chairDepth / 2}
+          width={chairWidth}
+          height={chairDepth}
+          rx={chairDepth / 4}
+          transform={`translate(${chair.x} ${chair.y}) rotate(${chair.angle})`}
+        />
+      ))}
+      {top({})}
+    </g>
+  )
   const boxWidth = width + 2 * chairSpace
   const boxHeight = height + 2 * chairSpace
   const scale = tableScale / 100
@@ -88,36 +120,43 @@ export function TableShape({
         focusable="false"
         style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', overflow: 'visible' }}
       >
-        {chairs(shape, seats, width, height).map((chair, i) => (
-          <rect
-            key={i}
-            x={-chairWidth / 2}
-            y={-chairDepth / 2}
-            width={chairWidth}
-            height={chairDepth}
-            rx={chairDepth / 3}
-            transform={`translate(${chair.x} ${chair.y}) rotate(${chair.angle})`}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth={1}
-            vectorEffect="non-scaling-stroke"
-          />
+        <defs>
+          <linearGradient id={sheenId} x1={0} y1={0} x2={1} y2={1}>
+            <stop offset={0} stopColor="#ffffff" stopOpacity={0.3} />
+            <stop offset={0.45} stopColor="#ffffff" stopOpacity={0} />
+            <stop offset={0.55} stopColor="#000000" stopOpacity={0} />
+            <stop offset={1} stopColor="#000000" stopOpacity={0.1} />
+          </linearGradient>
+        </defs>
+        {shadow(0.005, 0.007, 0.07)}
+        {shadow(0.0025, 0.0035, 0.12)}
+        {seatsAround.map((chair, i) => (
+          // Turned so that the backrest (at the top at 0°) faces away from the table.
+          <g key={i} transform={`translate(${chair.x} ${chair.y}) rotate(${chair.angle})`}>
+            <rect
+              x={-chairWidth * 0.44}
+              y={-chairDepth * 0.28}
+              width={chairWidth * 0.88}
+              height={chairDepth * 0.78}
+              rx={chairDepth * 0.22}
+              fill={fill}
+              stroke={stroke}
+              strokeWidth={1}
+              vectorEffect="non-scaling-stroke"
+            />
+            <rect
+              x={-chairWidth / 2}
+              y={-chairDepth / 2}
+              width={chairWidth}
+              height={chairDepth * 0.32}
+              rx={chairDepth * 0.16}
+              fill={stroke}
+            />
+          </g>
         ))}
-        {shape === 'Round' ? (
-          <circle r={width / 2} fill={fill} stroke={stroke} strokeWidth={strokeWidth} vectorEffect="non-scaling-stroke" />
-        ) : (
-          <rect
-            x={-width / 2}
-            y={-height / 2}
-            width={width}
-            height={height}
-            rx={Math.min(width, height) / 10}
-            fill={fill}
-            stroke={stroke}
-            strokeWidth={strokeWidth}
-            vectorEffect="non-scaling-stroke"
-          />
-        )}
+        {top({ fill: 'none', stroke: tableRim[dark ? 'dark' : 'light'], strokeWidth: strokeWidth + 2, vectorEffect: 'non-scaling-stroke' })}
+        {top({ fill, stroke, strokeWidth, vectorEffect: 'non-scaling-stroke' })}
+        {top({ fill: `url(#${sheenId})` })}
       </svg>
       <span
         style={{

@@ -6,7 +6,6 @@ import {
   Button,
   Container,
   Group,
-  Image,
   Skeleton,
   Text,
   useMantineColorScheme,
@@ -17,6 +16,7 @@ import { Link, Outlet, useMatch, useParams } from 'react-router'
 import { homePath, useCurrentUser } from '../api/auth.ts'
 import { usePublicRestaurant } from '../api/publicBooking.ts'
 import { Brand } from '../components/Brand.tsx'
+import { BrandLogo } from '../components/BrandLogo.tsx'
 import { BrandTheme } from '../components/BrandTheme.tsx'
 import { contentWidth, HeroContext, headerHeight, scrollToBooking } from '../components/booking/layout.ts'
 import { LanguageMenu } from '../components/LanguageSwitcher.tsx'
@@ -61,9 +61,10 @@ export function GuestLayout() {
 }
 
 /**
- * A restaurant's guest pages in its branding (BrandTheme). The header has the restaurant's logo on the left and the language
- * as a compact menu on the right. While a page's cover image (RestaurantHeader, through HeroContext) is behind it, the header
- * is transparent and its logo and menu sit on white plates; further down it is solid, with the logo or the name, and on the
+ * A restaurant's guest pages in its branding (BrandTheme). The header has the restaurant's logo on the left (without box,
+ * 40 px high, see BrandLogo) and the language as a compact menu on the right. While a page's cover image (RestaurantHeader,
+ * through HeroContext) is behind it, the header is transparent, the logo has a soft shadow and the menu sits on a white plate;
+ * further down it is solid, with the logo or the name, and on the
  * booking page on phones a "Reserve a table" button. The platform steps back into a plain footer with the staff sign-in
  * and "powered by". An unknown restaurant gets the platform's look.
  */
@@ -141,13 +142,9 @@ function RestaurantFrame({ slug }: { slug: string }) {
                   style={{ visibility: overHero && logoUrl === null ? 'hidden' : undefined }}
                 >
                   {logoUrl !== null ? (
-                    <Box p={4} bg="white" style={{ borderRadius: 'var(--mantine-radius-md)', display: 'flex' }}>
-                      <Image src={logoUrl} alt="" h={40} w="auto" maw={140} fit="contain" />
-                    </Box>
+                    <BrandLogo src={logoUrl} height={40} maxWidth={180} onPhoto={overHero} fallback={<RestaurantName name={restaurant.data.name} />} />
                   ) : (
-                    <Text component="span" ff="heading" fw={700} size="lg" truncate display="block">
-                      {restaurant.data.name}
-                    </Text>
+                    <RestaurantName name={restaurant.data.name} />
                   )}
                 </Anchor>
               )}
@@ -180,6 +177,14 @@ function RestaurantFrame({ slug }: { slug: string }) {
         </Box>
       </Box>
     </HeroContext>
+  )
+}
+
+function RestaurantName({ name }: { name: string }) {
+  return (
+    <Text component="span" ff="heading" fw={700} size="lg" truncate display="block">
+      {name}
+    </Text>
   )
 }
 

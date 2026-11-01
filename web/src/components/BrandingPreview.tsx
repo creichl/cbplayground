@@ -1,8 +1,9 @@
-import { Box, Button, Group, Image, SimpleGrid, Stack, Text } from '@mantine/core'
+import { Box, Button, Group, SimpleGrid, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import type { BrandStyle } from '../brandTheme.ts'
 import { RestaurantHeader } from './booking/RestaurantHeader.tsx'
 import { tableLooks } from './booking/tableLooks.ts'
+import { BrandLogo } from './BrandLogo.tsx'
 import { BrandTheme } from './BrandTheme.tsx'
 import { TableShape } from './floor-plan/TableShape.tsx'
 
@@ -15,7 +16,8 @@ type BrandingPreviewProps = {
 }
 
 /**
- * The top of the booking page in a given branding, saved or not: the header with logo or name, the cover image with name
+ * The top of the booking page in a given branding, saved or not: the header with logo (as on the booking page, a logo with
+ * its own background on a surface in that colour) or name, the cover image with name
  * and city, a sample button and a free and a chosen sample table.
  */
 export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: BrandingPreviewProps) {
@@ -29,11 +31,9 @@ export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: B
       <div inert>
         <Group h={52} px="md" style={{ borderBottom: '1px solid var(--mantine-color-default-border)' }}>
           {logoUrl !== null ? (
-            <Image src={logoUrl} alt="" h={32} w="auto" maw={140} fit="contain" />
+            <BrandLogo src={logoUrl} height={32} maxWidth={160} fallback={<HeaderName name={name} />} />
           ) : (
-            <Text ff="heading" fw={700} truncate>
-              {name}
-            </Text>
+            <HeaderName name={name} />
           )}
         </Group>
         <RestaurantHeader name={name} city={city} coverUrl={coverUrl} size="preview" />
@@ -67,5 +67,13 @@ export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: B
         </Stack>
       </div>
     </BrandTheme>
+  )
+}
+
+function HeaderName({ name }: { name: string }) {
+  return (
+    <Text ff="heading" fw={700} truncate>
+      {name}
+    </Text>
   )
 }
