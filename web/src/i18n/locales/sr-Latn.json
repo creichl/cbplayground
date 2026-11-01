@@ -164,6 +164,7 @@
       "otherTime": "Izaberite drugo vreme",
       "areasLabel": "Delovi restorana",
       "hint": "Dodirnite slobodan sto na planu ili izaberite jedan sa liste ispod.",
+      "areaPhoto": "Prostor {{area}}",
       "noPreference": "Svejedno",
       "fullyBooked": "Popunjeno",
       "selection_one": "Sto {{number}} · do {{count}} osobe · {{area}}",
@@ -502,7 +503,7 @@
       "choose": "Izaberi logo",
       "replace": "Zameni logo",
       "remove": "Ukloni logo",
-      "hint": "PNG, JPEG ili WebP, najviše 2 MB. Najbolje izgleda logo na providnoj ili svetloj pozadini.",
+      "hint": "Preporučuje se PNG sa providnom pozadinom. Može i JPEG ili WebP, najviše 2 MB; logo sa sopstvenom pozadinom prikazuje se na površini te boje.",
       "saved": "Logo je sačuvan.",
       "removed": "Logo je uklonjen."
     },

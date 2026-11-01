@@ -159,6 +159,7 @@
       "otherTime": "Andere Uhrzeit wählen",
       "areasLabel": "Bereiche",
       "hint": "Tippen Sie auf einen freien Tisch im Plan oder wählen Sie einen aus der Liste darunter.",
+      "areaPhoto": "Bereich {{area}}",
       "noPreference": "Keine Vorliebe",
       "fullyBooked": "Ausgebucht",
       "selection_one": "Tisch {{number}} · bis {{count}} Person · {{area}}",
@@ -493,7 +494,7 @@
       "choose": "Logo auswählen",
       "replace": "Logo ersetzen",
       "remove": "Logo entfernen",
-      "hint": "PNG, JPEG oder WebP, höchstens 2 MB. Am besten wirkt ein Logo auf transparentem oder hellem Hintergrund.",
+      "hint": "PNG mit transparentem Hintergrund empfohlen. Auch JPEG und WebP, höchstens 2 MB; ein Logo mit eigenem Hintergrund erscheint auf einer Fläche in dessen Farbe.",
       "saved": "Das Logo wurde gespeichert.",
       "removed": "Das Logo wurde entfernt."
     },

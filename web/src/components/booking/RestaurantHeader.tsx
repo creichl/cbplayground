@@ -1,5 +1,6 @@
 import { Box, Container, Skeleton, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
-import { use } from 'react'
+import { use, useState } from 'react'
+import { Photo } from '../Photo.tsx'
 import { contentWidth, HeroContext } from './layout.ts'
 
 type RestaurantHeaderProps = {
@@ -21,15 +22,19 @@ const heights = {
 
 /**
  * The top of the restaurant's guest pages, in the full width and behind the transparent header: the cover image (cropped to
- * fit, loaded first) with a gradient for legibility, on it the name, the city and a fact or two. Without cover image a calm
- * band in the accent colour, in the dark mode almost black. The logo is not repeated here: it is in the header. Used inside
- * BrandTheme.
+ * fit, loaded first, fading in on the band's colour) with a gradient for legibility, on it the name, the city and a fact or
+ * two. Without cover image a calm band in the accent colour, in the dark mode almost black; a cover image that cannot be
+ * loaded shows the band in the cover image's height, so nothing jumps. The logo is not repeated here: it is in the header.
+ * Used inside BrandTheme.
  */
 export function RestaurantHeader({ name, city, coverUrl, facts = [], size = 'page' }: RestaurantHeaderProps) {
   const dark = useMantineColorScheme().colorScheme === 'dark'
   const registerHero = use(HeroContext)
   const height = heights[size]
   const details = [city, ...facts].filter((part) => part !== null && part !== '')
+  const [failedCover, setFailedCover] = useState<string | null>(null)
+  const withCover = coverUrl !== null && failedCover !== coverUrl
+  const band = dark ? 'var(--mantine-color-dark-9)' : 'var(--mantine-primary-color-filled)'
 
   return (
     <Box
@@ -38,19 +43,16 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], size = 'pag
       h={coverUrl !== null ? height.cover : height.band}
       mih={coverUrl !== null ? height.coverMin : height.band}
       mah={coverUrl !== null ? 560 : undefined}
-      bg={coverUrl !== null ? 'dark.9' : dark ? 'var(--mantine-color-dark-9)' : 'var(--mantine-primary-color-filled)'}
-      c={coverUrl !== null || dark ? 'white' : 'var(--mantine-primary-color-contrast)'}
+      bg={band}
+      c={withCover || dark ? 'white' : 'var(--mantine-primary-color-contrast)'}
       style={{ display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}
     >
-      {coverUrl !== null && (
+      {withCover && (
         <>
-          {/* Only a picture of the place: the name below says what it is. The first thing on the page, so not lazy. */}
-          <img
-            src={coverUrl}
-            alt=""
-            fetchPriority="high"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-          />
+          <Box pos="absolute" inset={0}>
+            {/* Only a picture of the place: the name below says what it is. The first thing on the page, so not lazy. */}
+            <Photo src={coverUrl} alt="" placeholder={band} fallback={null} priority onError={() => setFailedCover(coverUrl)} />
+          </Box>
           <Box
             aria-hidden="true"
             pos="absolute"

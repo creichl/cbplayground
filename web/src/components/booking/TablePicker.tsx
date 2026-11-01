@@ -20,6 +20,7 @@ import { ErrorAlert } from '../ErrorAlert.tsx'
 import { FloorPlan } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
 import { ArmchairIcon, BanIcon, CheckIcon } from '../icons.tsx'
+import { Photo } from '../Photo.tsx'
 import { tableLooks, unavailableHatchId } from './tableLooks.ts'
 
 type TablePickerProps = {
@@ -175,13 +176,15 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
       </Stack>
 
       <Card withBorder shadow="none" padding={16} visibleFrom={stickyBar ? 'md' : undefined}>
-        <Group justify="space-between" gap={16}>
-          <Text fw={chosen !== undefined ? 600 : undefined} style={{ flex: '1 1 240px' }}>
+        {/* The text is never cut: where it does not fit beside the buttons, it stands above them. */}
+        <Box style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 16, rowGap: 12 }}>
+          <Text fw={chosen !== undefined ? 600 : undefined} style={{ flex: '1 1 260px', minWidth: 0 }}>
             {chosen !== undefined
               ? t('booking.table.selection', { number: chosen.table.number, count: chosen.table.seats, area: chosen.area.name })
               : t('booking.table.hint')}
           </Text>
-          <Group gap={8}>
+          {/* "No preference" second, "Continue" the main action. */}
+          <Group gap={8} justify="flex-end" ml="auto">
             <Button variant="default" h={44} onClick={noPreference}>
               {t('booking.table.noPreference')}
             </Button>
@@ -189,7 +192,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
               {t('booking.continue')}
             </Button>
           </Group>
-        </Group>
+        </Box>
       </Card>
       {stickyBar && (
         <Group hiddenFrom="md">
@@ -225,7 +228,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
 }
 
 /**
- * An area as a card: its photo (or a calm surface with a chair), name, description and how many suitable tables are free.
+ * An area as a card: its photo (fading in; without one, or when it cannot be loaded, a calm surface with a chair), name, description and how many suitable tables are free.
  * Without a free table it is disabled and says "Fully booked". The chosen area has an accent border and a check.
  */
 function AreaCard({ area, selected, onSelect }: { area: PublicArea; selected: boolean; onSelect: () => void }) {
@@ -254,18 +257,17 @@ function AreaCard({ area, selected, onSelect }: { area: PublicArea; selected: bo
     >
       <Box pos="relative">
         <AspectRatio ratio={16 / 9}>
-          {area.photoUrl !== null ? (
-            // The name below says what it shows.
-            <img src={area.photoUrl} alt="" loading="lazy" style={{ objectFit: 'cover', filter: full ? 'grayscale(1)' : undefined }} />
-          ) : (
-            <Box
-              bg={dark ? 'dark.5' : 'gray.1'}
-              c="dimmed"
-              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <ArmchairIcon size={40} strokeWidth={1.5} />
-            </Box>
-          )}
+          <Photo
+            src={area.photoUrl}
+            alt={t('booking.table.areaPhoto', { area: area.name })}
+            placeholder={dark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-1)'}
+            imageStyle={full ? { filter: 'grayscale(1)' } : undefined}
+            fallback={
+              <Box c="dimmed" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <ArmchairIcon size={40} strokeWidth={1.5} />
+              </Box>
+            }
+          />
         </AspectRatio>
         {selected && (
           <Box

@@ -159,6 +159,7 @@
       "otherTime": "Choose another time",
       "areasLabel": "Areas",
       "hint": "Tap a free table on the plan or choose one from the list below.",
+      "areaPhoto": "Area {{area}}",
       "noPreference": "No preference",
       "fullyBooked": "Fully booked",
       "selection_one": "Table {{number}} · up to {{count}} person · {{area}}",
@@ -493,7 +494,7 @@
       "choose": "Choose logo",
       "replace": "Replace logo",
       "remove": "Remove logo",
-      "hint": "PNG, JPEG or WebP, at most 2 MB. A logo on a transparent or light background works best.",
+      "hint": "PNG with a transparent background recommended. JPEG and WebP work too, at most 2 MB; a logo with its own background is shown on a surface in that colour.",
       "saved": "The logo has been saved.",
       "removed": "The logo has been removed."
     },
