@@ -746,7 +746,6 @@
     }
   },
   "notFound": {
-    "label": "Fehler 404",
     "title": "Seite nicht gefunden",
     "text": "Die gesuchte Seite gibt es nicht oder sie wurde verschoben."
   },

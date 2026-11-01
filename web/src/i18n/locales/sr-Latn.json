@@ -757,7 +757,6 @@
     }
   },
   "notFound": {
-    "label": "Greška 404",
     "title": "Stranica nije pronađena",
     "text": "Stranica koju tražite ne postoji ili je premeštena."
   },
