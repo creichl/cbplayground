@@ -193,7 +193,7 @@ public static class DevelopmentSeed
 
                 if (!await db.Areas.AnyAsync())
                 {
-                    var uploads = AreaEndpoints.FloorPlanDirectory(configuration, environment);
+                    var uploads = ImageUploads.UploadsDirectory(configuration, environment);
                     Directory.CreateDirectory(uploads);
                     for (var i = 0; i < demo.Areas.Length; i++)
                     {

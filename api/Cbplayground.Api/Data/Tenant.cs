@@ -1,4 +1,25 @@
+using System.Text.Json.Serialization;
+
 namespace Cbplayground.Api.Data;
+
+/// <summary>Light or dark appearance of the restaurant's guest pages.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<ThemeMode>))]
+public enum ThemeMode
+{
+    Light,
+    Dark,
+}
+
+/// <summary>A curated pair of fonts for the restaurant's guest pages. The API only knows the key; the web decides which fonts it stands for.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<FontStyle>))]
+public enum FontStyle
+{
+    Modern,
+    Classic,
+    Elegant,
+    Rustic,
+    Urban,
+}
 
 /// <summary>A tenant is one restaurant. All tenants share one database.</summary>
 public class Tenant
@@ -13,6 +34,9 @@ public class Tenant
 
     public const int MaxNameLength = 100;
     public const int MaxSlugLength = 50;
+
+    /// <summary>Length of <see cref="BrandColor"/>, "#rrggbb".</summary>
+    public const int BrandColorLength = 7;
 
     public Guid Id { get; set; }
 
@@ -56,4 +80,21 @@ public class Tenant
 
     /// <summary>A short description for guests.</summary>
     public string? Description { get; set; }
+
+    // The restaurant's branding, maintained by the Tenant Admin. Every field is optional (null: the platform's default).
+
+    /// <summary>Accent colour, "#rrggbb" in lower case.</summary>
+    public string? BrandColor { get; set; }
+
+    /// <summary>Null: <see cref="Data.ThemeMode.Light"/>.</summary>
+    public ThemeMode? ThemeMode { get; set; }
+
+    /// <summary>Null: <see cref="Data.FontStyle.Modern"/>.</summary>
+    public FontStyle? FontStyle { get; set; }
+
+    /// <summary>File name of the logo in "Uploads:Path", chosen by the server.</summary>
+    public string? LogoFileName { get; set; }
+
+    /// <summary>File name of the cover image in "Uploads:Path", chosen by the server.</summary>
+    public string? CoverFileName { get; set; }
 }

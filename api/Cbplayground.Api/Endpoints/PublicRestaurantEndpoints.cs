@@ -23,7 +23,7 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the calendar, the availability and the tables, see Program.cs.</summary>
     public const string ReadRateLimitPolicy = "public-read";
 
-    /// <summary>The restaurant for the booking page: its profile (every field null when empty) and how it is booked.</summary>
+    /// <summary>The restaurant for the booking page: its profile (every field null when empty), how it is booked and its branding.</summary>
     public record RestaurantResponse(
         string Name,
         string? Street,
@@ -39,7 +39,8 @@ public static class PublicRestaurantEndpoints
         int MaxOnlinePartySize,
         int BookingHorizonDays,
         IReadOnlyList<PeriodDto> OpeningHours,
-        bool Bookable);
+        bool Bookable,
+        BrandingEndpoints.BrandingResponse Branding);
 
     /// <summary><see cref="Status"/>: "closed", "full" or "available".</summary>
     public record CalendarDay(DateOnly Date, string Status);
@@ -146,7 +147,20 @@ public static class PublicRestaurantEndpoints
                 maxOnlinePartySize,
                 settings.BookingHorizonDays,
                 openingHours,
-                Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0);
+                Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0,
+                Branding: BrandingEndpoints.ToResponse(tenant));
+        });
+
+        group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
+        {
+            var fileName = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.LogoFileName).SingleAsync();
+            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageCacheControl(fileName, v));
+        });
+
+        group.MapGet("/cover", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
+        {
+            var fileName = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CoverFileName).SingleAsync();
+            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageCacheControl(fileName, v));
         });
 
         // One entry per day of the month. Days in the past and beyond the booking horizon are "closed", like closing days.
@@ -372,6 +386,13 @@ public static class PublicRestaurantEndpoints
             reservation.CancelledByGuest,
             now is not null && ReservationRules.CanGuestCancel(reservation, now.Value));
     }
+
+    /// <summary>
+    /// The URLs of logo and cover image carry the version of the image (<c>?v=</c>), which changes with every upload, so with the
+    /// current version the image may be cached for a year. Without it or with an outdated one it has to be revalidated.
+    /// </summary>
+    private static string ImageCacheControl(string? fileName, string? version) =>
+        fileName is not null && version == ImageUploads.Version(fileName) ? "public, max-age=31536000, immutable" : "no-cache";
 
     private static async Task<ReservationSettings> LoadSettingsAsync(AppDbContext db) =>
         await db.ReservationSettings.AsNoTracking().SingleOrDefaultAsync() ?? new ReservationSettings();
