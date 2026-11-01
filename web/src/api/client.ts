@@ -99,7 +99,7 @@ export function apiPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>('PUT', path, body)
 }
 
-/** DELETEs a resource of the API. Throws ApiError. */
-export function apiDelete(path: string): Promise<void> {
-  return request<void>('DELETE', path)
+/** DELETEs a resource of the API and returns the JSON answer, if any (undefined for 204). Throws ApiError. */
+export function apiDelete<T = void>(path: string): Promise<T> {
+  return request<T>('DELETE', path)
 }

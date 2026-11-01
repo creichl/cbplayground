@@ -241,6 +241,7 @@
       "overview": "Übersicht",
       "reservations": "Reservierungen",
       "profile": "Restaurantprofil",
+      "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
@@ -400,6 +401,79 @@
     },
     "save": "Speichern",
     "saved": "Das Profil wurde gespeichert."
+  },
+  "branding": {
+    "title": "Erscheinungsbild",
+    "subtitle": "Akzentfarbe, heller oder dunkler Modus, Schriften, Logo und Titelbild Ihrer Buchungsseite und der Website-Einbindung.",
+    "viewBookingPage": "Buchungsseite ansehen",
+    "color": {
+      "title": "Akzentfarbe",
+      "description": "Für Knöpfe, die Auswahl in der Buchung und den gewählten Tisch.",
+      "suggestions": "Vorgeschlagene Farben",
+      "label": "Farbe (Hex)",
+      "placeholder": "Plattformfarbe",
+      "invalid": "Bitte geben Sie eine Farbe als #RRGGBB ein, z. B. #1f5f8b.",
+      "reset": "Zurücksetzen",
+      "lowContrastLight": "Diese Farbe hebt sich nur schwach vom hellen Hintergrund ab (Kontrast {{ratio}}:1, empfohlen sind mindestens {{minimum}}:1). Speichern können Sie sie trotzdem.",
+      "lowContrastDark": "Diese Farbe hebt sich nur schwach vom dunklen Hintergrund ab (Kontrast {{ratio}}:1, empfohlen sind mindestens {{minimum}}:1). Speichern können Sie sie trotzdem."
+    },
+    "mode": {
+      "title": "Modus",
+      "description": "Nur für Ihre Buchungsseite und die Website-Einbindung.",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "font": {
+      "title": "Schriftpaar",
+      "description": "Eine Schrift für Überschriften und eine für Text.",
+      "sample": "Reservieren Sie Ihren Tisch für heute Abend – wir freuen uns auf Ihren Besuch.",
+      "styles": {
+        "Modern": "Modern",
+        "Classic": "Klassisch",
+        "Elegant": "Elegant",
+        "Rustic": "Rustikal",
+        "Urban": "Urban"
+      }
+    },
+    "logo": {
+      "title": "Logo",
+      "alt": "Ihr Logo",
+      "emptyTitle": "Noch kein Logo",
+      "choose": "Logo auswählen",
+      "replace": "Logo ersetzen",
+      "remove": "Logo entfernen",
+      "hint": "PNG, JPEG oder WebP, höchstens 2 MB. Am besten wirkt ein Logo auf transparentem oder hellem Hintergrund.",
+      "saved": "Das Logo wurde gespeichert.",
+      "removed": "Das Logo wurde entfernt."
+    },
+    "cover": {
+      "title": "Titelbild",
+      "alt": "Ihr Titelbild",
+      "emptyTitle": "Noch kein Titelbild",
+      "choose": "Titelbild auswählen",
+      "replace": "Titelbild ersetzen",
+      "remove": "Titelbild entfernen",
+      "hint": "PNG, JPEG oder WebP, höchstens 10 MB. Querformat, mindestens 1600 Pixel breit.",
+      "saved": "Das Titelbild wurde gespeichert.",
+      "removed": "Das Titelbild wurde entfernt."
+    },
+    "dropHint": "Bild hierher ziehen oder auswählen.",
+    "imagesSavedRightAway": "Logo und Titelbild werden sofort beim Hochladen bzw. Entfernen gespeichert.",
+    "preview": {
+      "title": "Vorschau",
+      "hint": "Zeigt Ihre Änderungen schon vor dem Speichern."
+    },
+    "save": "Speichern",
+    "saved": "Das Erscheinungsbild wurde gespeichert.",
+    "errors": {
+      "title": "Das Erscheinungsbild konnte nicht gespeichert werden",
+      "invalidBrandColor": "Die Farbe ist ungültig. Bitte geben Sie sie als #RRGGBB ein.",
+      "invalidThemeMode": "Der Modus ist ungültig.",
+      "invalidFontStyle": "Das Schriftpaar ist ungültig.",
+      "logoTooLarge": "Das Logo ist zu groß (höchstens 2 MB).",
+      "coverTooLarge": "Das Titelbild ist zu groß (höchstens 10 MB).",
+      "imageTypeInvalid": "Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild."
+    }
   },
   "staff": {
     "title": "Mitarbeiter",

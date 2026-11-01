@@ -1,4 +1,4 @@
-import { ActionIcon, Box, Group, Stack } from '@mantine/core'
+import { ActionIcon, Box, Group, Stack, useMantineColorScheme } from '@mantine/core'
 import { type PointerEvent, type ReactNode, type Ref, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TableRotation, TableShape } from '../../api/areas.ts'
@@ -50,6 +50,8 @@ const middle = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2
  */
 export function FloorPlan({ imageUrl, imageAlt, tables, tableScale, ariaHidden, onPlanClick, planRef, children }: FloorPlanProps) {
   const { t } = useTranslation()
+  // The guest pages of a restaurant may be dark (BrandTheme); the schematic room then is dark too.
+  const dark = useMantineColorScheme().colorScheme === 'dark'
   const viewportRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState(initialView)
   // Height : width of the image, known once it is loaded.
@@ -204,9 +206,9 @@ export function FloorPlan({ imageUrl, imageAlt, tables, tableScale, ariaHidden, 
                     position: 'relative',
                     aspectRatio: `${aspectRatio}`,
                     borderRadius: 'var(--mantine-radius-sm)',
-                    backgroundColor: 'var(--mantine-color-gray-0)',
+                    backgroundColor: dark ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-gray-0)',
                     // A shadow instead of a border, so the positions refer to the whole room.
-                    boxShadow: 'inset 0 0 0 2px var(--mantine-color-gray-3)',
+                    boxShadow: `inset 0 0 0 2px var(--mantine-color-${dark ? 'dark-4' : 'gray-3'})`,
                   }
                 : { position: 'relative' }
             }
