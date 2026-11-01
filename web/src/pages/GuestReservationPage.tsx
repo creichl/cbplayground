@@ -1,5 +1,6 @@
-import { Alert, Button, Card, Container, Group, Modal, Skeleton, Stack, Table, Text, Title } from '@mantine/core'
-import type { TFunction } from 'i18next'
+import { Alert, Box, Button, Card, Container, Group, Modal, Skeleton, Stack, Text, ThemeIcon, Title, VisuallyHidden } from '@mantine/core'
+import type { ParseKeys, TFunction } from 'i18next'
+import type { ReactNode } from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams, useSearchParams } from 'react-router'
@@ -12,12 +13,28 @@ import {
   useGuestReservation,
   usePublicRestaurant,
 } from '../api/publicBooking.ts'
+import { contentWidth } from '../components/booking/layout.ts'
 import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
-import { RestaurantHeader } from '../components/booking/RestaurantHeader.tsx'
+import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/booking/RestaurantHeader.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
-import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
+import { ArmchairIcon, BanIcon, CalendarIcon, CheckIcon, ClockIcon, UserIcon, UsersIcon, XIcon } from '../components/icons.tsx'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
+
+// Spacing follows an 8 px grid (8, 16, 24, 32, 48), text sizes Mantine's fixed scale.
+
+/** The width of the reservation's cards, so lines stay short. */
+const cardsWidth = 720
+
+/** How each status looks to the guest: never by colour alone, always with an icon and a title. */
+const statusLooks: Record<GuestReservation['status'], { icon: ReactNode; color: string; title: ParseKeys }> = {
+  Requested: { icon: <ClockIcon size={28} />, color: 'yellow', title: 'guestReservation.status.requested' },
+  Confirmed: { icon: <CheckIcon size={28} strokeWidth={3} />, color: 'green', title: 'guestReservation.status.confirmed' },
+  Arrived: { icon: <CheckIcon size={28} strokeWidth={3} />, color: 'green', title: 'guestReservation.status.arrived' },
+  Late: { icon: <ClockIcon size={28} />, color: 'orange', title: 'guestReservation.status.late' },
+  Cancelled: { icon: <XIcon size={28} />, color: 'gray', title: 'guestReservation.status.cancelled' },
+  Declined: { icon: <BanIcon size={28} />, color: 'gray', title: 'guestReservation.status.declined' },
+}
 
 /** A failed cancellation in the guest's language. */
 function cancelErrorMessage(error: Error, t: TFunction) {
@@ -40,8 +57,9 @@ function cancelErrorMessage(error: Error, t: TFunction) {
 }
 
 /**
- * The guest's page of a reservation, opened through the link from the booking (/r/:slug/reservation/:code?t=token):
- * status, what was booked, the restaurant's contact, and cancelling until the start.
+ * The guest's page of a reservation, opened through the link from the booking (/r/:slug/reservation/:code?t=token), in the
+ * look of the booking page: the cover image, a status card at the top, below it what was booked and the restaurant's
+ * contact. Cancelling until the start is a quiet button that asks first; afterwards "Book again" leads to the booking.
  * A wrong restaurant, code or token all show the same "not found".
  */
 export function GuestReservationPage() {
@@ -58,22 +76,25 @@ export function GuestReservationPage() {
 
   if (restaurant.isPending || reservation.isPending) {
     return (
-      <Container size="sm" py="xl">
-        <Stack gap="lg">
-          <Skeleton h={40} w="60%" />
-          <Skeleton h={240} radius="md" />
-        </Stack>
-      </Container>
+      <>
+        <RestaurantHeaderSkeleton size="compact" />
+        <Container size={cardsWidth} py={{ base: 16, md: 32 }}>
+          <Stack gap={24}>
+            <Skeleton h={160} radius="md" />
+            <Skeleton h={240} radius="md" />
+          </Stack>
+        </Container>
+      </>
     )
   }
 
   if (isNotFound(restaurant.error) || isNotFound(reservation.error)) {
     return (
-      <Container size="sm" py="xl">
-        <Stack gap="md" align="flex-start" py="xl">
+      <Container size="sm" py={48}>
+        <Stack gap={16} align="flex-start">
           <Title order={1}>{t('guestReservation.notFoundTitle')}</Title>
-          <Text c="dimmed">{t('guestReservation.notFoundText')}</Text>
-          <Button component={Link} to="/" size="md">
+          <Text size="lg">{t('guestReservation.notFoundText')}</Text>
+          <Button component={Link} to="/" size="md" h={48}>
             {t('common.backToStart')}
           </Button>
         </Stack>
@@ -84,7 +105,7 @@ export function GuestReservationPage() {
   if (restaurant.isError || reservation.isError) {
     const error = restaurant.error ?? reservation.error
     return (
-      <Container size="sm" py="xl">
+      <Container size="sm" py={48}>
         <ErrorAlert
           error={error!}
           onRetry={() => {
@@ -99,9 +120,11 @@ export function GuestReservationPage() {
   const { name, city, branding } = restaurant.data
   return (
     <>
-      <RestaurantHeader name={name} city={city} logoUrl={branding.logoUrl} coverUrl={branding.coverUrl} />
-      <Container size="sm" py={{ base: 'md', sm: 'xl' }}>
-        <ReservationDetails slug={slug} code={code} token={token} restaurant={restaurant.data} reservation={reservation.data} />
+      <RestaurantHeader name={name} city={city} coverUrl={branding.coverUrl} size="compact" />
+      <Container size={contentWidth} py={{ base: 16, md: 32 }}>
+        <Box maw={cardsWidth} mx="auto">
+          <ReservationDetails slug={slug} code={code} token={token} restaurant={restaurant.data} reservation={reservation.data} />
+        </Box>
       </Container>
     </>
   )
@@ -122,98 +145,111 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
   const [confirming, setConfirming] = useState(false)
   const cancelled = reservation.status === 'Cancelled'
   const closed = cancelled || reservation.status === 'Declined'
+  const look = statusLooks[reservation.status]
+  const bookingPath = `/r/${encodeURIComponent(slug)}`
+
+  const statusText = cancel.isSuccess
+    ? t('guestReservation.cancelledText')
+    : cancelled
+      ? t(reservation.cancelledByGuest ? 'guestReservation.cancelledByGuest' : 'guestReservation.cancelledByRestaurant')
+      : reservation.status === 'Declined'
+        ? t('guestReservation.declined')
+        : reservation.status === 'Requested'
+          ? t('guestReservation.status.requestedText')
+          : reservation.status === 'Confirmed'
+            ? t('guestReservation.status.confirmedText')
+            : null
 
   const rows = [
-    { label: t('booking.confirmation.restaurant'), value: restaurant.name },
-    { label: t('booking.confirmation.date'), value: formatLongDate(reservation.date, language) },
+    { icon: <CalendarIcon />, label: t('booking.confirmation.date'), value: formatLongDate(reservation.date, language) },
     {
+      icon: <ClockIcon />,
       label: t('booking.confirmation.time'),
       value: t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) }),
     },
-    { label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: reservation.guests }) },
-    { label: t('booking.confirmation.area'), value: reservation.area },
-    { label: t('booking.confirmation.table'), value: reservation.tableNumber },
-    { label: t('guestReservation.name'), value: reservation.name },
-    { label: t('guestReservation.referenceCode'), value: reservation.referenceCode },
+    { icon: <UsersIcon />, label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: reservation.guests }) },
+    {
+      icon: <ArmchairIcon />,
+      label: t('booking.confirmation.table'),
+      value: t('booking.confirmation.tableInArea', { number: reservation.tableNumber, area: reservation.area }),
+    },
+    { icon: <UserIcon />, label: t('guestReservation.name'), value: reservation.name },
   ]
 
   return (
-    <Stack gap="xl">
-      <Stack gap={4}>
-        <Group justify="space-between" align="center" gap="sm">
-          <Title order={2}>{t('guestReservation.title')}</Title>
-          <StatusBadge status={reservation.status} />
-        </Group>
-        <Text c="dimmed">{restaurant.name}</Text>
-      </Stack>
-
-      {cancel.isSuccess && (
-        <Alert color="green" variant="light" title={t('guestReservation.cancelledTitle')}>
-          <Stack gap="sm" align="flex-start">
-            <Text size="sm">{t('guestReservation.cancelledText')}</Text>
-            <Button component={Link} to={`/r/${encodeURIComponent(slug)}`}>
-              {t('guestReservation.bookAgain')}
-            </Button>
+    <Stack gap={24}>
+      <Card p={{ base: 16, sm: 24 }}>
+        <Group gap={16} wrap="nowrap" align="flex-start">
+          <ThemeIcon size={56} radius="xl" variant="light" color={look.color} style={{ flexShrink: 0 }}>
+            {look.icon}
+          </ThemeIcon>
+          <Stack gap={8} miw={0}>
+            <Text size="sm" fw={600}>
+              {t('guestReservation.title')}
+            </Text>
+            <Title order={2} size="h3">
+              {cancel.isSuccess ? t('guestReservation.cancelledTitle') : t(look.title)}
+            </Title>
+            {statusText !== null && <Text maw="60ch">{statusText}</Text>}
+            <Text size="sm">
+              {t('guestReservation.referenceCode')}:{' '}
+              <Text component="span" fw={700} ff="monospace" style={{ letterSpacing: '0.1em' }}>
+                {reservation.referenceCode}
+              </Text>
+            </Text>
+            {closed && (
+              <Group pt={8}>
+                <Button component={Link} to={bookingPath} h={48}>
+                  {t('guestReservation.bookAgain')}
+                </Button>
+              </Group>
+            )}
           </Stack>
-        </Alert>
-      )}
+        </Group>
+      </Card>
 
-      <Card>
-        <Stack gap="lg">
-          <Table withRowBorders={false} verticalSpacing={4}>
-            <Table.Tbody>
-              {rows.map((row) => (
-                <Table.Tr key={row.label}>
-                  <Table.Td c="dimmed" style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
-                    {row.label}
-                  </Table.Td>
-                  <Table.Td fw={500} td={closed ? 'line-through' : undefined}>
-                    {row.value}
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
+      <Card p={{ base: 16, sm: 24 }}>
+        <Stack gap={16}>
+          <Title order={2} size="h4">
+            {restaurant.name}
+          </Title>
+          <Stack gap={8} component="ul" m={0} p={0} style={{ listStyle: 'none' }}>
+            {rows.map((row) => (
+              <Group key={row.label} component="li" gap={16} wrap="nowrap" align="flex-start" td={closed ? 'line-through' : undefined}>
+                <Box c="dimmed" style={{ display: 'flex', flexShrink: 0, paddingTop: 3 }} aria-hidden="true">
+                  {row.icon}
+                </Box>
+                <Text>
+                  {/* The icon says it on screen. */}
+                  <VisuallyHidden>{`${row.label}: `}</VisuallyHidden>
+                  {row.value}
+                </Text>
+              </Group>
+            ))}
+          </Stack>
 
           {reservation.canCancel ? (
-            <Group>
-              <Button color="red" variant="light" onClick={() => setConfirming(true)}>
+            <Group pt={8}>
+              <Button variant="default" h={44} leftSection={<XIcon />} onClick={() => setConfirming(true)}>
                 {t('guestReservation.cancel')}
               </Button>
             </Group>
           ) : (
-            !cancel.isSuccess &&
-            (closed ? (
-              <Stack gap="sm" align="flex-start">
-                <Text size="sm" c="dimmed">
-                  {cancelled
-                    ? t(reservation.cancelledByGuest ? 'guestReservation.cancelledByGuest' : 'guestReservation.cancelledByRestaurant')
-                    : t('guestReservation.declined')}
-                </Text>
-                <Button component={Link} to={`/r/${encodeURIComponent(slug)}`} variant="light">
-                  {t('guestReservation.bookAgain')}
-                </Button>
-              </Stack>
-            ) : (
-              reservation.status !== 'Arrived' && (
-                <Text size="sm" c="dimmed">
-                  {t('guestReservation.cannotCancel')}
-                </Text>
-              )
-            ))
+            !closed &&
+            reservation.status !== 'Arrived' && <Text size="sm">{t('guestReservation.cannotCancel')}</Text>
           )}
 
           {cancel.isError && (
-            <Alert color="red" variant="light">
+            <Alert color="red" variant="light" role="alert">
               {cancelErrorMessage(cancel.error, t)}
             </Alert>
           )}
         </Stack>
       </Card>
 
-      <Card>
-        <Stack gap="sm">
-          <Title order={2} size="h5">
+      <Card p={{ base: 16, sm: 24 }}>
+        <Stack gap={8}>
+          <Title order={2} ff="text" fz="lg" fw={700}>
             {t('guestReservation.contact')}
           </Title>
           <RestaurantContact restaurant={restaurant} />
@@ -221,7 +257,7 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
       </Card>
 
       <Modal opened={confirming} onClose={() => setConfirming(false)} title={t('guestReservation.confirm.title')}>
-        <Stack gap="md">
+        <Stack gap={16}>
           <Text size="sm">
             {t('guestReservation.confirm.text', {
               date: formatLongDate(reservation.date, language),
@@ -229,12 +265,13 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
               guests: t('booking.guestsCount', { count: reservation.guests }),
             })}
           </Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={() => setConfirming(false)}>
+          <Group justify="flex-end" gap={8}>
+            <Button variant="default" h={44} onClick={() => setConfirming(false)}>
               {t('guestReservation.confirm.back')}
             </Button>
             <Button
               color="red"
+              h={44}
               loading={cancel.isPending}
               onClick={() => cancel.mutate(undefined, { onSettled: () => setConfirming(false) })}
             >
