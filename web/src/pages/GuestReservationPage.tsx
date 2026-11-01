@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Group, Modal, Skeleton, Stack, Table, Text, Title } from '@mantine/core'
+import { Alert, Button, Card, Container, Group, Modal, Skeleton, Stack, Table, Text, Title } from '@mantine/core'
 import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +13,7 @@ import {
   usePublicRestaurant,
 } from '../api/publicBooking.ts'
 import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
+import { RestaurantHeader } from '../components/booking/RestaurantHeader.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
@@ -57,39 +58,53 @@ export function GuestReservationPage() {
 
   if (restaurant.isPending || reservation.isPending) {
     return (
-      <Stack gap="lg">
-        <Skeleton h={40} w="60%" />
-        <Skeleton h={240} radius="md" />
-      </Stack>
+      <Container size="sm" py="xl">
+        <Stack gap="lg">
+          <Skeleton h={40} w="60%" />
+          <Skeleton h={240} radius="md" />
+        </Stack>
+      </Container>
     )
   }
 
   if (isNotFound(restaurant.error) || isNotFound(reservation.error)) {
     return (
-      <Stack gap="md" align="flex-start" py="xl">
-        <Title order={1}>{t('guestReservation.notFoundTitle')}</Title>
-        <Text c="dimmed">{t('guestReservation.notFoundText')}</Text>
-        <Button component={Link} to="/" size="md">
-          {t('common.backToStart')}
-        </Button>
-      </Stack>
+      <Container size="sm" py="xl">
+        <Stack gap="md" align="flex-start" py="xl">
+          <Title order={1}>{t('guestReservation.notFoundTitle')}</Title>
+          <Text c="dimmed">{t('guestReservation.notFoundText')}</Text>
+          <Button component={Link} to="/" size="md">
+            {t('common.backToStart')}
+          </Button>
+        </Stack>
+      </Container>
     )
   }
 
   if (restaurant.isError || reservation.isError) {
     const error = restaurant.error ?? reservation.error
     return (
-      <ErrorAlert
-        error={error!}
-        onRetry={() => {
-          void restaurant.refetch()
-          void reservation.refetch()
-        }}
-      />
+      <Container size="sm" py="xl">
+        <ErrorAlert
+          error={error!}
+          onRetry={() => {
+            void restaurant.refetch()
+            void reservation.refetch()
+          }}
+        />
+      </Container>
     )
   }
 
-  return <ReservationDetails slug={slug} code={code} token={token} restaurant={restaurant.data} reservation={reservation.data} />
+  const { name, city, branding } = restaurant.data
+  return (
+    <>
+      <RestaurantHeader name={name} city={city} logoUrl={branding.logoUrl} coverUrl={branding.coverUrl} />
+      <Container size="sm" py={{ base: 'md', sm: 'xl' }}>
+        <ReservationDetails slug={slug} code={code} token={token} restaurant={restaurant.data} reservation={reservation.data} />
+      </Container>
+    </>
+  )
 }
 
 type ReservationDetailsProps = {
@@ -126,7 +141,7 @@ function ReservationDetails({ slug, code, token, restaurant, reservation }: Rese
     <Stack gap="xl">
       <Stack gap={4}>
         <Group justify="space-between" align="center" gap="sm">
-          <Title order={1}>{t('guestReservation.title')}</Title>
+          <Title order={2}>{t('guestReservation.title')}</Title>
           <StatusBadge status={reservation.status} />
         </Group>
         <Text c="dimmed">{restaurant.name}</Text>

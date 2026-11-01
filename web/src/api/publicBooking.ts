@@ -2,6 +2,7 @@ import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/rea
 import type { Language } from '../i18n/index.ts'
 import { ApiError, apiGet, apiPost } from './client.ts'
 import type { TableRotation, TableShape } from './areas.ts'
+import type { Branding } from './branding.ts'
 import type { OpeningPeriod } from './openingHours.ts'
 import type { ConfirmationMode, TableSelectionMode } from './reservationSettings.ts'
 
@@ -25,6 +26,8 @@ export type PublicRestaurant = {
   openingHours: OpeningPeriod[]
   /** False without location, opening hours or tables that can be booked online. */
   bookable: boolean
+  /** Colour, light or dark, fonts, logo and cover image of the restaurant's guest pages. */
+  branding: Branding
 }
 
 /** A day of the date picker. "closed" also covers closing days, days in the past and days beyond the restaurant's booking horizon. */

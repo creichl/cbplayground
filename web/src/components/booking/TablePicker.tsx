@@ -1,10 +1,11 @@
-import { Alert, Box, Button, Group, Radio, Skeleton, Stack, Tabs, Text } from '@mantine/core'
+import { Alert, Box, Button, Group, Radio, Skeleton, Stack, Tabs, Text, useMantineColorScheme } from '@mantine/core'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type PublicArea, type PublicTable, usePublicTables } from '../../api/publicBooking.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 import { FloorPlan } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
+import { tableLooks } from './tableLooks.ts'
 
 type TablePickerProps = {
   slug: string
@@ -87,15 +88,10 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
   )
 }
 
-/** The colours of a table the guest can choose, has chosen or cannot choose (taken or too small). */
-const looks = {
-  free: { fill: 'white', stroke: 'var(--mantine-color-brand-8)', color: 'var(--mantine-color-dark-7)', strokeWidth: 2.5 },
-  selected: { fill: 'var(--mantine-color-brand-8)', stroke: 'var(--mantine-color-brand-9)', color: 'white', strokeWidth: 2.5 },
-  unavailable: { fill: 'var(--mantine-color-gray-2)', stroke: 'var(--mantine-color-gray-4)', color: 'var(--mantine-color-gray-6)', strokeWidth: 1 },
-}
-
 function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string | null; onChoose: (table: PublicTable) => void }) {
   const { t } = useTranslation()
+  const { colorScheme } = useMantineColorScheme()
+  const look = tableLooks[colorScheme === 'dark' ? 'dark' : 'light']
   const free = area.tables.filter((table) => table.available)
 
   return (
@@ -106,7 +102,7 @@ function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string
           <FloorPlan imageUrl={area.floorPlanUrl} imageAlt="" tables={area.tables} tableScale={area.tableScale} ariaHidden>
             {area.tables.map((table) => {
               const selected = table.id === value
-              const look = selected ? looks.selected : table.available ? looks.free : looks.unavailable
+              const tableLook = selected ? look.selected : table.available ? look.free : look.unavailable
               return (
                 <TableShape
                   key={table.id}
@@ -117,7 +113,7 @@ function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string
                   posX={table.posX}
                   posY={table.posY}
                   tableScale={area.tableScale}
-                  {...look}
+                  {...tableLook}
                   onClick={table.available ? () => onChoose(table) : undefined}
                   style={{
                     cursor: table.available ? 'pointer' : 'not-allowed',
@@ -129,9 +125,9 @@ function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string
             })}
           </FloorPlan>
           <Group gap="md" aria-hidden="true">
-            <LegendItem {...looks.free} label={t('booking.table.legend.free')} />
-            <LegendItem {...looks.selected} label={t('booking.table.legend.selected')} />
-            <LegendItem {...looks.unavailable} label={t('booking.table.legend.unavailable')} />
+            <LegendItem {...look.free} label={t('booking.table.legend.free')} />
+            <LegendItem {...look.selected} label={t('booking.table.legend.selected')} />
+            <LegendItem {...look.unavailable} label={t('booking.table.legend.unavailable')} />
           </Group>
         </Stack>
       )}

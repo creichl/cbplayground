@@ -9,6 +9,10 @@ export type Tenant = {
   /** City and short description from the restaurant's profile; null when not filled in. */
   city: string | null
   description: string | null
+  /** Logo, cover image and accent colour ("#rrggbb") from the branding; null when not set. */
+  logoUrl: string | null
+  coverUrl: string | null
+  brandColor: string | null
 }
 
 /** All restaurants, sorted by name. */

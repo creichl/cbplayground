@@ -1,71 +1,78 @@
-import { Card, Stack, Table, Text, Title } from '@mantine/core'
-import { useTranslation } from 'react-i18next'
-import type { DayOfWeek } from '../../api/openingHours.ts'
-import type { PublicRestaurant } from '../../api/publicBooking.ts'
-import { formatTime } from '../../i18n/format.ts'
-import { RestaurantContact } from './RestaurantContact.tsx'
+import { Box, Container, Group, Image, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
 
-/** The week as shown, starting on Monday. */
-const weekdays = [
-  { dayOfWeek: 1, key: 'monday' },
-  { dayOfWeek: 2, key: 'tuesday' },
-  { dayOfWeek: 3, key: 'wednesday' },
-  { dayOfWeek: 4, key: 'thursday' },
-  { dayOfWeek: 5, key: 'friday' },
-  { dayOfWeek: 6, key: 'saturday' },
-  { dayOfWeek: 0, key: 'sunday' },
-] as const satisfies readonly { dayOfWeek: DayOfWeek; key: string }[]
+type RestaurantHeaderProps = {
+  name: string
+  city: string | null
+  logoUrl: string | null
+  coverUrl: string | null
+}
 
-/** The top of the booking page: name, description, address (with a map link), contact and the regular opening hours. */
-export function RestaurantHeader({ restaurant }: { restaurant: PublicRestaurant }) {
-  const { t, i18n } = useTranslation()
-  const language = i18n.resolvedLanguage ?? 'en'
+/**
+ * The top of the restaurant's guest pages, in the full width: the cover image with a gradient for legibility, on it the
+ * logo, the name and the city. Without cover image a calm band in the accent colour, in the dark mode almost black.
+ * Without logo only the name, in the heading font. Used inside BrandTheme.
+ */
+export function RestaurantHeader({ name, city, logoUrl, coverUrl }: RestaurantHeaderProps) {
+  const { colorScheme } = useMantineColorScheme()
 
-  return (
-    <Stack gap="md">
-      <Stack gap={4}>
-        <Title order={1}>{restaurant.name}</Title>
-        {restaurant.description !== null && <Text c="dimmed">{restaurant.description}</Text>}
-      </Stack>
-
-      <Card padding="md">
-        <Stack gap="md">
-          <RestaurantContact restaurant={restaurant} />
-
-          <Stack gap={4}>
-            <Title order={2} size="h5">
-              {t('booking.restaurant.openingHours')}
-            </Title>
-            <Table verticalSpacing={2} horizontalSpacing={0} withRowBorders={false} fz="sm">
-              <Table.Tbody>
-                {weekdays.map(({ dayOfWeek, key }) => {
-                  const periods = restaurant.openingHours.filter((period) => period.dayOfWeek === dayOfWeek)
-                  return (
-                    <Table.Tr key={dayOfWeek}>
-                      <Table.Td pr="md" style={{ whiteSpace: 'nowrap', verticalAlign: 'top' }}>
-                        {t(`openingHours.weekdays.${key}`)}
-                      </Table.Td>
-                      <Table.Td c={periods.length === 0 ? 'dimmed' : undefined}>
-                        {periods.length === 0
-                          ? t('openingHours.closed')
-                          : // A line break only falls between two windows, never inside one.
-                            periods.map((period, index) => (
-                              <span key={period.start}>
-                                {index > 0 && ', '}
-                                <span style={{ whiteSpace: 'nowrap' }}>
-                                  {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
-                                </span>
-                              </span>
-                            ))}
-                      </Table.Td>
-                    </Table.Tr>
-                  )
-                })}
-              </Table.Tbody>
-            </Table>
-          </Stack>
+  const content = (
+    <Container size="lg" w="100%">
+      <Group gap="md" wrap="nowrap" align="flex-end">
+        {logoUrl !== null && (
+          <Box
+            p={6}
+            bg="var(--mantine-color-body)"
+            style={{ flexShrink: 0, borderRadius: 'var(--mantine-radius-md)', boxShadow: 'var(--mantine-shadow-sm)' }}
+          >
+            {/* The name stands next to the logo, so the logo has no text alternative of its own. */}
+            <Image src={logoUrl} alt="" h={{ base: 56, sm: 80 }} w="auto" maw={{ base: 120, sm: 200 }} fit="contain" />
+          </Box>
+        )}
+        <Stack gap={2} miw={0}>
+          <Title order={1} style={{ overflowWrap: 'anywhere', textWrap: 'balance' }}>
+            {name}
+          </Title>
+          {city !== null && <Text opacity={0.85}>{city}</Text>}
         </Stack>
-      </Card>
-    </Stack>
+      </Group>
+    </Container>
+  )
+
+  if (coverUrl !== null) {
+    return (
+      <Box
+        pos="relative"
+        h={{ base: 200, sm: 320 }}
+        c="white"
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          backgroundImage: `url("${coverUrl}")`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <Box
+          aria-hidden="true"
+          pos="absolute"
+          inset={0}
+          style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.35) 45%, rgba(0, 0, 0, 0) 80%)' }}
+        />
+        <Box pos="relative" w="100%" pb={{ base: 'md', sm: 'xl' }}>
+          {content}
+        </Box>
+      </Box>
+    )
+  }
+
+  const dark = colorScheme === 'dark'
+  return (
+    <Box
+      py={{ base: 'lg', sm: 'xl' }}
+      bg={dark ? 'var(--mantine-color-dark-9)' : 'var(--mantine-primary-color-filled)'}
+      c={dark ? 'var(--mantine-color-white)' : 'var(--mantine-primary-color-contrast)'}
+    >
+      {content}
+    </Box>
   )
 }
