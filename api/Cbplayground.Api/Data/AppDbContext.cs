@@ -51,6 +51,11 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             tenant.Property(t => t.Email).HasMaxLength(Tenant.MaxEmailLength);
             tenant.Property(t => t.Website).HasMaxLength(Tenant.MaxWebsiteLength);
             tenant.Property(t => t.Description).HasMaxLength(Tenant.MaxDescriptionLength);
+            tenant.Property(t => t.BrandColor).HasMaxLength(Tenant.BrandColorLength);
+            tenant.Property(t => t.ThemeMode).HasConversion<string>().HasMaxLength(20);
+            tenant.Property(t => t.FontStyle).HasConversion<string>().HasMaxLength(20);
+            tenant.Property(t => t.LogoFileName).HasMaxLength(100);
+            tenant.Property(t => t.CoverFileName).HasMaxLength(100);
         });
 
         modelBuilder.Entity<OpeningPeriod>(period =>

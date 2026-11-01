@@ -7,8 +7,11 @@ public static class TenantEndpoints
 {
     public record TenantResponse(Guid Id, string Name, string Slug);
 
-    /// <summary>An active restaurant in the public list, with its city and short description from the profile (null when empty).</summary>
-    public record TenantListItem(Guid Id, string Name, string Slug, string? City, string? Description);
+    /// <summary>
+    /// An active restaurant in the public list, with its city and short description from the profile and its logo, cover image
+    /// and accent colour from the branding (each null when empty).
+    /// </summary>
+    public record TenantListItem(Guid Id, string Name, string Slug, string? City, string? Description, string? LogoUrl, string? CoverUrl, string? BrandColor);
 
     public static void MapTenantEndpoints(this IEndpointRouteBuilder app)
     {
@@ -16,10 +19,10 @@ public static class TenantEndpoints
 
         // Deactivated restaurants are hidden from guests.
         group.MapGet("/", async (AppDbContext db) =>
-            await db.Tenants
+            (await db.Tenants
                 .Where(t => t.IsActive)
                 .OrderBy(t => t.Name)
-                .Select(t => new TenantListItem(t.Id, t.Name, t.Slug, t.City, t.Description))
-                .ToListAsync());
+                .ToListAsync())
+                .Select(t => new TenantListItem(t.Id, t.Name, t.Slug, t.City, t.Description, BrandingEndpoints.LogoUrl(t), BrandingEndpoints.CoverUrl(t), t.BrandColor)));
     }
 }
