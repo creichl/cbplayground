@@ -96,6 +96,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         {
             area.Property(a => a.Name).HasMaxLength(100);
             area.Property(a => a.FloorPlanFileName).HasMaxLength(100);
+            area.Property(a => a.Description).HasMaxLength(Area.MaxDescriptionLength);
+            area.Property(a => a.PhotoFileName).HasMaxLength(100);
             area.HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(a => a.TenantId)

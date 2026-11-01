@@ -3,6 +3,8 @@ namespace Cbplayground.Api.Data;
 /// <summary>An area of a restaurant, e.g. the dining room or the terrace, with its own floor plan.</summary>
 public class Area : ITenantOwned
 {
+    public const int MaxDescriptionLength = 200;
+
     public Guid Id { get; set; }
 
     public Guid TenantId { get; set; }
@@ -14,6 +16,12 @@ public class Area : ITenantOwned
 
     /// <summary>File name of the uploaded floor plan in the uploads folder; null until one is uploaded. Always chosen by the server.</summary>
     public string? FloorPlanFileName { get; set; }
+
+    /// <summary>Short description for the guest's choice of the area, e.g. "Dachterrasse mit Blick über die Stadt"; null when empty.</summary>
+    public string? Description { get; set; }
+
+    /// <summary>File name of the uploaded photo of the area in the uploads folder; null without photo. Always chosen by the server.</summary>
+    public string? PhotoFileName { get; set; }
 
     /// <summary>False blocks the area completely for online booking.</summary>
     public bool OnlineBookingEnabled { get; set; } = true;
