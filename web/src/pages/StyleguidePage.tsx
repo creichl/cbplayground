@@ -1,4 +1,4 @@
-import { ArrowRightIcon, InfoIcon, MoonIcon, SunIcon, UtensilsCrossedIcon } from 'lucide-react'
+import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, SunIcon, TriangleAlertIcon, UtensilsCrossedIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import { BrandTheme } from '../components/BrandTheme.tsx'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Calendar } from '../ui/calendar.tsx'
@@ -276,6 +277,25 @@ export function StyleguidePage() {
                   <Badge variant="success">{t('reservations.status.confirmed')}</Badge>
                   <Badge variant="warning">{t('reservations.status.requested')}</Badge>
                   <Badge variant="destructive">{t('reservations.status.cancelled')}</Badge>
+                </div>
+              </Block>
+
+              <Block name="Alert">
+                <div className="flex flex-col gap-3">
+                  <Alert>
+                    <InfoIcon aria-hidden="true" />
+                    <AlertDescription>{t('embed.notFound')}</AlertDescription>
+                  </Alert>
+                  <Alert variant="warning">
+                    <TriangleAlertIcon aria-hidden="true" />
+                    <AlertTitle>{t('booking.partySize.callTitle')}</AlertTitle>
+                    <AlertDescription>{t('booking.partySize.callText', { count: 8 })}</AlertDescription>
+                  </Alert>
+                  <Alert variant="destructive">
+                    <CircleAlertIcon aria-hidden="true" />
+                    <AlertTitle>{t('errors.title')}</AlertTitle>
+                    <AlertDescription>{t('errors.network')}</AlertDescription>
+                  </Alert>
                 </div>
               </Block>
 

@@ -158,6 +158,9 @@
   --animate-dialog-out: dialog-out var(--motion-medium) var(--ease-in);
   --animate-pop-in: pop-in var(--motion-fast) var(--ease-out);
   --animate-pop-out: pop-out var(--motion-fast) var(--ease-in);
+  /* The check of a confirmed booking: the circle pops in, then the check is drawn. */
+  --animate-check-circle: pop-in var(--motion-slow) var(--ease-out) both;
+  --animate-check-draw: check-draw 400ms var(--ease-out) 200ms both;
 }
 
 @theme {
@@ -215,6 +218,14 @@
     to {
       opacity: 0;
       scale: 0.97;
+    }
+  }
+  @keyframes check-draw {
+    from {
+      stroke-dashoffset: 1;
+    }
+    to {
+      stroke-dashoffset: 0;
     }
   }
 }
