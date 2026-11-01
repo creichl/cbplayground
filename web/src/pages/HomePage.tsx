@@ -1,4 +1,4 @@
-import { Button, Card, Group, Skeleton, Stack, Text, Title } from '@mantine/core'
+import { Button, Card, Group, Image, Skeleton, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { useTenants } from '../api/tenants.ts'
@@ -31,20 +31,32 @@ export function HomePage() {
         <Stack gap="sm">
           {tenants.data.map((tenant) => (
             <Card key={tenant.id}>
+              {/* Cover image and logo only accompany the name, so they have no text alternative. */}
+              {tenant.coverUrl !== null && (
+                <Card.Section mb="md">
+                  <Image src={tenant.coverUrl} alt="" h={{ base: 120, sm: 160 }} fit="cover" />
+                </Card.Section>
+              )}
               <Stack gap="sm">
-                <Stack gap={2}>
-                  <Title order={2} size="h3">
-                    {tenant.name}
-                  </Title>
-                  {tenant.city !== null && (
-                    <Text c="dimmed" size="sm">
-                      {tenant.city}
-                    </Text>
+                <Group gap="sm" wrap="nowrap">
+                  {tenant.logoUrl !== null && (
+                    <Image src={tenant.logoUrl} alt="" h={48} w="auto" maw={96} fit="contain" />
                   )}
-                </Stack>
+                  <Stack gap={2} miw={0}>
+                    <Title order={2} size="h3">
+                      {tenant.name}
+                    </Title>
+                    {tenant.city !== null && (
+                      <Text c="dimmed" size="sm">
+                        {tenant.city}
+                      </Text>
+                    )}
+                  </Stack>
+                </Group>
                 {tenant.description !== null && <Text size="sm">{tenant.description}</Text>}
                 <Group>
-                  <Button component={Link} to={`/r/${tenant.slug}`}>
+                  {/* In the restaurant's accent colour, with the text colour that contrasts with it. */}
+                  <Button component={Link} to={`/r/${tenant.slug}`} color={tenant.brandColor ?? undefined} autoContrast>
                     {t('home.reserve')}
                   </Button>
                 </Group>
