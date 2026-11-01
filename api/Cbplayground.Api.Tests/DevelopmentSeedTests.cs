@@ -65,8 +65,8 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
             Assert.Equal(HttpStatusCode.OK, image.StatusCode);
             Assert.Equal("image/png", image.Content.Headers.ContentType?.MediaType);
         }
-        // Three floor plans plus logo and cover image of each of the three restaurants, copied once.
-        Assert.Equal(9, Directory.GetFiles(factory.UploadsPath).Length);
+        // Three floor plans, logo and cover image of each of the three restaurants and a photo of each of the six areas, copied once.
+        Assert.Equal(15, Directory.GetFiles(factory.UploadsPath).Length);
 
         var hours = (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Ct))!;
         Assert.Equal(12, hours.Periods!.Count);
@@ -104,17 +104,28 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(ConfirmationMode.Request, dunavSettings.ConfirmationMode);
         Assert.Equal(TableSelectionMode.GuestChooses, dunavSettings.TableSelectionMode);
 
-        // Branding with logo and cover image for both, which guests can load.
+        // Every area has a photo, which guests can load, and a description in the restaurant's language.
+        using var guest = factory.CreateHttpsClient();
+        foreach (var area in areas.Concat(dunavAreas))
+        {
+            Assert.False(string.IsNullOrEmpty(area.Description));
+            Assert.InRange(area.Description!.Length, 1, Area.MaxDescriptionLength);
+            var photo = await guest.GetAsync(area.PhotoUrl, Ct);
+            Assert.Equal(HttpStatusCode.OK, photo.StatusCode);
+            Assert.Equal("image/jpeg", photo.Content.Headers.ContentType?.MediaType);
+        }
+        Assert.Equal("Bašta u hladu lipa, pogled na Dunav", basta.Description);
+
+        // Branding with logo and cover image for both, which guests can load: the logos are drawn, the cover images are photos.
         var lindeBranding = (await linde.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct))!;
         Assert.Equal(("#5a7d3a", ThemeMode.Light, FontStyle.Rustic), (lindeBranding.BrandColor, lindeBranding.ThemeMode, lindeBranding.FontStyle));
         var dunavBranding = (await dunav.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct))!;
         Assert.Equal(("#1f5f8b", ThemeMode.Light, FontStyle.Classic), (dunavBranding.BrandColor, dunavBranding.ThemeMode, dunavBranding.FontStyle));
-        using var guest = factory.CreateHttpsClient();
-        foreach (var url in new[] { lindeBranding.LogoUrl, lindeBranding.CoverUrl, dunavBranding.LogoUrl, dunavBranding.CoverUrl })
+        foreach (var (url, type) in new[] { (lindeBranding.LogoUrl, "image/png"), (lindeBranding.CoverUrl, "image/jpeg"), (dunavBranding.LogoUrl, "image/png"), (dunavBranding.CoverUrl, "image/jpeg") })
         {
             var image = await guest.GetAsync(url, Ct);
             Assert.Equal(HttpStatusCode.OK, image.StatusCode);
-            Assert.Equal("image/png", image.Content.Headers.ContentType?.MediaType);
+            Assert.Equal(type, image.Content.Headers.ContentType?.MediaType);
         }
     }
 
@@ -142,6 +153,7 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         {
             Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync(url, Ct)).StatusCode);
         }
+        Assert.Equal("image/jpeg", (await guest.GetAsync(rooftop.Branding.CoverUrl, Ct)).Content.Headers.ContentType?.MediaType);
         var listItem = Assert.Single((await guest.GetFromJsonAsync<List<TenantEndpoints.TenantListItem>>("/api/tenants", Ct))!, t => t.Slug == "rooftop-belvedere");
         Assert.Equal((rooftop.Branding.LogoUrl, rooftop.Branding.CoverUrl, "#c9a96e"), (listItem.LogoUrl, listItem.CoverUrl, listItem.BrandColor));
 
@@ -153,6 +165,8 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var areas = await db.Areas.OrderBy(a => a.SortOrder).ToListAsync(Ct);
         Assert.Equal(["Rooftop", "Lounge"], areas.Select(a => a.Name));
         Assert.All(areas, a => Assert.Null(a.FloorPlanFileName));
+        Assert.All(areas, a => Assert.NotNull(a.PhotoFileName));
+        Assert.Equal("Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.", areas[0].Description);
         Assert.Equal([70, 100], areas.Select(a => a.OnlineCapacityPercent));
         var tables = await db.Tables.ToListAsync(Ct);
         var rooftopTables = tables.Where(t => t.AreaId == areas[0].Id).ToList();
@@ -283,5 +297,44 @@ public class DevelopmentSeedBrandingTests(ApiFactory factory) : IClassFixture<Ap
         Assert.Equal(new BrandingResponse("#112233", ThemeMode.Dark, FontStyle.Urban, null, null), await linde.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct));
         Assert.Equal(dunavLogo, await dunav.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct));
         Assert.Null(dunavLogo.CoverUrl);
+    }
+}
+
+/// <summary>
+/// The seed and area photos and descriptions the admin maintained, on a factory of its own: the other seed tests count the uploaded files.
+/// </summary>
+public class DevelopmentSeedAreaPhotoTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private async Task SeedAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
+    }
+
+    [Fact]
+    public async Task The_seed_adds_photo_and_description_only_to_an_area_that_has_neither()
+    {
+        await SeedAsync();
+        using var linde = factory.CreateHttpsClient();
+        (await linde.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, Ct)).EnsureSuccessStatusCode();
+        var areas = (await linde.GetFromJsonAsync<List<AreaResponse>>("/api/admin/areas", Ct))!;
+        var (gaststube, terrasse) = (areas.Single(a => a.Name == "Gaststube"), areas.Single(a => a.Name == "Terrasse"));
+        // Gaststube keeps an own description without photo; Terrasse loses both, like an area from before the photos.
+        (await linde.DeleteAsync($"/api/admin/areas/{gaststube.Id}/photo", Ct)).EnsureSuccessStatusCode();
+        (await linde.PutAsJsonAsync($"/api/admin/areas/{gaststube.Id}", new { name = "Gaststube", onlineBookingEnabled = true, onlineCapacityPercent = 100, description = "Unsere Stube" }, Ct)).EnsureSuccessStatusCode();
+        (await linde.DeleteAsync($"/api/admin/areas/{terrasse.Id}/photo", Ct)).EnsureSuccessStatusCode();
+        (await linde.PutAsJsonAsync($"/api/admin/areas/{terrasse.Id}", new { name = "Terrasse", onlineBookingEnabled = true, onlineCapacityPercent = 50, description = "" }, Ct)).EnsureSuccessStatusCode();
+
+        await SeedAsync();
+
+        areas = (await linde.GetFromJsonAsync<List<AreaResponse>>("/api/admin/areas", Ct))!;
+        var gaststubeAfter = areas.Single(a => a.Id == gaststube.Id);
+        Assert.Equal(("Unsere Stube", null), (gaststubeAfter.Description, gaststubeAfter.PhotoUrl));
+        var terrasseAfter = areas.Single(a => a.Id == terrasse.Id);
+        Assert.Equal(terrasse.Description, terrasseAfter.Description);
+        Assert.NotNull(terrasseAfter.PhotoUrl);
+        Assert.NotEqual(terrasse.PhotoUrl, terrasseAfter.PhotoUrl);
     }
 }
