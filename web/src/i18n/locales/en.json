@@ -25,7 +25,8 @@
     "save": "Save",
     "close": "Close",
     "timeRange": "{{start}}–{{end}}",
-    "tableLabel": "{{number}} · {{seats}}"
+    "tableLabel": "{{number}} · {{seats}}",
+    "midnight": "midnight"
   },
   "auth": {
     "userMenu": "Account menu",
@@ -103,21 +104,25 @@
     "changePart": "Change: {{part}}",
     "continue": "Continue",
     "steps": {
-      "guests": "How many people?",
-      "date": "Which day?",
-      "time": "What time?",
-      "table": "Which table?",
+      "time": "Reserve a table",
+      "table": "Choose your table",
       "details": "Your contact details"
     },
     "restaurant": {
       "openingHours": "Opening hours",
       "website": "Website",
-      "addressOnMap": "{{address}} – open on a map"
+      "route": "Directions",
+      "infoTitle": "Info & contact",
+      "closedToday": "Closed today",
+      "openUntil": "Open now until {{time}}",
+      "opensAt": "Open today from {{time}}",
+      "closedNow": "Closed now",
+      "today": "{{day}} (today)",
+      "more": "More",
+      "less": "Less",
+      "routeTo": "Directions to {{address}}"
     },
     "partySize": {
-      "more": "More",
-      "moreLabel": "Number of people",
-      "morePlaceholder": "Please choose",
       "moreThan_one": "More than {{count}} person",
       "moreThan_other": "More than {{count}} people",
       "callTitle": "Please call us",
@@ -137,7 +142,8 @@
       "midday": "Lunch",
       "evening": "Evening",
       "noTables": "No free tables – next free days:",
-      "noFreeDays": "Unfortunately, no day is free in the coming weeks. Please choose another date or call us."
+      "noFreeDays": "Unfortunately, no day is free in the coming weeks. Please choose another date or call us.",
+      "freeTimes": "Free times"
     },
     "table": {
       "listLabel": "Free tables – {{area}}",
@@ -150,7 +156,15 @@
       "option_other": "Table {{number}} · {{count}} seats",
       "noneFreeInArea": "There is no suitable free table in this area at this time.",
       "noneFree": "Unfortunately, there is no free table left at this time.",
-      "otherTime": "Choose another time"
+      "otherTime": "Choose another time",
+      "areasLabel": "Areas",
+      "hint": "Tap a free table on the plan or choose one from the list below.",
+      "noPreference": "No preference",
+      "fullyBooked": "Fully booked",
+      "selection_one": "Table {{number}} · up to {{count}} person · {{area}}",
+      "selection_other": "Table {{number}} · up to {{count}} people · {{area}}",
+      "freeCount_one": "{{count}} table free",
+      "freeCount_other": "{{count}} tables free"
     },
     "details": {
       "name": "Name",
@@ -159,14 +173,17 @@
       "notes": "Note (optional)",
       "notesDescription_one": "E.g. high chair or allergies. At most {{count}} character.",
       "notesDescription_other": "E.g. high chair or allergies. At most {{count}} characters.",
-      "contactHint": "So the restaurant can reach you, please enter a phone number or an email address – one of the two is enough.",
+      "contactHint": "Phone or email – one of the two is enough.",
       "contactRequired": "Please enter a phone number or an email address.",
       "nameRequired": "Please enter your name.",
       "invalidPhone": "Please enter a valid phone number (at least 6 digits).",
       "invalidEmail": "Please enter a valid email address.",
       "invalidNotes": "The note is too long.",
       "submit": "Book now",
-      "submitRequest": "Send request"
+      "submitRequest": "Send request",
+      "contactTitle": "How can the restaurant reach you?",
+      "requestHint": "This is a request: the restaurant reviews it and gets back to you.",
+      "cancelHint": "After booking you get a link to view your reservation and to cancel it until it starts."
     },
     "errors": {
       "slotTaken": "Sorry, this time has just been booked by someone else. Please choose another time – the free times have been updated.",
@@ -192,7 +209,8 @@
       "manageLinkLabel": "Link to your reservation",
       "manageLinkHint": "Save this link to cancel later.",
       "copy": "Copy",
-      "copied": "Copied"
+      "copied": "Copied",
+      "tableInArea": "Table {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -202,6 +220,14 @@
     "notBookable": {
       "title": "Online booking unavailable",
       "text": "This restaurant does not take online reservations at the moment. Please call:"
+    },
+    "reserveTable": "Reserve a table",
+    "change": "Change",
+    "bar": {
+      "guests": "People",
+      "date": "Date",
+      "time": "Time",
+      "timePlaceholder": "Choose a time"
     }
   },
   "embed": {
@@ -247,6 +273,16 @@
     "errors": {
       "notPossible": "This reservation can no longer be cancelled online. Please call the restaurant.",
       "tooManyRequests": "Too many requests from this connection. Please try again in a few minutes."
+    },
+    "status": {
+      "requested": "Request sent",
+      "requestedText": "The restaurant is reviewing your request and will get back to you.",
+      "confirmed": "Reservation confirmed",
+      "confirmedText": "We look forward to your visit.",
+      "arrived": "Enjoy your visit",
+      "late": "Marked as late",
+      "cancelled": "Reservation cancelled",
+      "declined": "Request declined"
     }
   },
   "admin": {

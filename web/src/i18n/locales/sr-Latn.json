@@ -25,7 +25,8 @@
     "save": "Sačuvaj",
     "close": "Zatvori",
     "timeRange": "{{start}}–{{end}}",
-    "tableLabel": "{{number}} · {{seats}}"
+    "tableLabel": "{{number}} · {{seats}}",
+    "midnight": "ponoć"
   },
   "auth": {
     "userMenu": "Meni naloga",
@@ -105,21 +106,25 @@
     "changePart": "Promeni: {{part}}",
     "continue": "Dalje",
     "steps": {
-      "guests": "Koliko osoba?",
-      "date": "Koji dan?",
-      "time": "U koliko sati?",
-      "table": "Koji sto?",
+      "time": "Rezervišite sto",
+      "table": "Izaberite sto",
       "details": "Vaši kontakt podaci"
     },
     "restaurant": {
       "openingHours": "Radno vreme",
       "website": "Veb-sajt",
-      "addressOnMap": "{{address}} – otvori na mapi"
+      "route": "Kako stići",
+      "infoTitle": "Informacije i kontakt",
+      "closedToday": "Danas zatvoreno",
+      "openUntil": "Sada otvoreno do {{time}}",
+      "opensAt": "Danas otvoreno od {{time}}",
+      "closedNow": "Sada zatvoreno",
+      "today": "{{day}} (danas)",
+      "more": "Više",
+      "less": "Manje",
+      "routeTo": "Kako stići: {{address}}"
     },
     "partySize": {
-      "more": "Više",
-      "moreLabel": "Broj osoba",
-      "morePlaceholder": "Izaberite",
       "moreThan_one": "Više od {{count}} osobe",
       "moreThan_few": "Više od {{count}} osobe",
       "moreThan_other": "Više od {{count}} osoba",
@@ -141,7 +146,8 @@
       "midday": "Ručak",
       "evening": "Veče",
       "noTables": "Nema slobodnih stolova – sledeći slobodni dani:",
-      "noFreeDays": "Nažalost, u narednim nedeljama nema slobodnog dana. Izaberite drugi datum ili nas pozovite."
+      "noFreeDays": "Nažalost, u narednim nedeljama nema slobodnog dana. Izaberite drugi datum ili nas pozovite.",
+      "freeTimes": "Slobodni termini"
     },
     "table": {
       "listLabel": "Slobodni stolovi – {{area}}",
@@ -155,7 +161,17 @@
       "option_other": "Sto {{number}} · {{count}} mesta",
       "noneFreeInArea": "U ovom delu u to vreme nema odgovarajućeg slobodnog stola.",
       "noneFree": "Nažalost, u to vreme više nema slobodnog stola.",
-      "otherTime": "Izaberite drugo vreme"
+      "otherTime": "Izaberite drugo vreme",
+      "areasLabel": "Delovi restorana",
+      "hint": "Dodirnite slobodan sto na planu ili izaberite jedan sa liste ispod.",
+      "noPreference": "Svejedno",
+      "fullyBooked": "Popunjeno",
+      "selection_one": "Sto {{number}} · do {{count}} osobe · {{area}}",
+      "selection_few": "Sto {{number}} · do {{count}} osobe · {{area}}",
+      "selection_other": "Sto {{number}} · do {{count}} osoba · {{area}}",
+      "freeCount_one": "{{count}} slobodan sto",
+      "freeCount_few": "{{count}} slobodna stola",
+      "freeCount_other": "{{count}} slobodnih stolova"
     },
     "details": {
       "name": "Ime",
@@ -165,14 +181,17 @@
       "notesDescription_one": "Npr. dečja stolica ili alergije. Najviše {{count}} znak.",
       "notesDescription_few": "Npr. dečja stolica ili alergije. Najviše {{count}} znaka.",
       "notesDescription_other": "Npr. dečja stolica ili alergije. Najviše {{count}} znakova.",
-      "contactHint": "Da bi restoran mogao da vas kontaktira, unesite broj telefona ili imejl adresu – dovoljno je jedno od to dvoje.",
+      "contactHint": "Telefon ili imejl – dovoljno je jedno od to dvoje.",
       "contactRequired": "Unesite broj telefona ili imejl adresu.",
       "nameRequired": "Unesite svoje ime.",
       "invalidPhone": "Unesite ispravan broj telefona (najmanje 6 cifara).",
       "invalidEmail": "Unesite ispravnu imejl adresu.",
       "invalidNotes": "Napomena je predugačka.",
       "submit": "Rezerviši",
-      "submitRequest": "Pošalji zahtev"
+      "submitRequest": "Pošalji zahtev",
+      "contactTitle": "Kako restoran može da vas kontaktira?",
+      "requestHint": "Ovo je zahtev: restoran ga proverava i javiće vam se.",
+      "cancelHint": "Posle rezervacije dobijate link preko kog možete da vidite rezervaciju i da je otkažete do početka."
     },
     "errors": {
       "slotTaken": "Nažalost, ovo vreme je upravo zauzeto. Izaberite drugo – slobodna vremena su ažurirana.",
@@ -198,7 +217,8 @@
       "manageLinkLabel": "Link do vaše rezervacije",
       "manageLinkHint": "Sačuvajte link da biste kasnije mogli da otkažete.",
       "copy": "Kopiraj",
-      "copied": "Kopirano"
+      "copied": "Kopirano",
+      "tableInArea": "Sto {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Rezervacija stola – {{restaurant}}",
@@ -208,6 +228,14 @@
     "notBookable": {
       "title": "Onlajn rezervacija nije moguća",
       "text": "Ovaj restoran trenutno ne prima onlajn rezervacije. Pozovite:"
+    },
+    "reserveTable": "Rezervišite sto",
+    "change": "Izmeni",
+    "bar": {
+      "guests": "Broj osoba",
+      "date": "Datum",
+      "time": "Vreme",
+      "timePlaceholder": "Izaberite vreme"
     }
   },
   "embed": {
@@ -253,6 +281,16 @@
     "errors": {
       "notPossible": "Ovu rezervaciju više nije moguće otkazati onlajn. Pozovite restoran.",
       "tooManyRequests": "Previše zahteva sa ove veze. Pokušajte ponovo za nekoliko minuta."
+    },
+    "status": {
+      "requested": "Zahtev poslat",
+      "requestedText": "Restoran proverava vaš zahtev i javiće vam se.",
+      "confirmed": "Rezervacija potvrđena",
+      "confirmedText": "Radujemo se vašoj poseti.",
+      "arrived": "Dobro došli",
+      "late": "Označeno kao kašnjenje",
+      "cancelled": "Rezervacija otkazana",
+      "declined": "Zahtev odbijen"
     }
   },
   "admin": {

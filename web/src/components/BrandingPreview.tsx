@@ -15,8 +15,8 @@ type BrandingPreviewProps = {
 }
 
 /**
- * The top of the booking page in a given branding, saved or not: the header with logo or name, the cover image with logo,
- * name and city, a sample button and a free and a chosen sample table.
+ * The top of the booking page in a given branding, saved or not: the header with logo or name, the cover image with name
+ * and city, a sample button and a free and a chosen sample table.
  */
 export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: BrandingPreviewProps) {
   const { t } = useTranslation()
@@ -36,7 +36,7 @@ export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: B
             </Text>
           )}
         </Group>
-        <RestaurantHeader name={name} city={city} logoUrl={logoUrl} coverUrl={coverUrl} />
+        <RestaurantHeader name={name} city={city} coverUrl={coverUrl} size="preview" />
         <Stack gap="md" p="md" bg={dark ? 'var(--mantine-color-body)' : 'var(--mantine-color-gray-0)'}>
           <Group gap="sm">
             <Button>{t('home.reserve')}</Button>

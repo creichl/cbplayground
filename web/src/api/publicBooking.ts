@@ -53,8 +53,19 @@ export type PublicTable = {
   available: boolean
 }
 
-/** An area open for online booking with all its tables; `tableScale` (50–200 %) scales the drawn tables. */
-export type PublicArea = { id: string; name: string; floorPlanUrl: string | null; tableScale: number; tables: PublicTable[] }
+/**
+ * An area open for online booking with all its tables; `tableScale` (50–200 %) scales the drawn tables. `description` and
+ * `photoUrl` (a photo of the area, not its floor plan) are null when the restaurant has not given them.
+ */
+export type PublicArea = {
+  id: string
+  name: string
+  floorPlanUrl: string | null
+  description: string | null
+  photoUrl: string | null
+  tableScale: number
+  tables: PublicTable[]
+}
 
 export type BookingRequest = {
   /** "YYYY-MM-DD" and "HH:mm". */
@@ -121,6 +132,11 @@ export function todayIn(timeZoneId: string) {
   return new Intl.DateTimeFormat('en-CA', { timeZone: timeZoneId, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date())
 }
 
+/** The restaurant's local time "HH:mm" now. */
+export function nowIn(timeZoneId: string) {
+  return new Intl.DateTimeFormat('en-GB', { timeZone: timeZoneId, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())
+}
+
 /** Whether a request was refused because the restaurant does not exist. */
 export function isNotFound(error: unknown) {
   return error instanceof ApiError && error.status === 404
@@ -149,21 +165,25 @@ export function useBookingCalendar(slug: string, month: string, guests: number) 
   return useQuery(calendarQuery(slug, month, guests))
 }
 
+/** The months "YYYY-MM" from the month of `date` to the month of `lastDate`. */
+function monthsBetween(date: string, lastDate: string) {
+  const months: string[] = []
+  let [year, month] = date.split('-').map(Number)
+  const [lastYear, lastMonth] = lastDate.split('-').map(Number)
+  while (year < lastYear || (year === lastYear && month <= lastMonth)) {
+    months.push(`${year}-${String(month).padStart(2, '0')}`)
+    month = month === 12 ? 1 : month + 1
+    year = month === 1 ? year + 1 : year
+  }
+  return months
+}
+
 /**
  * Up to three available days after `date`, up to the month of `lastDate`, for "next free days".
  * Only loads while `enabled`; `isPending` until all months are loaded.
  */
 export function useNextFreeDays(slug: string, date: string, lastDate: string, guests: number, enabled: boolean) {
-  const months: string[] = []
-  if (enabled) {
-    let [year, month] = date.split('-').map(Number)
-    const [lastYear, lastMonth] = lastDate.split('-').map(Number)
-    while (year < lastYear || (year === lastYear && month <= lastMonth)) {
-      months.push(`${year}-${String(month).padStart(2, '0')}`)
-      month = month === 12 ? 1 : month + 1
-      year = month === 1 ? year + 1 : year
-    }
-  }
+  const months = enabled ? monthsBetween(date, lastDate) : []
   const results = useQueries({ queries: months.map((month) => calendarQuery(slug, month, guests)) })
   return {
     days: results
@@ -173,6 +193,36 @@ export function useNextFreeDays(slug: string, date: string, lastDate: string, gu
       .map((day) => day.date),
     isPending: results.some((result) => result.isPending),
   }
+}
+
+/**
+ * The first available day from `today` to `lastDate`, the booking's preset day; null when there is none. The months are
+ * loaded one after the other, only as far as needed. `isPending` until the day is known.
+ */
+export function useFirstFreeDay(slug: string, today: string, lastDate: string, guests: number, enabled: boolean) {
+  const queryClient = useQueryClient()
+  const isFree = (day: CalendarDay) => day.status === 'available' && day.date >= today && day.date <= lastDate
+  // A month is only loaded once the months before it are loaded and have no available day.
+  const queries = []
+  let load = true
+  for (const month of enabled ? monthsBetween(today, lastDate) : []) {
+    const query = calendarQuery(slug, month, guests)
+    queries.push({ ...query, enabled: load })
+    const days = queryClient.getQueryData<CalendarDay[]>(query.queryKey)
+    load = load && days !== undefined && !days.some(isFree)
+  }
+  const results = useQueries({ queries })
+  for (const result of results) {
+    if (result.data === undefined) {
+      // Still loading, or failed: then the booking starts at today.
+      return { day: null, isPending: result.isPending && enabled }
+    }
+    const day = result.data.find(isFree)
+    if (day !== undefined) {
+      return { day: day.date, isPending: false }
+    }
+  }
+  return { day: null, isPending: false }
 }
 
 /** The start times of a day; only loads while `enabled`. */

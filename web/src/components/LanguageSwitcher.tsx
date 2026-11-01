@@ -23,8 +23,18 @@ export function LanguageSwitcher() {
   )
 }
 
-/** The language as a compact menu, a globe and the language's short code, for the platform's header of the start page. */
-export function LanguageMenu() {
+type LanguageMenuProps = {
+  /** Instead of switching and remembering the language, e.g. the embed keeps it in its address only. */
+  onChange?: (language: Language) => void
+  /** On a photo, the button is a white plate, so it stays legible. */
+  onPhoto?: boolean
+}
+
+/**
+ * The language as a compact menu, a globe and the language's short code, for the platform's header of the start page and
+ * the restaurant's guest pages.
+ */
+export function LanguageMenu({ onChange = (language) => void changeLanguage(language), onPhoto = false }: LanguageMenuProps) {
   const { t, i18n } = useTranslation()
   const current = (i18n.resolvedLanguage ?? 'en') as Language
 
@@ -32,8 +42,8 @@ export function LanguageMenu() {
     <Menu position="bottom-end" width={224}>
       <Menu.Target>
         <Button
-          variant="subtle"
-          color="gray"
+          variant={onPhoto ? 'white' : 'subtle'}
+          color={onPhoto ? 'dark' : 'gray'}
           h={44}
           px={8}
           leftSection={<GlobeIcon />}
@@ -52,7 +62,7 @@ export function LanguageMenu() {
             mih={44}
             aria-current={language === current ? 'true' : undefined}
             rightSection={language === current ? <CheckIcon size={16} /> : null}
-            onClick={() => void changeLanguage(language)}
+            onClick={() => onChange(language)}
           >
             {t(`language.names.${language}`)}
           </Menu.Item>
