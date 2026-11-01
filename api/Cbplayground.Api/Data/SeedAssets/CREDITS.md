@@ -49,7 +49,7 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 
 - Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop, logo of Rooftop Belvedere
 - Cormorant Garamond (Christian Thalmann): logo of Rooftop Belvedere
-- Merriweather (Sorkin Type) and Open Sans (Steve Matteson): logo of Gasthaus zur Linde
+- Merriweather (Sorkin Type): logo of Gasthaus zur Linde
 - Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logo of Kafana Dunav
 
 ## `gaststube.webp`
@@ -99,8 +99,8 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 
 ## `zur-linde-logo.png`
 
-- Motif: Logo of Gasthaus zur Linde: a linden leaf in a ring, "Gasthaus zur Linde" in green
-- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; fonts Merriweather, Open Sans (see above)
+- Motif: Logo of Gasthaus zur Linde: a linden leaf in a ring, "Gasthaus" and "zur Linde" in two lines in green
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; font Merriweather (see above)
 - Author: made for this project (cbplayground)
 - Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
 - Retrieved: 2026-11-01 (fonts)
@@ -108,7 +108,7 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 
 ## `kafana-dunav-logo.png`
 
-- Motif: Logo of Kafana Dunav: a bridge over the Danube in a blue circle, "Kafana Dunav" in blue
+- Motif: Logo of Kafana Dunav: a bridge over the Danube in a blue circle, "Kafana" and "Dunav" in two lines in blue
 - Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; fonts Playfair Display, Source Sans 3 (see above)
 - Author: made for this project (cbplayground)
 - Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
@@ -117,7 +117,7 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 
 ## `rooftop-belvedere-logo.png`
 
-- Motif: Logo of Rooftop Belvedere: the roofs of Vienna in a ring, "Rooftop Belvedere" in champagne gold, for a dark background
+- Motif: Logo of Rooftop Belvedere: the roofs of Vienna in a ring, "Rooftop" and "Belvedere" in two lines in champagne gold, for a dark background
 - Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; fonts Cormorant Garamond, Montserrat (see above)
 - Author: made for this project (cbplayground)
 - Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
