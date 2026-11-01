@@ -100,6 +100,18 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.True(bastaTables.Select(t => t.Shape).Distinct().Count() > 1);
         AssertArrangedWithoutOverlap(bastaTables.Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), basta.TableScale);
 
+        // "Bašta" is a garden with the Danube on one side; the tables keep away from its plants and its entrance.
+        Assert.Equal(RoomStyle.Garden, basta.RoomStyle);
+        var bastaRoom = (await dunav.GetFromJsonAsync<RoomResponse>($"/api/admin/areas/{basta.Id}/room", Ct))!;
+        Assert.Single(bastaRoom.Elements, e => e.Kind == RoomElementKind.Entrance);
+        Assert.True(bastaRoom.Elements.Count(e => e.Kind == RoomElementKind.Plant) >= 4);
+        Assert.Equal("Dunav", Assert.Single(bastaRoom.Elements, e => e.Kind == RoomElementKind.Label).Label);
+        AssertClearOfElements(bastaTables, bastaRoom.Elements);
+        // The areas with a floor plan image keep the default room.
+        Assert.Equal(RoomStyle.Indoor, dunavAreas[0].RoomStyle);
+        Assert.Empty((await dunav.GetFromJsonAsync<RoomResponse>($"/api/admin/areas/{dunavAreas[0].Id}/room", Ct))!.Elements);
+        Assert.All(areas, a => Assert.Equal(RoomStyle.Indoor, a.RoomStyle));
+
         var dunavSettings = (await dunav.GetFromJsonAsync<ReservationSettingsDto>("/api/admin/reservation-settings", Ct))!;
         Assert.Equal(ConfirmationMode.Request, dunavSettings.ConfirmationMode);
         Assert.Equal(TableSelectionMode.GuestChooses, dunavSettings.TableSelectionMode);
@@ -167,6 +179,28 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         {
             AssertArrangedWithoutOverlap(tables.Where(t => t.AreaId == area.Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), area.TableScale);
         }
+
+        // The rooftop with stairs and entrance at a side, the bar at the back, planters and the view; the lounge indoors with
+        // windows, two sofas, a small bar and the entrance. Seeded twice, but each element only once.
+        Assert.Equal([RoomStyle.Rooftop, RoomStyle.Indoor], areas.Select(a => a.RoomStyle));
+        var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync(Ct);
+        var rooftopRoom = elements.Where(e => e.AreaId == areas[0].Id).ToList();
+        var loungeRoom = elements.Where(e => e.AreaId == areas[1].Id).ToList();
+        Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Stairs);
+        var rooftopEntrance = Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Entrance);
+        Assert.Contains(rooftopEntrance.Rotation, new[] { 90, 270 });
+        var rooftopBar = Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Bar);
+        Assert.Equal(0, rooftopBar.PosY - rooftopBar.Height / 2, 10);
+        Assert.Contains(rooftopRoom, e => e.Kind == RoomElementKind.Plant);
+        Assert.Equal("Blick auf den Stephansdom", Assert.Single(rooftopRoom, e => e.Kind == RoomElementKind.Label).Label);
+        Assert.DoesNotContain(rooftopRoom, e => e.Kind == RoomElementKind.Window);
+        Assert.Contains(loungeRoom, e => e.Kind == RoomElementKind.Window);
+        Assert.Equal(2, loungeRoom.Count(e => e.Kind == RoomElementKind.Sofa));
+        Assert.Single(loungeRoom, e => e.Kind == RoomElementKind.Bar);
+        Assert.Single(loungeRoom, e => e.Kind == RoomElementKind.Entrance);
+        Assert.Equal(elements.Count, rooftopRoom.Count + loungeRoom.Count);
+        RoomLayoutTests.AssertClearOfElements(rooftopTables, rooftopRoom, 100, TableLayout.ChairSpace);
+        RoomLayoutTests.AssertClearOfElements(loungeTables, loungeRoom, 100, TableLayout.ChairSpace);
         var settings = await db.ReservationSettings.SingleAsync(Ct);
         Assert.Equal(120, settings.DefaultDurationMinutes);
         Assert.Equal(1, await db.Tenants.CountAsync(t => t.Slug == "rooftop-belvedere", Ct));
@@ -210,6 +244,14 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == "rooftop-belvedere", Ct)).Id;
         Assert.NotEmpty(await db.Reservations.ToListAsync(Ct));
     }
+
+    /// <summary>The tables and their chairs do not touch a blocking element or the room in front of an entrance.</summary>
+    private static void AssertClearOfElements(List<TableResponse> tables, IReadOnlyList<RoomElementResponse> elements) =>
+        RoomLayoutTests.AssertClearOfElements(
+            tables.Select(t => new Table { Number = t.Number, Seats = t.Seats, Shape = t.Shape, Rotation = t.Rotation, PosX = t.PosX, PosY = t.PosY }),
+            elements.Select(e => new RoomElement { Kind = e.Kind, PosX = e.PosX, PosY = e.PosY, Width = e.Width, Height = e.Height, Rotation = e.Rotation }),
+            100,
+            TableLayout.ChairSpace);
 
     /// <summary>The tables lie completely within the plan and do not overlap each other.</summary>
     private static void AssertArrangedWithoutOverlap(List<(string Number, TableShape Shape, int Seats, int Rotation, double PosX, double PosY)> tables, int tableScale)

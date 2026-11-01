@@ -26,6 +26,7 @@ This README describes the full product vision.
 - Tables are placed on an area's floor plan.
 - Each table has attributes such as its number, its position on the plan, its seat count (number of guests), its shape (round, square, rectangular) and its rotation (0° or 90°).
 - An area without uploaded floor plan image is drawn as a schematic plan from its tables; the system arranges the tables, the restaurant may move them afterwards and have them arranged anew (see [Schematic floor plan](#schematic-floor-plan)).
+- Such an area is a room: its room style (indoor, terrace, garden, rooftop) sets floor and boundary, and room elements such as the entrance, windows, the bar, plants or a stage, optionally labelled (e.g. "Blick auf den Stephansdom"), furnish it. The system can suggest a room and keeps the tables away from the obstacles (see [Rooms](#rooms)).
 
 ### Opening hours & holidays
 
@@ -138,7 +139,7 @@ This README describes the full product vision.
 │   │   ├── Data/                 # AppDbContext, entities, development seed
 │   │   │   └── SeedAssets/       # floor plans, logos and cover images of the demo restaurants (development seed)
 │   │   ├── Endpoints/            # endpoint groups, one file per area
-│   │   ├── FloorPlans/           # schematic floor plan: table sizes and automatic arrangement
+│   │   ├── FloorPlans/           # schematic floor plan: table sizes, automatic arrangement, suggested rooms
 │   │   ├── Migrations/           # EF Core migrations
 │   │   ├── OpeningHours/         # public holidays, opening calendar, supported countries
 │   │   └── Reservations/         # availability, duration policy, reservation rules
@@ -177,7 +178,13 @@ In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo res
 | Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes | Instant confirmation, the guest picks the table, 120 minutes |
 | Branding | Light, `Rustic`, warm green `#5a7d3a`, logo and cover image | Light, `Classic`, Danube blue `#1f5f8b`, logo and cover image | Dark, `Elegant`, champagne gold `#c9a96e`, logo and cover image |
 
-So both confirmation modes and both table selection modes can be shown, and the guest's table choice once on drawn plans only (Rooftop Belvedere) and once on a floor plan image (Kafana Dunav's "Sala"). The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms. The tables have shapes that fit the rooms (square, rectangular for 6 and 8 seats, round ones on the terrace and a few elsewhere; Sala's table 4 is turned by 90°). The three areas with a floor plan image have a table scale of 80 %: at 100 % the drawn tables are large for these rooms, and some come too close to each other. "Bašta" has no floor plan image and a table scale of 100 %; its tables (round, square and rectangular) are arranged by `TableLayout`, so it shows the schematic floor plan. The same holds for both areas of Rooftop Belvedere. The logos (a drawn emblem with the name) and cover images (an illustrated scene) are PNG files in the same folder, made for this project (generated, no photos or graphics from elsewhere); the seed copies them into `Uploads:Path` under a new file name as well.
+So both confirmation modes and both table selection modes can be shown, and the guest's table choice once on drawn plans only (Rooftop Belvedere) and once on a floor plan image (Kafana Dunav's "Sala"). The floor plans are PNG files in `api/Cbplayground.Api/Data/SeedAssets/`; the seed copies them into `Uploads:Path` under a new file name, as an upload would, and places the tables in the drawn rooms. The tables have shapes that fit the rooms (square, rectangular for 6 and 8 seats, round ones on the terrace and a few elsewhere; Sala's table 4 is turned by 90°). The three areas with a floor plan image have a table scale of 80 %: at 100 % the drawn tables are large for these rooms, and some come too close to each other. "Bašta" has no floor plan image and a table scale of 100 %; its tables (round, square and rectangular) are arranged by `TableLayout`, so it shows the schematic floor plan. The same holds for both areas of Rooftop Belvedere. These three areas also have a room (see [Rooms](#rooms)), and their tables are arranged around its obstacles:
+
+- Rooftop Belvedere, "Rooftop": `Rooftop`, the suggested room (stairs with the entrance at the left side, the bar at the back, planters in three corners) and the label "Blick auf den Stephansdom" at the front parapet.
+- Rooftop Belvedere, "Lounge": `Indoor`, three windows in the top wall, a sofa at each side wall, a small bar (0.2 long) in the bottom right corner and the entrance in the bottom wall.
+- Kafana Dunav, "Bašta": `Garden`, the suggested garden (the entrance in the bottom side, trees along the edge) and the label "Dunav" at the top, the river side.
+
+The areas with a floor plan image keep the default room (`Indoor`, no elements). The logos (a drawn emblem with the name) and cover images (an illustrated scene) are PNG files in the same folder, made for this project (generated, no photos or graphics from elsewhere); the seed copies them into `Uploads:Path` under a new file name as well.
 
 The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
 
@@ -185,7 +192,7 @@ The seed is idempotent and never overwrites what an admin maintained. For each r
 - the profile, if all profile fields are empty;
 - the branding with logo and cover image, if all branding fields (colour, theme, font style, logo, cover image) are empty;
 - the opening hours, if there are none;
-- the areas with their floor plans and tables, if there are no areas (an area without tables gets none);
+- the areas with their floor plans, rooms and tables, if there are no areas (an area without tables gets none); so an existing area never gets a room from the seed;
 - the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, if they were never saved.
 
 A second start therefore adds nothing, and an existing database whose restaurants lack, for example, areas or opening hours is completed on the next start. Because areas are only added to a restaurant without areas, an existing development database does not get "Bašta"; it only appears after deleting the development database. A new demo restaurant such as Rooftop Belvedere is created in an existing database too (by its slug), with its areas, because it has none yet; the existing restaurants get their branding on the next start as long as nobody has set any of it. After deleting the development database, all three restaurants and their branding are certain to be complete. To start from scratch, stop the API and delete `data/cbplayground.db` and `data/uploads/`. Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
@@ -229,17 +236,21 @@ Endpoints:
   - `POST /api/admin/staff/{id}/password`: body `{ "password" }`. Sets a new password (204) and ends the user's other sessions.
   - Errors: 400 with `{ "error": "invalid_email" | "invalid_name" | "invalid_role" | "password_too_weak" }`, 409 with `{ "error": "email_taken" | "last_admin" | "cannot_deactivate_self" }`. The last active Tenant Admin of a restaurant cannot be deactivated or given another role, and nobody can deactivate themselves.
 - Areas (Tenant Admins only):
-  - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`, `tableScale`.
-  - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking, has an online quota of 100 % and a table scale of 100 %.
+  - `GET /api/admin/areas`: the restaurant's areas in their order: `id`, `name`, `sortOrder`, `floorPlanUrl` (`null` without floor plan), `onlineBookingEnabled`, `onlineCapacityPercent`, `tableScale`, `roomStyle`.
+  - `POST /api/admin/areas`: body `{ "name" }`. A new area comes last, is open for online booking, has an online quota of 100 %, a table scale of 100 % and is an `Indoor` room without elements.
   - `PUT /api/admin/areas/{id}`: body `{ "name", "onlineBookingEnabled", "onlineCapacityPercent", "tableScale" }`. `onlineCapacityPercent` 0–100 (otherwise 400 `online_capacity_percent_invalid`). `tableScale` is optional, whole percent from 50 to 200 (otherwise 400 `table_scale_invalid`); without it the stored value stays. It scales the drawn tables of this area, so they match an uploaded floor plan.
-  - `POST /api/admin/areas/{id}/arrange-tables`: arranges all tables of the area anew with `TableLayout` (see [Schematic floor plan](#schematic-floor-plan)), also in an area with a floor plan image, and returns the area's tables as `GET /api/admin/tables` lists them. Unknown area or one of another restaurant: 404.
+  - `POST /api/admin/areas/{id}/arrange-tables`: arranges all tables of the area anew with `TableLayout` (see [Schematic floor plan](#schematic-floor-plan)), also in an area with a floor plan image, and returns the area's tables as `GET /api/admin/tables` lists them. Without image the tables keep away from the room elements (see [Rooms](#rooms)), with an image the elements are ignored. Unknown area or one of another restaurant: 404.
+  - `GET /api/admin/areas/{id}/room`: the room of the area, `{ "roomStyle", "elements": [{ "id", "kind", "posX", "posY", "width", "height", "rotation", "label" }] }`, the elements in their order (see [Rooms](#rooms)).
+  - `PUT /api/admin/areas/{id}/room`: the same body; replaces the room style and all elements, all or nothing, and returns the room as `GET`. The `id` of an element in the body is ignored, every saved element gets a new one; without `elements` the room has none. The tables stay where they are. At most 60 elements. Errors: 400 `invalid_room_style`, `invalid_room_element` (unknown `kind`), `invalid_room_element_position` (`posX`/`posY` not 0–1, `width`/`height` not more than 0 and at most 1, `rotation` not 0, 90, 180 or 270), `invalid_room_element_label` (more than 40 characters, or missing on a `Label`), `too_many_room_elements`.
+  - `POST /api/admin/areas/{id}/suggest-room`: replaces the elements with the suggestion for the area's room style and number of tables (`RoomSuggestion`), then arranges the tables anew as `arrange-tables` does, around the new elements in an area without image. Returns `{ "roomStyle", "elements", "tables" }`, the tables as `GET /api/admin/tables` lists them.
+  - All room endpoints: unknown area or one of another restaurant: 404.
   - `DELETE /api/admin/areas/{id}`: deletes the area with its tables and its floor plan image. 409 `table_has_reservations` while one of its tables has a reservation that has not ended yet (see below).
   - `PUT /api/admin/areas/order`: body `{ "areaIds": [...] }` with every area of the restaurant once, in the new order.
   - `PUT /api/admin/areas/{id}/floorplan`: the body is the image itself (PNG, JPEG or WebP, at most 10 MB). The type is detected from the content; the file name is chosen by the server. Replaces an existing floor plan.
 - `GET /api/areas/{id}/floorplan`: the floor plan image of an area. Public, because guests will see it to pick a table.
 - Tables (Tenant Admins only):
   - `GET /api/admin/tables`: all tables of the restaurant: `id`, `areaId`, `number`, `seats`, `posX`, `posY`, `shape`, `rotation`. The position is the table's centre relative to the floor plan, from 0 to 1 (see [Schematic floor plan](#schematic-floor-plan) for an area without image). `shape` is `Round`, `Square` or `Rectangle`, never `null`; `rotation` is `0` or `90` (degrees), stored for every table but only visible on rectangular ones.
-  - `POST /api/admin/tables`: body `{ "areaId", "number", "seats", "shape", "rotation" }`; `shape` and `rotation` are optional. Without `shape` a table with 1–4 seats is `Square`, from 5 seats `Rectangle`; without `rotation` 0. In an area with floor plan image the table is placed in the middle of the image, in an area without one on the first free place of the arrangement, so it does not overlap another table.
+  - `POST /api/admin/tables`: body `{ "areaId", "number", "seats", "shape", "rotation" }`; `shape` and `rotation` are optional. Without `shape` a table with 1–4 seats is `Square`, from 5 seats `Rectangle`; without `rotation` 0. In an area with floor plan image the table is placed in the middle of the image, in an area without one on the first free place of the arrangement, so it does not overlap another table nor stand on a room element.
   - `PUT /api/admin/tables/{id}`: body `{ "number", "seats", "shape", "rotation" }`. Without `shape` or `rotation` the stored values stay; changing the seats does not change the shape.
   - `DELETE /api/admin/tables/{id}`. 409 `table_has_reservations` while the table has a reservation in the status `Requested`, `Confirmed`, `Arrived` or `Late` that has not ended yet. Its other reservations (past ones, cancelled and declined ones) are deleted together with the table: a reservation always keeps its table (the foreign key is `Restrict`), so the reservations that no longer matter are removed first, in the same transaction.
   - `PUT /api/admin/tables/positions`: body `[{ "id", "posX", "posY" }, ...]`. Saves the positions of several tables at once, all or none.
@@ -267,13 +278,13 @@ Endpoints:
   - `GET /api/public/restaurants/{slug}/logo` and `/cover`: the restaurant's logo or cover image, 404 without one. The URLs in the branding carry the image's version (`?v=`, its file name, which changes with every upload); with the current version the image may be cached for a year (`Cache-Control: public, max-age=31536000, immutable`), otherwise it is revalidated (`no-cache`).
   - `GET /api/public/restaurants/{slug}/calendar?month=YYYY-MM&guests=N`: one entry per day of the month, `{ "date", "status" }` with `closed` (closed, also on closing days, in the past or beyond the booking horizon), `full` or `available`, for the date picker. Errors: `invalid_month`, `invalid_party_size`.
   - `GET /api/public/restaurants/{slug}/availability?date=YYYY-MM-DD&guests=N`: `date`, `guests`, `durationMinutes` and `periods`: per opening window `{ "start", "end", "times": [{ "time", "available" }] }`. No periods on closing days and closed public holidays; on days with special hours exactly these windows.
-  - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tableScale", "tables": [{ "id", "number", "seats", "posX", "posY", "shape", "rotation", "available" }] }`. `available` considers size, other reservations, the online quota and the opening hours.
+  - `GET /api/public/restaurants/{slug}/tables?date=YYYY-MM-DD&time=HH:mm&guests=N`: only when the guest chooses the table (otherwise 400 `table_selection_disabled`). The areas open for online booking in their order, `{ "id", "name", "floorPlanUrl", "tableScale", "tables": [{ "id", "number", "seats", "posX", "posY", "shape", "rotation", "available" }], "roomStyle", "roomElements" }`; `roomElements` as the `elements` of `GET /api/admin/areas/{id}/room`. `available` considers size, other reservations, the online quota and the opening hours.
   - `POST /api/public/restaurants/{slug}/reservations`: body `{ "date", "time", "guests", "tableId", "name", "phone", "email", "notes", "language" }`. `tableId` is required when the guest chooses the table and ignored when the system assigns it; `phone` or `email` is required; `language` is `en`, `de`, `sr-Latn` or `sr-Cyrl`. Returns 201 with `referenceCode`, `status` (`Confirmed` in the instant mode, `Requested` in the request mode), `date`, `time`, `guests`, `durationMinutes`, `area`, `tableNumber` and `manageToken`, the token of the guest's link to view and cancel the reservation (32 random bytes, URL-safe Base64). Only its SHA-256 is stored (`Reservation.ManageTokenHash`), so it is returned only here. Errors: 400 `invalid_date`, `invalid_time`, `invalid_party_size`, `invalid_name`, `contact_required`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_language`, `table_required`, `outside_opening_hours`, `too_short_notice` (within the lead time), `too_far_ahead`, `in_the_past`; 409 `slot_unavailable`, `table_unavailable`; 429 `too_many_requests` after 10 bookings from the same client IP within 10 minutes (`RateLimiting:PublicBookings:PermitLimit`).
   - `GET /api/public/restaurants/{slug}/reservations/{referenceCode}?token=…`: the guest's view of an online reservation: `referenceCode`, `status`, `date`, `time`, `endTime`, `guests`, `durationMinutes`, `area`, `tableNumber`, `name`, `cancelledByGuest` and `canCancel` (whether the guest can still cancel). A wrong code, a wrong token or a reservation of another restaurant are all 404, without telling which; reservations entered by staff have no token and are never found.
   - `POST /api/public/restaurants/{slug}/reservations/{referenceCode}/cancel`: body `{ "token" }`. Cancels the reservation (`Cancelled`, `cancelledByGuest` true) and returns it as above. Errors: 404 as above; 409 `cancellation_not_possible` when it is not `Requested`, `Confirmed` or `Late` or has started (see the reservation rules).
   - Both compare the token in constant time and have their own rate limit with the limit of the bookings (429 `too_many_requests` after 10 requests from the same client IP within 10 minutes).
 - Reservations for the staff (Tenant Admins and Front desk users, `RequireStaff` policy), always of the signed-in user's restaurant; reservations of other restaurants are 404:
-  - `GET /api/staff/floor`: the areas in their order with their tables: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tableScale`, `tables` (`id`, `number`, `seats`, `posX`, `posY`, `shape`, `rotation`).
+  - `GET /api/staff/floor`: the areas in their order with their tables and rooms: `id`, `name`, `sortOrder`, `floorPlanUrl`, `tableScale`, `tables` (`id`, `number`, `seats`, `posX`, `posY`, `shape`, `rotation`), `roomStyle`, `roomElements` (as the `elements` of `GET /api/admin/areas/{id}/room`).
   - `GET /api/staff/reservations?from=YYYY-MM-DD&to=YYYY-MM-DD`: the reservations starting on these days (without `from`/`to`: today in the restaurant's time zone; at most 366 days, otherwise `invalid_range`), sorted by start: `id`, `referenceCode`, `date`, `time`, `endTime`, `durationMinutes`, `guests`, `status`, `source` (`Online` | `Staff` | `WalkIn`), `tableId`, `tableNumber`, `areaId`, `areaName`, `name`, `phone`, `email`, `notes`, `language`, `completedTime` (`HH:mm` when the guest left, status `Completed`; otherwise `null`), `cancelledByGuest` (the guest cancelled through the link), `createdAtUtc`, `updatedAtUtc`.
   - `GET /api/staff/availability?date=YYYY-MM-DD&guests=N&durationMinutes=M`: like the public availability, but each time lists the free tables (`id`, `number`, `seats`, `areaId`, `areaName`, empty when none is free), without online quota, online block, lead time, booking horizon and the largest online party; the buffer applies. `durationMinutes` is optional.
   - `POST /api/staff/reservations`: body `{ "date", "time", "guests", "tableId", "durationMinutes", "name", "phone", "email", "notes", "language" }`, e.g. for a phone reservation. Always `Confirmed`, source `Staff`. Without `tableId` the system assigns a table; `durationMinutes` (15–480 in steps of 15) overrides the restaurant's duration; the name is required, phone and email are optional; without `language` the language of the restaurant's country (`de` for Germany and Austria, `sr-Latn` for Serbia, otherwise `en`). Returns 201 with the reservation as in the list.
@@ -325,7 +336,59 @@ An area without floor plan image is drawn as a schematic plan from its tables. T
 - At 90° a rectangular table stands upright (width and height swapped). Around every table there is room for the chairs, 0.02 of the plan width on each side (scaled as well). A height in plan widths is a fraction of the plan height × 1.5.
 - **Arrangement** (`TableLayout.Arrange`, used by `POST /api/admin/areas/{id}/arrange-tables`): the tables go into rows from top left to bottom right in the order of their numbers, as `GET /api/admin/tables` sorts them (length first, then ordinal). The rows differ by at most one table; every row spreads its tables evenly over the width, the rows are spread evenly over the height, so larger tables get more room. The number of rows is the one that leaves the largest gaps. The tables keep their chair room and a gap to each other and to the edge, and lie completely within 0–1. With many tables the gap shrinks to zero, then the chair room; tables only overlap when they do not fit side by side even without it. The arrangement always uses the 3:2 plan, also in an area with an image.
 - **A new table** in an area without image goes to the first place of the arrangement (of all tables, the new one included) where it does not overlap an existing table and its chairs; if there is none, to the first such place top left to bottom right, then to one where at least the tables do not overlap. In an area with an image it is placed in the middle.
+- With room elements, the arrangement and a new table keep away from the obstacles; see [Rooms](#rooms).
 - **After the update:** before, every new table was placed at 0.5/0.5, so the tables of an area without image lay on top of each other. On every start, in every environment, the API arranges each area without image in which at least two tables have exactly the same position (`FloorPlans/StackedTables.cs`). Areas with an image and areas whose tables are spread are left alone, so in effect this happens once.
+
+#### Rooms
+
+An area without floor plan image is a room, not only tables in an empty rectangle. The room stays a 3:2 rectangle. The entities are `Area.RoomStyle` and `RoomElement` (`api/Cbplayground.Api/Data/`), the suggestion is `FloorPlans/RoomSuggestion.cs`, the arrangement `FloorPlans/TableLayout.cs`. In an area with floor plan image style and elements are stored but not drawn (the image shows the room), and the arrangement ignores them.
+
+**Room style** (`roomStyle`), default `Indoor`; it sets what the web draws as floor and boundary:
+
+| Style | Floor | Boundary |
+| --- | --- | --- |
+| `Indoor` | parquet | walls |
+| `Terrace` | stone slabs | railing |
+| `Garden` | gravel or lawn | hedge |
+| `Rooftop` | wooden deck | glass parapet |
+
+An area from before the rooms is `Indoor` without elements (the migration `AddRoomElements`); nothing is changed on start. The web still draws its walls and floor; the admin adds elements or lets the system suggest them.
+
+**Room elements** (`elements`), at most 60 per area, deleted with their area:
+
+- `kind`: `Entrance`, `Window`, `Bar`, `Plant`, `Pillar`, `Sofa`, `Stage`, `Service` (service station or kitchen pass), `Stairs`, `Label` (only a text).
+- `posX`, `posY`: the centre, 0–1 as for tables. `width`, `height`: the extent as the element lies on the plan (after the rotation), as a fraction of the plan width and of the plan height, more than 0 and at most 1. A height in plan widths is a fraction of the plan height × 1.5.
+- `rotation`: 0, 90, 180 or 270 degrees, clockwise. At 0 the element's front faces up, as at the bottom wall facing into the room; at 90 it stands at the left wall facing right, at 180 at the top wall facing down, at 270 at the right wall facing left. So a door can sit in every wall.
+- `label`: optional, at most 40 characters (trimmed, empty is none); required for `Label`.
+
+**Default sizes** of a new element, length along the wall × depth into the room, both in plan widths (`RoomElement.DefaultDimensions`; the web uses the same). At 0° and 180° `width` is the length and `height` the depth × 1.5; at 90° and 270° `width` is the depth and `height` the length × 1.5 (`RoomElement.Size`):
+
+| Kind | Length × depth | Blocks tables |
+| --- | --- | --- |
+| `Entrance` | 0.10 × 0.03 | keeps a zone free in front of it |
+| `Window` | 0.16 × 0.02 | no |
+| `Bar` | 0.30 × 0.10 (stools included) | yes |
+| `Plant` | 0.05 × 0.05 | yes |
+| `Pillar` | 0.04 × 0.04 | yes |
+| `Sofa` | 0.16 × 0.06 | yes |
+| `Stage` | 0.30 × 0.15 | yes |
+| `Service` | 0.14 × 0.08 | yes |
+| `Stairs` | 0.10 × 0.16 | yes |
+| `Label` | 0.24 × 0.04 | no |
+
+**Suggested room** (`RoomSuggestion.Suggest`, `POST /api/admin/areas/{id}/suggest-room`): elements of their default size at the edge of the plan, for the room style and the number of tables of the area. Deterministic: the same style and number of tables give the same room.
+
+- `Indoor`: the entrance in the middle of the bottom wall, three windows in the top wall (at 1/4, 1/2 and 3/4), from 6 tables a bar in the middle of the right wall, plants in the two top corners.
+- `Terrace`: the door in the left side, low (at 0.85 of the height), from 6 tables a bar in the middle of the back (top), plants in the other three corners; no windows.
+- `Rooftop`: the stairs in the bottom left corner, facing right, with the entrance onto the deck right in front of them, from 6 tables a bar in the middle of the back (top), planters in the other three corners; no windows.
+- `Garden`: the entrance in the middle of the bottom side, plants (trees) along the edge: in the four corners and in the middle of the top, left and right side.
+
+**Arrangement around the elements** (`TableLayout.Arrange` for `arrange-tables`, `suggest-room` and the stacked tables on start, `TableLayout.FreePosition` for a new table), only in an area without floor plan image:
+
+- Blocking are `Bar`, `Pillar`, `Sofa`, `Stage`, `Service`, `Stairs` and `Plant`. In front of an `Entrance`, on the side it faces, a zone of `TableLayout.EntranceZoneDepth` = 0.10 plan widths (about a table depth with its chairs) stays free, as wide as the entrance. `Window` and `Label` do not block.
+- The tables keep their chair room and a gap to the obstacles as to each other and to the edge. The other rules of the [schematic floor plan](#schematic-floor-plan) stay: rows in the order of the numbers, spread evenly, within 0–1. A row is spread over the pieces of its width that no obstacle covers, from left to right; the rows are spread evenly over the whole plan height or, if that leaves larger gaps, over the height between an obstacle at the top and one at the bottom (e.g. below a stage along the top wall). The arrangement with the largest gaps wins.
+- When the room is not enough, first the gaps shrink, then the chair room, then the tables overlap each other beside the obstacles. Only when a table does not fit beside the obstacles at all are the tables arranged as without elements: overlapping an element is the last resort.
+- A new table takes the first place as before that also keeps away from the obstacles (with chair room, then without). If there is none, the middle, or, when the middle lies on an obstacle, the first place free of the obstacles even if it overlaps a table.
 
 ### Demo reservations
 
