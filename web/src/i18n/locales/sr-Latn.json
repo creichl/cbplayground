@@ -44,6 +44,9 @@
     "email": "Imejl",
     "password": "Lozinka",
     "submit": "Prijavi se",
+    "submitting": "Prijavljivanje…",
+    "showPassword": "Prikaži lozinku",
+    "claim": "Rezervacije, stolovi i gosti – sve na jednom mestu.",
     "validation": {
       "email": "Unesite ispravnu imejl adresu.",
       "password": "Unesite lozinku."

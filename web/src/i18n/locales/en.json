@@ -44,6 +44,9 @@
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
+    "submitting": "Signing in…",
+    "showPassword": "Show password",
+    "claim": "Reservations, tables and guests – all in one place.",
     "validation": {
       "email": "Please enter a valid email address.",
       "password": "Please enter your password."
