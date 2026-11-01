@@ -21,9 +21,9 @@ const weekdays = [
 ] as const satisfies readonly { dayOfWeek: DayOfWeek; key: string }[]
 
 /**
- * Next to the booking (below it on phones), staying in view while the page scrolls: whether the restaurant is open today,
- * its address with "Route", phone, email and website, and the regular opening hours of the week, folded away, with today
- * stressed.
+ * Next to the booking (below it on phones), staying in view while the page scrolls: whether the restaurant is open today
+ * (a dot and the text), its address with "Route" below it, phone, email and website, and the regular opening hours of the
+ * week, folded away, with today stressed. All rows share one icon column.
  */
 export function RestaurantInfo({ slug, restaurant }: { slug: string; restaurant: PublicRestaurant }) {
   const { t, i18n } = useTranslation()
@@ -42,15 +42,12 @@ export function RestaurantInfo({ slug, restaurant }: { slug: string; restaurant:
         </Title>
 
         {status !== null && (
-          <Group gap={8} wrap="nowrap">
+          // In the icon column of the rows below.
+          <Group gap={16} wrap="nowrap" align="flex-start">
             {/* The text says it; the dot only repeats it. */}
-            <Box
-              aria-hidden="true"
-              w={10}
-              h={10}
-              bg={status.open ? 'green.7' : 'red.7'}
-              style={{ borderRadius: '50%', flexShrink: 0 }}
-            />
+            <Box w={24} h={25} aria-hidden="true" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Box w={10} h={10} bg={status.open ? 'green.7' : 'red.7'} style={{ borderRadius: '50%' }} />
+            </Box>
             <Text fw={600}>{status.text}</Text>
           </Group>
         )}
@@ -67,7 +64,7 @@ export function RestaurantInfo({ slug, restaurant }: { slug: string; restaurant:
               mih={44}
               style={{ display: 'flex', alignItems: 'center', gap: 16, borderRadius: 'var(--mantine-radius-sm)' }}
             >
-              <Box c="dimmed" style={{ display: 'flex' }} aria-hidden="true">
+              <Box c="dimmed" w={24} style={{ display: 'flex', justifyContent: 'center', flexShrink: 0 }} aria-hidden="true">
                 <ClockIcon />
               </Box>
               <Text fw={600} style={{ flex: 1 }}>
