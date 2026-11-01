@@ -19,7 +19,7 @@ public static class StaffReservationEndpoints
 
     public record FloorTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation);
 
-    public record FloorArea(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, int TableScale, IReadOnlyList<FloorTable> Tables);
+    public record FloorArea(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, int TableScale, IReadOnlyList<FloorTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements);
 
     public record ReservationResponse(
         Guid Id,
@@ -98,13 +98,16 @@ public static class StaffReservationEndpoints
             var tables = (await db.Tables.ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .ToList();
+            var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync();
             return areas.Select(area => new FloorArea(
                 area.Id,
                 area.Name,
                 area.SortOrder,
                 AreaEndpoints.FloorPlanUrl(area),
                 area.TableScale,
-                tables.Where(t => t.AreaId == area.Id).Select(t => new FloorTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation)).ToList()));
+                tables.Where(t => t.AreaId == area.Id).Select(t => new FloorTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation)).ToList(),
+                area.RoomStyle,
+                elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList()));
         });
 
         // Without from/to: today in the restaurant's time zone.
