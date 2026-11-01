@@ -22,17 +22,15 @@ public static class DevelopmentSeed
     private static readonly string SeedAssetsPath = Path.Combine("Data", "SeedAssets");
 
     /// <summary>Size of the seed floor plans in pixels; the table positions below are given in pixels of these images.</summary>
-    private const double PlanWidth = 1200;
-    private const double PlanHeight = 800;
-
-    /// <summary>Table scale of the areas with a seed floor plan: at 100 % the drawn tables are large for the rooms and come too close.</summary>
-    private const int SeedFloorPlanTableScale = 80;
+    private const double PlanWidth = 1800;
+    private const double PlanHeight = 1200;
 
     /// <summary>A demo table; in an area without floor plan the position is ignored and the tables are arranged (<see cref="TableLayout"/>).</summary>
     private record DemoTable(string Number, int Seats, TableShape Shape, double X = 0, double Y = 0, int Rotation = 0);
 
     /// <summary>
-    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. <see cref="PhotoFile"/> is a photo in
+    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. With one, <see cref="TableScale"/> fits the
+    /// tables to the scale of the plan (a table for 4 about as large as in the room). <see cref="PhotoFile"/> is a photo in
     /// <see cref="SeedAssetsPath"/>, <see cref="Description"/> is in the restaurant's language. <see cref="Room"/> creates the
     /// elements of its room, new ones on every call.
     /// </summary>
@@ -85,19 +83,21 @@ public static class DevelopmentSeed
             ],
             Areas:
             [
-                new("Gaststube", "gaststube.png", 100, SeedFloorPlanTableScale,
+                // A room of 11.8 × 7.5 m: tiled stove with its bench, corner bench, bar with stools, entrance at the bottom.
+                new("Gaststube", "gaststube.webp", 100, 90,
                 [
-                    new("1", 2, Square, 260, 270), new("2", 4, Square, 450, 270), new("3", 4, Square, 640, 270),
-                    new("4", 2, Square, 880, 250), new("5", 2, Square, 1060, 250),
-                    new("6", 4, Square, 260, 470), new("7", 6, Rectangle, 470, 470), new("8", 8, Rectangle, 720, 470),
-                    new("9", 4, Round, 980, 470), new("10", 6, Rectangle, 260, 660),
+                    new("1", 2, Square, 443, 194), new("2", 4, Square, 658, 208), new("3", 4, Square, 900, 208),
+                    new("4", 2, Square, 1115, 194), new("5", 2, Square, 1308, 194),
+                    new("6", 4, Square, 208, 554), new("7", 6, Rectangle, 519, 554), new("8", 8, Rectangle, 907, 554),
+                    new("9", 4, Round, 415, 900), new("10", 6, Rectangle, 1094, 872),
                 ],
                 Description: "Gemütliche Stube mit Holzbänken und Herrgottswinkel, wie früher beim Wirt im Dorf.",
                 PhotoFile: "gaststube-photo.jpg"),
-                new("Terrasse", "terrasse.png", 50, SeedFloorPlanTableScale,
+                // 13 × 8 m of stone slabs between the house and the hedges, the chestnut with its round bench at the bottom right.
+                new("Terrasse", "terrasse.webp", 50, 85,
                 [
-                    new("T1", 4, Round, 220, 230), new("T2", 4, Round, 480, 260), new("T3", 6, Rectangle, 800, 230),
-                    new("T4", 2, Round, 220, 520), new("T5", 4, Round, 500, 540), new("T6", 2, Round, 760, 500),
+                    new("T1", 4, Round, 206, 257), new("T2", 4, Round, 476, 309), new("T3", 6, Rectangle, 1363, 257),
+                    new("T4", 2, Round, 206, 720), new("T5", 4, Round, 540, 823), new("T6", 2, Round, 874, 540),
                 ],
                 Description: "Schattige Terrasse unter alten Bäumen, im Sommer der schönste Platz im Haus.",
                 PhotoFile: "terrasse-photo.jpg"),
@@ -132,14 +132,15 @@ public static class DevelopmentSeed
             OpeningHours: [.. Enum.GetValues<DayOfWeek>().Select(day => new DemoPeriod(day, new TimeOnly(12, 0), OpeningPeriod.EndOfDay))],
             Areas:
             [
-                new("Sala", "sala.png", 100, SeedFloorPlanTableScale,
+                // A room of 13.8 × 8.8 m: bar with stools at the top right, a podium for the musicians at the bottom right.
+                new("Sala", "sala.webp", 100, 80,
                 [
-                    new("1", 2, Square, 300, 200), new("2", 4, Square, 500, 200), new("3", 4, Square, 700, 200),
-                    new("4", 6, Rectangle, 860, 330, Rotation: 90),
-                    new("5", 4, Square, 300, 400), new("6", 6, Rectangle, 500, 400), new("7", 8, Rectangle, 700, 400),
-                    new("8", 4, Round, 960, 420),
-                    new("9", 2, Square, 300, 620), new("10", 4, Square, 500, 620), new("11", 4, Square, 700, 620),
-                    new("12", 2, Square, 900, 620),
+                    new("1", 2, Square, 240, 168), new("2", 4, Square, 480, 180), new("3", 4, Square, 720, 180),
+                    new("4", 6, Rectangle, 1152, 240, Rotation: 90),
+                    new("5", 4, Square, 240, 552), new("6", 6, Rectangle, 516, 552), new("7", 8, Rectangle, 864, 552),
+                    new("8", 4, Round, 1200, 576),
+                    new("9", 2, Square, 240, 888), new("10", 4, Square, 468, 888), new("11", 4, Square, 1080, 876),
+                    new("12", 2, Square, 1284, 912),
                 ],
                 Description: "Topla sala sa domaćom atmosferom, za porodične ručkove i veća društva.",
                 PhotoFile: "sala-photo.jpg"),
@@ -178,37 +179,28 @@ public static class DevelopmentSeed
                 Description: "Rooftop-Bar über den Dächern Wiens mit Blick über die ganze Stadt: Signature-Cocktails, Sharing-Plates zum Teilen und lange Sommerabende unter freiem Himmel."),
             // Wednesday to Sunday 17:00–24:00.
             OpeningHours: [.. WednesdayToSunday.Select(day => new DemoPeriod(day, new TimeOnly(17, 0), OpeningPeriod.EndOfDay))],
-            // Only areas without floor plan image: the drawn plan, next to Kafana Dunav's "Sala" with image.
+            // Both areas with a floor plan image; the image shows the room, so they have no room elements.
             Areas:
             [
-                // The suggested rooftop: stairs with the entrance, the bar at the back, planters; the view over the front parapet.
-                new("Rooftop", null, 70, 100,
+                // A deck of 16 × 10 m behind glass: stairs and lift at the top left, the bar at the back, planters, the view at the bottom.
+                new("Rooftop", "rooftop.webp", 70, 68,
                 [
-                    new("R1", 2, Round), new("R2", 2, Round), new("R3", 4, Square), new("R4", 4, Round),
-                    new("R5", 4, Square), new("R6", 6, Rectangle), new("R7", 2, Round), new("R8", 6, Round),
+                    new("R1", 2, Round, 650, 450), new("R2", 2, Round, 870, 450), new("R3", 4, Square, 1110, 450),
+                    new("R4", 4, Round, 1400, 460),
+                    new("R5", 4, Square, 360, 880), new("R6", 6, Rectangle, 660, 900), new("R7", 2, Round, 970, 910),
+                    new("R8", 6, Round, 1280, 880),
                 ],
                 Description: "Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.",
                 PhotoFile: "rooftop-photo.jpg",
-                RoomStyle.Rooftop,
-                () => [.. RoomSuggestion.Suggest(RoomStyle.Rooftop, 8), Label("Blick auf den Stephansdom", 0.5, top: false)]),
-                // Windows at the top, a sofa at each side wall, a small bar in the bottom right corner and the entrance beside it.
-                new("Lounge", null, 100, 100,
+                RoomStyle.Rooftop),
+                // A room of 13 × 8.2 m: panorama windows at the top, a sofa at each side wall, a small bar at the bottom right.
+                new("Lounge", "lounge.webp", 100, 85,
                 [
-                    new("L1", 2, Round), new("L2", 4, Square), new("L3", 4, Round), new("L4", 6, Rectangle), new("L5", 8, Rectangle),
+                    new("L1", 2, Round, 386, 231), new("L2", 4, Square, 720, 244), new("L3", 4, Round, 1080, 244),
+                    new("L4", 6, Rectangle, 540, 694), new("L5", 8, Rectangle, 1003, 643),
                 ],
                 Description: "Lounge hinter Panoramafenstern mit bequemen Sesseln, auch bei Regen mit Blick über die Dächer.",
-                PhotoFile: "lounge-photo.jpg",
-                RoomStyle.Indoor,
-                () =>
-                [
-                    RoomSuggestion.AtWall(RoomElementKind.Entrance, 0, 0.35),
-                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.2),
-                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.5),
-                    RoomSuggestion.AtWall(RoomElementKind.Window, 180, 0.8),
-                    RoomSuggestion.AtWall(RoomElementKind.Sofa, 90, 0.45),
-                    RoomSuggestion.AtWall(RoomElementKind.Sofa, 270, 0.45),
-                    RoomSuggestion.AtWall(RoomElementKind.Bar, 0, 0.9, length: 0.2),
-                ]),
+                PhotoFile: "lounge-photo.jpg"),
             ],
             Settings: new ReservationSettings
             {
