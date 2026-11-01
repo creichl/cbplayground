@@ -7,6 +7,7 @@ import { GuestLayout } from './layouts/GuestLayout.tsx'
 import { SuperadminLayout } from './layouts/SuperadminLayout.tsx'
 import { AdminOverviewPage } from './pages/AdminOverviewPage.tsx'
 import { AreasPage } from './pages/AreasPage.tsx'
+import { BrandingPage } from './pages/BrandingPage.tsx'
 import { EmbedBookingPage } from './pages/EmbedBookingPage.tsx'
 import { EmbedSnippetPage } from './pages/EmbedSnippetPage.tsx'
 import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
@@ -64,6 +65,7 @@ export const router = createBrowserRouter([
       { path: 'reservations', element: <ReservationsPage /> },
       { path: 'tables', element: <TableOverviewPage /> },
       { path: 'profile', element: <ProfilePage /> },
+      { path: 'design', element: <BrandingPage /> },
       { path: 'areas', element: <AreasPage /> },
       { path: 'opening-hours', element: <OpeningHoursPage /> },
       { path: 'reservation-settings', element: <ReservationSettingsPage /> },
