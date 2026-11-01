@@ -9,14 +9,13 @@ type RestaurantHeaderProps = {
   coverUrl: string | null
   /** One or two short facts after the city, e.g. "Open today until 24:00". */
   facts?: string[]
-  /** "page": the booking page, about half the screen high; "compact": the guest's reservation; "preview": a fixed height. */
-  size?: 'page' | 'compact' | 'preview'
+  /** "page": the booking page, about half the screen high; "preview": a fixed height. */
+  size?: 'page' | 'preview'
 }
 
 /** The heights of the cover image; without one, the band is lower. */
 const heights = {
   page: { cover: { base: '40dvh', md: '50dvh' }, coverMin: { base: 240, md: 360 }, band: { base: 200, md: 240 } },
-  compact: { cover: { base: 200, md: 280 }, coverMin: { base: 200, md: 280 }, band: { base: 160, md: 200 } },
   preview: { cover: { base: 200, md: 200 }, coverMin: { base: 200, md: 200 }, band: { base: 136, md: 136 } },
 } as const
 

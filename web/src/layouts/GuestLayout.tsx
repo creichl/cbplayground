@@ -1,7 +1,6 @@
 import {
   Anchor,
   type AnchorProps,
-  AppShell,
   Box,
   Button,
   Container,
@@ -20,14 +19,13 @@ import { BrandLogo } from '../components/BrandLogo.tsx'
 import { BrandTheme } from '../components/BrandTheme.tsx'
 import { contentWidth, HeroContext, headerHeight, scrollToBooking } from '../components/booking/layout.ts'
 import { LanguageMenu } from '../components/LanguageSwitcher.tsx'
-
-/** The width of "not found", header and content alike. */
-const platformWidth = 1120
+import { SiteFooter } from '../ui/site-footer.tsx'
+import { SiteHeader } from '../ui/site-header.tsx'
 
 /**
- * Layout for guests. "Not found" keeps the platform: product name on the left, staff sign-in and the language as a compact
- * menu on the right, content up to about 1120 px wide (the start page has its own header and footer, src/ui). A restaurant's
- * pages (/r/:slug/…) belong to the restaurant: see RestaurantLayout.
+ * Layout for guests. "Not found" keeps the platform's look of the start page (design system, src/ui): its header with the
+ * product name, the staff sign-in and the language, and its plain footer. A restaurant's pages (/r/:slug/…) belong to the
+ * restaurant: see RestaurantLayout.
  */
 export function GuestLayout() {
   const { slug } = useParams()
@@ -37,26 +35,13 @@ export function GuestLayout() {
   }
 
   return (
-    <AppShell header={{ height: 64 }}>
-      <AppShell.Header>
-        <Container size={platformWidth} h="100%">
-          <Group h="100%" justify="space-between" wrap="nowrap" gap={8}>
-            <Brand to="/" />
-            <Group gap={8} wrap="nowrap" miw={0}>
-              {/* Not the dimmed grey here: on white it falls short of the AA contrast. 44 px high, so it is easy to tap. */}
-              <StaffLink c="gray.7" lh="44px" display="block" />
-              <LanguageMenu />
-            </Group>
-          </Group>
-        </Container>
-      </AppShell.Header>
-
-      <AppShell.Main>
-        <Container size={platformWidth} py={{ base: 32, sm: 48 }}>
-          <Outlet />
-        </Container>
-      </AppShell.Main>
-    </AppShell>
+    <div className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
+      <SiteHeader />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <SiteFooter />
+    </div>
   )
 }
 
