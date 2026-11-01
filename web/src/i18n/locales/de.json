@@ -10,6 +10,12 @@
       "de": "Deutsch",
       "sr-Latn": "Srpski (latinica)",
       "sr-Cyrl": "Српски (ћирилица)"
+    },
+    "short": {
+      "en": "EN",
+      "de": "DE",
+      "sr-Latn": "SR",
+      "sr-Cyrl": "СР"
     }
   },
   "common": {
@@ -68,8 +74,17 @@
   },
   "home": {
     "title": "Restaurants",
-    "subtitle": "Wählen Sie ein Restaurant, um einen Tisch zu reservieren.",
-    "empty": "Es gibt noch keine Restaurants.",
+    "heading": "Tisch reservieren – direkt beim Restaurant",
+    "subtitle": "Wählen Sie ein Restaurant und buchen Sie Ihren Tisch in wenigen Schritten online.",
+    "search": "Nach Name oder Ort suchen",
+    "loading": "Restaurants werden geladen …",
+    "results_one": "{{count}} Restaurant gefunden",
+    "results_other": "{{count}} Restaurants gefunden",
+    "emptyTitle": "Noch keine Restaurants",
+    "empty": "Bald finden Sie hier Restaurants, bei denen Sie direkt einen Tisch reservieren können.",
+    "noMatchTitle": "Kein Restaurant passt zu „{{query}}“",
+    "noMatch": "Prüfen Sie die Schreibweise oder versuchen Sie einen anderen Namen oder Ort.",
+    "resetSearch": "Suche zurücksetzen",
     "reserve": "Tisch reservieren"
   },
   "guest": {
