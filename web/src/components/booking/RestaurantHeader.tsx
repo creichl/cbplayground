@@ -12,8 +12,8 @@ type RestaurantHeaderProps = {
   facts?: string[]
   /** Whether the restaurant is open today, as a chip below the city (openingStatus.ts); only on the booking page. */
   status?: { open: boolean; text: string } | null
-  /** "page": the booking page, about 60 % of the screen high (45 % on phones); "compact": the guest's reservation; "preview": a fixed height. */
-  size?: 'page' | 'compact' | 'preview'
+  /** "page": the booking page, about 60 % of the screen high (45 % on phones); "preview": a fixed height (/admin/design). */
+  size?: 'page' | 'preview'
 }
 
 /**
@@ -22,7 +22,6 @@ type RestaurantHeaderProps = {
  */
 const heights = {
   page: { cover: 'h-[45svh] min-h-72 max-h-160 lg:h-[60svh]', band: 'h-56 lg:h-72' },
-  compact: { cover: 'h-50 md:h-70', band: 'h-40 md:h-50' },
   preview: { cover: 'h-50', band: 'h-34' },
 } as const
 
@@ -61,7 +60,7 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], status = nu
         <h1
           className={cn(
             'font-display text-balance wrap-anywhere',
-            size === 'page' ? 'text-4xl sm:text-5xl xl:text-6xl' : size === 'compact' ? 'text-3xl md:text-4xl' : 'text-2xl',
+            size === 'page' ? 'text-4xl sm:text-5xl xl:text-6xl' : 'text-2xl',
           )}
         >
           {name}

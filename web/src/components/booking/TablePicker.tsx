@@ -76,7 +76,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
   if (!anyFree) {
     return (
       <div className="flex flex-col items-start gap-4">
-        <Alert variant="warning">
+        <Alert variant="warning" role="note">
           <TriangleAlertIcon aria-hidden="true" />
           <AlertDescription>{t('booking.table.noneFree')}</AlertDescription>
         </Alert>

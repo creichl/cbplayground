@@ -56,7 +56,7 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
   return (
     <div className="flex flex-col gap-5">
       {notice !== null && (
-        <Alert variant="warning" role="alert">
+        <Alert variant="warning">
           <TriangleAlertIcon aria-hidden="true" />
           <AlertDescription>{t(notice)}</AlertDescription>
         </Alert>

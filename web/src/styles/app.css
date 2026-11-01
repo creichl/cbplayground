@@ -1,6 +1,6 @@
 /*
  * The design system of the guest pages: Tailwind CSS 4 with the tokens below, next to Mantine (admin, front desk,
- * Superadmin, login and, for now, the restaurant's guest pages). See README, "Design system".
+ * Superadmin). See README, "Design system".
  *
  * Every style lives in a cascade layer with a fixed order, so Tailwind's preflight (base) never wins over Mantine and
  * Mantine never wins over the utilities of the new components. Later layers win, whatever the selector.

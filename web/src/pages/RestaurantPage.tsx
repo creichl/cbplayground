@@ -1,7 +1,7 @@
-import { CircleAlertIcon, SearchXIcon } from 'lucide-react'
+import { CircleAlertIcon, StoreIcon } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { requestErrorMessage } from '../api/client.ts'
 import { isNotFound, type PublicRestaurant, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
@@ -14,6 +14,7 @@ import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/bookin
 import { useDocumentTitle } from '../i18n/title.ts'
 import { Button } from '../ui/button.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
+import { NotFound } from './NotFoundPage.tsx'
 
 /** The content: 12 columns, at most 1200 px; from 1024 px on the information in 7 of them, the reservation card in 5. */
 const gridClassName = 'mx-auto max-w-page px-4 sm:px-6 lg:grid lg:grid-cols-12 lg:gap-x-12'
@@ -58,31 +59,21 @@ export function RestaurantPage() {
     )
   }
 
+  if (isNotFound(restaurant.error)) {
+    return <NotFound icon={<StoreIcon />} title={t('restaurant.notFoundTitle')} text={t('restaurant.notFoundText')} />
+  }
+
   if (restaurant.isError) {
-    const notFound = isNotFound(restaurant.error)
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center">
-        <span
-          aria-hidden="true"
-          className={
-            notFound
-              ? 'flex size-12 items-center justify-center rounded-full bg-primary-50 text-primary-text dark:bg-accent [&_svg]:size-6'
-              : 'flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive [&_svg]:size-6'
-          }
-        >
-          {notFound ? <SearchXIcon /> : <CircleAlertIcon />}
+        <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-destructive/10 text-destructive [&_svg]:size-6">
+          <CircleAlertIcon />
         </span>
-        <h1 className="font-display text-3xl">{notFound ? t('restaurant.notFoundTitle') : t('errors.title')}</h1>
-        <p className="text-muted-foreground">{notFound ? t('restaurant.notFoundText') : requestErrorMessage(restaurant.error, t)}</p>
-        {notFound ? (
-          <Button asChild size="lg">
-            <Link to="/">{t('common.backToStart')}</Link>
-          </Button>
-        ) : (
-          <Button size="lg" variant="outline" onClick={() => void restaurant.refetch()}>
-            {t('common.retry')}
-          </Button>
-        )}
+        <h1 className="font-display text-3xl">{t('errors.title')}</h1>
+        <p className="text-muted-foreground">{requestErrorMessage(restaurant.error, t)}</p>
+        <Button size="lg" variant="outline" onClick={() => void restaurant.refetch()}>
+          {t('common.retry')}
+        </Button>
       </div>
     )
   }

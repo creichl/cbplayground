@@ -1,4 +1,4 @@
-import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, SunIcon, TriangleAlertIcon, UtensilsCrossedIcon } from 'lucide-react'
+import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon, TriangleAlertIcon, UtensilsCrossedIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -281,20 +281,24 @@ export function StyleguidePage() {
               </Block>
 
               <Block name="Alert">
-                <div className="flex flex-col gap-3">
-                  <Alert>
+                <div className="flex max-w-xl flex-col gap-3">
+                  <Alert variant="destructive" role="note">
+                    <CircleAlertIcon aria-hidden="true" />
+                    <AlertDescription>{t('login.errors.invalidCredentials')}</AlertDescription>
+                  </Alert>
+                  <Alert role="note">
+                    <PhoneIcon aria-hidden="true" />
+                    <AlertTitle>{t('guestReservation.contact')}</AlertTitle>
+                    <AlertDescription>{t('guestReservation.cannotCancel')}</AlertDescription>
+                  </Alert>
+                  <Alert role="note">
                     <InfoIcon aria-hidden="true" />
                     <AlertDescription>{t('embed.notFound')}</AlertDescription>
                   </Alert>
-                  <Alert variant="warning">
+                  <Alert variant="warning" role="note">
                     <TriangleAlertIcon aria-hidden="true" />
                     <AlertTitle>{t('booking.partySize.callTitle')}</AlertTitle>
                     <AlertDescription>{t('booking.partySize.callText', { count: 8 })}</AlertDescription>
-                  </Alert>
-                  <Alert variant="destructive">
-                    <CircleAlertIcon aria-hidden="true" />
-                    <AlertTitle>{t('errors.title')}</AlertTitle>
-                    <AlertDescription>{t('errors.network')}</AlertDescription>
                   </Alert>
                 </div>
               </Block>

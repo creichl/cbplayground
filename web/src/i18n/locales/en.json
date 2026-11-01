@@ -44,6 +44,9 @@
     "email": "Email",
     "password": "Password",
     "submit": "Sign in",
+    "submitting": "Signing in…",
+    "showPassword": "Show password",
+    "claim": "Reservations, tables and guests – all in one place.",
     "validation": {
       "email": "Please enter a valid email address.",
       "password": "Please enter your password."
@@ -221,7 +224,8 @@
       "copied": "Copied",
       "tableInArea": "Table {{number}} · {{area}}",
       "address": "Address",
-      "copyLink": "Copy link"
+      "copyLink": "Copy link",
+      "copy": "Copy"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -284,8 +288,8 @@
     "cannotCancel": "This reservation can only be cancelled online until it starts. Please call the restaurant.",
     "contact": "Contact the restaurant",
     "confirm": {
-      "title": "Cancel the reservation?",
-      "text": "Your reservation on {{date}} at {{time}} ({{guests}}) will be cancelled. This cannot be undone.",
+      "title": "Really cancel the reservation?",
+      "text": "The table will be released for other guests. This cannot be undone.",
       "back": "Back",
       "confirm": "Cancel reservation"
     },
@@ -301,7 +305,9 @@
       "arrived": "Enjoy your visit",
       "late": "Marked as late",
       "cancelled": "Reservation cancelled",
-      "declined": "Request declined"
+      "declined": "Request declined",
+      "past": "This reservation is over",
+      "pastText": "We look forward to your next visit."
     }
   },
   "admin": {
@@ -761,7 +767,6 @@
     }
   },
   "notFound": {
-    "label": "Error 404",
     "title": "Page not found",
     "text": "The page you are looking for does not exist or has been moved."
   },

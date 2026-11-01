@@ -25,7 +25,7 @@ export function EmbedBookingPage() {
   if (restaurant.isError) {
     if (isNotFound(restaurant.error)) {
       return (
-        <Alert>
+        <Alert role="note">
           <InfoIcon aria-hidden="true" />
           <AlertDescription>{t('embed.notFound')}</AlertDescription>
         </Alert>

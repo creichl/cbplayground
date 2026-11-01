@@ -44,6 +44,9 @@
     "email": "Imejl",
     "password": "Lozinka",
     "submit": "Prijavi se",
+    "submitting": "Prijavljivanje…",
+    "showPassword": "Prikaži lozinku",
+    "claim": "Rezervacije, stolovi i gosti – sve na jednom mestu.",
     "validation": {
       "email": "Unesite ispravnu imejl adresu.",
       "password": "Unesite lozinku."
@@ -231,7 +234,8 @@
       "copied": "Kopirano",
       "tableInArea": "Sto {{number}} · {{area}}",
       "address": "Adresa",
-      "copyLink": "Kopiraj link"
+      "copyLink": "Kopiraj link",
+      "copy": "Kopiraj"
     },
     "calendarEvent": {
       "title": "Rezervacija stola – {{restaurant}}",
@@ -294,8 +298,8 @@
     "cannotCancel": "Rezervaciju je moguće otkazati onlajn samo do njenog početka. Pozovite restoran.",
     "contact": "Kontakt restorana",
     "confirm": {
-      "title": "Otkazati rezervaciju?",
-      "text": "Vaša rezervacija {{date}} u {{time}} ({{guests}}) biće otkazana. Ovo se ne može poništiti.",
+      "title": "Zaista otkazati rezervaciju?",
+      "text": "Sto će biti oslobođen za druge goste. Ovo se ne može poništiti.",
       "back": "Nazad",
       "confirm": "Otkaži rezervaciju"
     },
@@ -311,7 +315,9 @@
       "arrived": "Dobro došli",
       "late": "Označeno kao kašnjenje",
       "cancelled": "Rezervacija otkazana",
-      "declined": "Zahtev odbijen"
+      "declined": "Zahtev odbijen",
+      "past": "Ova rezervacija je prošla",
+      "pastText": "Radujemo se vašoj sledećoj poseti."
     }
   },
   "admin": {
@@ -774,7 +780,6 @@
     }
   },
   "notFound": {
-    "label": "Greška 404",
     "title": "Stranica nije pronađena",
     "text": "Stranica koju tražite ne postoji ili je premeštena."
   },

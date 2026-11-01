@@ -12,7 +12,7 @@ export function RequestError({ error, onRetry }: { error: Error; onRetry: () => 
   const { t } = useTranslation()
 
   return (
-    <Alert variant="destructive" role="alert">
+    <Alert variant="destructive">
       <CircleAlertIcon aria-hidden="true" />
       <AlertTitle>{t('errors.title')}</AlertTitle>
       <AlertDescription>

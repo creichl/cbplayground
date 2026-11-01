@@ -133,7 +133,7 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
       </ul>
 
       {error !== null && (
-        <Alert variant="destructive" role="alert">
+        <Alert variant="destructive">
           <CircleAlertIcon aria-hidden="true" />
           <AlertDescription>{error}</AlertDescription>
         </Alert>

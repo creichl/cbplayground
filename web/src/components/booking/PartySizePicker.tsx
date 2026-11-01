@@ -64,7 +64,7 @@ export function PartySizeCallHint({ maxOnlinePartySize, phone }: { maxOnlinePart
   const { t } = useTranslation()
 
   return (
-    <Alert variant="warning">
+    <Alert variant="warning" role="note">
       <PhoneIcon aria-hidden="true" />
       <AlertTitle>{t('booking.partySize.callTitle')}</AlertTitle>
       <AlertDescription>
