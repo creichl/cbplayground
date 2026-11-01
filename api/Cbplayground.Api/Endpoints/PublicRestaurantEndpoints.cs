@@ -53,7 +53,7 @@ public static class PublicRestaurantEndpoints
 
     public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
 
-    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements);
+    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements);
 
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
@@ -154,13 +154,13 @@ public static class PublicRestaurantEndpoints
         group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
             var fileName = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.LogoFileName).SingleAsync();
-            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageCacheControl(fileName, v));
+            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageUploads.CacheControl(fileName, v));
         });
 
         group.MapGet("/cover", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
             var fileName = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CoverFileName).SingleAsync();
-            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageCacheControl(fileName, v));
+            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageUploads.CacheControl(fileName, v));
         });
 
         // One entry per day of the month. Days in the past and beyond the booking horizon are "closed", like closing days.
@@ -244,6 +244,8 @@ public static class PublicRestaurantEndpoints
                 area.Id,
                 area.Name,
                 AreaEndpoints.FloorPlanUrl(area),
+                area.Description,
+                AreaEndpoints.PhotoUrl(area),
                 area.TableScale,
                 tables
                     .Where(t => t.AreaId == area.Id)
@@ -389,13 +391,6 @@ public static class PublicRestaurantEndpoints
             reservation.CancelledByGuest,
             now is not null && ReservationRules.CanGuestCancel(reservation, now.Value));
     }
-
-    /// <summary>
-    /// The URLs of logo and cover image carry the version of the image (<c>?v=</c>), which changes with every upload, so with the
-    /// current version the image may be cached for a year. Without it or with an outdated one it has to be revalidated.
-    /// </summary>
-    private static string ImageCacheControl(string? fileName, string? version) =>
-        fileName is not null && version == ImageUploads.Version(fileName) ? "public, max-age=31536000, immutable" : "no-cache";
 
     private static async Task<ReservationSettings> LoadSettingsAsync(AppDbContext db) =>
         await db.ReservationSettings.AsNoTracking().SingleOrDefaultAsync() ?? new ReservationSettings();
