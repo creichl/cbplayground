@@ -241,6 +241,7 @@
       "overview": "Overview",
       "reservations": "Reservations",
       "profile": "Restaurant profile",
+      "design": "Appearance",
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
@@ -400,6 +401,79 @@
     },
     "save": "Save",
     "saved": "The profile has been saved."
+  },
+  "branding": {
+    "title": "Appearance",
+    "subtitle": "Accent colour, light or dark mode, fonts, logo and cover image of your booking page and the website embed.",
+    "viewBookingPage": "View booking page",
+    "color": {
+      "title": "Accent colour",
+      "description": "For buttons, the selection in the booking and the chosen table.",
+      "suggestions": "Suggested colours",
+      "label": "Colour (hex)",
+      "placeholder": "Platform colour",
+      "invalid": "Please enter a colour as #RRGGBB, e.g. #1f5f8b.",
+      "reset": "Reset",
+      "lowContrastLight": "This colour stands out only weakly against the light background (contrast {{ratio}}:1, at least {{minimum}}:1 is recommended). You can save it anyway.",
+      "lowContrastDark": "This colour stands out only weakly against the dark background (contrast {{ratio}}:1, at least {{minimum}}:1 is recommended). You can save it anyway."
+    },
+    "mode": {
+      "title": "Mode",
+      "description": "Only for your booking page and the website embed.",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "font": {
+      "title": "Font pair",
+      "description": "A font for headings and one for text.",
+      "sample": "Reserve your table for tonight – we look forward to your visit.",
+      "styles": {
+        "Modern": "Modern",
+        "Classic": "Classic",
+        "Elegant": "Elegant",
+        "Rustic": "Rustic",
+        "Urban": "Urban"
+      }
+    },
+    "logo": {
+      "title": "Logo",
+      "alt": "Your logo",
+      "emptyTitle": "No logo yet",
+      "choose": "Choose logo",
+      "replace": "Replace logo",
+      "remove": "Remove logo",
+      "hint": "PNG, JPEG or WebP, at most 2 MB. A logo on a transparent or light background works best.",
+      "saved": "The logo has been saved.",
+      "removed": "The logo has been removed."
+    },
+    "cover": {
+      "title": "Cover image",
+      "alt": "Your cover image",
+      "emptyTitle": "No cover image yet",
+      "choose": "Choose cover image",
+      "replace": "Replace cover image",
+      "remove": "Remove cover image",
+      "hint": "PNG, JPEG or WebP, at most 10 MB. Landscape format, at least 1600 pixels wide.",
+      "saved": "The cover image has been saved.",
+      "removed": "The cover image has been removed."
+    },
+    "dropHint": "Drop an image here or choose one.",
+    "imagesSavedRightAway": "Logo and cover image are saved as soon as you upload or remove them.",
+    "preview": {
+      "title": "Preview",
+      "hint": "Shows your changes before you save them."
+    },
+    "save": "Save",
+    "saved": "The appearance has been saved.",
+    "errors": {
+      "title": "The appearance could not be saved",
+      "invalidBrandColor": "The colour is not valid. Please enter it as #RRGGBB.",
+      "invalidThemeMode": "The mode is not valid.",
+      "invalidFontStyle": "The font pair is not valid.",
+      "logoTooLarge": "The logo is too large (at most 2 MB).",
+      "coverTooLarge": "The cover image is too large (at most 10 MB).",
+      "imageTypeInvalid": "Please choose a PNG, JPEG or WebP image."
+    }
   },
   "staff": {
     "title": "Staff",

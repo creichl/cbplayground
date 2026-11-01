@@ -246,6 +246,7 @@
       "overview": "Pregled",
       "reservations": "Rezervacije",
       "profile": "Profil restorana",
+      "design": "Izgled",
       "areas": "Prostori i stolovi",
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
@@ -406,6 +407,79 @@
     },
     "save": "Sačuvaj",
     "saved": "Profil je sačuvan."
+  },
+  "branding": {
+    "title": "Izgled",
+    "subtitle": "Boja akcenta, svetli ili tamni režim, fontovi, logo i naslovna slika vaše stranice za rezervacije i ugradnje na sajt.",
+    "viewBookingPage": "Pogledaj stranicu za rezervacije",
+    "color": {
+      "title": "Boja akcenta",
+      "description": "Za dugmad, izbor u rezervaciji i izabrani sto.",
+      "suggestions": "Predložene boje",
+      "label": "Boja (hex)",
+      "placeholder": "Boja platforme",
+      "invalid": "Unesite boju kao #RRGGBB, npr. #1f5f8b.",
+      "reset": "Vrati na podrazumevano",
+      "lowContrastLight": "Ova boja se slabo ističe na svetloj pozadini (kontrast {{ratio}}:1, preporučeno je najmanje {{minimum}}:1). Ipak je možete sačuvati.",
+      "lowContrastDark": "Ova boja se slabo ističe na tamnoj pozadini (kontrast {{ratio}}:1, preporučeno je najmanje {{minimum}}:1). Ipak je možete sačuvati."
+    },
+    "mode": {
+      "title": "Režim",
+      "description": "Samo za vašu stranicu za rezervacije i ugradnju na sajt.",
+      "light": "Svetli",
+      "dark": "Tamni"
+    },
+    "font": {
+      "title": "Par fontova",
+      "description": "Jedan font za naslove i jedan za tekst.",
+      "sample": "Rezervišite sto za večeras – radujemo se vašoj poseti.",
+      "styles": {
+        "Modern": "Moderno",
+        "Classic": "Klasično",
+        "Elegant": "Elegantno",
+        "Rustic": "Rustično",
+        "Urban": "Urbano"
+      }
+    },
+    "logo": {
+      "title": "Logo",
+      "alt": "Vaš logo",
+      "emptyTitle": "Još nema loga",
+      "choose": "Izaberi logo",
+      "replace": "Zameni logo",
+      "remove": "Ukloni logo",
+      "hint": "PNG, JPEG ili WebP, najviše 2 MB. Najbolje izgleda logo na providnoj ili svetloj pozadini.",
+      "saved": "Logo je sačuvan.",
+      "removed": "Logo je uklonjen."
+    },
+    "cover": {
+      "title": "Naslovna slika",
+      "alt": "Vaša naslovna slika",
+      "emptyTitle": "Još nema naslovne slike",
+      "choose": "Izaberi naslovnu sliku",
+      "replace": "Zameni naslovnu sliku",
+      "remove": "Ukloni naslovnu sliku",
+      "hint": "PNG, JPEG ili WebP, najviše 10 MB. Položeni format, najmanje 1600 piksela širine.",
+      "saved": "Naslovna slika je sačuvana.",
+      "removed": "Naslovna slika je uklonjena."
+    },
+    "dropHint": "Prevucite sliku ovde ili je izaberite.",
+    "imagesSavedRightAway": "Logo i naslovna slika čuvaju se odmah pri otpremanju ili uklanjanju.",
+    "preview": {
+      "title": "Pregled",
+      "hint": "Prikazuje vaše izmene i pre čuvanja."
+    },
+    "save": "Sačuvaj",
+    "saved": "Izgled je sačuvan.",
+    "errors": {
+      "title": "Izgled nije sačuvan",
+      "invalidBrandColor": "Boja nije ispravna. Unesite je kao #RRGGBB.",
+      "invalidThemeMode": "Režim nije ispravan.",
+      "invalidFontStyle": "Par fontova nije ispravan.",
+      "logoTooLarge": "Logo je prevelik (najviše 2 MB).",
+      "coverTooLarge": "Naslovna slika je prevelika (najviše 10 MB).",
+      "imageTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku."
+    }
   },
   "staff": {
     "title": "Zaposleni",
