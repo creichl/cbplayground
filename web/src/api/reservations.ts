@@ -1,7 +1,7 @@
 import { type QueryClient, queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
-import type { TableRotation, TableShape } from './areas.ts'
+import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import { useCurrentUser } from './auth.ts'
 import { apiGet, apiPost, apiPut } from './client.ts'
 
@@ -72,9 +72,14 @@ export type FloorArea = {
   name: string
   sortOrder: number
   floorPlanUrl: string | null
+  description: string | null
+  photoUrl: string | null
   /** Scales the drawn tables, 50–200 %. */
   tableScale: number
   tables: FloorTable[]
+  /** The drawn room of an area without floor plan image. */
+  roomStyle: RoomStyle
+  roomElements: RoomElement[]
 }
 
 /** An opening window of a day, "HH:mm"; the end may be "24:00". */
