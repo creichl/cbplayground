@@ -28,6 +28,11 @@ export type PublicRestaurant = {
   bookable: boolean
   /** Colour, light or dark, fonts, logo and cover image of the restaurant's guest pages. */
   branding: Branding
+  /**
+   * The areas open for online booking, in their order, to describe the place (also when the system assigns the tables);
+   * `description` and `photoUrl` are null when the restaurant has not given them.
+   */
+  areas: { name: string; description: string | null; photoUrl: string | null }[]
 }
 
 /** A day of the date picker. "closed" also covers closing days, days in the past and days beyond the restaurant's booking horizon. */

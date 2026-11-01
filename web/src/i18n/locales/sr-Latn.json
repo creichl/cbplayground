@@ -128,7 +128,8 @@
       "about": "O nama",
       "directions": "Kako do nas i kontakt",
       "todayBadge": "Danas",
-      "todayDiffers": "Danas drugačije:"
+      "todayDiffers": "Danas drugačije:",
+      "areas": "Delovi restorana"
     },
     "partySize": {
       "moreThan_one": "Više od {{count}} osobe",

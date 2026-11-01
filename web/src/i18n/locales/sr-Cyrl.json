@@ -128,7 +128,8 @@
       "about": "О нама",
       "directions": "Како до нас и контакт",
       "todayBadge": "Данас",
-      "todayDiffers": "Данас другачије:"
+      "todayDiffers": "Данас другачије:",
+      "areas": "Делови ресторана"
     },
     "partySize": {
       "moreThan_one": "Више од {{count}} особе",

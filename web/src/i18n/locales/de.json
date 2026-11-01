@@ -126,7 +126,8 @@
       "about": "Über uns",
       "directions": "Anfahrt & Kontakt",
       "todayBadge": "Heute",
-      "todayDiffers": "Heute abweichend:"
+      "todayDiffers": "Heute abweichend:",
+      "areas": "Bereiche"
     },
     "partySize": {
       "moreThan_one": "Mehr als {{count}} Person",

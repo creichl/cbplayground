@@ -126,7 +126,8 @@
       "about": "About us",
       "directions": "Directions & contact",
       "todayBadge": "Today",
-      "todayDiffers": "Today differs:"
+      "todayDiffers": "Today differs:",
+      "areas": "Areas"
     },
     "partySize": {
       "moreThan_one": "More than {{count}} person",

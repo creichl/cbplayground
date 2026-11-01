@@ -1,4 +1,4 @@
-import { CircleAlertIcon, StoreIcon } from 'lucide-react'
+import { ArmchairIcon, CircleAlertIcon, StoreIcon } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router'
@@ -13,6 +13,7 @@ import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
 import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/booking/RestaurantHeader.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { Button } from '../ui/button.tsx'
+import { Photo } from '../ui/photo.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
 
@@ -24,7 +25,7 @@ const infoColumnClassName = 'flex flex-col gap-12 pt-12 lg:col-span-7 lg:row-sta
 /**
  * The booking page of a restaurant, like the restaurant pages of Resy, OpenTable or Tock. At the top its cover image (about
  * 60 % of the screen, at most 640 px; about 45 % on phones) with name, city and whether it is open today. Below it, from
- * 1024 px on, the information on the left (7 of 12 columns: about us, opening hours, directions and contact) and the
+ * 1024 px on, the information on the left (7 of 12 columns: about us, areas, opening hours, directions and contact) and the
  * reservation card on the right, which stays in view below the header. On phones the card comes right below the cover
  * image, the information after it, and a bar "Reserve a table" appears at the bottom of the screen once the card is
  * scrolled out of view.
@@ -105,6 +106,11 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
               <p className="max-w-prose text-lg leading-relaxed whitespace-pre-line">{description}</p>
             </Section>
           )}
+          {restaurant.areas.length > 0 && (
+            <Section title={t('booking.restaurant.areas')}>
+              <AreaCards areas={restaurant.areas} />
+            </Section>
+          )}
           {restaurant.openingHours.length > 0 && (
             <Section title={t('booking.restaurant.openingHours')}>
               <OpeningHoursList restaurant={restaurant} today={status?.periods ?? null} />
@@ -119,6 +125,38 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
       </div>
       {restaurant.bookable && <ReserveBar />}
     </>
+  )
+}
+
+/**
+ * The restaurant's areas as photo cards with name and description, only to show the place: where the guest chooses the
+ * table, the choice comes in the booking dialog. Without photo, or when it cannot be loaded, a calm surface with a chair.
+ */
+function AreaCards({ areas }: { areas: PublicRestaurant['areas'] }) {
+  const { t } = useTranslation()
+
+  return (
+    <ul className="grid gap-6 sm:grid-cols-2">
+      {areas.map((area) => (
+        <li key={area.name} className="flex flex-col gap-3">
+          <Photo
+            src={area.photoUrl}
+            alt={t('booking.table.areaPhoto', { area: area.name })}
+            ratio="4/3"
+            className="rounded-xl"
+            fallback={
+              <span className="flex items-center justify-center text-muted-foreground">
+                <ArmchairIcon aria-hidden="true" className="size-10" strokeWidth={1.5} />
+              </span>
+            }
+          />
+          <div className="flex flex-col gap-1">
+            <h3 className="font-display text-xl">{area.name}</h3>
+            {area.description !== null && <p className="text-muted-foreground">{area.description}</p>}
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 
