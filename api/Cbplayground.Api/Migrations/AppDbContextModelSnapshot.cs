@@ -99,6 +99,10 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FloorPlanFileName")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
@@ -113,6 +117,10 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<int>("OnlineCapacityPercent")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("PhotoFileName")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("RoomStyle")
                         .IsRequired()

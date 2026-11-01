@@ -52,6 +52,16 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         return client.PutAsync($"/api/admin/areas/{areaId}/floorplan", body, Ct);
     }
 
+    private static Task<HttpResponseMessage> UploadPhotoAsync(HttpClient client, Guid areaId, byte[] content, string contentType = "image/png")
+    {
+        var body = new ByteArrayContent(content);
+        body.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        return client.PutAsync($"/api/admin/areas/{areaId}/photo", body, Ct);
+    }
+
+    private static Task<HttpResponseMessage> UpdateAreaAsync(HttpClient client, AreaResponse area, string? description) =>
+        client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, description }, Ct);
+
     private static async Task<string?> ErrorOf(HttpResponseMessage response) =>
         (await response.Content.ReadFromJsonAsync<ErrorResponse>(Ct))?.Error;
 
@@ -68,6 +78,8 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [InlineData("PUT", "/api/admin/areas/00000000-0000-0000-0000-000000000001")]
     [InlineData("DELETE", "/api/admin/areas/00000000-0000-0000-0000-000000000001")]
     [InlineData("PUT", "/api/admin/areas/00000000-0000-0000-0000-000000000001/floorplan")]
+    [InlineData("PUT", "/api/admin/areas/00000000-0000-0000-0000-000000000001/photo")]
+    [InlineData("DELETE", "/api/admin/areas/00000000-0000-0000-0000-000000000001/photo")]
     [InlineData("POST", "/api/admin/areas/00000000-0000-0000-0000-000000000001/arrange-tables")]
     [InlineData("GET", "/api/admin/tables")]
     [InlineData("POST", "/api/admin/tables")]
@@ -96,6 +108,8 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(100, area.OnlineCapacityPercent);
         Assert.Equal(100, area.TableScale);
         Assert.Null(area.FloorPlanUrl);
+        Assert.Null(area.Description);
+        Assert.Null(area.PhotoUrl);
         Assert.True(area.SortOrder > first.SortOrder);
         Assert.Equal(area, (await GetAreasAsync(client))!.Last());
     }
@@ -692,6 +706,8 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var area = await CreateAreaAsync(clientA, "Gaststube A");
         var table = await CreateTableAsync(clientA, area.Id);
         await UploadAsync(clientA, area.Id, Png);
+        await UpdateAreaAsync(clientA, area, "Stube A");
+        await UploadPhotoAsync(clientA, area.Id, Png);
         var areaBefore = Assert.Single((await GetAreasAsync(clientA))!, a => a.Id == area.Id);
 
         Assert.DoesNotContain((await GetAreasAsync(clientB))!, a => a.Id == area.Id);
@@ -699,6 +715,8 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "taken by B", onlineBookingEnabled = false, onlineCapacityPercent = 0 }, Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await UploadAsync(clientB, area.Id, Jpeg, "image/jpeg")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await UploadPhotoAsync(clientB, area.Id, Jpeg, "image/jpeg")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/admin/areas/{area.Id}/photo", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.DeleteAsync($"/api/admin/areas/{area.Id}", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await clientB.PostAsync($"/api/admin/areas/{area.Id}/arrange-tables", null, Ct)).StatusCode);
         var areaIdsOfB = (await GetAreasAsync(clientB))!.Select(a => a.Id).Append(area.Id);
@@ -713,5 +731,189 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(table, Assert.Single((await GetTablesAsync(clientA))!, t => t.Id == table.Id));
         using var guest = factory.CreateHttpsClient();
         Assert.Equal(Png, await guest.GetByteArrayAsync(areaBefore.FloorPlanUrl, Ct));
+        Assert.Equal(Png, await guest.GetByteArrayAsync(areaBefore.PhotoUrl, Ct));
+    }
+
+    [Fact]
+    public async Task The_description_of_an_area_is_trimmed_kept_when_missing_and_removed_when_empty()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var set = await UpdateAreaAsync(client, area, "  Dachterrasse mit Blick über die Stadt  ");
+        var withoutDescription = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100 }, Ct);
+
+        Assert.Equal("Dachterrasse mit Blick über die Stadt", (await set.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.Description);
+        Assert.Equal("Dachterrasse mit Blick über die Stadt", (await withoutDescription.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.Description);
+
+        var replaced = await UpdateAreaAsync(client, area, "Lounge");
+        Assert.Equal("Lounge", (await replaced.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.Description);
+
+        var removed = await UpdateAreaAsync(client, area, "   ");
+        Assert.Equal(HttpStatusCode.OK, removed.StatusCode);
+        Assert.Null(Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).Description);
+    }
+
+    [Fact]
+    public async Task The_description_of_an_area_may_have_at_most_200_characters()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var accepted = await UpdateAreaAsync(client, area, new string('a', 200));
+        var rejected = await UpdateAreaAsync(client, area, new string('b', 201));
+
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+        Assert.Equal("invalid_area_description", await ErrorOf(rejected));
+        Assert.Equal(new string('a', 200), Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).Description);
+    }
+
+    [Theory]
+    [InlineData("png")]
+    [InlineData("jpeg")]
+    [InlineData("webp")]
+    public async Task An_area_photo_can_be_uploaded_and_read_without_sign_in(string type)
+    {
+        var (content, contentType) = type switch
+        {
+            "png" => (Png, "image/png"),
+            "jpeg" => (Jpeg, "image/jpeg"),
+            _ => (WebP, "image/webp"),
+        };
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var upload = await UploadPhotoAsync(client, area.Id, content, contentType);
+
+        Assert.Equal(HttpStatusCode.OK, upload.StatusCode);
+        var photoUrl = (await upload.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl;
+        Assert.NotNull(photoUrl);
+        Assert.StartsWith($"/api/areas/{area.Id}/photo?v=", photoUrl);
+        Assert.Equal(photoUrl, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).PhotoUrl);
+
+        using var guest = factory.CreateHttpsClient();
+        var image = await guest.GetAsync(photoUrl, Ct);
+        Assert.Equal(HttpStatusCode.OK, image.StatusCode);
+        Assert.Equal(contentType, image.Content.Headers.ContentType?.MediaType);
+        Assert.Equal(content, await image.Content.ReadAsByteArrayAsync(Ct));
+    }
+
+    [Fact]
+    public async Task An_area_photo_with_its_current_version_may_be_cached_otherwise_it_is_revalidated()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var photoUrl = (await (await UploadPhotoAsync(client, area.Id, Png)).Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl!;
+        using var guest = factory.CreateHttpsClient();
+
+        var current = await guest.GetAsync(photoUrl, Ct);
+        var withoutVersion = await guest.GetAsync($"/api/areas/{area.Id}/photo", Ct);
+        var outdated = await guest.GetAsync($"/api/areas/{area.Id}/photo?v=old", Ct);
+
+        Assert.Equal("public, max-age=31536000, immutable", current.Headers.CacheControl?.ToString());
+        Assert.Equal("no-cache", withoutVersion.Headers.CacheControl?.ToString());
+        Assert.Equal("no-cache", outdated.Headers.CacheControl?.ToString());
+    }
+
+    [Fact]
+    public async Task A_new_area_photo_replaces_the_old_file_and_removing_it_deletes_the_file()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var first = (await (await UploadPhotoAsync(client, area.Id, Png)).Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+
+        var second = (await (await UploadPhotoAsync(client, area.Id, Jpeg, "image/jpeg")).Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+
+        Assert.NotEqual(first.PhotoUrl, second.PhotoUrl);
+        Assert.False(File.Exists(Path.Combine(factory.UploadsPath, FileNameOf(first.PhotoUrl!) + ".png")));
+        Assert.True(File.Exists(Path.Combine(factory.UploadsPath, FileNameOf(second.PhotoUrl!) + ".jpg")));
+
+        var removed = await client.DeleteAsync($"/api/admin/areas/{area.Id}/photo", Ct);
+
+        Assert.Equal(HttpStatusCode.OK, removed.StatusCode);
+        Assert.Null((await removed.Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl);
+        Assert.Null(Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).PhotoUrl);
+        Assert.False(File.Exists(Path.Combine(factory.UploadsPath, FileNameOf(second.PhotoUrl!) + ".jpg")));
+        using var guest = factory.CreateHttpsClient();
+        Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/areas/{area.Id}/photo", Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/areas/{Guid.NewGuid()}/photo", Ct)).StatusCode);
+    }
+
+    [Theory]
+    [InlineData("gif")]
+    [InlineData("svg")]
+    [InlineData("empty")]
+    public async Task An_area_photo_upload_checks_the_content_not_the_declared_type(string type)
+    {
+        byte[] content = type switch
+        {
+            "gif" => Gif,
+            "svg" => "<svg xmlns=\"http://www.w3.org/2000/svg\"></svg>"u8.ToArray(),
+            _ => [],
+        };
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await UploadPhotoAsync(client, area.Id, content, "image/png");
+
+        Assert.Equal(HttpStatusCode.UnsupportedMediaType, response.StatusCode);
+        Assert.Equal("floor_plan_type_invalid", await ErrorOf(response));
+        Assert.Null(Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).PhotoUrl);
+    }
+
+    [Fact]
+    public async Task An_area_photo_may_have_at_most_10_MB()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var exactly10Mb = new byte[MaxPhotoBytes];
+        Jpeg.CopyTo(exactly10Mb, 0);
+        var tooLarge = new byte[MaxPhotoBytes + 1];
+        Jpeg.CopyTo(tooLarge, 0);
+
+        var rejected = await UploadPhotoAsync(client, area.Id, tooLarge, "image/jpeg");
+        var accepted = await UploadPhotoAsync(client, area.Id, exactly10Mb, "image/jpeg");
+
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, rejected.StatusCode);
+        Assert.Equal("floor_plan_too_large", await ErrorOf(rejected));
+        Assert.Equal(HttpStatusCode.OK, accepted.StatusCode);
+    }
+
+    [Fact]
+    public async Task Deleting_an_area_deletes_its_photo()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var photoUrl = (await (await UploadPhotoAsync(client, area.Id, Png)).Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl!;
+
+        var response = await client.DeleteAsync($"/api/admin/areas/{area.Id}", Ct);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        Assert.False(File.Exists(Path.Combine(factory.UploadsPath, FileNameOf(photoUrl) + ".png")));
+        using var guest = factory.CreateHttpsClient();
+        Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync(photoUrl, Ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task The_guest_table_list_and_the_staff_floor_show_description_and_photo_of_the_areas()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory,
+            [new TestArea("Rooftop", true, 100, ("1", 2)), new TestArea("Lounge", true, 100, ("2", 4))],
+            tableSelectionMode: TableSelectionMode.GuestChooses);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var rooftop = Assert.Single((await GetAreasAsync(admin))!, a => a.Name == "Rooftop");
+        await UpdateAreaAsync(admin, rooftop, "Dachterrasse mit Blick über die Stadt");
+        var photoUrl = (await (await UploadPhotoAsync(admin, rooftop.Id, Jpeg, "image/jpeg")).Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl;
+        using var guest = factory.CreateHttpsClient();
+
+        var publicAreas = await guest.GetFromJsonAsync<List<PublicRestaurantEndpoints.PublicArea>>(
+            $"/api/public/restaurants/{restaurant.Slug}/tables?date={TestRestaurants.NextOpenDay(factory):yyyy-MM-dd}&time=18:00&guests=2", Ct);
+        var floor = await admin.GetFromJsonAsync<List<StaffReservationEndpoints.FloorArea>>("/api/staff/floor", Ct);
+
+        Assert.Equal([("Rooftop", "Dachterrasse mit Blick über die Stadt", photoUrl), ("Lounge", null, null)],
+            publicAreas!.Select(a => (a.Name, a.Description, a.PhotoUrl)));
+        Assert.Equal([("Rooftop", "Dachterrasse mit Blick über die Stadt", photoUrl), ("Lounge", null, null)],
+            floor!.Select(a => (a.Name, a.Description, a.PhotoUrl)));
     }
 }

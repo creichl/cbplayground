@@ -18,7 +18,7 @@ public static class DevelopmentSeed
 {
     public record SeedUser(string Email, string Password, string DisplayName, string Role, string? TenantSlug = null);
 
-    /// <summary>Folder of the seed floor plans, logos and cover images, relative to the content root.</summary>
+    /// <summary>Folder of the seed floor plans, logos, cover images and area photos, relative to the content root; the photos' sources are in CREDITS.md there.</summary>
     private static readonly string SeedAssetsPath = Path.Combine("Data", "SeedAssets");
 
     /// <summary>Size of the seed floor plans in pixels; the table positions below are given in pixels of these images.</summary>
@@ -32,11 +32,12 @@ public static class DevelopmentSeed
     private record DemoTable(string Number, int Seats, TableShape Shape, double X = 0, double Y = 0, int Rotation = 0);
 
     /// <summary>
-    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. <see cref="Room"/> creates the elements of its room,
-    /// new ones on every call.
+    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. <see cref="PhotoFile"/> is a photo in
+    /// <see cref="SeedAssetsPath"/>, <see cref="Description"/> is in the restaurant's language. <see cref="Room"/> creates the
+    /// elements of its room, new ones on every call.
     /// </summary>
     private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, int TableScale, DemoTable[] Tables,
-        RoomStyle RoomStyle = RoomStyle.Indoor, Func<List<RoomElement>>? Room = null);
+        string Description, string PhotoFile, RoomStyle RoomStyle = RoomStyle.Indoor, Func<List<RoomElement>>? Room = null);
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
@@ -90,12 +91,16 @@ public static class DevelopmentSeed
                     new("4", 2, Square, 880, 250), new("5", 2, Square, 1060, 250),
                     new("6", 4, Square, 260, 470), new("7", 6, Rectangle, 470, 470), new("8", 8, Rectangle, 720, 470),
                     new("9", 4, Round, 980, 470), new("10", 6, Rectangle, 260, 660),
-                ]),
+                ],
+                Description: "Gemütliche Stube mit Holzbänken und Herrgottswinkel, wie früher beim Wirt im Dorf.",
+                PhotoFile: "gaststube-photo.jpg"),
                 new("Terrasse", "terrasse.png", 50, SeedFloorPlanTableScale,
                 [
                     new("T1", 4, Round, 220, 230), new("T2", 4, Round, 480, 260), new("T3", 6, Rectangle, 800, 230),
                     new("T4", 2, Round, 220, 520), new("T5", 4, Round, 500, 540), new("T6", 2, Round, 760, 500),
-                ]),
+                ],
+                Description: "Schattige Terrasse unter alten Bäumen, im Sommer der schönste Platz im Haus.",
+                PhotoFile: "terrasse-photo.jpg"),
             ],
             Settings: new ReservationSettings
             {
@@ -109,7 +114,7 @@ public static class DevelopmentSeed
                 new DurationRule { MinGuests = 3, MaxGuests = 6, DurationMinutes = 120 },
             ],
             // A warm green, like the linden tree.
-            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.png")),
+            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.jpg")),
         new(
             Name: "Kafana Dunav",
             Slug: "kafana-dunav",
@@ -135,13 +140,17 @@ public static class DevelopmentSeed
                     new("8", 4, Round, 960, 420),
                     new("9", 2, Square, 300, 620), new("10", 4, Square, 500, 620), new("11", 4, Square, 700, 620),
                     new("12", 2, Square, 900, 620),
-                ]),
+                ],
+                Description: "Topla sala sa domaćom atmosferom, za porodične ručkove i veća društva.",
+                PhotoFile: "sala-photo.jpg"),
                 // The garden has no floor plan image: the web draws its room, the suggested garden with the river at the top.
                 new("Bašta", null, 100, 100,
                 [
                     new("B1", 2, Round), new("B2", 4, Square), new("B3", 4, Round),
                     new("B4", 6, Rectangle), new("B5", 8, Rectangle), new("B6", 2, Square),
                 ],
+                Description: "Bašta u hladu lipa, pogled na Dunav",
+                PhotoFile: "basta-photo.jpg",
                 RoomStyle.Garden,
                 () => [.. RoomSuggestion.Suggest(RoomStyle.Garden, 6), Label("Dunav", 0.27, top: true)]),
             ],
@@ -153,7 +162,7 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Danube blue.
-            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.png")),
+            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.jpg")),
         new(
             Name: "Rooftop Belvedere",
             Slug: "rooftop-belvedere",
@@ -178,6 +187,8 @@ public static class DevelopmentSeed
                     new("R1", 2, Round), new("R2", 2, Round), new("R3", 4, Square), new("R4", 4, Round),
                     new("R5", 4, Square), new("R6", 6, Rectangle), new("R7", 2, Round), new("R8", 6, Round),
                 ],
+                Description: "Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.",
+                PhotoFile: "rooftop-photo.jpg",
                 RoomStyle.Rooftop,
                 () => [.. RoomSuggestion.Suggest(RoomStyle.Rooftop, 8), Label("Blick auf den Stephansdom", 0.5, top: false)]),
                 // Windows at the top, a sofa at each side wall, a small bar in the bottom right corner and the entrance beside it.
@@ -185,6 +196,8 @@ public static class DevelopmentSeed
                 [
                     new("L1", 2, Round), new("L2", 4, Square), new("L3", 4, Round), new("L4", 6, Rectangle), new("L5", 8, Rectangle),
                 ],
+                Description: "Lounge hinter Panoramafenstern mit bequemen Sesseln, auch bei Regen mit Blick über die Dächer.",
+                PhotoFile: "lounge-photo.jpg",
                 RoomStyle.Indoor,
                 () =>
                 [
@@ -205,7 +218,7 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Dark and elegant with a champagne gold accent.
-            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.png")),
+            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg")),
     ];
 
     /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
@@ -221,7 +234,8 @@ public static class DevelopmentSeed
     /// Creates the demo restaurants that do not exist yet and completes their setup. Each part is only added
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
-    /// opening hours (none), areas with floor plans, rooms and tables (no areas), reservation settings with duration rules (never saved).
+    /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
+    /// rules (never saved). An existing demo area gets its photo and description when it has neither.
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
@@ -300,6 +314,8 @@ public static class DevelopmentSeed
                             Name = demoArea.Name,
                             SortOrder = i,
                             FloorPlanFileName = fileName,
+                            Description = demoArea.Description,
+                            PhotoFileName = CopySeedAsset(demoArea.PhotoFile),
                             OnlineCapacityPercent = demoArea.OnlineCapacityPercent,
                             TableScale = demoArea.TableScale,
                             RoomStyle = demoArea.RoomStyle,
@@ -327,6 +343,18 @@ public static class DevelopmentSeed
                             TableLayout.Arrange(tables, area.TableScale, elements);
                         }
                         db.Tables.AddRange(tables);
+                    }
+                }
+                else
+                {
+                    // Areas from before the photos, and areas whose photo and description were both removed.
+                    foreach (var area in await db.Areas.Where(a => a.Description == null && a.PhotoFileName == null).ToListAsync())
+                    {
+                        if (demo.Areas.SingleOrDefault(d => d.Name == area.Name) is { } demoArea)
+                        {
+                            area.Description = demoArea.Description;
+                            area.PhotoFileName = CopySeedAsset(demoArea.PhotoFile);
+                        }
                     }
                 }
 

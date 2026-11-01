@@ -56,6 +56,24 @@ public sealed class BackupTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_ContainsThePhotosOfTheAreas()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 3];
+        using var admin = factory.CreateHttpsClient();
+        (await admin.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, ct)).EnsureSuccessStatusCode();
+        var created = await admin.PostAsJsonAsync("/api/admin/areas", new { name = "Terrasse" }, ct);
+        var area = (await created.Content.ReadFromJsonAsync<AreaEndpoints.AreaResponse>(ct))!;
+        var upload = await admin.PutAsync($"/api/admin/areas/{area.Id}/photo", new ByteArrayContent(jpeg), ct);
+        var photoUrl = (await upload.Content.ReadFromJsonAsync<AreaEndpoints.AreaResponse>(ct))!.PhotoUrl!;
+
+        var file = Backup.Create(new DateTime(2026, 11, 1, 3, 0, 0));
+
+        ZipFile.ExtractToDirectory(file, extractPath);
+        Assert.Equal(jpeg, File.ReadAllBytes(Path.Combine(extractPath, "uploads", photoUrl.Split("?v=")[1] + ".jpg")));
+    }
+
+    [Fact]
     public void DeleteExpired_DeletesOnlyBackupsOlderThanTheRetentionPeriod()
     {
         Directory.CreateDirectory(factory.BackupPath);

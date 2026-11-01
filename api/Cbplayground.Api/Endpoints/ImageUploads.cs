@@ -1,7 +1,7 @@
 namespace Cbplayground.Api.Endpoints;
 
 /// <summary>
-/// The uploaded images (floor plans, logos and cover images) in the folder "Uploads:Path", which the daily backup takes along.
+/// The uploaded images (floor plans, logos, cover images and area photos) in the folder "Uploads:Path", which the daily backup takes along.
 /// The body of an upload is the image itself, PNG, JPEG or WebP; the type is detected from the content and the file name is
 /// chosen by the server, so a new upload always gets a new file name.
 /// </summary>
@@ -63,6 +63,13 @@ public static class ImageUploads
 
     /// <summary>The version of an image in its URL (<c>?v=</c>): its file name without extension, which changes with every upload.</summary>
     public static string Version(string fileName) => Path.GetFileNameWithoutExtension(fileName);
+
+    /// <summary>
+    /// The URLs of logo, cover image and area photo carry the version of the image (<c>?v=</c>), which changes with every upload, so with the
+    /// current version the image may be cached for a year. Without it or with an outdated one it has to be revalidated.
+    /// </summary>
+    public static string CacheControl(string? fileName, string? version) =>
+        fileName is not null && version == Version(fileName) ? "public, max-age=31536000, immutable" : "no-cache";
 
     /// <summary>The uploaded image with the given Cache-Control header; 404 without file name or file.</summary>
     public static IResult Read(HttpContext httpContext, IConfiguration configuration, IWebHostEnvironment environment, string? fileName, string cacheControl)
