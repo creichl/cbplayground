@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { homePath, useCurrentUser } from '@/api/auth'
-import { Button } from '@/ui/button'
-import { LanguageMenu } from '@/ui/language-menu'
+import { homePath, useCurrentUser } from '../api/auth.ts'
+import { Button } from './button.tsx'
+import { LanguageMenu } from './language-menu.tsx'
 
 /**
  * The platform's header: the product name on the left; on the right the discreet entry for staff (the sign-in, or the own

@@ -1,7 +1,7 @@
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
 import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '../lib/utils.ts'
 
 /** Chips and states: fully rounded, the colour as a calm surface with text in the same colour. */
 const badgeVariants = cva(

@@ -3,8 +3,8 @@ import type { ComponentProps } from 'react'
 import { DayPicker } from 'react-day-picker'
 import { de, enGB, sr, srLatn } from 'react-day-picker/locale'
 import { useTranslation } from 'react-i18next'
-import type { Language } from '@/i18n/index'
-import { cn } from '@/lib/utils'
+import type { Language } from '../i18n/index.ts'
+import { cn } from '../lib/utils.ts'
 
 /** The calendar's language (month and day names, labels of the buttons) for each UI language. */
 const locales = { en: enGB, de, 'sr-Latn': srLatn, 'sr-Cyrl': sr } satisfies Record<Language, unknown>

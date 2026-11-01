@@ -1,7 +1,7 @@
 import * as TooltipPrimitive from '@radix-ui/react-tooltip'
 import { type ComponentProps, useContext } from 'react'
-import { ThemeRootContext } from '@/brandTheme'
-import { cn } from '@/lib/utils'
+import { ThemeRootContext } from '../brandTheme.ts'
+import { cn } from '../lib/utils.ts'
 
 /** A short hint on hover and keyboard focus; its own provider, so it works without one around the app. */
 function Tooltip({ delayDuration = 300, ...props }: ComponentProps<typeof TooltipPrimitive.Root> & { delayDuration?: number }) {

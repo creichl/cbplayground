@@ -2,10 +2,10 @@ import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { CheckIcon, GlobeIcon } from 'lucide-react'
 import { useContext } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ThemeRootContext } from '@/brandTheme'
-import { changeLanguage, type Language, languages } from '@/i18n/index'
-import { cn } from '@/lib/utils'
-import { Button } from '@/ui/button'
+import { ThemeRootContext } from '../brandTheme.ts'
+import { changeLanguage, type Language, languages } from '../i18n/index.ts'
+import { cn } from '../lib/utils.ts'
+import { Button } from './button.tsx'
 
 type LanguageMenuProps = {
   /** Instead of switching and remembering the language, e.g. the embed keeps it in its address only. */

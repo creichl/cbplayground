@@ -1,7 +1,7 @@
 import { type ComponentProps, useContext } from 'react'
 import { Drawer as DrawerPrimitive } from 'vaul'
-import { ThemeRootContext } from '@/brandTheme'
-import { cn } from '@/lib/utils'
+import { ThemeRootContext } from '../brandTheme.ts'
+import { cn } from '../lib/utils.ts'
 
 // A sheet (vaul): from the bottom on phones, where it can be dragged down to close, or from the side (`direction="right"`).
 // vaul animates it itself (with its own stylesheet); its duration follows the motion token for sheets, also when the user

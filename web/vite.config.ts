@@ -1,6 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
-import { fileURLToPath } from 'node:url'
 import { defineConfig, type Connect } from 'vite'
 
 // Who may show the pages in a frame: the booking embed (/embed/*) any website, every other page only the platform itself.
@@ -21,10 +20,6 @@ export default defineConfig({
       configurePreviewServer: (server) => void server.middlewares.use(frameAncestors),
     },
   ],
-  resolve: {
-    // "@/" is src/, as in the components of the design system (src/ui, shadcn/ui, see components.json).
-    alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
-  },
   server: {
     // Forward API calls to the local .NET API (see api/Cbplayground.Api/Properties/launchSettings.json),
     // so the frontend only uses relative /api URLs and needs no CORS.

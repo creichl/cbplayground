@@ -586,13 +586,13 @@ A restaurant's guest pages, `/r/<slug>`, its confirmation and `/r/<slug>/reserva
 
 `/superadmin` lists all restaurants in a table with a status badge (active or deactivated), the number of admins, tables and upcoming reservations, and a search by name or slug. "Create restaurant" opens a form with name, slug (suggested from the name until it is changed by hand) and optionally country and federal state; afterwards the restaurant's page opens. `/superadmin/tenants/:id` shows the restaurant's master data and its admins: "Edit" changes name and slug, "Deactivate"/"Activate" asks first and says what happens, "View booking page" opens `/r/<slug>` in a new tab, "Add admin" creates a Tenant Admin with a start password, and each admin's menu sets a new password. The layout has the language switcher and the user menu with sign-out. A newly created admin can sign in right away and sees the setup checklist under `/admin`.
 
-Before committing, run `npm run lint` (oxlint plus the translation key check) and `npm run build` (typecheck and production build).
+Before committing, run `npm run lint` (oxlint, the translation key check and the check for `@/` imports) and `npm run build` (typecheck and production build).
 
 ### Design system
 
 The guest pages move to their own design system, built with **Tailwind CSS 4** (`@tailwindcss/vite`) and **shadcn/ui** (Radix primitives, the components copied into the repository). The start page `/`, the login `/login`, "not found", the booking page `/r/<slug>` with the restaurant's header and footer (`GuestLayout`), the guest's page "Your reservation" and the embed `/embed/<slug>` use it; admin, front desk and Superadmin are still Mantine. "Your reservation" lays the design system's background over the layout's, so its cards stand out in the light and the dark mode. The styleguide `/dev/ui` is the reference.
 
-**Stack:** `tailwindcss` 4, `@radix-ui/*`, `class-variance-authority`, `clsx` and `tailwind-merge` (`cn()` in `web/src/lib/utils.ts`), `lucide-react` (icons), `react-day-picker` (calendar), `vaul` (sheets) and `sonner` (toasts). The components live in `web/src/ui/` (file names and `@/` imports as in shadcn/ui; `@/` is `web/src/`, set in `tsconfig.json`, `tsconfig.app.json` and `vite.config.ts`), the configuration of the shadcn CLI in `web/components.json`.
+**Stack:** `tailwindcss` 4, `@radix-ui/*`, `class-variance-authority`, `clsx` and `tailwind-merge` (`cn()` in `web/src/lib/utils.ts`), `lucide-react` (icons), `react-day-picker` (calendar), `vaul` (sheets) and `sonner` (toasts). The components live in `web/src/ui/` (file names as in shadcn/ui), the configuration of the shadcn CLI in `web/components.json`. Like the rest of the code they import relatively and with the file extension (`import { cn } from '../lib/utils.ts'`), never with an alias such as `@/`: there is none in `vite.config.ts` and the tsconfigs, so the frontend runs with every Vite configuration, also one without `resolve.alias`. `npm run lint` fails on every `@/` import under `web/src` and names its file and line.
 
 **Layers:** `web/src/styles/app.css` is the only stylesheet; `main.tsx` imports it. It puts every style into a cascade layer, in this order:
 
@@ -624,9 +624,10 @@ The guest pages move to their own design system, built with **Tailwind CSS 4** (
 **Add a shadcn component:**
 
 1. In `web`, run `npx shadcn@latest add <name>` (e.g. `accordion`). The CLI reads `components.json` and writes the file to `web/src/ui/`; it may ask to install its Radix package. Packages beyond those listed under Stack need agreement first.
-2. Fit it to the tokens: colours only from the tokens above (no `zinc-*`/`neutral-*`), `rounded-lg` for fields and buttons and `rounded-xl` for surfaces, `focus-ring` on everything that can be operated, `touch:` heights of at least 44 px, animations from the motion tokens; a part that opens in a portal gets `container={useContext(ThemeRootContext)}`. The registry currently writes `import { cn } from "cn"` and imports from the umbrella package `radix-ui`: change them to `import { cn } from '@/lib/utils'` and the single `@radix-ui/react-<name>` package (and remove `radix-ui` from `package.json` again); classes of `tw-animate-css` (`animate-in`, `fade-in-0` …) become the motion tokens.
-3. Visible texts come from the translations (`t()`), also labels for screen readers.
-4. Show it in the styleguide (`web/src/pages/StyleguidePage.tsx`) in light and dark, and run `npm run lint` and `npm run build`.
+2. Make the imports relative: the CLI always writes its imports with the aliases of `components.json` (e.g. `import { Separator } from "src/ui/separator"`), which do not resolve. Change them to relative imports with the file extension, e.g. `import { Separator } from './separator.tsx'`.
+3. Fit it to the tokens: colours only from the tokens above (no `zinc-*`/`neutral-*`), `rounded-lg` for fields and buttons and `rounded-xl` for surfaces, `focus-ring` on everything that can be operated, `touch:` heights of at least 44 px, animations from the motion tokens; a part that opens in a portal gets `container={useContext(ThemeRootContext)}`. The registry currently writes `import { cn } from "cn"` and imports from the umbrella package `radix-ui`: change them to `import { cn } from '../lib/utils.ts'` and the single `@radix-ui/react-<name>` package (and remove `radix-ui` from `package.json` again); classes of `tw-animate-css` (`animate-in`, `fade-in-0` …) become the motion tokens.
+4. Visible texts come from the translations (`t()`), also labels for screen readers.
+5. Show it in the styleguide (`web/src/pages/StyleguidePage.tsx`) in light and dark, and run `npm run lint` and `npm run build`.
 
 ### Translations
 
