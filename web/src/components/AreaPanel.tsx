@@ -1,10 +1,20 @@
-import { Button, Divider, Group, Input, Modal, NumberInput, Slider, Stack, Switch, Text, TextInput, Title } from '@mantine/core'
+import { Button, Divider, Group, Input, Modal, NumberInput, Slider, Stack, Switch, Text, Textarea, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
 import { useTranslation } from 'react-i18next'
-import { type Area, useArrangeTables, useDeleteArea, useUpdateArea } from '../api/areas.ts'
+import {
+  type Area,
+  floorPlanTypes,
+  maxFloorPlanBytes,
+  useArrangeTables,
+  useDeleteArea,
+  useDeleteAreaPhoto,
+  useUpdateArea,
+  useUploadAreaPhoto,
+} from '../api/areas.ts'
 import { errorCode, errorMessage } from '../api/areaErrors.ts'
+import { AreaPhotoUpload } from './AreaPhotoUpload.tsx'
 
 type AreaPanelProps = {
   area: Area
@@ -23,9 +33,12 @@ type AreaPanelProps = {
 /** The table size in steps of 5 % from 50 to 200 %, as the API accepts it. */
 const tableScaleMarks = [50, 100, 150, 200].map((value) => ({ value, label: `${value} %` }))
 
+/** The longest description of an area, as the API accepts it. */
+const maxDescriptionLength = 200
+
 /**
- * Settings of the selected area: name, online booking and quota, table size, the automatic arrangement of its tables,
- * order and deletion.
+ * Settings of the selected area: name, description, online booking and quota, table size, its photo, the automatic
+ * arrangement of its tables, order and deletion.
  */
 export function AreaPanel({
   area,
@@ -42,12 +55,15 @@ export function AreaPanel({
   const updateArea = useUpdateArea()
   const deleteArea = useDeleteArea()
   const arrangeTables = useArrangeTables()
+  const uploadPhoto = useUploadAreaPhoto()
+  const deletePhoto = useDeleteAreaPhoto()
   const [deleteOpened, { open: openDelete, close: closeDelete }] = useDisclosure()
   const [arrangeOpened, { open: openArrange, close: closeArrange }] = useDisclosure()
 
   const form = useForm({
     initialValues: {
       name: area.name,
+      description: area.description ?? '',
       onlineBookingEnabled: area.onlineBookingEnabled,
       onlineCapacityPercent: area.onlineCapacityPercent as number | string,
       tableScale: area.tableScale,
@@ -58,10 +74,29 @@ export function AreaPanel({
         const name = value.trim()
         return name.length === 0 || name.length > 100 ? t('areas.errors.areaNameInvalid') : null
       },
+      description: (value) => (value.trim().length > maxDescriptionLength ? t('areas.errors.descriptionInvalid') : null),
       onlineCapacityPercent: (value) =>
         typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100 ? null : t('areas.errors.percentInvalid'),
     },
   })
+
+  function uploadAreaPhoto(file: File) {
+    if (!floorPlanTypes.includes(file.type)) {
+      notifications.show({ color: 'red', title: t('errors.title'), message: t('areas.errors.floorPlanTypeInvalid') })
+      return
+    }
+    if (file.size > maxFloorPlanBytes) {
+      notifications.show({ color: 'red', title: t('errors.title'), message: t('areas.errors.floorPlanTooLarge') })
+      return
+    }
+    uploadPhoto.mutate(
+      { areaId: area.id, file },
+      {
+        onSuccess: () => notifications.show({ color: 'brand', message: t('areas.photo.saved') }),
+        onError: (error) => notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) }),
+      },
+    )
+  }
 
   return (
     <Stack gap="md">
@@ -74,6 +109,7 @@ export function AreaPanel({
               onlineBookingEnabled: values.onlineBookingEnabled,
               onlineCapacityPercent: Number(values.onlineCapacityPercent),
               tableScale: values.tableScale,
+              description: values.description.trim(),
             },
             {
               onSuccess: () => notifications.show({ color: 'brand', message: t('areas.area.saved') }),
@@ -83,6 +119,8 @@ export function AreaPanel({
                   form.setFieldError('name', errorMessage(error, t))
                 } else if (code === 'online_capacity_percent_invalid') {
                   form.setFieldError('onlineCapacityPercent', errorMessage(error, t))
+                } else if (code === 'invalid_area_description') {
+                  form.setFieldError('description', errorMessage(error, t))
                 } else if (code === 'table_scale_invalid') {
                   form.setFieldError('tableScale', errorMessage(error, t))
                 } else {
@@ -96,6 +134,21 @@ export function AreaPanel({
         <Stack gap="md">
           <Title order={4}>{t('areas.area.title')}</Title>
           <TextInput label={t('areas.area.name')} maxLength={100} {...form.getInputProps('name')} />
+          <Stack gap={4}>
+            <Textarea
+              label={t('areas.area.description')}
+              description={t('areas.area.descriptionHint')}
+              placeholder={t('areas.area.descriptionPlaceholder')}
+              autosize
+              minRows={2}
+              maxRows={5}
+              maxLength={maxDescriptionLength}
+              {...form.getInputProps('description')}
+            />
+            <Text size="xs" c="dimmed" ta="right">
+              {t('areas.area.descriptionCounter', { length: form.values.description.length, max: maxDescriptionLength })}
+            </Text>
+          </Stack>
           <Switch
             label={t('areas.area.onlineBookingEnabled')}
             description={t('areas.area.onlineBookingEnabledHint')}
@@ -133,6 +186,29 @@ export function AreaPanel({
           </Group>
         </Stack>
       </form>
+
+      <Divider />
+
+      <Stack gap="xs">
+        <Text size="sm" fw={500}>
+          {t('areas.photo.title')}
+        </Text>
+        <Text size="xs" c="dimmed">
+          {t('areas.photo.text')}
+        </Text>
+        <AreaPhotoUpload
+          photoUrl={area.photoUrl}
+          onFile={uploadAreaPhoto}
+          onRemove={() =>
+            deletePhoto.mutate(area.id, {
+              onSuccess: () => notifications.show({ color: 'brand', message: t('areas.photo.removed') }),
+              onError: (error) => notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) }),
+            })
+          }
+          uploading={uploadPhoto.isPending}
+          removing={deletePhoto.isPending}
+        />
+      </Stack>
 
       <Divider />
 

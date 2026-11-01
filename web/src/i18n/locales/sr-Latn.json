@@ -802,7 +802,11 @@
       "delete": "Obriši prostor",
       "deleteTitle": "Obrisati „{{name}}“?",
       "deleteText": "Stolovi ovog prostora ({{tables}}) i njegov tlocrt biće takođe obrisani. Ovo ne može da se poništi.",
-      "deleteConfirm": "Obriši"
+      "deleteConfirm": "Obriši",
+      "description": "Opis",
+      "descriptionHint": "Kratak tekst koji gosti vide kada biraju prostor.",
+      "descriptionPlaceholder": "npr. Krovna terasa sa pogledom na grad",
+      "descriptionCounter": "{{length}} / {{max}}"
     },
     "table": {
       "title": "Sto {{number}}",
@@ -839,13 +843,81 @@
       "shapeInvalid": "Izaberite okrugao, kvadratan ili pravougaon oblik.",
       "rotationInvalid": "Sto može da se okrene samo za 0° ili 90°.",
       "tableScaleInvalid": "Izaberite veličinu stolova od 50 do 200 %.",
-      "positionsNotSaved": "Položaji stolova nisu mogli da se sačuvaju"
+      "positionsNotSaved": "Položaji stolova nisu mogli da se sačuvaju",
+      "descriptionInvalid": "Unesite opis od najviše 200 znakova.",
+      "roomStyleInvalid": "Izaberite unutrašnji prostor, terasu, baštu ili krovnu terasu.",
+      "roomElementInvalid": "Ova vrsta elementa prostorije nije poznata. Učitajte stranicu ponovo.",
+      "roomElementPositionInvalid": "Element prostorije mora da leži u prostoriji.",
+      "roomElementLabelInvalid": "Unesite natpis od najviše 40 znakova.",
+      "tooManyRoomElements": "Prostorija može imati najviše 60 elemenata.",
+      "roomNotSaved": "Prostorija nije mogla da se sačuva"
+    },
+    "roomDragHint": "Prevucite stolove i elemente prostorije da biste ih pomerili; strelice pomeraju izabrani element. Kliknite na njega da biste ga izmenili.",
+    "photo": {
+      "title": "Fotografija",
+      "text": "Fotografija prostora za goste. Čuva se čim se otpremi ili ukloni.",
+      "alt": "Fotografija prostora",
+      "emptyTitle": "Još nema fotografije",
+      "dropHint": "Prevucite sliku ovde ili izaberite jednu.",
+      "choose": "Izaberi fotografiju",
+      "replace": "Zameni fotografiju",
+      "remove": "Ukloni fotografiju",
+      "hint": "PNG, JPEG ili WebP, najviše 10 MB. Najbolje u položenom formatu.",
+      "saved": "Fotografija je sačuvana.",
+      "removed": "Fotografija je uklonjena."
+    },
+    "room": {
+      "title": "Prostorija",
+      "saving": "Čuva se…",
+      "saved": "Sačuvano",
+      "style": "Vrsta prostorije",
+      "styleHint": "Određuje pod i ogradu nacrtane prostorije.",
+      "styles": {
+        "Indoor": "Unutrašnji prostor: parket i zidovi",
+        "Terrace": "Terasa: kamene ploče i ograda",
+        "Garden": "Bašta: travnjak i živica",
+        "Rooftop": "Krovna terasa: drvena podloga i staklena ograda"
+      },
+      "add": "Dodaj element",
+      "addHint": "Novi element se pojavljuje na sredini prostorije. Prevucite ga na njegovo mesto.",
+      "full": "Prostorija može imati najviše {{max}} elemenata.",
+      "suggestTitle": "Predlog prostorije",
+      "suggestHint": "Uređuje prostoriju prema njenoj vrsti i broju stolova i raspoređuje stolove oko elemenata.",
+      "suggest": "Predloži prostoriju",
+      "suggestConfirmTitle": "Predložiti prostoriju za „{{name}}“?",
+      "suggestConfirmText": "Svi elementi ove prostorije biće zamenjeni predlogom, a svi stolovi ponovo raspoređeni oko njih. Njihovi dosadašnji položaji biće zamenjeni.",
+      "suggestConfirm": "Predloži",
+      "suggested": "Prostorija je uređena, a stolovi raspoređeni.",
+      "kinds": {
+        "Entrance": "Vrata",
+        "Window": "Prozor",
+        "Bar": "Šank",
+        "Plant": "Biljka",
+        "Pillar": "Stub",
+        "Sofa": "Sofa",
+        "Stage": "Bina",
+        "Service": "Servis",
+        "Stairs": "Stepenice",
+        "Label": "Natpis"
+      },
+      "elementMarker": "{{kind}}: {{label}}",
+      "kind": "Vrsta",
+      "length": "Dužina",
+      "lengthHint": "Duž zida, kao udeo širine prostorije.",
+      "depth": "Širina",
+      "depthHint": "Ka unutrašnjosti prostorije, kao udeo širine prostorije.",
+      "rotate": "Okreni za 90°",
+      "label": "Natpis",
+      "labelHint": "Opciono, prikazuje se u planu, npr. „Kuhinja“.",
+      "delete": "Obriši element",
+      "defaultLabel": "Tekst"
     }
   },
   "floorPlan": {
     "zoomIn": "Uvećaj",
     "zoomOut": "Umanji",
-    "zoomReset": "Vrati prikaz"
+    "zoomReset": "Vrati prikaz",
+    "service": "Servis"
   },
   "reservationSettings": {
     "title": "Podešavanja rezervacija",

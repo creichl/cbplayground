@@ -54,7 +54,7 @@ function smallestFreeTable(areas: PublicArea[]) {
 
 /**
  * The guest's choice of table. At the top the areas as cards with photo, description and the number of free tables (an area
- * without one is disabled), scrolling sideways on phones. Below, the legend and the drawn plan of the chosen area with the
+ * without one is disabled), scrolling sideways on phones. Below, the legend and the plan of the chosen area (its floor plan image or its drawn room) with the
  * zoom buttons in its corner: free tables that fit the party outlined in the accent colour, the chosen one filled with a
  * check, the others muted and hatched. Under the plan the chosen table with "Continue" (on phones in the bar at the bottom),
  * "No preference" and the list of the free tables, which is the way to choose with the keyboard and screen readers.
@@ -143,6 +143,8 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
           <FloorPlan
             imageUrl={area.floorPlanUrl}
             imageAlt=""
+            roomStyle={area.roomStyle}
+            roomElements={area.roomElements}
             tables={area.tables}
             tableScale={area.tableScale}
             ariaHidden

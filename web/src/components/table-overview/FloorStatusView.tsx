@@ -27,7 +27,7 @@ type FloorStatusViewProps = {
 const step = 15
 
 /**
- * The plan of every area (floor plan image or schematic plan) with its tables drawn in the colour of their status at the
+ * The plan of every area (floor plan image or drawn room) with its tables drawn in the colour of their status at the
  * chosen time, and the end of the current or the start of the next reservation at each table.
  */
 export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes, onWalkIn }: FloorStatusViewProps) {
@@ -86,7 +86,14 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
             {area.tables.length === 0 ? (
               <Text c="dimmed">{t('tableOverview.noTables')}</Text>
             ) : (
-              <FloorPlan imageUrl={area.floorPlanUrl} imageAlt={t('areas.floorPlanAlt')} tables={area.tables} tableScale={area.tableScale}>
+              <FloorPlan
+                imageUrl={area.floorPlanUrl}
+                imageAlt={t('areas.floorPlanAlt')}
+                roomStyle={area.roomStyle}
+                roomElements={area.roomElements}
+                tables={area.tables}
+                tableScale={area.tableScale}
+              >
                 {area.tables.map((table) => (
                   <TableStatus
                     key={table.id}

@@ -1,15 +1,19 @@
 import { ActionIcon, Box, Group, Stack, useMantineColorScheme } from '@mantine/core'
 import { type PointerEvent, type ReactNode, type Ref, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { TableRotation, TableShape } from '../../api/areas.ts'
+import type { RoomElement, RoomStyle, TableRotation, TableShape } from '../../api/areas.ts'
 import { MinusIcon, PlusIcon, ZoomResetIcon } from '../icons.tsx'
-import { aspectRatio, chairSpace, tableSize } from './layout.ts'
+import { aspectRatio, chairSpace, roomBoundary, tableSize } from './layout.ts'
+import { Room } from './Room.tsx'
 
 type PlannedTable = { posX: number; posY: number; seats: number; shape: TableShape; rotation: TableRotation }
 
 type FloorPlanProps = {
-  /** The uploaded floor plan image; without one the plan is a schematic room in the ratio 3:2. */
+  /** The uploaded floor plan image; without one the plan is the drawn room in the ratio 3:2. */
   imageUrl: string | null
+  /** Floor and boundary of the drawn room, and its elements; ignored on an image, which shows the room itself. */
+  roomStyle: RoomStyle
+  roomElements: Pick<RoomElement, 'id' | 'kind' | 'posX' | 'posY' | 'width' | 'height' | 'rotation' | 'label'>[]
   /** Text alternative of the image; empty when the plan only repeats an accessible list. */
   imageAlt: string
   /** The tables drawn on the plan (as children), so tables that stick out over its edge are not cut off. */
@@ -17,13 +21,13 @@ type FloorPlanProps = {
   tableScale: number
   /** Hides the plan from assistive technology when an accessible list next to it offers the same. */
   ariaHidden?: boolean
-  /** Called on a click on the plan itself, not on a table. */
+  /** Called on a click on the plan itself, not on a table or on a room element of the editor. */
   onPlanClick?: () => void
   /** The plan's element, to which the positions of the tables are relative. */
   planRef?: Ref<HTMLDivElement>
   /** Where the zoom buttons are: below the plan (default) or inside it, in its lower right corner. */
   zoomControls?: 'below' | 'inside'
-  /** The tables, as TableShape. */
+  /** The tables, as TableShape, and in the editor the room elements' handles. */
   children: ReactNode
 }
 
@@ -46,13 +50,16 @@ const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y)
 const middle = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 })
 
 /**
- * The area's plan with its tables: the floor plan image, or without one a calm schematic room in the ratio 3:2 (as in the
- * API's arrangement). It fits the width and keeps its aspect ratio. It zooms and pans with pinch and drag (pointer events)
- * and with the buttons + / − / reset below it or in its corner. Tables that stick out over the plan's edge get room around it.
+ * The area's plan with its tables: the floor plan image, or without one the drawn room in the ratio 3:2 (as in the API's
+ * arrangement, see Room) below the tables. It fits the width and keeps its aspect ratio. It zooms and pans with pinch and
+ * drag (pointer events) and with the buttons + / − / reset below it or in its corner. Tables that stick out over the plan's
+ * edge, and the room's boundary, get room around it.
  */
 export function FloorPlan({
   imageUrl,
   imageAlt,
+  roomStyle,
+  roomElements,
   tables,
   tableScale,
   ariaHidden,
@@ -62,7 +69,7 @@ export function FloorPlan({
   children,
 }: FloorPlanProps) {
   const { t } = useTranslation()
-  // The guest pages of a restaurant may be dark (BrandTheme); the schematic room then is dark too.
+  // The guest pages of a restaurant may be dark (BrandTheme); the drawn room then is dark too.
   const dark = useMantineColorScheme().colorScheme === 'dark'
   const viewportRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState(initialView)
@@ -74,7 +81,7 @@ export function FloorPlan({
   const suppressClick = useRef(false)
 
   const planHeight = imageUrl === null ? 1 / aspectRatio : imageHeight
-  const margin = overhang(tables, tableScale, planHeight)
+  const margin = overhang(tables, tableScale, planHeight, imageUrl === null ? roomBoundary + 0.003 : 0.005)
   // Padding in percent refers to the width around the plan: margin × plan width = padding × (plan width + 2 × padding).
   const padding = margin / (1 + 2 * margin)
 
@@ -229,7 +236,10 @@ export function FloorPlan({
           }
         }}
         onClick={(event) => {
-          if (onPlanClick !== undefined && !(event.target instanceof Element && event.target.closest('[data-floor-table]'))) {
+          if (
+            onPlanClick !== undefined &&
+            !(event.target instanceof Element && event.target.closest('[data-floor-table], [data-room-element]'))
+          ) {
             onPlanClick()
           }
         }}
@@ -244,19 +254,9 @@ export function FloorPlan({
         >
           <div
             ref={planRef}
-            style={
-              imageUrl === null
-                ? {
-                    position: 'relative',
-                    aspectRatio: `${aspectRatio}`,
-                    borderRadius: 'var(--mantine-radius-sm)',
-                    backgroundColor: dark ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-gray-0)',
-                    // A shadow instead of a border, so the positions refer to the whole room.
-                    boxShadow: `inset 0 0 0 2px var(--mantine-color-${dark ? 'dark-4' : 'gray-3'})`,
-                  }
-                : { position: 'relative' }
-            }
+            style={imageUrl === null ? { position: 'relative', aspectRatio: `${aspectRatio}` } : { position: 'relative' }}
           >
+            {imageUrl === null && <Room roomStyle={roomStyle} elements={roomElements} dark={dark} />}
             {imageUrl !== null && (
               <img
                 src={imageUrl}
@@ -294,12 +294,12 @@ export function FloorPlan({
 }
 
 /**
- * How far the tables with their chairs stick out over the plan's edge, in plan widths, at least a little room for the
- * outline. `planHeight` is the plan's height in plan widths; while it is unknown, only the sides count.
+ * How far the tables with their chairs stick out over the plan's edge, in plan widths, at least `minimum` (room for the
+ * outline or the room's boundary). `planHeight` is the plan's height in plan widths; while it is unknown, only the sides count.
  */
-function overhang(tables: PlannedTable[], tableScale: number, planHeight: number | null) {
+function overhang(tables: PlannedTable[], tableScale: number, planHeight: number | null, minimum: number) {
   const chairs = (chairSpace * tableScale) / 100
-  let margin = 0.005
+  let margin = minimum
   for (const table of tables) {
     const { width, height } = tableSize(table.shape, table.seats, table.rotation, tableScale)
     const halfWidth = width / 2 + chairs
