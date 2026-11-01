@@ -1,10 +1,22 @@
-import { ActionIcon, Box, Group, Stack, useMantineColorScheme } from '@mantine/core'
-import { type PointerEvent, type ReactNode, type Ref, useRef, useState } from 'react'
+import { type ComponentType, type PointerEvent, type ReactNode, type Ref, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from '../../api/areas.ts'
 import { MinusIcon, PlusIcon, ZoomResetIcon } from '../icons.tsx'
 import { aspectRatio, chairSpace, roomBoundary, tableSize } from './layout.ts'
 import { Room } from './Room.tsx'
+
+/**
+ * What a zoom button of the plan gets. The caller draws it with the building blocks of its page: the admin area and the
+ * table overview with Mantine, the guest pages with the design system (src/ui), so the plan itself depends on neither.
+ */
+export type ZoomButtonProps = {
+  label: string
+  icon: ReactNode
+  disabled: boolean
+  onClick: () => void
+  /** Inside the plan the buttons are larger (44 px), below it compact. */
+  placement: 'below' | 'inside'
+}
 
 type PlannedTable = { posX: number; posY: number; seats: number; shape: TableShape; rotation: TableRotation }
 
@@ -27,6 +39,10 @@ type FloorPlanProps = {
   planRef?: Ref<HTMLDivElement>
   /** Where the zoom buttons are: below the plan (default) or inside it, in its lower right corner. */
   zoomControls?: 'below' | 'inside'
+  /** The zoom buttons + / − / reset, drawn by the caller (see ZoomButtonProps). */
+  zoomButton: ComponentType<ZoomButtonProps>
+  /** A dark page (the restaurant's dark mode): the drawn room is dark too. */
+  dark?: boolean
   /** The tables, as TableShape, and in the editor the room elements' handles. */
   children: ReactNode
 }
@@ -52,7 +68,7 @@ const middle = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2
 /**
  * The area's plan with its tables: the floor plan image, or without one the drawn room in the ratio 3:2 (as in the API's
  * arrangement, see Room) below the tables. It fits the width and keeps its aspect ratio. It zooms and pans with pinch and
- * drag (pointer events) and with the buttons + / − / reset below it or in its corner. Tables that stick out over the plan's
+ * drag (pointer events) and with the buttons + / − / reset below it or in its corner, which the caller draws (`zoomButton`). Tables that stick out over the plan's
  * edge, and the room's boundary, get room around it.
  */
 export function FloorPlan({
@@ -66,11 +82,11 @@ export function FloorPlan({
   onPlanClick,
   planRef,
   zoomControls = 'below',
+  zoomButton: ZoomButton,
+  dark = false,
   children,
 }: FloorPlanProps) {
   const { t } = useTranslation()
-  // The guest pages of a restaurant may be dark (BrandTheme); the drawn room then is dark too.
-  const dark = useMantineColorScheme().colorScheme === 'dark'
   const viewportRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState(initialView)
   // Height : width of the image, known once it is loaded.
@@ -178,48 +194,38 @@ export function FloorPlan({
 
   const controls = (
     <>
-      <ActionIcon
-        variant="default"
-        size={zoomControls === 'inside' ? 44 : 'lg'}
-        aria-label={t('floorPlan.zoomOut')}
+      <ZoomButton
+        placement={zoomControls}
+        label={t('floorPlan.zoomOut')}
+        icon={<MinusIcon />}
         disabled={view.scale <= 1}
         onClick={() => zoomBy(1 / zoomStep)}
-      >
-        <MinusIcon />
-      </ActionIcon>
-      <ActionIcon
-        variant="default"
-        size={zoomControls === 'inside' ? 44 : 'lg'}
-        aria-label={t('floorPlan.zoomIn')}
+      />
+      <ZoomButton
+        placement={zoomControls}
+        label={t('floorPlan.zoomIn')}
+        icon={<PlusIcon />}
         disabled={view.scale >= maxScale}
         onClick={() => zoomBy(zoomStep)}
-      >
-        <PlusIcon />
-      </ActionIcon>
-      <ActionIcon
-        variant="default"
-        size={zoomControls === 'inside' ? 44 : 'lg'}
-        aria-label={t('floorPlan.zoomReset')}
+      />
+      <ZoomButton
+        placement={zoomControls}
+        label={t('floorPlan.zoomReset')}
+        icon={<ZoomResetIcon />}
         disabled={view.scale === 1}
         onClick={() => setView(initialView)}
-      >
-        <ZoomResetIcon />
-      </ActionIcon>
+      />
     </>
   )
 
   return (
-    <Stack gap="xs">
-      <Box
+    <div className="flex flex-col gap-2.5">
+      <div
         ref={viewportRef}
-        pos="relative"
-        style={{
-          overflow: 'hidden',
-          userSelect: 'none',
-          borderRadius: 'var(--mantine-radius-sm)',
-          // Unzoomed, a vertical swipe still scrolls the page; zoomed, every move pans the plan.
-          touchAction: view.scale === 1 ? 'pan-y' : 'none',
-        }}
+        // Unzoomed, a vertical swipe still scrolls the page; zoomed, every move pans the plan. A sheet (vaul) around the plan
+        // is not dragged by it (data-vaul-no-drag).
+        className={`relative overflow-hidden rounded-sm select-none ${view.scale === 1 ? 'touch-pan-y' : 'touch-none'}`}
+        data-vaul-no-drag=""
         onPointerDownCapture={() => {
           if (pointers.current.size === 0) {
             suppressClick.current = false
@@ -271,25 +277,17 @@ export function FloorPlan({
         </div>
         {zoomControls === 'inside' && (
           // Not part of the plan's gestures: a press on a button neither pans the plan nor counts as a click on it.
-          <Group
-            gap={4}
-            pos="absolute"
-            right={8}
-            bottom={8}
-            wrap="nowrap"
+          <div
+            className="absolute right-2 bottom-2 flex flex-nowrap items-center gap-1"
             onPointerDown={(event) => event.stopPropagation()}
             onClick={(event) => event.stopPropagation()}
           >
             {controls}
-          </Group>
+          </div>
         )}
-      </Box>
-      {zoomControls === 'below' && (
-        <Group gap={6} justify="flex-end">
-          {controls}
-        </Group>
-      )}
-    </Stack>
+      </div>
+      {zoomControls === 'below' && <div className="flex flex-wrap items-center justify-end gap-1.5">{controls}</div>}
+    </div>
   )
 }
 

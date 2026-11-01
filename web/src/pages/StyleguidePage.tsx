@@ -1,4 +1,4 @@
-import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon, UtensilsCrossedIcon } from 'lucide-react'
+import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon, TriangleAlertIcon, UtensilsCrossedIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -290,6 +290,15 @@ export function StyleguidePage() {
                     <PhoneIcon aria-hidden="true" />
                     <AlertTitle>{t('guestReservation.contact')}</AlertTitle>
                     <AlertDescription>{t('guestReservation.cannotCancel')}</AlertDescription>
+                  </Alert>
+                  <Alert role="note">
+                    <InfoIcon aria-hidden="true" />
+                    <AlertDescription>{t('embed.notFound')}</AlertDescription>
+                  </Alert>
+                  <Alert variant="warning" role="note">
+                    <TriangleAlertIcon aria-hidden="true" />
+                    <AlertTitle>{t('booking.partySize.callTitle')}</AlertTitle>
+                    <AlertDescription>{t('booking.partySize.callText', { count: 8 })}</AlertDescription>
                   </Alert>
                 </div>
               </Block>

@@ -2,6 +2,7 @@ import { type KeyboardEvent, type PointerEvent, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RoomElement, RoomStyle, Table } from '../api/areas.ts'
 import { FloorPlan } from './floor-plan/FloorPlan.tsx'
+import { FloorPlanZoomButton } from './FloorPlanZoomButton.tsx'
 import { clampToRoom } from './floor-plan/layout.ts'
 import { TableShape } from './floor-plan/TableShape.tsx'
 
@@ -172,6 +173,7 @@ export function FloorPlanCanvas({
       tableScale={tableScale}
       planRef={containerRef}
       onPlanClick={() => onSelect(null)}
+      zoomButton={FloorPlanZoomButton}
     >
       {imageUrl === null &&
         elements.map((element) => {

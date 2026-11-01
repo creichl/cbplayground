@@ -121,12 +121,13 @@
       "infoTitle": "Info & contact",
       "closedToday": "Closed today",
       "openUntil": "Open now until {{time}}",
-      "opensAt": "Open today from {{time}}",
-      "closedNow": "Closed now",
-      "today": "{{day}} (today)",
-      "more": "More",
-      "less": "Less",
-      "routeTo": "Directions to {{address}}"
+      "routeTo": "Directions to {{address}}",
+      "openToday": "Open today · {{hours}}",
+      "about": "About us",
+      "directions": "Directions & contact",
+      "todayBadge": "Today",
+      "todayDiffers": "Today differs:",
+      "areas": "Areas"
     },
     "partySize": {
       "moreThan_one": "More than {{count}} person",
@@ -134,7 +135,8 @@
       "callTitle": "Please call us",
       "callText_one": "Online you can book for up to {{count}} person. For larger groups, please call us:",
       "callText_other": "Online you can book for up to {{count}} people. For larger groups, please call us:",
-      "noPhone": "Please contact the restaurant directly."
+      "noPhone": "Please contact the restaurant directly.",
+      "more": "More"
     },
     "calendar": {
       "full": "fully booked",
@@ -171,7 +173,13 @@
       "selection_one": "Table {{number}} · up to {{count}} person · {{area}}",
       "selection_other": "Table {{number}} · up to {{count}} people · {{area}}",
       "freeCount_one": "{{count}} table free",
-      "freeCount_other": "{{count}} tables free"
+      "freeCount_other": "{{count}} tables free",
+      "freeShort_one": "{{count}} free",
+      "freeShort_other": "{{count}} free",
+      "tooltip_one": "Table {{number}} · up to {{count}} person",
+      "tooltip_other": "Table {{number}} · up to {{count}} people",
+      "tooltipUnavailable": "Table {{number}} · not available",
+      "showList": "Show tables as a list"
     },
     "details": {
       "name": "Name",
@@ -213,11 +221,12 @@
       "table": "Table",
       "addToCalendar": "Add to calendar",
       "manageLink": "Manage reservation",
-      "manageLinkLabel": "Link to your reservation",
       "manageLinkHint": "Save this link to cancel later.",
-      "copy": "Copy",
       "copied": "Copied",
-      "tableInArea": "Table {{number}} · {{area}}"
+      "tableInArea": "Table {{number}} · {{area}}",
+      "address": "Address",
+      "copyLink": "Copy link",
+      "copy": "Copy"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -229,12 +238,20 @@
       "text": "This restaurant does not take online reservations at the moment. Please call:"
     },
     "reserveTable": "Reserve a table",
-    "change": "Change",
     "bar": {
       "guests": "People",
-      "date": "Date",
-      "time": "Time",
-      "timePlaceholder": "Choose a time"
+      "date": "Date"
+    },
+    "card": {
+      "instantMode": "Instant confirmation",
+      "requestMode": "Request – the restaurant confirms",
+      "freeCancellation": "Free cancellation through the link"
+    },
+    "dialog": {
+      "stepTable": "Table",
+      "stepDetails": "Contact details",
+      "stepDone": "Confirmation",
+      "stepOf": "Step {{step}} of {{total}}"
     }
   },
   "embed": {
