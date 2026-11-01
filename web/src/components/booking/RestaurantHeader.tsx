@@ -1,91 +1,90 @@
-import { Box, Container, Skeleton, Stack, Text, Title, useMantineColorScheme } from '@mantine/core'
 import { use, useState } from 'react'
-import { Photo } from '../Photo.tsx'
-import { contentWidth, HeroContext } from './layout.ts'
+import { cn } from '../../lib/utils.ts'
+import { Photo } from '../../ui/photo.tsx'
+import { Skeleton } from '../../ui/skeleton.tsx'
+import { HeroContext } from './layout.ts'
 
 type RestaurantHeaderProps = {
   name: string
   city: string | null
   coverUrl: string | null
-  /** One or two short facts after the city, e.g. "Open today until 24:00". */
+  /** One or two short facts after the city. */
   facts?: string[]
-  /** "page": the booking page, about half the screen high; "preview": a fixed height. */
+  /** Whether the restaurant is open today, as a chip below the city (openingStatus.ts); only on the booking page. */
+  status?: { open: boolean; text: string } | null
+  /** "page": the booking page, about 60 % of the screen high (45 % on phones); "preview": a fixed height (/admin/design). */
   size?: 'page' | 'preview'
 }
 
-/** The heights of the cover image; without one, the band is lower. */
+/**
+ * The heights of the cover image and of the band without one. In the small viewport height (svh), which does not change
+ * while the browser's address bar comes and goes, so nothing below it moves.
+ */
 const heights = {
-  page: { cover: { base: '40dvh', md: '50dvh' }, coverMin: { base: 240, md: 360 }, band: { base: 200, md: 240 } },
-  preview: { cover: { base: 200, md: 200 }, coverMin: { base: 200, md: 200 }, band: { base: 136, md: 136 } },
+  page: { cover: 'h-[45svh] min-h-72 max-h-160 lg:h-[60svh]', band: 'h-56 lg:h-72' },
+  preview: { cover: 'h-50', band: 'h-34' },
 } as const
 
 /**
  * The top of the restaurant's guest pages, in the full width and behind the transparent header: the cover image (cropped to
- * fit, loaded first, fading in on the band's colour) with a gradient for legibility, on it the name, the city and a fact or
- * two. Without cover image a calm band in the accent colour, in the dark mode almost black; a cover image that cannot be
- * loaded shows the band in the cover image's height, so nothing jumps. The logo is not repeated here: it is in the header.
- * Used inside BrandTheme.
+ * fit, loaded first, fading in) with a gradient towards the bottom, on it at the bottom left the name large in the display
+ * font, the city and, on the booking page, a chip whether it is open today. Without cover image a calm band in the accent
+ * colour; a cover image that cannot be loaded shows the band in the cover image's height, so nothing jumps. The logo is not
+ * repeated here: it is in the header.
  */
-export function RestaurantHeader({ name, city, coverUrl, facts = [], size = 'page' }: RestaurantHeaderProps) {
-  const dark = useMantineColorScheme().colorScheme === 'dark'
+export function RestaurantHeader({ name, city, coverUrl, facts = [], status = null, size = 'page' }: RestaurantHeaderProps) {
   const registerHero = use(HeroContext)
-  const height = heights[size]
   const details = [city, ...facts].filter((part) => part !== null && part !== '')
   const [failedCover, setFailedCover] = useState<string | null>(null)
   const withCover = coverUrl !== null && failedCover !== coverUrl
-  const band = dark ? 'var(--mantine-color-dark-9)' : 'var(--mantine-primary-color-filled)'
 
   return (
-    <Box
+    <div
       ref={size === 'preview' ? undefined : registerHero}
-      pos="relative"
-      h={coverUrl !== null ? height.cover : height.band}
-      mih={coverUrl !== null ? height.coverMin : height.band}
-      mah={coverUrl !== null ? 560 : undefined}
-      bg={band}
-      c={withCover || dark ? 'white' : 'var(--mantine-primary-color-contrast)'}
-      style={{ display: 'flex', alignItems: 'flex-end', overflow: 'hidden' }}
+      className={cn(
+        'relative flex items-end overflow-hidden',
+        coverUrl !== null ? heights[size].cover : heights[size].band,
+        withCover ? 'bg-primary-900 text-white' : 'bg-primary text-primary-foreground',
+      )}
     >
       {withCover && (
         <>
-          <Box pos="absolute" inset={0}>
-            {/* Only a picture of the place: the name below says what it is. The first thing on the page, so not lazy. */}
-            <Photo src={coverUrl} alt="" placeholder={band} fallback={null} priority onError={() => setFailedCover(coverUrl)} />
-          </Box>
-          <Box
-            aria-hidden="true"
-            pos="absolute"
-            inset={0}
-            style={{
-              background:
-                'linear-gradient(to top, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.45) 40%, rgba(0, 0, 0, 0) 70%), linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0) 96px)',
-            }}
-          />
+          {/* Only a picture of the place: the name below says what it is. The first thing on the page, so not lazy. */}
+          <Photo src={coverUrl} alt="" fallback={null} priority onError={() => setFailedCover(coverUrl)} className="absolute inset-0 bg-primary-900" />
+          {/* Darkens the bottom for the name and the top for the header. */}
+          <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 via-45% to-transparent to-75%" />
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-black/40 to-transparent" />
         </>
       )}
-      <Container size={contentWidth} w="100%" pos="relative" pb={size === 'preview' ? 16 : { base: 24, md: 32 }}>
-        <Stack gap={8}>
-          <Title
-            order={1}
-            fz={size === 'page' ? { base: 32, md: 48 } : { base: 28, md: 32 }}
-            lh={1.15}
-            style={{ overflowWrap: 'anywhere', textWrap: 'balance' }}
-          >
-            {name}
-          </Title>
-          {details.length > 0 && (
-            <Text size="lg" fw={500}>
-              {details.join(' · ')}
-            </Text>
+      <div className={cn('relative mx-auto w-full max-w-page px-4 sm:px-6', size === 'preview' ? 'pb-4' : 'pb-6 lg:pb-10')}>
+        <h1
+          className={cn(
+            'font-display text-balance wrap-anywhere',
+            size === 'page' ? 'text-4xl sm:text-5xl xl:text-6xl' : 'text-2xl',
           )}
-        </Stack>
-      </Container>
-    </Box>
+        >
+          {name}
+        </h1>
+        {details.length > 0 && <p className={cn('mt-2 font-medium', size === 'preview' ? 'text-base' : 'text-lg')}>{details.join(' · ')}</p>}
+        {status !== null && (
+          <p
+            className={cn(
+              'mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium backdrop-blur-sm',
+              withCover ? 'bg-black/35 text-white ring-1 ring-white/25' : 'bg-primary-foreground/15 ring-1 ring-primary-foreground/25',
+            )}
+          >
+            {/* The text says it; the dot only repeats it. */}
+            <span aria-hidden="true" className={cn('size-2 rounded-full', status.open ? 'bg-green-400' : 'bg-red-400')} />
+            {status.text}
+          </p>
+        )}
+      </div>
+    </div>
   )
 }
 
 /** The cover image while the restaurant loads, in the height of the page's cover image, so nothing jumps. */
 export function RestaurantHeaderSkeleton({ size = 'page' }: Pick<RestaurantHeaderProps, 'size'>) {
   const registerHero = use(HeroContext)
-  return <Skeleton ref={registerHero} h={heights[size].cover} mih={heights[size].coverMin} mah={560} radius={0} />
+  return <Skeleton ref={registerHero} className={cn('rounded-none', heights[size].cover)} />
 }

@@ -23,7 +23,10 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the calendar, the availability and the tables, see Program.cs.</summary>
     public const string ReadRateLimitPolicy = "public-read";
 
-    /// <summary>The restaurant for the booking page: its profile (every field null when empty), how it is booked and its branding.</summary>
+    /// <summary>
+    /// The restaurant for the booking page: its profile (every field null when empty), how it is booked, its branding and its
+    /// areas open for online booking (to describe the place, also when the system assigns the tables).
+    /// </summary>
     public record RestaurantResponse(
         string Name,
         string? Street,
@@ -40,7 +43,11 @@ public static class PublicRestaurantEndpoints
         int BookingHorizonDays,
         IReadOnlyList<PeriodDto> OpeningHours,
         bool Bookable,
-        BrandingEndpoints.BrandingResponse Branding);
+        BrandingEndpoints.BrandingResponse Branding,
+        IReadOnlyList<RestaurantArea> Areas);
+
+    /// <summary>An area open for online booking, in the order of the areas; description and photo are null when not given.</summary>
+    public record RestaurantArea(string Name, string? Description, string? PhotoUrl);
 
     /// <summary><see cref="Status"/>: "closed", "full" or "available".</summary>
     public record CalendarDay(DateOnly Date, string Status);
@@ -132,6 +139,9 @@ public static class PublicRestaurantEndpoints
                 .Select(p => new PeriodDto(p.DayOfWeek, FormatTime(p.Start), FormatTime(p.End)))
                 .ToList();
             var maxOnlinePartySize = await availability.GetMaxOnlinePartySizeAsync();
+            var areas = (await db.Areas.Where(a => a.OnlineBookingEnabled).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync())
+                .Select(a => new RestaurantArea(a.Name, a.Description, AreaEndpoints.PhotoUrl(a)))
+                .ToList();
             return new RestaurantResponse(
                 tenant.Name,
                 tenant.Street,
@@ -148,7 +158,8 @@ public static class PublicRestaurantEndpoints
                 settings.BookingHorizonDays,
                 openingHours,
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0,
-                Branding: BrandingEndpoints.ToResponse(tenant));
+                Branding: BrandingEndpoints.ToResponse(tenant),
+                Areas: areas);
         });
 
         group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>

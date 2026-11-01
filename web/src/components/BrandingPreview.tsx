@@ -23,7 +23,6 @@ type BrandingPreviewProps = {
 export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: BrandingPreviewProps) {
   const { t } = useTranslation()
   const dark = brandStyle.themeMode === 'Dark'
-  const looks = tableLooks[dark ? 'dark' : 'light']
 
   return (
     <BrandTheme brandStyle={brandStyle} style={{ borderRadius: 'var(--mantine-radius-md)', overflow: 'hidden' }}>
@@ -52,8 +51,8 @@ export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: B
                 boxShadow: `inset 0 0 0 2px var(--mantine-color-${dark ? 'dark-4' : 'gray-3'})`,
               }}
             >
-              <TableShape number="1" seats={4} shape="Square" rotation={0} posX={0.25} posY={0.5} tableScale={200} {...looks.free} />
-              <TableShape number="2" seats={4} shape="Round" rotation={0} posX={0.75} posY={0.5} tableScale={200} {...looks.selected} />
+              <TableShape number="1" seats={4} shape="Square" rotation={0} posX={0.25} posY={0.5} tableScale={200} dark={dark} {...tableLooks.free} />
+              <TableShape number="2" seats={4} shape="Round" rotation={0} posX={0.75} posY={0.5} tableScale={200} dark={dark} {...tableLooks.selected} />
             </Box>
             <SimpleGrid cols={2}>
               <Text size="xs" c="dimmed" ta="center">

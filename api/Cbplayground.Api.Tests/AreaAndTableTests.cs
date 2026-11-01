@@ -916,4 +916,24 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal([("Rooftop", "Dachterrasse mit Blick über die Stadt", photoUrl), ("Lounge", null, null)],
             floor!.Select(a => (a.Name, a.Description, a.PhotoUrl)));
     }
+
+    [Fact]
+    public async Task The_booking_page_lists_the_online_areas_with_description_and_photo_also_when_the_system_assigns_tables()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory,
+            [new TestArea("Gaststube", true, 100, ("1", 2)), new TestArea("Terrasse", true, 50, ("2", 4)), new TestArea("Saal", false, 100, ("3", 8))]);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var gaststube = Assert.Single((await GetAreasAsync(admin))!, a => a.Name == "Gaststube");
+        await UpdateAreaAsync(admin, gaststube, "Stube mit Kachelofen");
+        var photoUrl = (await (await UploadPhotoAsync(admin, gaststube.Id, Jpeg, "image/jpeg")).Content.ReadFromJsonAsync<AreaResponse>(Ct))!.PhotoUrl;
+        using var guest = factory.CreateHttpsClient();
+
+        var publicRestaurant = await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{restaurant.Slug}", Ct);
+
+        // "Saal" is not open for online booking, so the guest does not see it.
+        Assert.Equal(
+            [new PublicRestaurantEndpoints.RestaurantArea("Gaststube", "Stube mit Kachelofen", photoUrl), new PublicRestaurantEndpoints.RestaurantArea("Terrasse", null, null)],
+            publicRestaurant!.Areas);
+        Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync(photoUrl, Ct)).StatusCode);
+    }
 }

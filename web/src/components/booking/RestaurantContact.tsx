@@ -1,8 +1,7 @@
-import { Anchor, Box, Text } from '@mantine/core'
+import { GlobeIcon, MailIcon, MapPinIcon, NavigationIcon, PhoneIcon } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PublicRestaurant } from '../../api/publicBooking.ts'
-import { LinkIcon, MailIcon, MapPinIcon, PhoneIcon, RouteIcon } from '../icons.tsx'
 import { addressLines, formatAddress, mapSearchUrl } from './format.ts'
 
 /** The website without "https://" and "www.", e.g. "zur-linde.at"; the address itself if it is not a valid URL. */
@@ -27,11 +26,13 @@ function breakable(text: string) {
   ))
 }
 
+const linkClassName = 'rounded-sm underline-offset-4 hover:underline focus-ring'
+
 /**
- * The restaurant's address as a block with "Route" (a map search, new tab) in its own line below, its phone, email and
- * website, one row each with the icon in the same column; nothing when all are empty. Email and website break only before
- * "@" and dots (anywhere only as the last resort) and carry the full value as title. The links are in the text colour, so
- * they keep the contrast in every branding.
+ * The restaurant's address with "Directions" (a map search, new tab) below it, its phone, email and website, one row each
+ * with its icon (lucide) in the same column; nothing when all are empty. Email and website break only before "@" and dots
+ * (anywhere only as the last resort) and carry the full value as title. The links are in the text colour, so they keep the
+ * contrast in every branding; every row is at least 44 px high to tap.
  */
 export function RestaurantContact({ restaurant }: { restaurant: PublicRestaurant }) {
   const { t } = useTranslation()
@@ -43,103 +44,69 @@ export function RestaurantContact({ restaurant }: { restaurant: PublicRestaurant
   }
 
   return (
-    <Box component="ul" m={0} p={0} style={{ listStyle: 'none' }}>
+    <ul className="flex flex-col divide-y divide-border">
       {address !== '' && (
         <Row icon={<MapPinIcon />}>
-          <Text component="address" py={10} fs="normal">
+          <address className="not-italic">
             {lines.map((line, index) => (
               <Fragment key={index}>
                 {index > 0 && <br />}
                 {line}
               </Fragment>
             ))}
-          </Text>
-          <Anchor
+          </address>
+          <a
             href={mapSearchUrl(address)}
             target="_blank"
             rel="noopener noreferrer"
-            fw={600}
-            c="var(--mantine-color-text)"
-            underline="always"
-            mih={44}
             aria-label={t('booking.restaurant.routeTo', { address })}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
+            className={`inline-flex min-h-11 items-center gap-2 self-start font-semibold text-primary-text ${linkClassName}`}
           >
-            <RouteIcon size={16} />
+            <NavigationIcon aria-hidden="true" className="size-4" />
             {t('booking.restaurant.route')}
-          </Anchor>
+          </a>
         </Row>
       )}
       {restaurant.phone !== null && (
         <Row icon={<PhoneIcon />}>
-          <ContactLink href={`tel:${restaurant.phone.replace(/[^0-9+]/g, '')}`} noWrap>
+          <a href={`tel:${restaurant.phone.replace(/[^0-9+]/g, '')}`} className={`whitespace-nowrap ${linkClassName}`}>
             {restaurant.phone}
-          </ContactLink>
+          </a>
         </Row>
       )}
       {restaurant.email !== null && (
         <Row icon={<MailIcon />}>
-          <ContactLink href={`mailto:${restaurant.email}`} title={restaurant.email}>
+          <a href={`mailto:${restaurant.email}`} title={restaurant.email} className={`wrap-anywhere ${linkClassName}`}>
             {breakable(restaurant.email)}
-          </ContactLink>
+          </a>
         </Row>
       )}
       {restaurant.website !== null && (
-        <Row icon={<LinkIcon />}>
-          <ContactLink
+        <Row icon={<GlobeIcon />}>
+          <a
             href={restaurant.website}
-            external
+            target="_blank"
+            rel="noopener noreferrer"
             title={restaurant.website}
-            label={`${t('booking.restaurant.website')}: ${websiteLabel(restaurant.website)}`}
+            aria-label={`${t('booking.restaurant.website')}: ${websiteLabel(restaurant.website)}`}
+            className={`wrap-anywhere ${linkClassName}`}
           >
             {breakable(websiteLabel(restaurant.website))}
-          </ContactLink>
+          </a>
         </Row>
       )}
-    </Box>
+    </ul>
   )
 }
 
-/** A row of the list: the icon in a column of its own, centred on the first line of the text, which is 44 px high to tap. */
+/** A row of the list: the icon in a column of its own on the first line of the text. */
 function Row({ icon, children }: { icon: ReactNode; children: ReactNode }) {
   return (
-    <Box component="li" style={{ display: 'grid', gridTemplateColumns: '24px minmax(0, 1fr)', columnGap: 16, alignItems: 'start' }}>
-      <Box c="dimmed" h={44} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }} aria-hidden="true">
+    <li className="grid grid-cols-[1.25rem_minmax(0,1fr)] gap-x-4 py-3">
+      <span aria-hidden="true" className="flex h-6 items-center text-muted-foreground [&_svg]:size-5">
         {icon}
-      </Box>
-      <Box miw={0} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-        {children}
-      </Box>
-    </Box>
-  )
-}
-
-type ContactLinkProps = {
-  href: string
-  external?: boolean
-  label?: string
-  title?: string
-  /** Kept in one line, e.g. a phone number. */
-  noWrap?: boolean
-  children: ReactNode
-}
-
-function ContactLink({ href, external, label, title, noWrap, children }: ContactLinkProps) {
-  return (
-    <Anchor
-      href={href}
-      target={external ? '_blank' : undefined}
-      rel={external ? 'noopener noreferrer' : undefined}
-      aria-label={label}
-      title={title}
-      c="var(--mantine-color-text)"
-      // 44 px high to tap, also when the line wraps.
-      display="block"
-      py={10}
-      maw="100%"
-      style={noWrap ? { whiteSpace: 'nowrap' } : { overflowWrap: 'anywhere' }}
-    >
-      {children}
-    </Anchor>
+      </span>
+      <div className="flex min-h-6 min-w-0 flex-col items-start justify-center">{children}</div>
+    </li>
   )
 }
