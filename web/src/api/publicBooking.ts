@@ -1,7 +1,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Language } from '../i18n/index.ts'
 import { ApiError, apiGet, apiPost } from './client.ts'
-import type { TableRotation, TableShape } from './areas.ts'
+import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import type { Branding } from './branding.ts'
 import type { OpeningPeriod } from './openingHours.ts'
 import type { ConfirmationMode, TableSelectionMode } from './reservationSettings.ts'
@@ -53,8 +53,21 @@ export type PublicTable = {
   available: boolean
 }
 
-/** An area open for online booking with all its tables; `tableScale` (50–200 %) scales the drawn tables. */
-export type PublicArea = { id: string; name: string; floorPlanUrl: string | null; tableScale: number; tables: PublicTable[] }
+/**
+ * An area open for online booking with all its tables; `tableScale` (50–200 %) scales the drawn tables. Without floor plan
+ * image the plan is drawn as a room of `roomStyle` with `roomElements`.
+ */
+export type PublicArea = {
+  id: string
+  name: string
+  floorPlanUrl: string | null
+  description: string | null
+  photoUrl: string | null
+  tableScale: number
+  tables: PublicTable[]
+  roomStyle: RoomStyle
+  roomElements: RoomElement[]
+}
 
 export type BookingRequest = {
   /** "YYYY-MM-DD" and "HH:mm". */

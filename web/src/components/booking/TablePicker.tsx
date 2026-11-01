@@ -20,7 +20,7 @@ type TablePickerProps = {
 }
 
 /**
- * The guest's choice of table: the drawn plan of each area (tabs), on the floor plan image or on the schematic plan, with
+ * The guest's choice of table: the drawn plan of each area (tabs), on the floor plan image or in the drawn room, with
  * the free tables that fit the party highlighted and the others greyed out, a legend, and below it a list of the free
  * tables, which also works with the keyboard.
  */
@@ -99,7 +99,15 @@ function AreaTables({ area, value, onChoose }: { area: PublicArea; value: string
       {area.tables.length > 0 && (
         <Stack gap="xs">
           {/* The list below is the accessible way to choose; the plan repeats it for pointer and touch. */}
-          <FloorPlan imageUrl={area.floorPlanUrl} imageAlt="" tables={area.tables} tableScale={area.tableScale} ariaHidden>
+          <FloorPlan
+            imageUrl={area.floorPlanUrl}
+            imageAlt=""
+            roomStyle={area.roomStyle}
+            roomElements={area.roomElements}
+            tables={area.tables}
+            tableScale={area.tableScale}
+            ariaHidden
+          >
             {area.tables.map((table) => {
               const selected = table.id === value
               const tableLook = selected ? look.selected : table.available ? look.free : look.unavailable

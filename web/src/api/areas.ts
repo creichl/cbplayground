@@ -8,12 +8,45 @@ export type Area = {
   sortOrder: number
   /** URL of the floor plan image; null until one is uploaded. */
   floorPlanUrl: string | null
+  /** Short text for the guest's choice of the area, at most 200 characters; null when empty. */
+  description: string | null
+  /** URL of the area's photo; null without one. */
+  photoUrl: string | null
   onlineBookingEnabled: boolean
   /** Share of the seats that can be booked online, 0–100. */
   onlineCapacityPercent: number
   /** Scales the drawn tables of this area, whole percent from 50 to 200. */
   tableScale: number
+  /** Floor and boundary of the drawn room; only drawn without floor plan image. */
+  roomStyle: RoomStyle
 }
+
+/** The kind of room of an area without floor plan image: it sets the drawn floor and boundary. */
+export type RoomStyle = 'Indoor' | 'Terrace' | 'Garden' | 'Rooftop'
+
+export type RoomElementKind = 'Entrance' | 'Window' | 'Bar' | 'Plant' | 'Pillar' | 'Sofa' | 'Stage' | 'Service' | 'Stairs' | 'Label'
+
+/** Degrees, clockwise. At 0 the element's front faces up (at the bottom wall), at 90 right, at 180 down, at 270 left. */
+export type RoomRotation = 0 | 90 | 180 | 270
+
+/**
+ * An object of the room that is not a table, e.g. the entrance or the bar. `posX`/`posY` are its centre, 0–1 as for tables;
+ * `width` and `height` its extent as it lies on the plan, as fractions of the plan width and of the plan height.
+ */
+export type RoomElement = {
+  id: string
+  kind: RoomElementKind
+  posX: number
+  posY: number
+  width: number
+  height: number
+  rotation: RoomRotation
+  /** At most 40 characters; required for a Label. */
+  label: string | null
+}
+
+/** The room of an area, as returned by GET /api/admin/areas/{id}/room. */
+export type Room = { roomStyle: RoomStyle; elements: RoomElement[] }
 
 export type TableShape = 'Round' | 'Square' | 'Rectangle'
 
@@ -40,6 +73,7 @@ export const maxFloorPlanBytes = 10 * 1024 * 1024
 
 const areasKey = ['admin', 'areas'] as const
 const tablesKey = ['admin', 'tables'] as const
+const roomKey = (areaId: string) => ['admin', 'room', areaId] as const
 
 /** The restaurant's areas in their order. */
 export function useAreas() {
@@ -62,7 +96,10 @@ export function useCreateArea() {
 export function useUpdateArea() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...area }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale'>) =>
+    mutationFn: ({
+      id,
+      ...area
+    }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale'> & { description: string }) =>
       apiPut<Area>(`/admin/areas/${id}`, area),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
   })
@@ -96,6 +133,62 @@ export function useUploadFloorPlan() {
   return useMutation({
     mutationFn: ({ areaId, file }: { areaId: string; file: File }) => apiPut<Area>(`/admin/areas/${areaId}/floorplan`, file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
+  })
+}
+
+/** Uploads or replaces the photo of the area (PNG, JPEG or WebP, at most 10 MB, like the floor plan). */
+export function useUploadAreaPhoto() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ areaId, file }: { areaId: string; file: File }) => apiPut<Area>(`/admin/areas/${areaId}/photo`, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
+  })
+}
+
+export function useDeleteAreaPhoto() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (areaId: string) => apiDelete<Area>(`/admin/areas/${areaId}/photo`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
+  })
+}
+
+/** The room of an area: its style and its elements; nothing is loaded without area (null). */
+export function useRoom(areaId: string | null) {
+  return useQuery({
+    queryKey: roomKey(areaId ?? ''),
+    queryFn: () => apiGet<Room>(`/admin/areas/${areaId}/room`),
+    enabled: areaId !== null,
+  })
+}
+
+/**
+ * Replaces style and elements of the room. The API gives every saved element a new id; the cache keeps the ids that were
+ * sent (in the same order), so an element stays selected in the editor across saves.
+ */
+export function useSaveRoom() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ areaId, room }: { areaId: string; room: Room }) => apiPut<Room>(`/admin/areas/${areaId}/room`, room),
+    onSuccess: async (saved, { areaId, room }) => {
+      queryClient.setQueryData<Room>(roomKey(areaId), {
+        roomStyle: saved.roomStyle,
+        elements: saved.elements.map((element, i) => ({ ...element, id: room.elements[i]?.id ?? element.id })),
+      })
+      await queryClient.invalidateQueries({ queryKey: areasKey })
+    },
+  })
+}
+
+/** Replaces the elements with the suggested room for the area's style and arranges its tables anew around them. */
+export function useSuggestRoom() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (areaId: string) => apiPost<Room & { tables: Table[] }>(`/admin/areas/${areaId}/suggest-room`),
+    onSuccess: ({ tables: arranged, ...room }, areaId) => {
+      queryClient.setQueryData<Room>(roomKey(areaId), room)
+      queryClient.setQueryData<Table[]>(tablesKey, (tables) => tables?.map((table) => arranged.find((a) => a.id === table.id) ?? table))
+    },
   })
 }
 

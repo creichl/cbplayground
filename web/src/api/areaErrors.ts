@@ -16,6 +16,12 @@ const errorKeys = {
   shape_invalid: 'areas.errors.shapeInvalid',
   rotation_invalid: 'areas.errors.rotationInvalid',
   table_scale_invalid: 'areas.errors.tableScaleInvalid',
+  invalid_area_description: 'areas.errors.descriptionInvalid',
+  invalid_room_style: 'areas.errors.roomStyleInvalid',
+  invalid_room_element: 'areas.errors.roomElementInvalid',
+  invalid_room_element_position: 'areas.errors.roomElementPositionInvalid',
+  invalid_room_element_label: 'areas.errors.roomElementLabelInvalid',
+  too_many_room_elements: 'areas.errors.tooManyRoomElements',
 } as const
 
 /** The error code of a failed request, e.g. "table_number_taken", or null. */
