@@ -1,5 +1,5 @@
 import { type ReactNode, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '../lib/utils.ts'
 
 const ratios = { '4/3': 'aspect-4/3', '16/9': 'aspect-video' } as const
 
