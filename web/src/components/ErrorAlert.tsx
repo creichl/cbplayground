@@ -1,6 +1,6 @@
 import { Alert, Button, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { ApiError, httpErrorMessage } from '../api/client.ts'
+import { requestErrorMessage } from '../api/client.ts'
 
 type ErrorAlertProps = {
   error: Error
@@ -11,16 +11,7 @@ type ErrorAlertProps = {
 export function ErrorAlert({ error, onRetry }: ErrorAlertProps) {
   const { t } = useTranslation()
 
-  let message = t('errors.unexpected')
-  if (error instanceof ApiError) {
-    if (error.kind === 'network') {
-      message = t('errors.network')
-    } else if (error.kind === 'http') {
-      message = httpErrorMessage(error, t)
-    } else {
-      message = t('errors.invalidResponse')
-    }
-  }
+  const message = requestErrorMessage(error, t)
 
   return (
     <Alert color="red" variant="light" title={t('errors.title')}>

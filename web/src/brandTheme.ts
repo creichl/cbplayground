@@ -1,6 +1,9 @@
 import { generateColors } from '@mantine/colors-generator'
 import { createTheme, darken, DEFAULT_THEME, lighten, luminance, type MantineColorShade, Portal } from '@mantine/core'
+import chroma from 'chroma-js'
+import { createContext } from 'react'
 import type { Branding, FontStyle, ThemeMode } from './api/branding.ts'
+import { brand, brandShade } from './theme.ts'
 
 // The theme of a restaurant's guest pages (/r/<slug>, its reservations and /embed/<slug>), built from its branding on top of
 // the platform theme (theme.ts). It only applies inside BrandTheme; admin, front desk, Superadmin, login and the start page
@@ -137,3 +140,63 @@ export function createBrandTheme(style: BrandStyle, portalTarget: HTMLElement | 
     },
   })
 }
+
+// The branding as CSS variables of the design system (src/styles/app.css, README "Design system"). BrandTheme sets them on
+// its element, so they apply inside it only.
+
+/** The page background of the design system in each mode (white, stone-950), for the contrast of the accent colour as text. */
+const pageBackgrounds = { light: '#ffffff', dark: '#0c0a09' } as const
+
+/** The text on the accent colour: white or the dark text colour (stone-900), whichever contrasts more. */
+const textOnPrimary = { light: '#ffffff', dark: '#1c1917' } as const
+
+/** Tailwind's names for the ten shades of a colour, from light to dark. */
+const steps = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const
+
+/**
+ * The accent colour as the variables primary*: `--primary` is the colour itself, `--primary-foreground` the text on it
+ * chosen by WCAG contrast, `--primary-hover` the colour under the pointer (darker under white text, lighter under dark),
+ * `--primary-50` to `--primary-900` its ten shades for surfaces and hover (the same palette as the Mantine theme, so both
+ * show the same colours), and `--primary-text` / `--ring` the shade nearest to it that stands out from the page as text
+ * (4.5:1) in the given mode. Without accent colour, the platform's palette from theme.ts.
+ */
+export function primaryVariables(brandColor: string | null, colorScheme: 'light' | 'dark'): Record<string, string> {
+  const palette = brandColor === null ? brand : generateColors(brandColor)
+  // The generator keeps the colour itself as one of the ten shades, the one closest to its lightness.
+  const index = brandColor === null ? brandShade : Math.max(0, palette.indexOf(brandColor.toLowerCase()))
+  const primary = palette[index]
+  const whiteText = chroma.contrast(primary, textOnPrimary.light) >= chroma.contrast(primary, textOnPrimary.dark)
+
+  // From the colour towards more contrast: darker on the light page, lighter on the dark one.
+  const background = pageBackgrounds[colorScheme]
+  const direction = colorScheme === 'light' ? 1 : -1
+  let text = index
+  while (chroma.contrast(palette[text], background) < 4.5 && palette[text + direction] !== undefined) {
+    text += direction
+  }
+
+  return {
+    '--primary': primary,
+    '--primary-foreground': whiteText ? textOnPrimary.light : textOnPrimary.dark,
+    '--primary-hover': whiteText ? darken(primary, 0.1) : lighten(primary, 0.1),
+    '--primary-text': palette[text],
+    '--ring': palette[text],
+    ...Object.fromEntries(steps.map((step, i) => [`--primary-${step}`, palette[i]])),
+  }
+}
+
+/** The font pair of a style as the variables `--font-sans` (text), `--font-display` and `--font-display-weight` (headings). */
+export function fontVariables(fontStyle: FontStyle): Record<string, string> {
+  const fonts = fontPairs[fontStyle]
+  return {
+    '--font-sans': fontStack(fonts.body),
+    '--font-display': fontStack(fonts.heading),
+    '--font-display-weight': fonts.headingWeight,
+  }
+}
+
+/**
+ * The element of the themed area (BrandTheme): popovers, menus, dialogs and sheets of the design system open inside it, so
+ * they carry its colours, fonts and mode. Outside a themed area null: they open at the end of the page.
+ */
+export const ThemeRootContext = createContext<HTMLElement | null>(null)

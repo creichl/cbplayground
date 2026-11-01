@@ -92,6 +92,9 @@
     "staffLogin": "Für Restaurants: Anmelden",
     "toManagement": "Zur Verwaltung"
   },
+  "site": {
+    "copyright": "© {{year}} cbplayground"
+  },
   "restaurant": {
     "notFoundTitle": "Restaurant nicht gefunden",
     "notFoundText": "Unter dieser Adresse gibt es kein Restaurant."
@@ -1203,5 +1206,40 @@
       },
       "next": "Danach an diesem Tisch: {{time}}, {{name}} ({{guests}})"
     }
+  },
+  "styleguide": {
+    "title": "Styleguide",
+    "intro": "Tokens und Bausteine des Design-Systems für die Gastseiten. Nur in der Entwicklung.",
+    "branding": "Branding",
+    "withoutBranding": "Ohne Branding",
+    "mode": "Modus",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "colors": "Farben",
+    "primaryScale": "Stufen der Akzentfarbe",
+    "typography": "Schrift",
+    "radii": "Radien",
+    "radiusCard": "Karten",
+    "radiusField": "Felder und Knöpfe",
+    "radiusChip": "Chips",
+    "shadows": "Schatten",
+    "shadowCard": "Karte",
+    "shadowFloat": "schwebend",
+    "shadowDialog": "Dialog",
+    "motion": "Bewegung",
+    "motionHint": "Aus, wenn das Gerät um reduzierte Bewegung bittet.",
+    "motionFast": "Hover und Druck",
+    "motionMedium": "Fotos und Schließen",
+    "motionSlow": "Sheets, Dialoge und Einblenden",
+    "focus": "Fokus",
+    "focusHint": "Drücken Sie Tab: Alles Bedienbare zeigt einen Ring von 2 px mit 2 px Abstand.",
+    "components": "Bausteine",
+    "openDialog": "Dialog öffnen",
+    "openSheet": "Sheet öffnen",
+    "openSheetSide": "Sheet von der Seite öffnen",
+    "showToast": "Hinweis zeigen",
+    "photoLoaded": "Foto",
+    "photoPlaceholder": "Platzhalter beim Laden",
+    "photoFallback": "Foto, das nicht geladen werden kann"
   }
 }
