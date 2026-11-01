@@ -47,7 +47,7 @@ Models from Poly Haven (https://polyhaven.com), licence CC0 1.0 (https://polyhav
 
 Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font License 1.1 (https://openfontlicense.org):
 
-- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop, logo of Rooftop Belvedere
+- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop (set with Pillow), logo of Rooftop Belvedere
 - Cormorant Garamond (Christian Thalmann): logo of Rooftop Belvedere
 - Merriweather (Sorkin Type): logo of Gasthaus zur Linde
 - Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logo of Kafana Dunav
@@ -86,7 +86,7 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 - Author: made for this project (cbplayground)
 - Licence: made for this project, without rights of others: materials and models CC0 1.0, font SIL Open Font License 1.1
 - Retrieved: 2026-11-01 (materials, models and fonts)
-- Changes: textures brightened and partly recoloured, models scaled and placed; rendered at 1800 × 1200 pixels, denoised, saved as WebP
+- Changes: textures brightened and partly recoloured, models scaled and placed; rendered at 1800 × 1200 pixels, denoised; the label "Blick auf den Stephansdom" and its arrows set afterwards with Pillow in Montserrat; saved as WebP
 
 ## `lounge.webp`
 
