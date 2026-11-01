@@ -1,6 +1,16 @@
 import { type CSSVariablesResolver, MantineProvider } from '@mantine/core'
 import { type CSSProperties, type ReactNode, useEffect, useId, useMemo, useState } from 'react'
-import { type BrandStyle, colorSchemeOf, createBrandTheme, defaultBrandStyle, filledHover, loadFonts } from '../brandTheme.ts'
+import {
+  type BrandStyle,
+  colorSchemeOf,
+  createBrandTheme,
+  defaultBrandStyle,
+  filledHover,
+  fontVariables,
+  loadFonts,
+  primaryVariables,
+  ThemeRootContext,
+} from '../brandTheme.ts'
 
 /**
  * Mantine's secondary ("dimmed") text and its error text fall short of the AA contrast of 4.5:1 (gray.6 and red.6 on white,
@@ -43,6 +53,8 @@ type BrandThemeProps = {
  * Applies a restaurant's theme (brandTheme.ts) to its children only: a nested MantineProvider whose CSS variables and
  * light or dark mode are bound to this element instead of the whole document, so the platform's pages around and after it
  * stay as they are. Dropdowns and dialogs open inside it, so they carry the theme too.
+ * For the design system (src/styles/app.css) the element carries the variables primary*, --font-sans and --font-display
+ * and, in the dark mode, the class "dark"; its popovers, menus and dialogs open inside it as well (ThemeRootContext).
  */
 export function BrandTheme({ brandStyle, fullHeight, style, children }: BrandThemeProps) {
   const id = useId()
@@ -50,6 +62,10 @@ export function BrandTheme({ brandStyle, fullHeight, style, children }: BrandThe
   const { brandColor, themeMode, fontStyle } = brandStyle ?? defaultBrandStyle
   const colorScheme = colorSchemeOf(themeMode)
   const theme = useMemo(() => createBrandTheme({ brandColor, themeMode, fontStyle }, root), [brandColor, themeMode, fontStyle, root])
+  const variables = useMemo(
+    () => ({ ...primaryVariables(brandColor, colorScheme), ...fontVariables(fontStyle) }),
+    [brandColor, colorScheme, fontStyle],
+  )
 
   useEffect(() => {
     if (brandStyle !== null) {
@@ -70,7 +86,9 @@ export function BrandTheme({ brandStyle, fullHeight, style, children }: BrandThe
         ref={setRoot}
         data-brand-theme={id}
         data-mantine-color-scheme={colorScheme}
+        className={colorScheme === 'dark' ? 'dark' : undefined}
         style={{
+          ...variables,
           // What Mantine sets on the body, here for the themed area.
           colorScheme,
           backgroundColor: 'var(--mantine-color-body)',
@@ -82,7 +100,7 @@ export function BrandTheme({ brandStyle, fullHeight, style, children }: BrandThe
           ...style,
         }}
       >
-        {children}
+        <ThemeRootContext value={root}>{children}</ThemeRootContext>
       </div>
     </MantineProvider>
   )

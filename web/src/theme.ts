@@ -1,7 +1,7 @@
 import { AppShell, Card, createTheme, type MantineColorsTuple } from '@mantine/core'
 
 // Calm, deep teal as the primary colour, from light (0) to dark (9).
-const brand: MantineColorsTuple = [
+export const brand: MantineColorsTuple = [
   '#e9f7f5',
   '#d8ece9',
   '#acd8d1',
@@ -14,12 +14,15 @@ const brand: MantineColorsTuple = [
   '#006b5e',
 ]
 
+/** The shade of `brand` that buttons and links carry. */
+export const brandShade = 8
+
 const fontFamily = 'system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
 
 export const theme = createTheme({
   colors: { brand },
   primaryColor: 'brand',
-  primaryShade: 8,
+  primaryShade: brandShade,
   defaultRadius: 'md',
   fontFamily,
   headings: {
