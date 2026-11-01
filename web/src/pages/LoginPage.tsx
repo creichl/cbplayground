@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Center, Container, Group, Loader, PasswordInput, Stack, Text, TextInput, Title, UnstyledButton } from '@mantine/core'
+import { Alert, Box, Button, Card, Center, Container, Group, Loader, PasswordInput, SimpleGrid, Stack, Text, TextInput, Title, UnstyledButton } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useTranslation } from 'react-i18next'
 import { Navigate, useSearchParams } from 'react-router'
@@ -7,6 +7,7 @@ import { ApiError } from '../api/client.ts'
 import { Brand } from '../components/Brand.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
+import { Photo } from '../components/Photo.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
 const loginErrors = {
@@ -36,7 +37,13 @@ function safeReturnTo(value: string | null) {
   return value !== null && value.startsWith('/') && !value.startsWith('//') ? value : null
 }
 
-/** Staff sign-in: a centred card with email and password. */
+/** The photo beside the sign-in, in `web/public/` (see CREDITS.md there). */
+const loginPhoto = '/login-photo.webp'
+
+/**
+ * Staff sign-in. From about 992 px on it is split: on the left the card with email and password, centred, on the right a
+ * photo of a restaurant, filling the height. On smaller screens only the form; the photo is not loaded there.
+ */
 export function LoginPage() {
   const { t } = useTranslation()
   useDocumentTitle(t('login.title'), null)
@@ -70,65 +77,73 @@ export function LoginPage() {
   const errorCode = error instanceof ApiError ? error.code : null
 
   return (
-    <Center mih="100vh" bg="gray.0" py="xl">
-      <Container size={440} w="100%">
-        <Stack gap="lg">
-          <Group justify="space-between" wrap="nowrap" gap="xs">
-            <Brand to="/" />
-            <LanguageSwitcher />
-          </Group>
+    <SimpleGrid cols={{ base: 1, md: 2 }} spacing={0} mih="100vh">
+      <Center mih="100vh" bg="gray.0" py="xl">
+        <Container size={440} w="100%">
+          <Stack gap="lg">
+            <Group justify="space-between" wrap="nowrap" gap="xs">
+              <Brand to="/" />
+              <LanguageSwitcher />
+            </Group>
 
-          <Card padding="xl">
-            <form onSubmit={form.onSubmit((values) => login.mutate({ email: values.email.trim(), password: values.password }))}>
-              <Stack gap="md">
-                <Stack gap={4}>
-                  <Title order={2}>{t('login.title')}</Title>
-                  <Text c="dimmed" size="sm">
-                    {t('login.subtitle')}
-                  </Text>
+            <Card padding="xl">
+              <form onSubmit={form.onSubmit((values) => login.mutate({ email: values.email.trim(), password: values.password }))}>
+                <Stack gap="md">
+                  <Stack gap={4}>
+                    <Title order={2}>{t('login.title')}</Title>
+                    <Text c="dimmed" size="sm">
+                      {t('login.subtitle')}
+                    </Text>
+                  </Stack>
+
+                  {error !== null &&
+                    (isLoginError(errorCode) ? (
+                      <Alert color="red" variant="light">
+                        {t(loginErrors[errorCode])}
+                      </Alert>
+                    ) : (
+                      <ErrorAlert error={error} />
+                    ))}
+
+                  <TextInput
+                    label={t('login.email')}
+                    type="email"
+                    autoComplete="username"
+                    autoFocus
+                    key={form.key('email')}
+                    {...form.getInputProps('email')}
+                  />
+                  <PasswordInput
+                    label={t('login.password')}
+                    autoComplete="current-password"
+                    key={form.key('password')}
+                    {...form.getInputProps('password')}
+                  />
+                  <Button type="submit" fullWidth size="md" loading={login.isPending}>
+                    {t('login.submit')}
+                  </Button>
                 </Stack>
+              </form>
+            </Card>
 
-                {error !== null &&
-                  (isLoginError(errorCode) ? (
-                    <Alert color="red" variant="light">
-                      {t(loginErrors[errorCode])}
-                    </Alert>
-                  ) : (
-                    <ErrorAlert error={error} />
-                  ))}
-
-                <TextInput
-                  label={t('login.email')}
-                  type="email"
-                  autoComplete="username"
-                  autoFocus
-                  key={form.key('email')}
-                  {...form.getInputProps('email')}
-                />
-                <PasswordInput
-                  label={t('login.password')}
-                  autoComplete="current-password"
-                  key={form.key('password')}
-                  {...form.getInputProps('password')}
-                />
-                <Button type="submit" fullWidth size="md" loading={login.isPending}>
-                  {t('login.submit')}
-                </Button>
-              </Stack>
-            </form>
-          </Card>
-
-          {import.meta.env.DEV && (
-            <DemoAccounts
-              onPick={(email) => {
-                form.setValues({ email, password: demoPassword })
-                form.clearErrors()
-              }}
-            />
-          )}
-        </Stack>
-      </Container>
-    </Center>
+            {import.meta.env.DEV && (
+              <DemoAccounts
+                onPick={(email) => {
+                  form.setValues({ email, password: demoPassword })
+                  form.clearErrors()
+                }}
+              />
+            )}
+          </Stack>
+        </Container>
+      </Center>
+      {/* Only a picture of the place; the photo fills the right half, cropped to fit. */}
+      <Box visibleFrom="md" pos="relative" mih="100vh">
+        <Box pos="sticky" top={0} h="100vh">
+          <Photo src={loginPhoto} alt="" placeholder="var(--mantine-color-dark-7)" fallback={null} />
+        </Box>
+      </Box>
+    </SimpleGrid>
   )
 }
 

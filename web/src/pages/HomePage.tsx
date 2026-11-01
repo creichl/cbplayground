@@ -3,7 +3,6 @@ import {
   Box,
   Button,
   Card,
-  Image,
   SimpleGrid,
   Skeleton,
   Stack,
@@ -17,9 +16,10 @@ import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { type Tenant, useTenants } from '../api/tenants.ts'
-import { contrastRatio } from '../brandTheme.ts'
+import { BrandLogo } from '../components/BrandLogo.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { SearchIcon } from '../components/icons.tsx'
+import { Photo } from '../components/Photo.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
 // Spacing on the start page follows an 8 px grid (8, 16, 24, 32, 48), text sizes Mantine's fixed scale.
@@ -135,17 +135,25 @@ export function HomePage() {
 }
 
 /**
- * A restaurant as a card that is one link to its booking page: the photo in 16:9 with the logo as a small badge on it, then
- * name, city, the description cut to two lines, and "Reserve a table" in the restaurant's accent colour. The button is only
- * the look of the link, not a link of its own. Without photo a calm area in the accent colour (or the platform's) with the
- * logo or the name.
+ * A restaurant as a card that is one link to its booking page: the photo in 16:9 (fading in on a tint of the accent colour)
+ * with the logo on it, then name, city, the description cut to two lines, and "Reserve a table" in the restaurant's accent
+ * colour. The button is only the look of the link, not a link of its own. Without photo, or when it cannot be loaded, a calm area in
+ * a light tint of the accent colour (or the platform's) with the logo or the name.
  */
 function RestaurantCard({ tenant }: { tenant: Tenant }) {
   const { t } = useTranslation()
   const theme = useMantineTheme()
   const color = tenant.brandColor ?? theme.colors.brand[8]
-  // The text colour with the higher contrast to the accent colour.
-  const onColor = contrastRatio(color, theme.white) >= contrastRatio(color, theme.black) ? theme.white : theme.black
+  // A light tint of the accent colour behind the photo and in its place: a logo in the accent colour stays visible on it.
+  const surface = `color-mix(in srgb, ${color} 14%, white)`
+  const [coverFailed, setCoverFailed] = useState(false)
+  const withCover = tenant.coverUrl !== null && !coverFailed
+
+  const name = (
+    <Text aria-hidden="true" size="xl" fw={700} ta="center" lineClamp={2} style={{ overflowWrap: 'anywhere' }}>
+      {tenant.name}
+    </Text>
+  )
 
   return (
     <Card
@@ -160,24 +168,31 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
       {/* Photo and logo only accompany the name below, so they have no text alternative. */}
       <Card.Section pos="relative">
         <AspectRatio ratio={16 / 9}>
-          {tenant.coverUrl !== null ? (
-            <Image src={tenant.coverUrl} alt="" fit="cover" loading="lazy" />
-          ) : (
-            <Box bg={color} c={onColor} p={24} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {tenant.logoUrl !== null ? (
-                <LogoBadge src={tenant.logoUrl} height={64} />
-              ) : (
-                <Text aria-hidden="true" size="xl" fw={700} ta="center" lineClamp={2} style={{ overflowWrap: 'anywhere' }}>
-                  {tenant.name}
-                </Text>
-              )}
-            </Box>
-          )}
+          <Photo
+            src={tenant.coverUrl}
+            alt=""
+            placeholder={surface}
+            onError={() => setCoverFailed(true)}
+            fallback={
+              <Box c="gray.9" p={24} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {tenant.logoUrl !== null ? <BrandLogo src={tenant.logoUrl} height={64} maxWidth={240} accent={color} loading="lazy" fallback={name} /> : name}
+              </Box>
+            }
+          />
         </AspectRatio>
-        {tenant.coverUrl !== null && tenant.logoUrl !== null && (
-          <Box pos="absolute" left={16} bottom={16}>
-            <LogoBadge src={tenant.logoUrl} height={40} />
-          </Box>
+        {withCover && tenant.logoUrl !== null && (
+          <>
+            {/* Darkens the bottom of the photo a little, so a light logo stands out. */}
+            <Box
+              aria-hidden="true"
+              pos="absolute"
+              inset={0}
+              style={{ background: 'linear-gradient(to top, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0) 50%)', pointerEvents: 'none' }}
+            />
+            <Box pos="absolute" left={16} bottom={16} right={16}>
+              <BrandLogo src={tenant.logoUrl} height={56} maxWidth={200} accent={color} onPhoto loading="lazy" />
+            </Box>
+          </>
         )}
       </Card.Section>
 
@@ -205,15 +220,6 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
         </Box>
       </Stack>
     </Card>
-  )
-}
-
-/** The restaurant's logo on a small white plate, so it stands out on any photo or colour. */
-function LogoBadge({ src, height }: { src: string; height: number }) {
-  return (
-    <Box p={8} bg="white" style={{ borderRadius: 'var(--mantine-radius-md)', boxShadow: 'var(--mantine-shadow-sm)' }}>
-      <Image src={src} alt="" h={height} w="auto" maw={height * 2.5} fit="contain" loading="lazy" />
-    </Box>
   )
 }
 

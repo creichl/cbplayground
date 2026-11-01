@@ -14,9 +14,16 @@ import { useDocumentTitle } from '../i18n/title.ts'
 // Spacing follows an 8 px grid (8, 16, 24, 32, 48), text sizes Mantine's fixed scale.
 
 /**
+ * The columns of booking and info card: 7 to 5 from about 992 px on, 2 to 1 from about 1200 px on, so the info card is
+ * never narrower than about 360 px beside the booking.
+ */
+const bookingSpan = { base: 12, md: 7, lg: 8 }
+const infoSpan = { base: 12, md: 5, lg: 4 }
+
+/**
  * The booking page of a restaurant. At the top its cover image, about half the screen high, with name, city and whether it
- * is open today. Below, from about 992 px on, the booking on the left (about 2/3, with the description above it, cut to
- * three lines) and the info card on the right, which stays in view. On phones the booking comes right below the cover
+ * is open today. Below, from about 992 px on, the booking on the left (7/12, from about 1200 px on 2/3, with the description
+ * above it, cut to three lines) and the info card on the right, which stays in view. On phones the booking comes right below the cover
  * image, the info and the description after it.
  */
 export function RestaurantPage() {
@@ -34,10 +41,10 @@ export function RestaurantPage() {
         <RestaurantHeaderSkeleton />
         <Container size={contentWidth} py={{ base: 16, md: 32 }}>
           <Grid gap={32}>
-            <Grid.Col span={{ base: 12, md: 8 }}>
+            <Grid.Col span={bookingSpan}>
               <Skeleton h={320} radius="md" />
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 4 }} visibleFrom="md">
+            <Grid.Col span={infoSpan} visibleFrom="md">
               <Skeleton h={240} radius="md" />
             </Grid.Col>
           </Grid>
@@ -76,7 +83,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
       <RestaurantHeader name={name} city={city} coverUrl={branding.coverUrl} facts={status !== null ? [status.text] : []} />
       <Container size={contentWidth} py={{ base: 16, md: 32 }}>
         <Grid gap={32}>
-          <Grid.Col span={{ base: 12, md: 8 }}>
+          <Grid.Col span={bookingSpan}>
             <Stack gap={24}>
               {description !== null && (
                 <Box visibleFrom="md">
@@ -89,7 +96,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
               </Box>
             </Stack>
           </Grid.Col>
-          <Grid.Col span={{ base: 12, md: 4 }}>
+          <Grid.Col span={infoSpan}>
             {/* As high as the booking, so the info card can stay in view beside it. */}
             <Stack gap={24} h="100%">
               <RestaurantInfo slug={slug} restaurant={restaurant} />

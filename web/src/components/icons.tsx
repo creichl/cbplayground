@@ -225,6 +225,17 @@ export function LinkIcon(props: IconProps) {
   )
 }
 
+/** A route between two points, for directions to the restaurant. */
+export function RouteIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 19a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" />
+      <path d="M19 7a2 2 0 1 0 0 -4a2 2 0 0 0 0 4z" />
+      <path d="M11 19h5.5a3.5 3.5 0 0 0 0 -7h-8a3.5 3.5 0 0 1 0 -7h4.5" />
+    </Icon>
+  )
+}
+
 /** A chair, for an area without photo. */
 export function ArmchairIcon(props: IconProps) {
   return (

@@ -22,7 +22,7 @@ export function scrollToBooking() {
 export const headerHeight = 64
 
 /** The widest the content of a restaurant's pages gets, header and footer alike. */
-export const contentWidth = 1120
+export const contentWidth = 1200
 
 /** The fields of the booking bar: 48 px high (8 px grid, at least 44 px to tap), the label above in the text colour. */
 export const barInputStyles = {
