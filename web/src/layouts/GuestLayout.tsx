@@ -21,13 +21,13 @@ import { BrandTheme } from '../components/BrandTheme.tsx'
 import { contentWidth, HeroContext, headerHeight, scrollToBooking } from '../components/booking/layout.ts'
 import { LanguageMenu } from '../components/LanguageSwitcher.tsx'
 
-/** The width of the start page and "not found", header and content alike. */
+/** The width of "not found", header and content alike. */
 const platformWidth = 1120
 
 /**
- * Layout for guests. The start page and "not found" keep the platform: product name on the left, staff sign-in and the
- * language as a compact menu on the right, content up to about 1120 px wide. A restaurant's pages (/r/:slug/…) belong to the
- * restaurant: see RestaurantLayout.
+ * Layout for guests. "Not found" keeps the platform: product name on the left, staff sign-in and the language as a compact
+ * menu on the right, content up to about 1120 px wide (the start page has its own header and footer, src/ui). A restaurant's
+ * pages (/r/:slug/…) belong to the restaurant: see RestaurantLayout.
  */
 export function GuestLayout() {
   const { slug } = useParams()

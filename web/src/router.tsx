@@ -26,7 +26,19 @@ import { SuperadminTenantsPage } from './pages/SuperadminTenantsPage.tsx'
 import { TableOverviewPage } from './pages/TableOverviewPage.tsx'
 
 export const router = createBrowserRouter([
+  // The start page brings its own header and footer (design system, src/ui).
+  { index: true, element: <HomePage /> },
   { path: 'login', element: <LoginPage /> },
+  // Development only: the styleguide of the design system. The production build contains neither the route nor the page.
+  ...(import.meta.env.DEV
+    ? [
+        {
+          path: 'dev/ui',
+          HydrateFallback: () => null,
+          lazy: () => import('./pages/StyleguidePage.tsx').then(({ StyleguidePage }) => ({ Component: StyleguidePage })),
+        },
+      ]
+    : []),
   {
     element: <EmbedLayout />,
     children: [{ path: 'embed/:slug', element: <EmbedBookingPage /> }],
@@ -34,7 +46,6 @@ export const router = createBrowserRouter([
   {
     element: <GuestLayout />,
     children: [
-      { index: true, element: <HomePage /> },
       { path: 'r/:slug', element: <RestaurantPage /> },
       { path: 'r/:slug/reservation/:code', element: <GuestReservationPage /> },
       { path: '*', element: <NotFoundPage /> },

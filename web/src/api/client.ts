@@ -39,6 +39,20 @@ export function httpErrorMessage(error: ApiError, t: TFunction) {
   return t('errors.http', { status: error.status })
 }
 
+/** A failed request in the user's language: no connection, an HTTP error (see httpErrorMessage) or an unexpected answer. */
+export function requestErrorMessage(error: Error, t: TFunction) {
+  if (!(error instanceof ApiError)) {
+    return t('errors.unexpected')
+  }
+  if (error.kind === 'network') {
+    return t('errors.network')
+  }
+  if (error.kind === 'http') {
+    return httpErrorMessage(error, t)
+  }
+  return t('errors.invalidResponse')
+}
+
 async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
   const headers: Record<string, string> = { Accept: 'application/json' }
   // A file is sent as it is, everything else as JSON.

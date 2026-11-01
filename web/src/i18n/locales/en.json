@@ -92,6 +92,9 @@
     "staffLogin": "For restaurants: Sign in",
     "toManagement": "Go to management"
   },
+  "site": {
+    "copyright": "© {{year}} cbplayground"
+  },
   "restaurant": {
     "notFoundTitle": "Restaurant not found",
     "notFoundText": "There is no restaurant at this address."
@@ -1203,5 +1206,40 @@
       },
       "next": "Next at this table: {{time}}, {{name}} ({{guests}})"
     }
+  },
+  "styleguide": {
+    "title": "Styleguide",
+    "intro": "Tokens and components of the design system for the guest pages. Development only.",
+    "branding": "Branding",
+    "withoutBranding": "Without branding",
+    "mode": "Mode",
+    "light": "Light",
+    "dark": "Dark",
+    "colors": "Colours",
+    "primaryScale": "Shades of the accent colour",
+    "typography": "Typography",
+    "radii": "Radii",
+    "radiusCard": "cards",
+    "radiusField": "fields and buttons",
+    "radiusChip": "chips",
+    "shadows": "Shadows",
+    "shadowCard": "card",
+    "shadowFloat": "floating",
+    "shadowDialog": "dialog",
+    "motion": "Motion",
+    "motionHint": "Off when the device asks for reduced motion.",
+    "motionFast": "Hover and press",
+    "motionMedium": "Photos and closing",
+    "motionSlow": "Sheets, dialogs and fading in",
+    "focus": "Focus",
+    "focusHint": "Press Tab: everything that can be operated shows a ring of 2 px at a distance of 2 px.",
+    "components": "Components",
+    "openDialog": "Open dialog",
+    "openSheet": "Open sheet",
+    "openSheetSide": "Open sheet from the side",
+    "showToast": "Show toast",
+    "photoLoaded": "Photo",
+    "photoPlaceholder": "Placeholder while loading",
+    "photoFallback": "Photo that cannot be loaded"
   }
 }
