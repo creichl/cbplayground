@@ -144,6 +144,30 @@ public sealed class TenantIsolationTests : IDisposable
     }
 
     [Fact]
+    public void Room_elements_are_only_read_by_their_tenant()
+    {
+        using (var db = CreateContext(null))
+        {
+            db.Tenants.Add(new Tenant { Id = TenantA, Name = "A", Slug = "a", CreatedAt = DateTime.UtcNow });
+            db.SaveChanges();
+        }
+        using (var db = CreateContext(TenantA))
+        {
+            var area = new Area { Name = "Gaststube" };
+            db.Areas.Add(area);
+            db.RoomElements.Add(new RoomElement { AreaId = area.Id, Kind = RoomElementKind.Bar, PosX = 0.5, PosY = 0.5, Width = 0.3, Height = 0.15 });
+            db.SaveChanges();
+        }
+
+        using var dbA = CreateContext(TenantA);
+        using var dbB = CreateContext(TenantB);
+        Assert.Equal(TenantA, Assert.Single(dbA.RoomElements.ToList()).TenantId);
+        Assert.Empty(dbB.RoomElements.ToList());
+        Assert.Equal(0, dbB.RoomElements.ExecuteDelete());
+        Assert.Single(dbA.RoomElements.ToList());
+    }
+
+    [Fact]
     public void A_tenant_can_change_its_own_data()
     {
         using (var db = CreateContext(TenantA))

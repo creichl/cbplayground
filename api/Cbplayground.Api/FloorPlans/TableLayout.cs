@@ -50,16 +50,27 @@ public static class TableLayout
     }
 
     /// <summary>
+    /// The room kept free in front of an <see cref="RoomElementKind.Entrance"/>, in plan widths: about the depth of a table
+    /// with its chairs (<see cref="RectangleDepth"/> plus <see cref="ChairSpace"/> on both sides).
+    /// </summary>
+    public const double EntranceZoneDepth = 0.10;
+
+    /// <summary>
     /// Sets the positions of the tables of one area: in rows from top left to bottom right, in the order of the table number
     /// (length first, then ordinal, as the table list). Every row spreads its tables evenly over the width, the rows are spread
     /// evenly over the height, so larger tables get more room. The number of rows is the one with the largest distances.
     /// The tables keep their <see cref="ChairSpace"/> and a distance to each other and to the edge; with many tables the distance
     /// shrinks, then the chair space. They only overlap when they do not fit side by side even without it.
+    /// With room <paramref name="elements"/> (only in an area without floor plan image) the tables and their chairs also keep away
+    /// from the blocking elements and the room in front of an entrance (<see cref="Obstacles"/>): a row is spread over the free
+    /// pieces of its width, and the rows may also be spread over the height between elements at the top and the bottom of the
+    /// room, whichever leaves the largest distances. Only when the tables do not fit beside the elements even overlapping each
+    /// other, they are arranged as if there were no elements.
     /// </summary>
-    public static void Arrange(IReadOnlyCollection<Table> tables, int tableScale)
+    public static void Arrange(IReadOnlyCollection<Table> tables, int tableScale, IReadOnlyCollection<RoomElement>? elements = null)
     {
         var ordered = InNumberOrder(tables);
-        var positions = Positions(ordered.Select(t => TableSize(t.Shape, t.Seats, t.Rotation, tableScale)).ToList(), ChairSpace * tableScale / 100);
+        var positions = Positions(ordered.Select(t => TableSize(t.Shape, t.Seats, t.Rotation, tableScale)).ToList(), ChairSpace * tableScale / 100, Obstacles(elements));
         for (var i = 0; i < ordered.Count; i++)
         {
             (ordered[i].PosX, ordered[i].PosY) = positions[i];
@@ -70,46 +81,69 @@ public static class TableLayout
     /// The position of a new table among the <paramref name="existing"/> tables of an area without floor plan image: the first
     /// place of the arrangement of all tables, the new one included, that does not overlap an existing table with its chairs;
     /// otherwise the first such place top left to bottom right, then the first one where at least the tables do not overlap.
-    /// The middle only when there is no such place at all.
+    /// None of these places touches a blocking room element or the room in front of an entrance, the chairs included as far as
+    /// they are. The middle only when there is no such place at all, or, if the middle lies on a room element, the first place
+    /// that is free of the elements.
     /// </summary>
-    public static (double X, double Y) FreePosition(IReadOnlyCollection<Table> existing, Table table, int tableScale)
+    public static (double X, double Y) FreePosition(IReadOnlyCollection<Table> existing, Table table, int tableScale, IReadOnlyCollection<RoomElement>? elements = null)
     {
         var size = Fraction(TableSize(table.Shape, table.Seats, table.Rotation, tableScale));
         var others = existing.Select(t => (t.PosX, t.PosY, Size: Fraction(TableSize(t.Shape, t.Seats, t.Rotation, tableScale)))).ToList();
+        var obstacles = Obstacles(elements);
         var chairSpace = ChairSpace * tableScale / 100;
-        var slots = Positions(InNumberOrder([.. existing, table]).Select(t => TableSize(t.Shape, t.Seats, t.Rotation, tableScale)).ToList(), chairSpace);
+        var slots = Positions(InNumberOrder([.. existing, table]).Select(t => TableSize(t.Shape, t.Seats, t.Rotation, tableScale)).ToList(), chairSpace, obstacles);
 
-        foreach (var space in new[] { chairSpace, 0 })
+        // The chair space around a table is space in plan widths: as a fraction of the plan width and of the plan height.
+        bool IsFree((double X, double Y) position, double space, bool besideTables)
         {
-            // The chair space around a table, as a fraction of the plan width and of the plan height.
             var spaceX = space;
             var spaceY = space * AspectRatio;
-            bool IsFree((double X, double Y) position) =>
-                position.X - size.Width / 2 >= 0 && position.X + size.Width / 2 <= 1
-                && position.Y - size.Height / 2 >= 0 && position.Y + size.Height / 2 <= 1
-                && others.All(o =>
+            var left = position.X - size.Width / 2;
+            var right = position.X + size.Width / 2;
+            var top = position.Y - size.Height / 2;
+            var bottom = position.Y + size.Height / 2;
+            return left >= 0 && right <= 1 && top >= 0 && bottom <= 1
+                && (!besideTables || others.All(o =>
                     Math.Abs(position.X - o.PosX) >= (size.Width + o.Size.Width) / 2 + 2 * spaceX - Tolerance
-                    || Math.Abs(position.Y - o.PosY) >= (size.Height + o.Size.Height) / 2 + 2 * spaceY - Tolerance);
+                    || Math.Abs(position.Y - o.PosY) >= (size.Height + o.Size.Height) / 2 + 2 * spaceY - Tolerance))
+                && obstacles.All(o =>
+                    right + spaceX <= o.Left + Tolerance || left - spaceX >= o.Right - Tolerance
+                    || bottom + spaceY <= o.Top * AspectRatio + Tolerance || top - spaceY >= o.Bottom * AspectRatio - Tolerance);
+        }
 
+        (double X, double Y)? FirstFree(double space, bool besideTables)
+        {
             foreach (var slot in slots)
             {
-                if (IsFree(slot))
+                if (IsFree(slot, space, besideTables))
                 {
                     return slot;
                 }
             }
+            var spaceY = space * AspectRatio;
             for (var y = size.Height / 2 + spaceY; y <= 1 - size.Height / 2 - spaceY; y += GridStep)
             {
-                for (var x = size.Width / 2 + spaceX; x <= 1 - size.Width / 2 - spaceX; x += GridStep)
+                for (var x = size.Width / 2 + space; x <= 1 - size.Width / 2 - space; x += GridStep)
                 {
-                    if (IsFree((x, y)))
+                    if (IsFree((x, y), space, besideTables))
                     {
                         return (x, y);
                     }
                 }
             }
+            return null;
         }
-        return (0.5, 0.5);
+
+        foreach (var space in new[] { chairSpace, 0 })
+        {
+            if (FirstFree(space, besideTables: true) is { } position)
+            {
+                return position;
+            }
+        }
+        // The room is full: overlapping a table comes before overlapping a room element.
+        (double X, double Y) middle = (0.5, 0.5);
+        return IsFree(middle, 0, besideTables: false) ? middle : FirstFree(0, besideTables: false) ?? middle;
     }
 
     /// <summary>Steps of the search for a free place, as a fraction of the plan.</summary>
@@ -118,79 +152,252 @@ public static class TableLayout
     /// <summary>Rounding errors that do not count as overlap.</summary>
     private const double Tolerance = 1e-9;
 
+    /// <summary>A rectangle in plan widths: from the left 0–1, from the top 0 to the plan height.</summary>
+    private readonly record struct Box(double Left, double Top, double Right, double Bottom);
+
+    /// <summary>A possible arrangement: the smallest distance (negative when tables overlap each other), whether every table lies beside the obstacles, and the centres (0–1).</summary>
+    private record Layout(double Gap, bool Fits, List<(double X, double Y)> Positions);
+
+    private static bool IsBetter(bool fits, double gap, Layout than) => fits != than.Fits ? fits : gap > than.Gap;
+
+    /// <summary>Room elements on which no table may stand: <see cref="RoomElementKind.Window"/> and <see cref="RoomElementKind.Label"/> do not block.</summary>
+    private static bool IsBlocking(RoomElementKind kind) => kind is RoomElementKind.Bar or RoomElementKind.Pillar or RoomElementKind.Sofa
+        or RoomElementKind.Stage or RoomElementKind.Service or RoomElementKind.Stairs or RoomElementKind.Plant;
+
+    /// <summary>
+    /// The rectangles the tables keep away from: every blocking element, and every entrance together with the room of
+    /// <see cref="EntranceZoneDepth"/> in front of it, on the side it faces (rotation 0: up, 90: right, 180: down, 270: left).
+    /// </summary>
+    private static List<Box> Obstacles(IReadOnlyCollection<RoomElement>? elements)
+    {
+        var obstacles = new List<Box>();
+        foreach (var element in elements ?? [])
+        {
+            if (element.Kind != RoomElementKind.Entrance && !IsBlocking(element.Kind))
+            {
+                continue;
+            }
+            var left = element.PosX - element.Width / 2;
+            var right = element.PosX + element.Width / 2;
+            var top = (element.PosY - element.Height / 2) * PlanHeight;
+            var bottom = (element.PosY + element.Height / 2) * PlanHeight;
+            if (element.Kind == RoomElementKind.Entrance)
+            {
+                switch (element.Rotation)
+                {
+                    case 90: right += EntranceZoneDepth; break;
+                    case 180: bottom += EntranceZoneDepth; break;
+                    case 270: left -= EntranceZoneDepth; break;
+                    default: top -= EntranceZoneDepth; break;
+                }
+            }
+            obstacles.Add(new Box(left, top, right, bottom));
+        }
+        return obstacles;
+    }
+
     private static List<Table> InNumberOrder(IEnumerable<Table> tables) =>
         tables.OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal).ToList();
 
     /// <summary>A size in plan widths as fractions of the plan width and height.</summary>
     private static (double Width, double Height) Fraction((double Width, double Height) size) => (size.Width, size.Height * AspectRatio);
 
-    /// <summary>The centres (0–1) for tables of the given sizes (in plan widths), in this order.</summary>
-    private static List<(double X, double Y)> Positions(List<(double Width, double Height)> sizes, double chairSpace)
+    /// <summary>The centres (0–1) for tables of the given sizes (in plan widths), in this order, beside the <paramref name="obstacles"/>.</summary>
+    private static List<(double X, double Y)> Positions(List<(double Width, double Height)> sizes, double chairSpace, List<Box> obstacles)
     {
         if (sizes.Count == 0)
         {
             return [];
         }
 
-        // The largest chair space (at most the scaled ChairSpace) with which the tables fit without overlapping.
-        var space = chairSpace;
-        if (BestRowCount(sizes, space).Gap < 0)
+        // The largest chair space (at most the scaled ChairSpace) with which the tables fit without overlapping;
+        // none when they do not even fit without it.
+        var best = BestLayout(sizes, chairSpace, obstacles);
+        if (best.Gap < 0)
         {
-            var low = 0.0;
-            var high = chairSpace;
-            for (var i = 0; i < 30; i++)
+            best = BestLayout(sizes, 0, obstacles);
+            if (best.Gap >= 0)
             {
-                var middle = (low + high) / 2;
-                if (BestRowCount(sizes, middle).Gap >= 0)
+                var low = 0.0;
+                var high = chairSpace;
+                for (var i = 0; i < 30; i++)
                 {
-                    low = middle;
+                    var middle = (low + high) / 2;
+                    if (BestLayout(sizes, middle, obstacles).Gap >= 0)
+                    {
+                        low = middle;
+                    }
+                    else
+                    {
+                        high = middle;
+                    }
                 }
-                else
-                {
-                    high = middle;
-                }
+                best = BestLayout(sizes, low, obstacles);
             }
-            space = low;
         }
 
-        var rows = Rows(sizes.Count, BestRowCount(sizes, space).Rows);
-        var rowHeights = rows.Select(row => row.Select(i => sizes[i].Height + 2 * space).Max()).ToList();
-        var rowCentres = Spread(rowHeights, PlanHeight);
+        // Overlapping the room elements is the last resort.
+        if (!best.Fits && obstacles.Count > 0)
+        {
+            return Positions(sizes, chairSpace, []);
+        }
+        return best.Positions;
+    }
+
+    /// <summary>
+    /// The arrangement with the largest gap between the tables (with <paramref name="space"/> around each), to the edge and to the
+    /// obstacles, over every number of rows and every height the rows can be spread over: the whole plan height, or from below an
+    /// obstacle that begins in the upper half to above one that ends in the lower half. One where every table lies beside the
+    /// obstacles comes first.
+    /// </summary>
+    private static Layout BestLayout(List<(double Width, double Height)> sizes, double space, List<Box> obstacles)
+    {
+        List<double> tops = [0, .. obstacles.Where(o => o.Top < PlanHeight / 2 && o.Bottom > 0 && o.Bottom < PlanHeight).Select(o => o.Bottom).Order()];
+        List<double> bottoms = [PlanHeight, .. obstacles.Where(o => o.Bottom > PlanHeight / 2 && o.Top < PlanHeight && o.Top > 0).Select(o => o.Top).OrderDescending()];
+
+        Layout? best = null;
+        foreach (var top in tops.Distinct())
+        {
+            foreach (var bottom in bottoms.Distinct().Where(b => b > top))
+            {
+                for (var rowCount = 1; rowCount <= sizes.Count; rowCount++)
+                {
+                    var rows = Rows(sizes.Count, rowCount);
+                    var rowHeights = rows.Select(row => row.Select(i => sizes[i].Height + 2 * space).Max()).ToList();
+                    var verticalGap = (bottom - top - rowHeights.Sum()) / (rowCount + 1);
+                    var verticalFits = rowHeights.All(h => h <= bottom - top + Tolerance);
+                    // The rows can only make it worse.
+                    if (best is not null && !IsBetter(verticalFits, verticalGap, best))
+                    {
+                        continue;
+                    }
+                    var layout = ArrangeRows(sizes, space, obstacles, rows, rowHeights, top, bottom, verticalGap, verticalFits);
+                    if (best is null || IsBetter(layout.Fits, layout.Gap, best))
+                    {
+                        best = layout;
+                    }
+                }
+            }
+        }
+        return best!;
+    }
+
+    /// <summary>The rows spread evenly between <paramref name="top"/> and <paramref name="bottom"/>, each spread over the free pieces of its width.</summary>
+    private static Layout ArrangeRows(List<(double Width, double Height)> sizes, double space, List<Box> obstacles, List<List<int>> rows,
+        List<double> rowHeights, double top, double bottom, double verticalGap, bool verticalFits)
+    {
+        var gap = verticalGap;
+        var fits = verticalFits;
+        var rowCentres = Spread(rowHeights, bottom - top).Select(c => top + c).ToList();
         var positions = new (double X, double Y)[sizes.Count];
         for (var r = 0; r < rows.Count; r++)
         {
-            var centres = Spread(rows[r].Select(i => sizes[i].Width + 2 * space).ToList(), 1);
+            var segments = FreeSegments(obstacles, rowCentres[r] - rowHeights[r] / 2, rowCentres[r] + rowHeights[r] / 2);
+            var (rowGap, rowFits, centres) = FitRow(rows[r].Select(i => sizes[i].Width + 2 * space).ToList(), segments);
+            gap = Math.Min(gap, rowGap);
+            fits &= rowFits;
             for (var j = 0; j < rows[r].Count; j++)
             {
                 var (width, height) = Fraction(sizes[rows[r][j]]);
                 positions[rows[r][j]] = (Inside(centres[j], width), Inside(rowCentres[r] / PlanHeight, height));
             }
         }
-        return [.. positions];
+        return new Layout(gap, fits, [.. positions]);
+    }
+
+    /// <summary>The pieces of the width 0–1 that no obstacle covers between <paramref name="top"/> and <paramref name="bottom"/>, from left to right.</summary>
+    private static List<(double Start, double End)> FreeSegments(List<Box> obstacles, double top, double bottom)
+    {
+        var covered = obstacles
+            .Where(o => o.Top < bottom - Tolerance && o.Bottom > top + Tolerance && o.Right > Tolerance && o.Left < 1 - Tolerance)
+            .Select(o => (Start: Math.Max(0, o.Left), End: Math.Min(1, o.Right)))
+            .OrderBy(c => c.Start);
+        var segments = new List<(double Start, double End)>();
+        var position = 0.0;
+        foreach (var (start, end) in covered)
+        {
+            if (start > position + Tolerance)
+            {
+                segments.Add((position, start));
+            }
+            position = Math.Max(position, end);
+        }
+        if (position < 1 - Tolerance)
+        {
+            segments.Add((position, 1));
+        }
+        return segments;
     }
 
     /// <summary>
-    /// The number of rows with the largest gap between the tables (with <paramref name="space"/> around each) and to the edge;
-    /// the gap is negative when they do not fit.
+    /// The centres of consecutive pieces of the given lengths, in this order, spread over the free <paramref name="segments"/>:
+    /// each segment gets the next pieces and spreads them evenly (<see cref="Spread"/>). The split with the largest gap, one where
+    /// every piece fits into its segment first. A row without free segments is spread over the whole width and does not fit.
     /// </summary>
-    private static (int Rows, double Gap) BestRowCount(List<(double Width, double Height)> sizes, double space)
+    private static (double Gap, bool Fits, List<double> Centres) FitRow(List<double> lengths, List<(double Start, double End)> segments)
     {
-        var best = (Rows: 1, Gap: double.NegativeInfinity);
-        for (var rowCount = 1; rowCount <= sizes.Count; rowCount++)
+        var n = lengths.Count;
+        var m = segments.Count;
+        if (m == 0)
         {
-            var rows = Rows(sizes.Count, rowCount);
-            var rowHeights = rows.Select(row => row.Select(i => sizes[i].Height + 2 * space).Max()).ToList();
-            var gap = (PlanHeight - rowHeights.Sum()) / (rowCount + 1);
-            foreach (var row in rows)
+            return (double.NegativeInfinity, false, Spread(lengths, 1));
+        }
+
+        // The best split of the first i pieces over the first j segments, and where the pieces of segment j - 1 begin.
+        var reached = new bool[m + 1, n + 1];
+        var fits = new bool[m + 1, n + 1];
+        var gaps = new double[m + 1, n + 1];
+        var from = new int[m + 1, n + 1];
+        reached[0, 0] = true;
+        fits[0, 0] = true;
+        gaps[0, 0] = double.PositiveInfinity;
+        for (var j = 1; j <= m; j++)
+        {
+            var length = segments[j - 1].End - segments[j - 1].Start;
+            for (var i = 0; i <= n; i++)
             {
-                gap = Math.Min(gap, (1 - row.Select(i => sizes[i].Width + 2 * space).Sum()) / (row.Count + 1));
-            }
-            if (gap > best.Gap)
-            {
-                best = (rowCount, gap);
+                var total = 0.0;
+                var longest = 0.0;
+                for (var k = i; k >= 0; k--)
+                {
+                    if (k < i)
+                    {
+                        total += lengths[k];
+                        longest = Math.Max(longest, lengths[k]);
+                    }
+                    if (!reached[j - 1, k])
+                    {
+                        continue;
+                    }
+                    var count = i - k;
+                    var groupFits = longest <= length + Tolerance;
+                    var groupGap = count == 0 ? double.PositiveInfinity : (length - total) / (count + 1);
+                    var candidateFits = fits[j - 1, k] && groupFits;
+                    var candidateGap = Math.Min(gaps[j - 1, k], groupGap);
+                    if (!reached[j, i] || (candidateFits != fits[j, i] ? candidateFits : candidateGap > gaps[j, i]))
+                    {
+                        reached[j, i] = true;
+                        fits[j, i] = candidateFits;
+                        gaps[j, i] = candidateGap;
+                        from[j, i] = k;
+                    }
+                }
             }
         }
-        return best;
+
+        var centres = new double[n];
+        for (int j = m, i = n; j > 0; j--)
+        {
+            var k = from[j, i];
+            var segment = segments[j - 1];
+            var groupCentres = Spread(lengths.GetRange(k, i - k), segment.End - segment.Start);
+            for (var g = 0; g < groupCentres.Count; g++)
+            {
+                centres[k + g] = segment.Start + groupCentres[g];
+            }
+            i = k;
+        }
+        return (gaps[m, n], fits[m, n], [.. centres]);
     }
 
     /// <summary>The indexes 0 to count − 1 in order, split into rows that differ by at most one table, the longer rows first.</summary>
