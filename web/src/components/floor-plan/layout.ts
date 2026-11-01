@@ -21,10 +21,13 @@ const rectangleMinLength = 0.08
 /** Room for the chairs on every side of a table. */
 export const chairSpace = 0.02
 
-/** The drawn chair, within the chair space: its width along the table, its depth and its distance to the table. */
-export const chairWidth = 0.022
-export const chairDepth = 0.013
-export const chairGap = 0.003
+/**
+ * The drawn chair, within the chair space: its width along the table, its depth (seat and backrest) and its distance to the
+ * table. Only the web draws them; the API only keeps the chair space free.
+ */
+export const chairWidth = 0.024
+export const chairDepth = 0.016
+export const chairGap = 0.002
 
 /** Below this distance between their centres, the chairs on a side of a rectangular table do not fit any more. */
 const chairPitch = 0.028
@@ -41,7 +44,10 @@ export function tableSize(shape: TableShape, seats: number, rotation: TableRotat
   return rotation === 90 ? { width: depth, height: length } : { width: length, height: depth }
 }
 
-/** A chair: its centre relative to the table's centre and its turn in degrees (0: above or below the table). */
+/**
+ * A chair: its centre relative to the table's centre and its turn in degrees, clockwise: at 0 it stands above the table
+ * with its backrest at the top, away from the table; 90 right of it, 180 below it, 270 left of it, round tables in between.
+ */
 export type Chair = { x: number; y: number; angle: number }
 
 /**
@@ -62,8 +68,8 @@ export function chairs(shape: TableShape, seats: number, width: number, height: 
 
   // The four sides: along the width (top, bottom) and along the height (left, right).
   const top = { length: width, place: (along: number) => ({ x: along, y: -height / 2 - offset, angle: 0 }) }
-  const bottom = { length: width, place: (along: number) => ({ x: along, y: height / 2 + offset, angle: 0 }) }
-  const left = { length: height, place: (along: number) => ({ x: -width / 2 - offset, y: along, angle: 90 }) }
+  const bottom = { length: width, place: (along: number) => ({ x: along, y: height / 2 + offset, angle: 180 }) }
+  const left = { length: height, place: (along: number) => ({ x: -width / 2 - offset, y: along, angle: 270 }) }
   const right = { length: height, place: (along: number) => ({ x: width / 2 + offset, y: along, angle: 90 }) }
   const sides = width >= height ? [top, bottom, left, right] : [left, right, top, bottom]
   const counts = [0, 0, 0, 0]
@@ -114,7 +120,7 @@ export const maxRoomElements = 60
 export const maxRoomElementLabelLength = 40
 
 /** Thickness of the wall, railing or hedge around the room, in plan widths; it lies outside the room, around the plan. */
-export const roomBoundary = 0.012
+export const roomBoundary = 0.016
 
 /**
  * `width` and `height` of an element of `length` along the wall and `depth` (in plan widths) at this rotation, as the API
@@ -139,82 +145,179 @@ export function clampToRoom(position: number, size: number) {
 }
 
 /**
- * The colours of the drawn room in the light and the dark mode. The room is the background: muted, so the tables and their
- * state keep the strongest contrasts; the restaurant's accent colour belongs to the tables, not to the room.
+ * The colours of the drawn room in the light and the dark mode, like a rendered plan view: floors with their tones (one per
+ * plank, slab or pebble), grain and joints, the boundaries, the furniture and the shadows. The room is the background: muted,
+ * so the tables and their state keep the strongest contrasts; the restaurant's accent colour belongs to the tables, not to
+ * the room. The light floors stay light, so dark table edges stand out on all of them, and the dark ones stay dark.
  */
 export const roomColors = {
   light: {
     floor: {
-      Indoor: { base: '#f2ece3', line: '#e3d9cb' },
-      Terrace: { base: '#ebe8e2', line: '#d9d5cd' },
-      Rooftop: { base: '#ece2d3', line: '#dacbb6' },
-      Garden: { base: '#e5ecdb', line: '#d1dcc3' },
+      // Oak planks.
+      Indoor: {
+        base: '#e8dbc6',
+        tones: ['#ebdfcc', '#e6d8c2', '#eee3d2', '#e3d4bc', '#e9dcc8', '#e5d6c0'],
+        grain: '#c8b291',
+        joint: '#c9b597',
+      },
+      // Stone slabs.
+      Terrace: {
+        base: '#e4e1da',
+        tones: ['#e8e5df', '#dfdbd3', '#ebe8e3', '#dbd7ce', '#e4e0d8'],
+        grain: '#ccc7bc',
+        joint: '#c4beb3',
+      },
+      // A wooden deck.
+      Rooftop: {
+        base: '#d6c1a3',
+        tones: ['#dbc7aa', '#d3bd9e', '#dfccb1', '#cfb897'],
+        grain: '#bba17c',
+        joint: '#ab9172',
+      },
+      // Gravel; the lawn runs along the hedge.
+      Garden: {
+        base: '#e2dccf',
+        tones: ['#d6cdbb', '#cbc1ad', '#ece7dc', '#c2b7a2', '#ddd4c4'],
+        grain: '#b9ad96',
+        joint: '#cfc6b5',
+      },
     },
-    wall: '#4b565d',
-    railing: '#8e979d',
-    glass: '#d6e4ea',
-    glassLine: '#8a98a0',
-    hedge: '#a3bd90',
-    hedgeLine: '#8aa676',
-    window: '#f4f8fa',
-    windowLine: '#98b2c0',
-    door: '#8a9399',
-    wood: '#b99a80',
-    woodLight: '#cdb39c',
-    woodLine: '#9a7c64',
-    plant: '#a5c092',
-    plantLight: '#bcd2ab',
-    pot: '#8f7764',
-    pillar: '#7b858b',
-    sofa: '#d3c8bb',
-    sofaBack: '#bfb2a2',
-    sofaLine: '#ab9d8c',
-    stage: '#e4dccf',
-    stageEdge: '#d2c6b5',
-    stageLine: '#b8aa97',
-    service: '#e6e3de',
-    servicePass: '#cfc9c0',
-    serviceLine: '#b3ada4',
-    stairs: '#e3dcd1',
-    stairsLine: '#a99f92',
-    text: '#6b665f',
+    lawn: { base: '#c3d4a8', tones: ['#b3c897', '#a8bf8b', '#cfdeb8', '#bacd9f'] },
+    hedge: { base: '#7d9c66', leaves: ['#8cab72', '#6d8c57', '#9fbc84', '#78985f'], edge: '#5c7a48' },
+    wall: '#575e63',
+    wallEdge: '#3c4246',
+    railing: '#7f888e',
+    railingLight: '#c3c9cc',
+    post: '#5e676c',
+    glass: '#bcd5df',
+    glassLine: '#7a929d',
+    glassGlint: '#ffffff',
+    window: '#e9f2f6',
+    windowLine: '#7f9cab',
+    door: '#8a705b',
+    doorSwing: '#8a9399',
+    threshold: '#d6d0c6',
+    wood: '#a78468',
+    woodLight: '#c4a587',
+    woodDark: '#7e604a',
+    woodLine: '#6f5442',
+    bottles: ['#7a9a6a', '#b88a4a', '#8e6a8c', '#6f8fa8'],
+    stool: '#5f5148',
+    stoolTop: '#857463',
+    leaf: '#7fa266',
+    leafLight: '#9dbd82',
+    leafDark: '#5f804b',
+    pot: '#a7856c',
+    potRim: '#c19f86',
+    soil: '#6c5646',
+    pillar: '#62696e',
+    pillarLight: '#7c8489',
+    sofa: '#cdbfae',
+    sofaBack: '#b6a690',
+    sofaLine: '#9c8b76',
+    cushion: '#d9cdbe',
+    pillow: '#a9927a',
+    stage: '#d9c8ad',
+    stageBoard: '#cdb999',
+    stageEdge: '#b39c7a',
+    stageLine: '#9a8364',
+    service: '#d9dcde',
+    serviceTop: '#eceeef',
+    servicePass: '#c3c8cb',
+    serviceLine: '#9ea5aa',
+    sink: '#b8c0c5',
+    stairs: '#e1dbd1',
+    stairsAlt: '#d7d0c4',
+    stairsLine: '#9d9386',
+    text: '#5f5a53',
+    shadow: '#2a2016',
+    /** Multiplies the opacity of all shadows. */
+    shadowStrength: 1,
   },
   dark: {
     floor: {
-      Indoor: { base: '#2c2a27', line: '#37342f' },
-      Terrace: { base: '#2b2c2d', line: '#393b3d' },
-      Rooftop: { base: '#302b26', line: '#3e3730' },
-      Garden: { base: '#262c25', line: '#323b30' },
+      Indoor: {
+        base: '#36302a',
+        tones: ['#39322b', '#332d27', '#3d362e', '#302a24', '#37302a', '#342e28'],
+        grain: '#463d34',
+        joint: '#29241f',
+      },
+      Terrace: {
+        base: '#33332f',
+        tones: ['#363632', '#30302c', '#393935', '#2e2e2a', '#343430'],
+        grain: '#42423d',
+        joint: '#262623',
+      },
+      Rooftop: {
+        base: '#3a3129',
+        tones: ['#3d342b', '#372e26', '#41372e', '#342b23'],
+        grain: '#4a3f34',
+        joint: '#231d18',
+      },
+      Garden: {
+        base: '#35322c',
+        tones: ['#3e3a33', '#2f2c27', '#454039', '#2a2722', '#3a362f'],
+        grain: '#4a453d',
+        joint: '#2c2924',
+      },
     },
-    wall: '#737c82',
-    railing: '#7d868c',
-    glass: '#3b4a52',
-    glassLine: '#7a8a93',
-    hedge: '#4f6546',
-    hedgeLine: '#627b57',
-    window: '#b7c9d3',
-    windowLine: '#6c8693',
-    door: '#8a9399',
-    wood: '#6c5545',
-    woodLight: '#7e6553',
-    woodLine: '#8c705b',
-    plant: '#4f6646',
-    plantLight: '#5f7a55',
-    pot: '#7a6655',
-    pillar: '#737c82',
-    sofa: '#4b453e',
-    sofaBack: '#5a5249',
-    sofaLine: '#6d6359',
-    stage: '#3a352f',
-    stageEdge: '#454039',
-    stageLine: '#5d554b',
-    service: '#35383b',
-    servicePass: '#44484c',
-    serviceLine: '#5d6266',
-    stairs: '#3b3732',
-    stairsLine: '#706960',
-    text: '#b4ada3',
+    lawn: { base: '#2c3826', tones: ['#33402b', '#283322', '#3a4831', '#2f3b28'] },
+    hedge: { base: '#34472c', leaves: ['#3c5233', '#2c3d25', '#46603b', '#33482b'], edge: '#24321e' },
+    wall: '#4b5155',
+    wallEdge: '#63696d',
+    railing: '#6f787d',
+    railingLight: '#8b9499',
+    post: '#5a6267',
+    glass: '#3c4d55',
+    glassLine: '#6e828c',
+    glassGlint: '#a9bcc5',
+    window: '#4a5d66',
+    windowLine: '#7d939e',
+    door: '#7a6656',
+    doorSwing: '#7f878c',
+    threshold: '#4a4640',
+    wood: '#5e4a3b',
+    woodLight: '#715946',
+    woodDark: '#47372b',
+    woodLine: '#836a55',
+    bottles: ['#5d7a52', '#8a6a3d', '#6e5470', '#506d82'],
+    stool: '#2c2621',
+    stoolTop: '#4d4238',
+    leaf: '#4a6340',
+    leafLight: '#5b784e',
+    leafDark: '#384d30',
+    pot: '#6a5545',
+    potRim: '#7d6553',
+    soil: '#2e2620',
+    pillar: '#5b6266',
+    pillarLight: '#6c7378',
+    sofa: '#4a433b',
+    sofaBack: '#3d3730',
+    sofaLine: '#5f564c',
+    cushion: '#554d44',
+    pillow: '#6b5c4d',
+    stage: '#433a31',
+    stageBoard: '#4b4137',
+    stageEdge: '#2f2822',
+    stageLine: '#5c5045',
+    service: '#383b3e',
+    serviceTop: '#44484b',
+    servicePass: '#2e3133',
+    serviceLine: '#5a5f63',
+    sink: '#2a2d30',
+    stairs: '#3a3631',
+    stairsAlt: '#34302b',
+    stairsLine: '#6b645a',
+    text: '#b9b2a8',
+    shadow: '#000000',
+    shadowStrength: 1.6,
   },
 }
 
 export type RoomColors = (typeof roomColors)['light']
+
+/**
+ * The thin edge around every table, outside its outline: dark on the light floors, light on the dark ones. It keeps the
+ * table's edge at least 3:1 against every floor (and most plan images), whatever the accent or status colour of the table.
+ */
+export const tableRim = { light: 'rgba(28, 24, 20, 0.75)', dark: 'rgba(244, 239, 231, 0.72)' }
