@@ -272,8 +272,8 @@
     "cannotCancel": "This reservation can only be cancelled online until it starts. Please call the restaurant.",
     "contact": "Contact the restaurant",
     "confirm": {
-      "title": "Cancel the reservation?",
-      "text": "Your reservation on {{date}} at {{time}} ({{guests}}) will be cancelled. This cannot be undone.",
+      "title": "Really cancel the reservation?",
+      "text": "The table will be released for other guests. This cannot be undone.",
       "back": "Back",
       "confirm": "Cancel reservation"
     },
@@ -289,7 +289,9 @@
       "arrived": "Enjoy your visit",
       "late": "Marked as late",
       "cancelled": "Reservation cancelled",
-      "declined": "Request declined"
+      "declined": "Request declined",
+      "past": "This reservation is over",
+      "pastText": "We look forward to your next visit."
     }
   },
   "admin": {

@@ -272,8 +272,8 @@
     "cannotCancel": "Online stornieren ist nur bis zum Beginn der Reservierung möglich. Bitte rufen Sie das Restaurant an.",
     "contact": "Kontakt zum Restaurant",
     "confirm": {
-      "title": "Reservierung stornieren?",
-      "text": "Ihre Reservierung am {{date}} um {{time}} ({{guests}}) wird storniert. Das lässt sich nicht rückgängig machen.",
+      "title": "Wirklich stornieren?",
+      "text": "Der Tisch wird für andere Gäste freigegeben. Das lässt sich nicht rückgängig machen.",
       "back": "Zurück",
       "confirm": "Stornieren"
     },
@@ -289,7 +289,9 @@
       "arrived": "Schön, dass Sie da sind",
       "late": "Als verspätet vermerkt",
       "cancelled": "Reservierung storniert",
-      "declined": "Anfrage abgelehnt"
+      "declined": "Anfrage abgelehnt",
+      "past": "Diese Reservierung ist vorbei",
+      "pastText": "Wir freuen uns auf Ihren nächsten Besuch."
     }
   },
   "admin": {
