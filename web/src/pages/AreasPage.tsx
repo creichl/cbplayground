@@ -1,4 +1,4 @@
-import { Button, Card, Center, FileButton, Grid, Group, Loader, Modal, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
+import { Button, Card, Center, Divider, FileButton, Grid, Group, Loader, Modal, Stack, Tabs, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { useDisclosure } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -8,21 +8,30 @@ import {
   type Area,
   floorPlanTypes,
   maxFloorPlanBytes,
+  type Room,
+  type RoomElement,
+  type RoomElementKind,
   type Table,
   type TablePosition,
   useAreas,
   useCreateArea,
   useCreateTable,
   useReorderAreas,
+  useRoom,
+  useSaveRoom,
   useSaveTablePositions,
+  useSuggestRoom,
   useTables,
   useUploadFloorPlan,
 } from '../api/areas.ts'
 import { errorMessage } from '../api/areaErrors.ts'
 import { AreaPanel } from '../components/AreaPanel.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { roomElementDimensions, roomElementSize } from '../components/floor-plan/layout.ts'
 import { FloorPlanCanvas } from '../components/FloorPlanCanvas.tsx'
 import { FloorPlanDropzone } from '../components/FloorPlanDropzone.tsx'
+import { RoomElementPanel } from '../components/RoomElementPanel.tsx'
+import { RoomPanel } from '../components/RoomPanel.tsx'
 import { TablePanel } from '../components/TablePanel.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
@@ -94,6 +103,73 @@ function usePendingPositions() {
   return { pending, move, discard }
 }
 
+/**
+ * The edited rooms keep their changes here until they are saved, like the table positions: all changes of a room within
+ * a short time go into one request (the whole room), and whatever is still unsaved when the page is left as well.
+ */
+function usePendingRooms() {
+  const { t } = useTranslation()
+  const { mutateAsync, isPending } = useSaveRoom()
+  const [pending, setPending] = useState<Record<string, Room>>({})
+  const pendingRef = useRef(pending)
+
+  useEffect(() => {
+    pendingRef.current = pending
+  }, [pending])
+
+  /** Saves every pending room; a failed one is dropped (the plan shows the saved room again) and reported. */
+  const save = useCallback(async () => {
+    await Promise.all(
+      Object.entries(pendingRef.current).map(async ([areaId, room]) => {
+        // A room that was changed again in the meantime stays pending and is saved next.
+        const done = () =>
+          setPending((current) => {
+            if (current[areaId] !== room) {
+              return current
+            }
+            const next = { ...current }
+            delete next[areaId]
+            return next
+          })
+        try {
+          await mutateAsync({ areaId, room })
+        } catch (error) {
+          notifications.show({ color: 'red', title: t('areas.errors.roomNotSaved'), message: errorMessage(error, t) })
+        }
+        done()
+      }),
+    )
+  }, [mutateAsync, t])
+
+  useEffect(() => {
+    if (Object.keys(pending).length === 0) {
+      return
+    }
+    const timer = window.setTimeout(() => void save(), savePositionsDelay)
+    return () => window.clearTimeout(timer)
+  }, [pending, save])
+
+  // Saves what is still pending when the page is left.
+  useEffect(() => () => void save(), [save])
+
+  /** Changes the room of the area, starting from its pending or else its saved state. */
+  const edit = useCallback((areaId: string, saved: Room, change: (room: Room) => Room) => {
+    setPending((current) => ({ ...current, [areaId]: change(current[areaId] ?? saved) }))
+  }, [])
+
+  const discard = useCallback((areaId: string) => {
+    setPending((current) => Object.fromEntries(Object.entries(current).filter(([id]) => id !== areaId)))
+  }, [])
+
+  return { pending, saving: isPending, save, edit, discard }
+}
+
+/** A new room element of its default size in the middle of the room, where the admin then drags it. */
+function newElement(kind: RoomElementKind, label: string | null): RoomElement {
+  const { length, depth } = roomElementDimensions[kind]
+  return { id: crypto.randomUUID(), kind, posX: 0.5, posY: 0.5, rotation: 0, label, ...roomElementSize(length, depth, 0) }
+}
+
 /** Shape and rotation of the selected table as chosen in its panel, before they are saved. */
 type TablePreview = Pick<Table, 'id' | 'shape' | 'rotation'>
 
@@ -104,8 +180,9 @@ function nextTableNumber(tables: Table[]) {
 }
 
 /**
- * Areas & tables: areas as tabs, the plan with its tables, and a panel with the selected table or area.
- * An area without floor plan image shows its tables on the schematic plan; an image can be uploaded below it.
+ * Areas & tables: areas as tabs, the plan with its tables, and a panel with the selected table, room element or area.
+ * An area without floor plan image is a drawn room: its tables stand in it, the panel "Room" sets its style and adds
+ * elements, which are moved like the tables; an image can be uploaded below it.
  * Shape and rotation of the selected table and the area's table size show in the plan before they are saved.
  */
 export function AreasPage() {
@@ -117,8 +194,15 @@ export function AreasPage() {
   const uploadFloorPlan = useUploadFloorPlan()
   const reorderAreas = useReorderAreas()
   const { pending, move, discard } = usePendingPositions()
+  const pendingRooms = usePendingRooms()
+  const suggestRoom = useSuggestRoom()
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
+  const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  // The room of the shown area, only without floor plan image (the image shows the room).
+  const shownArea = areas.data?.find((a) => a.id === selectedAreaId) ?? areas.data?.[0]
+  const roomAreaId = shownArea !== undefined && shownArea.floorPlanUrl === null ? shownArea.id : null
+  const savedRoom = useRoom(roomAreaId)
   // Not yet saved values of the panel, shown in the plan.
   const [tablePreview, setTablePreview] = useState<TablePreview | null>(null)
   const [tableScalePreview, setTableScalePreview] = useState<number | null>(null)
@@ -151,16 +235,20 @@ export function AreasPage() {
         .filter((table) => table.areaId === area.id)
         .map((table) => ({ ...table, ...pending[table.id], ...(tablePreview?.id === table.id ? tablePreview : undefined) }))
   const selectedTable = areaTables.find((table) => table.id === selectedTableId)
+  const room = roomAreaId === null ? undefined : (pendingRooms.pending[roomAreaId] ?? savedRoom.data)
+  const selectedElement = room?.elements.find((element) => element.id === selectedElementId)
 
   function selectArea(areaId: string | null) {
     setSelectedAreaId(areaId)
     setSelectedTableId(null)
+    setSelectedElementId(null)
     setTablePreview(null)
     setTableScalePreview(null)
   }
 
   /** Selecting a table shows its panel instead of the area's, so an unsaved table size is dropped. */
   function selectTable(tableId: string | null) {
+    setSelectedElementId(null)
     if (tableId === selectedTableId) {
       return
     }
@@ -168,6 +256,44 @@ export function AreasPage() {
     setTablePreview(null)
     if (tableId !== null) {
       setTableScalePreview(null)
+    }
+  }
+
+  /** Selecting a room element shows its panel instead of the table's or the area's. */
+  function selectElement(elementId: string) {
+    selectTable(null)
+    setSelectedElementId(elementId)
+    setTableScalePreview(null)
+  }
+
+  /** Changes the room of the shown area; it is saved shortly after. */
+  function editRoom(change: (room: Room) => Room) {
+    if (roomAreaId !== null && savedRoom.data !== undefined) {
+      pendingRooms.edit(roomAreaId, savedRoom.data, change)
+    }
+  }
+
+  function changeElement(element: RoomElement) {
+    editRoom((current) => ({ ...current, elements: current.elements.map((e) => (e.id === element.id ? element : e)) }))
+  }
+
+  function addElement(kind: RoomElementKind) {
+    const element = newElement(kind, kind === 'Label' ? t('areas.room.defaultLabel') : null)
+    editRoom((current) => ({ ...current, elements: [...current.elements, element] }))
+    selectElement(element.id)
+  }
+
+  /** Saves the pending room first, so the suggestion uses the chosen style; then replaces elements and table positions. */
+  async function suggest(area: Area) {
+    await pendingRooms.save()
+    try {
+      await suggestRoom.mutateAsync(area.id)
+      pendingRooms.discard(area.id)
+      discard(areaTables.map((table) => table.id))
+      setSelectedElementId(null)
+      notifications.show({ color: 'brand', message: t('areas.room.suggested') })
+    } catch (error) {
+      notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) })
     }
   }
 
@@ -263,13 +389,20 @@ export function AreasPage() {
                     selectedTableId={selectedTableId}
                     onSelect={selectTable}
                     onMove={move}
+                    roomStyle={room?.roomStyle ?? area.roomStyle}
+                    roomElements={room?.elements ?? []}
+                    selectedElementId={selectedElementId}
+                    onSelectElement={selectElement}
+                    onMoveElement={(id, posX, posY) =>
+                      editRoom((current) => ({
+                        ...current,
+                        elements: current.elements.map((e) => (e.id === id ? { ...e, posX, posY } : e)),
+                      }))
+                    }
                   />
                   <Text size="xs" c="dimmed">
-                    {area.floorPlanUrl === null ? t('areas.dragHint') : `${t('areas.dragHint')} ${t('areas.newTableHint')}`}
+                    {area.floorPlanUrl === null ? t('areas.roomDragHint') : `${t('areas.dragHint')} ${t('areas.newTableHint')}`}
                   </Text>
-                  {area.floorPlanUrl === null && (
-                    <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
-                  )}
                   <Text fw={500}>
                     {area.onlineBookingEnabled
                       ? t('areas.capacity', {
@@ -279,6 +412,32 @@ export function AreasPage() {
                         })
                       : t('areas.capacityOnlineBlocked', { seats })}
                   </Text>
+                  {roomAreaId !== null && (
+                    <>
+                      <Divider />
+                      {savedRoom.isError ? (
+                        <ErrorAlert error={savedRoom.error} onRetry={() => void savedRoom.refetch()} />
+                      ) : room === undefined ? (
+                        <Center py="md">
+                          <Loader size="sm" />
+                        </Center>
+                      ) : (
+                        <RoomPanel
+                          areaName={area.name}
+                          roomStyle={room.roomStyle}
+                          elementCount={room.elements.length}
+                          saving={pendingRooms.pending[area.id] !== undefined || pendingRooms.saving}
+                          onStyleChange={(roomStyle) => editRoom((current) => ({ ...current, roomStyle }))}
+                          onAdd={addElement}
+                          onSuggest={() => suggest(area)}
+                          suggesting={suggestRoom.isPending}
+                        />
+                      )}
+                    </>
+                  )}
+                  {area.floorPlanUrl === null && (
+                    <FloorPlanDropzone onFile={(file) => upload(area, file)} loading={uploadFloorPlan.isPending} />
+                  )}
                 </Stack>
               </Card>
             </Grid.Col>
@@ -290,6 +449,17 @@ export function AreasPage() {
                     table={selectedTable}
                     onPreview={(shape, rotation) => setTablePreview({ id: selectedTable.id, shape, rotation })}
                     onClose={() => selectTable(null)}
+                  />
+                ) : selectedElement !== undefined ? (
+                  <RoomElementPanel
+                    key={selectedElement.id}
+                    element={selectedElement}
+                    onChange={changeElement}
+                    onDelete={() => {
+                      editRoom((current) => ({ ...current, elements: current.elements.filter((e) => e.id !== selectedElement.id) }))
+                      setSelectedElementId(null)
+                    }}
+                    onClose={() => setSelectedElementId(null)}
                   />
                 ) : (
                   <AreaPanel

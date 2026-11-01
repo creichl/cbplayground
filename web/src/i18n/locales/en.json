@@ -755,7 +755,11 @@
       "delete": "Delete area",
       "deleteTitle": "Delete “{{name}}”?",
       "deleteText": "The area’s tables ({{tables}}) and its floor plan will be deleted as well. This cannot be undone.",
-      "deleteConfirm": "Delete"
+      "deleteConfirm": "Delete",
+      "description": "Description",
+      "descriptionHint": "A short text guests see when they choose the area.",
+      "descriptionPlaceholder": "e.g. Roof terrace with a view over the city",
+      "descriptionCounter": "{{length}} / {{max}}"
     },
     "table": {
       "title": "Table {{number}}",
@@ -792,13 +796,81 @@
       "shapeInvalid": "Please choose round, square or rectangular.",
       "rotationInvalid": "A table can only be turned by 0° or 90°.",
       "tableScaleInvalid": "Please choose a table size from 50 to 200 %.",
-      "positionsNotSaved": "The table positions could not be saved"
+      "positionsNotSaved": "The table positions could not be saved",
+      "descriptionInvalid": "Please enter a description of at most 200 characters.",
+      "roomStyleInvalid": "Please choose indoor, terrace, garden or rooftop.",
+      "roomElementInvalid": "This kind of room element is not known. Please reload the page.",
+      "roomElementPositionInvalid": "A room element must lie in the room.",
+      "roomElementLabelInvalid": "Please enter a label of at most 40 characters.",
+      "tooManyRoomElements": "A room can have at most 60 elements.",
+      "roomNotSaved": "The room could not be saved"
+    },
+    "roomDragHint": "Drag tables and room elements to move them; the arrow keys move a selected element. Click one to edit it.",
+    "photo": {
+      "title": "Photo",
+      "text": "A photo of the area for the guests. It is saved as soon as it is uploaded or removed.",
+      "alt": "Photo of the area",
+      "emptyTitle": "No photo yet",
+      "dropHint": "Drop an image here or choose one.",
+      "choose": "Choose photo",
+      "replace": "Replace photo",
+      "remove": "Remove photo",
+      "hint": "PNG, JPEG or WebP, at most 10 MB. Landscape works best.",
+      "saved": "The photo has been saved.",
+      "removed": "The photo has been removed."
+    },
+    "room": {
+      "title": "Room",
+      "saving": "Saving…",
+      "saved": "Saved",
+      "style": "Room style",
+      "styleHint": "Sets the floor and the boundary of the drawn room.",
+      "styles": {
+        "Indoor": "Indoor: parquet and walls",
+        "Terrace": "Terrace: stone slabs and railing",
+        "Garden": "Garden: lawn and hedge",
+        "Rooftop": "Rooftop: wooden deck and glass parapet"
+      },
+      "add": "Add element",
+      "addHint": "A new element appears in the middle of the room. Drag it to its place.",
+      "full": "A room can have at most {{max}} elements.",
+      "suggestTitle": "Suggested room",
+      "suggestHint": "Furnishes the room to suit its style and number of tables and arranges the tables around the elements.",
+      "suggest": "Suggest room",
+      "suggestConfirmTitle": "Suggest a room for “{{name}}”?",
+      "suggestConfirmText": "All elements of this room are replaced by the suggestion, and all tables are placed anew around them. Their current positions are replaced.",
+      "suggestConfirm": "Suggest",
+      "suggested": "The room has been furnished and the tables arranged.",
+      "kinds": {
+        "Entrance": "Door",
+        "Window": "Window",
+        "Bar": "Bar",
+        "Plant": "Plant",
+        "Pillar": "Pillar",
+        "Sofa": "Sofa",
+        "Stage": "Stage",
+        "Service": "Service",
+        "Stairs": "Stairs",
+        "Label": "Label"
+      },
+      "elementMarker": "{{kind}}: {{label}}",
+      "kind": "Kind",
+      "length": "Length",
+      "lengthHint": "Along the wall, as a share of the room’s width.",
+      "depth": "Width",
+      "depthHint": "Into the room, as a share of the room’s width.",
+      "rotate": "Turn by 90°",
+      "label": "Label",
+      "labelHint": "Optional, shown in the plan, e.g. “Kitchen”.",
+      "delete": "Delete element",
+      "defaultLabel": "Text"
     }
   },
   "floorPlan": {
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "zoomReset": "Reset zoom"
+    "zoomReset": "Reset zoom",
+    "service": "Service"
   },
   "reservationSettings": {
     "title": "Reservation settings",

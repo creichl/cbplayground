@@ -755,7 +755,11 @@
       "delete": "Bereich löschen",
       "deleteTitle": "„{{name}}“ löschen?",
       "deleteText": "Die Tische des Bereichs ({{tables}}) und sein Grundriss werden ebenfalls gelöscht. Das lässt sich nicht rückgängig machen.",
-      "deleteConfirm": "Löschen"
+      "deleteConfirm": "Löschen",
+      "description": "Beschreibung",
+      "descriptionHint": "Ein kurzer Text, den Gäste bei der Wahl des Bereichs sehen.",
+      "descriptionPlaceholder": "z. B. Dachterrasse mit Blick über die Stadt",
+      "descriptionCounter": "{{length}} / {{max}}"
     },
     "table": {
       "title": "Tisch {{number}}",
@@ -792,13 +796,81 @@
       "shapeInvalid": "Bitte wählen Sie rund, quadratisch oder rechteckig.",
       "rotationInvalid": "Ein Tisch lässt sich nur um 0° oder 90° drehen.",
       "tableScaleInvalid": "Bitte wählen Sie eine Tischgröße von 50 bis 200 %.",
-      "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden"
+      "positionsNotSaved": "Die Tischpositionen konnten nicht gespeichert werden",
+      "descriptionInvalid": "Bitte geben Sie eine Beschreibung mit höchstens 200 Zeichen ein.",
+      "roomStyleInvalid": "Bitte wählen Sie Innenraum, Terrasse, Garten oder Dachterrasse.",
+      "roomElementInvalid": "Diese Art von Raumelement ist unbekannt. Bitte laden Sie die Seite neu.",
+      "roomElementPositionInvalid": "Ein Raumelement muss im Raum liegen.",
+      "roomElementLabelInvalid": "Bitte geben Sie eine Beschriftung mit höchstens 40 Zeichen ein.",
+      "tooManyRoomElements": "Ein Raum kann höchstens 60 Elemente haben.",
+      "roomNotSaved": "Der Raum konnte nicht gespeichert werden"
+    },
+    "roomDragHint": "Ziehen Sie Tische und Raumelemente, um sie zu verschieben; die Pfeiltasten verschieben ein gewähltes Element. Klicken Sie darauf, um es zu bearbeiten.",
+    "photo": {
+      "title": "Foto",
+      "text": "Ein Foto des Bereichs für die Gäste. Es wird gespeichert, sobald es hochgeladen oder entfernt ist.",
+      "alt": "Foto des Bereichs",
+      "emptyTitle": "Noch kein Foto",
+      "dropHint": "Ziehen Sie ein Bild hierher oder wählen Sie eines aus.",
+      "choose": "Foto auswählen",
+      "replace": "Foto ersetzen",
+      "remove": "Foto entfernen",
+      "hint": "PNG, JPEG oder WebP, höchstens 10 MB. Am besten im Querformat.",
+      "saved": "Das Foto wurde gespeichert.",
+      "removed": "Das Foto wurde entfernt."
+    },
+    "room": {
+      "title": "Raum",
+      "saving": "Wird gespeichert…",
+      "saved": "Gespeichert",
+      "style": "Raumart",
+      "styleHint": "Bestimmt Boden und Begrenzung des gezeichneten Raums.",
+      "styles": {
+        "Indoor": "Innenraum: Parkett und Wände",
+        "Terrace": "Terrasse: Steinplatten und Geländer",
+        "Garden": "Garten: Rasen und Hecke",
+        "Rooftop": "Dachterrasse: Holzdeck und Glasbrüstung"
+      },
+      "add": "Element hinzufügen",
+      "addHint": "Ein neues Element erscheint in der Mitte des Raums. Ziehen Sie es an seinen Platz.",
+      "full": "Ein Raum kann höchstens {{max}} Elemente haben.",
+      "suggestTitle": "Raumvorschlag",
+      "suggestHint": "Richtet den Raum passend zu Raumart und Tischzahl ein und ordnet die Tische um die Elemente an.",
+      "suggest": "Raum vorschlagen",
+      "suggestConfirmTitle": "Raum für „{{name}}“ vorschlagen?",
+      "suggestConfirmText": "Alle Elemente dieses Raums werden durch den Vorschlag ersetzt, und alle Tische werden neu darum angeordnet. Ihre bisherigen Positionen werden ersetzt.",
+      "suggestConfirm": "Vorschlagen",
+      "suggested": "Der Raum wurde eingerichtet und die Tische angeordnet.",
+      "kinds": {
+        "Entrance": "Tür",
+        "Window": "Fenster",
+        "Bar": "Bar",
+        "Plant": "Pflanze",
+        "Pillar": "Säule",
+        "Sofa": "Sofa",
+        "Stage": "Bühne",
+        "Service": "Service",
+        "Stairs": "Treppe",
+        "Label": "Beschriftung"
+      },
+      "elementMarker": "{{kind}}: {{label}}",
+      "kind": "Art",
+      "length": "Länge",
+      "lengthHint": "Entlang der Wand, als Anteil der Raumbreite.",
+      "depth": "Breite",
+      "depthHint": "In den Raum hinein, als Anteil der Raumbreite.",
+      "rotate": "Um 90° drehen",
+      "label": "Beschriftung",
+      "labelHint": "Optional, erscheint im Plan, z. B. „Küche“.",
+      "delete": "Element löschen",
+      "defaultLabel": "Text"
     }
   },
   "floorPlan": {
     "zoomIn": "Vergrößern",
     "zoomOut": "Verkleinern",
-    "zoomReset": "Ansicht zurücksetzen"
+    "zoomReset": "Ansicht zurücksetzen",
+    "service": "Service"
   },
   "reservationSettings": {
     "title": "Reservierungseinstellungen",
