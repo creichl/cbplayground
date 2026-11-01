@@ -1,4 +1,4 @@
-import { ArrowRightIcon, InfoIcon, MoonIcon, SunIcon, UtensilsCrossedIcon } from 'lucide-react'
+import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon, UtensilsCrossedIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import { BrandTheme } from '../components/BrandTheme.tsx'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
+import { Alert, AlertDescription, AlertTitle } from '../ui/alert.tsx'
 import { Badge } from '../ui/badge.tsx'
 import { Button } from '../ui/button.tsx'
 import { Calendar } from '../ui/calendar.tsx'
@@ -276,6 +277,20 @@ export function StyleguidePage() {
                   <Badge variant="success">{t('reservations.status.confirmed')}</Badge>
                   <Badge variant="warning">{t('reservations.status.requested')}</Badge>
                   <Badge variant="destructive">{t('reservations.status.cancelled')}</Badge>
+                </div>
+              </Block>
+
+              <Block name="Alert">
+                <div className="flex max-w-xl flex-col gap-3">
+                  <Alert variant="destructive" role="note">
+                    <CircleAlertIcon aria-hidden="true" />
+                    <AlertDescription>{t('login.errors.invalidCredentials')}</AlertDescription>
+                  </Alert>
+                  <Alert role="note">
+                    <PhoneIcon aria-hidden="true" />
+                    <AlertTitle>{t('guestReservation.contact')}</AlertTitle>
+                    <AlertDescription>{t('guestReservation.cannotCancel')}</AlertDescription>
+                  </Alert>
                 </div>
               </Block>
 

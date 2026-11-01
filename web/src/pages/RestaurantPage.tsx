@@ -1,7 +1,8 @@
-import { Box, Button, Container, Grid, Skeleton, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { Box, Container, Grid, Skeleton, Stack, Text, UnstyledButton } from '@mantine/core'
+import { StoreIcon } from 'lucide-react'
 import { useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { isNotFound, type PublicRestaurant, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
 import { bookingSectionId, contentWidth, headerHeight } from '../components/booking/layout.ts'
@@ -10,6 +11,7 @@ import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/bookin
 import { RestaurantInfo } from '../components/booking/RestaurantInfo.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
+import { NotFound } from './NotFoundPage.tsx'
 
 // Spacing follows an 8 px grid (8, 16, 24, 32, 48), text sizes Mantine's fixed scale.
 
@@ -53,20 +55,14 @@ export function RestaurantPage() {
     )
   }
 
+  if (isNotFound(restaurant.error)) {
+    return <NotFound icon={<StoreIcon />} title={t('restaurant.notFoundTitle')} text={t('restaurant.notFoundText')} />
+  }
+
   if (restaurant.isError) {
     return (
       <Container size="sm" py={48}>
-        {isNotFound(restaurant.error) ? (
-          <Stack gap={16} align="flex-start">
-            <Title order={1}>{t('restaurant.notFoundTitle')}</Title>
-            <Text size="lg">{t('restaurant.notFoundText')}</Text>
-            <Button component={Link} to="/" size="md" h={48}>
-              {t('common.backToStart')}
-            </Button>
-          </Stack>
-        ) : (
-          <ErrorAlert error={restaurant.error} onRetry={() => void restaurant.refetch()} />
-        )}
+        <ErrorAlert error={restaurant.error} onRetry={() => void restaurant.refetch()} />
       </Container>
     )
   }
