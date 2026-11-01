@@ -1,4 +1,5 @@
 import { Alert, Anchor, Box, Button, Card, Grid, Group, Skeleton, Stack, Text, Title, UnstyledButton } from '@mantine/core'
+import { useElementSize } from '@mantine/hooks'
 import type { ParseKeys, TFunction } from 'i18next'
 import { type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -259,6 +260,8 @@ function BookingSteps({ slug, restaurant, timeZoneId, stickyBar }: Required<Book
   // After a change of step, the focus moves to the new step's heading, so keyboard and screen reader users follow along.
   const headingRef = useRef<HTMLHeadingElement>(null)
   const focusedStep = useRef(step)
+  // The height of the bar at the bottom of the screen on phones, which grows with its text.
+  const { ref: barRef, height: barHeight } = useElementSize()
   useEffect(() => {
     if (focusedStep.current !== step) {
       focusedStep.current = step
@@ -498,8 +501,8 @@ function BookingSteps({ slug, restaurant, timeZoneId, stickyBar }: Required<Book
 
       {stickyBar && (
         <>
-          {/* Room for the bar, so it never covers the end of the step. */}
-          <Box hiddenFrom="md" h={80} />
+          {/* Room for the bar (its content and padding), so it never covers the end of the step. */}
+          <Box hiddenFrom="md" h={Math.max(80, barHeight + 32)} />
           <Box
             hiddenFrom="md"
             pos="fixed"
@@ -516,8 +519,19 @@ function BookingSteps({ slug, restaurant, timeZoneId, stickyBar }: Required<Book
               boxShadow: '0 -4px 16px rgba(0, 0, 0, 0.12)',
             }}
           >
-            <Group justify="space-between" wrap="nowrap" gap={16}>
-              <Text size="sm" fw={600} lineClamp={2} miw={0}>
+            {/* On the table step the hint or the chosen table is never cut: it stands above the button. */}
+            <Box
+              ref={barRef}
+              style={{
+                display: 'flex',
+                flexWrap: step === 'table' ? 'wrap' : 'nowrap',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                columnGap: 16,
+                rowGap: 8,
+              }}
+            >
+              <Text size="sm" fw={600} lineClamp={step === 'table' ? undefined : 2} miw={0} style={{ flexBasis: step === 'table' ? '100%' : undefined }}>
                 {barText}
               </Text>
               {'submit' in barAction ? (
@@ -525,11 +539,11 @@ function BookingSteps({ slug, restaurant, timeZoneId, stickyBar }: Required<Book
                   {barAction.label}
                 </Button>
               ) : (
-                <Button h={48} disabled={barAction.disabled} onClick={barAction.onClick} style={{ flexShrink: 0 }}>
+                <Button h={48} ml="auto" disabled={barAction.disabled} onClick={barAction.onClick} style={{ flexShrink: 0 }}>
                   {barAction.label}
                 </Button>
               )}
-            </Group>
+            </Box>
           </Box>
         </>
       )}
