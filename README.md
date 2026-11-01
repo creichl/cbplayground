@@ -617,6 +617,8 @@ The guest pages move to their own design system, built with **Tailwind CSS 4** (
 
 **Styleguide:** `/dev/ui` shows all tokens and components, in light and dark, switchable between "without branding" and the brandings of the three demo restaurants. It only exists in development (`npm run dev`); the production build contains neither the route nor the page (like the demo accounts on `/login`).
 
+**Loading:** only the start page is part of the main bundle; every other page and its layout (`web/src/router.tsx`, `lazy`) is loaded when its route is first visited, so the start page does not carry the code of the restaurant's pages, the admin area, the front desk and the Superadmin. On the start page, Lighthouse (mobile) is held back by the cover images: the API delivers them as uploaded (the demo covers 400–570 KB), and the first one is the largest element of the page. Without them the page scores 98 for performance; smaller variants of the images for the cards are still open.
+
 **Add a shadcn component:**
 
 1. In `web`, run `npx shadcn@latest add <name>` (e.g. `accordion`). The CLI reads `components.json` and writes the file to `web/src/ui/`; it may ask to install its Radix package. Packages beyond those listed under Stack need agreement first.

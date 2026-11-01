@@ -1,102 +1,95 @@
 import { createBrowserRouter } from 'react-router'
 import { RequireRole } from './components/RequireRole.tsx'
-import { AdminLayout } from './layouts/AdminLayout.tsx'
-import { EmbedLayout } from './layouts/EmbedLayout.tsx'
-import { FrontdeskLayout } from './layouts/FrontdeskLayout.tsx'
-import { GuestLayout } from './layouts/GuestLayout.tsx'
-import { SuperadminLayout } from './layouts/SuperadminLayout.tsx'
-import { AdminOverviewPage } from './pages/AdminOverviewPage.tsx'
-import { AreasPage } from './pages/AreasPage.tsx'
-import { BrandingPage } from './pages/BrandingPage.tsx'
-import { EmbedBookingPage } from './pages/EmbedBookingPage.tsx'
-import { EmbedSnippetPage } from './pages/EmbedSnippetPage.tsx'
-import { FrontdeskTodayPage } from './pages/FrontdeskTodayPage.tsx'
-import { GuestReservationPage } from './pages/GuestReservationPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
-import { LoginPage } from './pages/LoginPage.tsx'
-import { NotFoundPage } from './pages/NotFoundPage.tsx'
-import { OpeningHoursPage } from './pages/OpeningHoursPage.tsx'
-import { ProfilePage } from './pages/ProfilePage.tsx'
-import { ReservationSettingsPage } from './pages/ReservationSettingsPage.tsx'
-import { ReservationsPage } from './pages/ReservationsPage.tsx'
-import { RestaurantPage } from './pages/RestaurantPage.tsx'
-import { StaffPage } from './pages/StaffPage.tsx'
-import { SuperadminTenantPage } from './pages/SuperadminTenantPage.tsx'
-import { SuperadminTenantsPage } from './pages/SuperadminTenantsPage.tsx'
-import { TableOverviewPage } from './pages/TableOverviewPage.tsx'
 
+// Every page except the start page, and its layout, is loaded when its route is first visited, so the start page does not carry the code
+// of the restaurant's pages, the admin area, the front desk and the Superadmin (README, "Design system").
 export const router = createBrowserRouter([
-  // The start page brings its own header and footer (design system, src/ui).
-  { index: true, element: <HomePage /> },
-  { path: 'login', element: <LoginPage /> },
-  // Development only: the styleguide of the design system. The production build contains neither the route nor the page.
-  ...(import.meta.env.DEV
-    ? [
-        {
-          path: 'dev/ui',
-          HydrateFallback: () => null,
-          lazy: () => import('./pages/StyleguidePage.tsx').then(({ StyleguidePage }) => ({ Component: StyleguidePage })),
-        },
-      ]
-    : []),
   {
-    element: <EmbedLayout />,
-    children: [{ path: 'embed/:slug', element: <EmbedBookingPage /> }],
-  },
-  {
-    element: <GuestLayout />,
+    // Nothing is shown while the page of the first visited route loads.
+    HydrateFallback: () => null,
     children: [
-      { path: 'r/:slug', element: <RestaurantPage /> },
-      { path: 'r/:slug/reservation/:code', element: <GuestReservationPage /> },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-  {
-    path: 'superadmin',
-    element: (
-      <RequireRole roles={['Superadmin']}>
-        <SuperadminLayout />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, element: <SuperadminTenantsPage /> },
-      { path: 'tenants/:id', element: <SuperadminTenantPage /> },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-  {
-    path: 'admin',
-    element: (
-      <RequireRole roles={['TenantAdmin']}>
-        <AdminLayout />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, element: <AdminOverviewPage /> },
-      { path: 'reservations', element: <ReservationsPage /> },
-      { path: 'tables', element: <TableOverviewPage /> },
-      { path: 'profile', element: <ProfilePage /> },
-      { path: 'design', element: <BrandingPage /> },
-      { path: 'areas', element: <AreasPage /> },
-      { path: 'opening-hours', element: <OpeningHoursPage /> },
-      { path: 'reservation-settings', element: <ReservationSettingsPage /> },
-      { path: 'staff', element: <StaffPage /> },
-      { path: 'embed', element: <EmbedSnippetPage /> },
-      { path: '*', element: <NotFoundPage /> },
-    ],
-  },
-  {
-    path: 'frontdesk',
-    element: (
-      <RequireRole roles={['TenantAdmin', 'FrontDesk']}>
-        <FrontdeskLayout />
-      </RequireRole>
-    ),
-    children: [
-      { index: true, element: <FrontdeskTodayPage /> },
-      { path: 'reservations', element: <ReservationsPage /> },
-      { path: 'tables', element: <TableOverviewPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      // The start page brings its own header and footer (design system, src/ui).
+      { index: true, element: <HomePage /> },
+      { path: 'login', lazy: () => import('./pages/LoginPage.tsx').then(({ LoginPage }) => ({ Component: LoginPage })) },
+      // Development only: the styleguide of the design system. The production build contains neither the route nor the page.
+      ...(import.meta.env.DEV
+        ? [
+            {
+              path: 'dev/ui',
+              lazy: () => import('./pages/StyleguidePage.tsx').then(({ StyleguidePage }) => ({ Component: StyleguidePage })),
+            },
+          ]
+        : []),
+      {
+        lazy: () => import('./layouts/EmbedLayout.tsx').then(({ EmbedLayout }) => ({ Component: EmbedLayout })),
+        children: [{ path: 'embed/:slug', lazy: () => import('./pages/EmbedBookingPage.tsx').then(({ EmbedBookingPage }) => ({ Component: EmbedBookingPage })) }],
+      },
+      {
+        lazy: () => import('./layouts/GuestLayout.tsx').then(({ GuestLayout }) => ({ Component: GuestLayout })),
+        children: [
+          { path: 'r/:slug', lazy: () => import('./pages/RestaurantPage.tsx').then(({ RestaurantPage }) => ({ Component: RestaurantPage })) },
+          { path: 'r/:slug/reservation/:code', lazy: () => import('./pages/GuestReservationPage.tsx').then(({ GuestReservationPage }) => ({ Component: GuestReservationPage })) },
+          { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
+        ],
+      },
+      {
+        path: 'superadmin',
+        lazy: () =>
+          import('./layouts/SuperadminLayout.tsx').then(({ SuperadminLayout }) => ({
+            element: (
+              <RequireRole roles={['Superadmin']}>
+                <SuperadminLayout />
+              </RequireRole>
+            ),
+          })),
+        children: [
+          { index: true, lazy: () => import('./pages/SuperadminTenantsPage.tsx').then(({ SuperadminTenantsPage }) => ({ Component: SuperadminTenantsPage })) },
+          { path: 'tenants/:id', lazy: () => import('./pages/SuperadminTenantPage.tsx').then(({ SuperadminTenantPage }) => ({ Component: SuperadminTenantPage })) },
+          { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
+        ],
+      },
+      {
+        path: 'admin',
+        lazy: () =>
+          import('./layouts/AdminLayout.tsx').then(({ AdminLayout }) => ({
+            element: (
+              <RequireRole roles={['TenantAdmin']}>
+                <AdminLayout />
+              </RequireRole>
+            ),
+          })),
+        children: [
+          { index: true, lazy: () => import('./pages/AdminOverviewPage.tsx').then(({ AdminOverviewPage }) => ({ Component: AdminOverviewPage })) },
+          { path: 'reservations', lazy: () => import('./pages/ReservationsPage.tsx').then(({ ReservationsPage }) => ({ Component: ReservationsPage })) },
+          { path: 'tables', lazy: () => import('./pages/TableOverviewPage.tsx').then(({ TableOverviewPage }) => ({ Component: TableOverviewPage })) },
+          { path: 'profile', lazy: () => import('./pages/ProfilePage.tsx').then(({ ProfilePage }) => ({ Component: ProfilePage })) },
+          { path: 'design', lazy: () => import('./pages/BrandingPage.tsx').then(({ BrandingPage }) => ({ Component: BrandingPage })) },
+          { path: 'areas', lazy: () => import('./pages/AreasPage.tsx').then(({ AreasPage }) => ({ Component: AreasPage })) },
+          { path: 'opening-hours', lazy: () => import('./pages/OpeningHoursPage.tsx').then(({ OpeningHoursPage }) => ({ Component: OpeningHoursPage })) },
+          { path: 'reservation-settings', lazy: () => import('./pages/ReservationSettingsPage.tsx').then(({ ReservationSettingsPage }) => ({ Component: ReservationSettingsPage })) },
+          { path: 'staff', lazy: () => import('./pages/StaffPage.tsx').then(({ StaffPage }) => ({ Component: StaffPage })) },
+          { path: 'embed', lazy: () => import('./pages/EmbedSnippetPage.tsx').then(({ EmbedSnippetPage }) => ({ Component: EmbedSnippetPage })) },
+          { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
+        ],
+      },
+      {
+        path: 'frontdesk',
+        lazy: () =>
+          import('./layouts/FrontdeskLayout.tsx').then(({ FrontdeskLayout }) => ({
+            element: (
+              <RequireRole roles={['TenantAdmin', 'FrontDesk']}>
+                <FrontdeskLayout />
+              </RequireRole>
+            ),
+          })),
+        children: [
+          { index: true, lazy: () => import('./pages/FrontdeskTodayPage.tsx').then(({ FrontdeskTodayPage }) => ({ Component: FrontdeskTodayPage })) },
+          { path: 'reservations', lazy: () => import('./pages/ReservationsPage.tsx').then(({ ReservationsPage }) => ({ Component: ReservationsPage })) },
+          { path: 'tables', lazy: () => import('./pages/TableOverviewPage.tsx').then(({ TableOverviewPage }) => ({ Component: TableOverviewPage })) },
+          { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
+        ],
+      },
     ],
   },
 ])
