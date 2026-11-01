@@ -8,24 +8,18 @@ import { createContext } from 'react'
  */
 export const HeroContext = createContext<(element: HTMLElement | null) => void>(() => {})
 
-/** The id of the booking on the restaurant's page, the target of the header's "Reserve a table" on phones. */
+/** The id of the reservation card on the restaurant's page, the target of "Reserve a table" in the header and the bar on phones. */
 export const bookingSectionId = 'booking'
 
-/** Brings the booking into view and moves the focus to its step heading. */
+/** Brings the reservation card into view and moves the focus to its heading. */
 export function scrollToBooking() {
   const section = document.getElementById(bookingSectionId)
-  section?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  section?.querySelector<HTMLElement>('[data-step-heading]')?.focus({ preventScroll: true })
+  section?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
+  section?.querySelector<HTMLElement>('[data-booking-heading]')?.focus({ preventScroll: true })
 }
 
-/** Height of the restaurant's header in pixels. */
+/** Height of the restaurant's header in pixels (h-16). */
 export const headerHeight = 64
 
-/** The widest the content of a restaurant's pages gets, header and footer alike. */
+/** The widest the content of a restaurant's pages gets, header and footer alike (max-w-page). */
 export const contentWidth = 1200
-
-/** The fields of the booking bar: 48 px high (8 px grid, at least 44 px to tap), the label above in the text colour. */
-export const barInputStyles = {
-  input: { height: 48 },
-  label: { fontWeight: 600, marginBottom: 4 },
-} as const

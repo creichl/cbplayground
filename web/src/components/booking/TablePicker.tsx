@@ -1,26 +1,17 @@
-import {
-  Alert,
-  AspectRatio,
-  Box,
-  Button,
-  Card,
-  Group,
-  Radio,
-  SimpleGrid,
-  Skeleton,
-  Stack,
-  Text,
-  UnstyledButton,
-  useMantineColorScheme,
-} from '@mantine/core'
-import { useState } from 'react'
+import { ArmchairIcon, BanIcon, CheckIcon, ChevronDownIcon, TriangleAlertIcon } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type PublicArea, type PublicTable, usePublicTables } from '../../api/publicBooking.ts'
-import { ErrorAlert } from '../ErrorAlert.tsx'
-import { FloorPlan } from '../floor-plan/FloorPlan.tsx'
+import { cn } from '../../lib/utils.ts'
+import { Alert, AlertDescription } from '../../ui/alert.tsx'
+import { Button } from '../../ui/button.tsx'
+import { Photo } from '../../ui/photo.tsx'
+import { Skeleton } from '../../ui/skeleton.tsx'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip.tsx'
+import { FloorPlan, type ZoomButtonProps } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
-import { ArmchairIcon, BanIcon, CheckIcon } from '../icons.tsx'
-import { Photo } from '../Photo.tsx'
+import { RequestError } from './RequestError.tsx'
+import { StepActions } from './StepActions.tsx'
 import { tableLooks, unavailableHatchId } from './tableLooks.ts'
 
 type TablePickerProps = {
@@ -33,11 +24,9 @@ type TablePickerProps = {
   onChange: (tableId: string) => void
   onContinue: () => void
   onChangeTime: () => void
-  /** On phones the chosen table and "Continue" are in the booking's bar at the bottom of the screen instead of below the plan. */
-  stickyBar: boolean
+  /** The restaurant's dark mode: the drawn room and the tables suit it. */
+  dark: boolean
 }
-
-type Look = (typeof tableLooks)['light']
 
 /**
  * The table the guest would pick if the system assigned it: the fewest seats; for equal sizes the order of the areas, then
@@ -54,48 +43,47 @@ function smallestFreeTable(areas: PublicArea[]) {
 }
 
 /**
- * The guest's choice of table. At the top the areas as cards with photo, description and the number of free tables (an area
- * without one is disabled), scrolling sideways on phones. Below, the legend and the plan of the chosen area (its floor plan image or its drawn room) with the
- * zoom buttons in its corner: free tables that fit the party outlined in the accent colour, the chosen one filled with a
- * check, the others muted and hatched. Under the plan the chosen table with "Continue" (on phones in the bar at the bottom),
- * "No preference" and the list of the free tables, which is the way to choose with the keyboard and screen readers.
+ * The guest's choice of table in the booking dialog. From 768 px on the plan of the chosen area large on the left (its floor
+ * plan image or its drawn room, with the zoom buttons in its corner) and a column on the right: the areas as small cards with
+ * photo and "N free", the legend, the chosen table, "No preference" and "Continue". On phones the areas are chips above the
+ * plan in the full width, and the choice with "Continue" stays at the bottom of the screen. Free tables that fit the party
+ * are outlined in the accent colour, the chosen one filled with a check, the others muted and hatched; hovering a table
+ * names it ("Table R6 · up to 6 people"). The list of the free tables, folded away below the plan, is the way to choose with
+ * the keyboard and screen readers.
  */
-export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, stickyBar }: TablePickerProps) {
+export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, dark }: TablePickerProps) {
   const { t } = useTranslation()
-  const dark = useMantineColorScheme().colorScheme === 'dark'
-  const look = tableLooks[dark ? 'dark' : 'light']
   const areas = usePublicTables(slug, date, time, guests)
   const [activeArea, setActiveArea] = useState<string | null>(null)
 
   if (areas.isPending) {
     return (
-      <Stack gap={16} aria-hidden="true">
-        <Group gap={16} wrap="nowrap" style={{ overflow: 'hidden' }}>
-          <Skeleton h={208} w={240} style={{ flexShrink: 0 }} />
-          <Skeleton h={208} w={240} style={{ flexShrink: 0 }} />
-        </Group>
-        <Skeleton h={24} w="60%" />
-        <AspectRatio ratio={3 / 2}>
-          <Skeleton />
-        </AspectRatio>
-      </Stack>
+      <div className="grid gap-6 md:grid-cols-[minmax(0,1fr)_17rem]" aria-hidden="true">
+        <Skeleton className="aspect-3/2 w-full" />
+        <div className="hidden flex-col gap-3 md:flex">
+          <Skeleton className="h-18" />
+          <Skeleton className="h-18" />
+          <Skeleton className="h-24" />
+        </div>
+      </div>
     )
   }
   if (areas.isError) {
-    return <ErrorAlert error={areas.error} onRetry={() => void areas.refetch()} />
+    return <RequestError error={areas.error} onRetry={() => void areas.refetch()} />
   }
 
   const anyFree = areas.data.some((area) => area.tables.some((table) => table.available))
   if (!anyFree) {
     return (
-      <Stack gap={16} align="flex-start">
-        <Alert color="yellow" variant="light" w="100%">
-          {t('booking.table.noneFree')}
+      <div className="flex flex-col items-start gap-4">
+        <Alert variant="warning">
+          <TriangleAlertIcon aria-hidden="true" />
+          <AlertDescription>{t('booking.table.noneFree')}</AlertDescription>
         </Alert>
-        <Button variant="default" h={44} onClick={onChangeTime}>
+        <Button variant="outline" onClick={onChangeTime}>
           {t('booking.table.otherTime')}
         </Button>
-      </Stack>
+      </div>
     )
   }
 
@@ -106,6 +94,10 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
   const area = areas.data.find((option) => option.id === activeArea) ?? defaultArea
   const chosen = areas.data.flatMap((option) => option.tables.map((table) => ({ table, area: option }))).find(({ table }) => table.id === value)
   const free = area.tables.filter((table) => table.available)
+  const selection =
+    chosen !== undefined
+      ? t('booking.table.selection', { number: chosen.table.number, count: chosen.table.seats, area: chosen.area.name })
+      : t('booking.table.hint')
 
   const choose = (table: PublicTable) => {
     setActiveArea(areas.data.find((option) => option.tables.includes(table))?.id ?? null)
@@ -117,28 +109,39 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
       choose(table)
     }
   }
+  const freeCount = (option: PublicArea) => option.tables.filter((table) => table.available).length
 
   return (
-    <Stack gap={24}>
-      <HatchPatterns />
+    // A grid around the whole step, so the actions at its end stay at the bottom of the screen on phones (StepActions).
+    <div className="grid gap-x-6 gap-y-5 md:grid-cols-[minmax(0,1fr)_17rem] md:grid-rows-[auto_1fr]">
+      <HatchPattern />
 
-      <Box
-        role="group"
-        aria-label={t('booking.table.areasLabel')}
-        // Scrolls sideways when the cards do not fit, e.g. on phones; the page itself never does.
-        style={{ display: 'flex', gap: 16, overflowX: 'auto', scrollSnapType: 'x mandatory', padding: 2, margin: -2 }}
-      >
-        {areas.data.map((option) => (
-          <AreaCard key={option.id} area={option} selected={option.id === area.id} onSelect={() => setActiveArea(option.id)} />
-        ))}
-      </Box>
+      <div className="flex min-w-0 flex-col gap-4 md:row-span-2">
+        {/* On phones the areas as chips that scroll sideways; the page itself never does. */}
+        <div role="group" aria-label={t('booking.table.areasLabel')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
+          {areas.data.map((option) => {
+            const count = freeCount(option)
+            return (
+              <button
+                key={option.id}
+                type="button"
+                aria-pressed={option.id === area.id}
+                disabled={count === 0}
+                onClick={() => setActiveArea(option.id)}
+                className={cn(
+                  'inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors focus-ring disabled:cursor-not-allowed disabled:opacity-60',
+                  option.id === area.id ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background hover:bg-accent',
+                )}
+              >
+                {option.name}
+                <span className={cn('text-xs', option.id === area.id ? 'opacity-90' : 'text-muted-foreground')}>
+                  {count === 0 ? t('booking.table.fullyBooked') : t('booking.table.freeShort', { count })}
+                </span>
+              </button>
+            )
+          })}
+        </div>
 
-      <Stack gap={8}>
-        <Group gap={16} aria-hidden="true">
-          <LegendItem look={look.free} label={t('booking.table.legend.free')} />
-          <LegendItem look={look.selected} label={t('booking.table.legend.selected')} check />
-          <LegendItem look={look.unavailable} hatch={look.hatch} label={t('booking.table.legend.unavailable')} />
-        </Group>
         {area.tables.length > 0 && (
           // The list below is the accessible way to choose; the plan repeats it for pointer and touch.
           <FloorPlan
@@ -150,221 +153,192 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
             tableScale={area.tableScale}
             ariaHidden
             zoomControls="inside"
+            zoomButton={ZoomButton}
+            dark={dark}
           >
             {area.tables.map((table) => {
               const selected = table.id === value
-              const tableLook = selected ? look.selected : table.available ? look.free : look.unavailable
+              const look = selected ? tableLooks.selected : table.available ? tableLooks.free : tableLooks.unavailable
               return (
-                <TableShape
-                  key={table.id}
-                  number={table.number}
-                  seats={table.seats}
-                  shape={table.shape}
-                  rotation={table.rotation}
-                  posX={table.posX}
-                  posY={table.posY}
-                  tableScale={area.tableScale}
-                  {...tableLook}
-                  note={selected ? <CheckIcon size={12} strokeWidth={3} style={{ display: 'block', margin: '1px 0' }} /> : undefined}
-                  onClick={table.available ? () => choose(table) : undefined}
-                  style={{ cursor: table.available ? 'pointer' : 'not-allowed', zIndex: selected ? 2 : 1 }}
-                />
+                <Tooltip key={table.id}>
+                  <TooltipTrigger asChild>
+                    <TableShape
+                      number={table.number}
+                      seats={table.seats}
+                      shape={table.shape}
+                      rotation={table.rotation}
+                      posX={table.posX}
+                      posY={table.posY}
+                      tableScale={area.tableScale}
+                      dark={dark}
+                      {...look}
+                      note={selected ? <CheckIcon aria-hidden="true" className="my-px size-3" strokeWidth={3} /> : undefined}
+                      onClick={table.available ? () => choose(table) : undefined}
+                      className={table.available ? 'cursor-pointer' : 'cursor-not-allowed'}
+                      // Above the other tables, so its check is never covered.
+                      style={{ zIndex: selected ? 2 : 1 }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent side="top">
+                    {table.available
+                      ? t('booking.table.tooltip', { number: table.number, count: table.seats })
+                      : t('booking.table.tooltipUnavailable', { number: table.number, count: table.seats })}
+                  </TooltipContent>
+                </Tooltip>
               )
             })}
           </FloorPlan>
         )}
-      </Stack>
 
-      <Card withBorder shadow="none" padding={16} visibleFrom={stickyBar ? 'md' : undefined}>
-        {/* The text is never cut: where it does not fit beside the buttons, it stands above them. */}
-        <Box style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', columnGap: 16, rowGap: 12 }}>
-          <Text fw={chosen !== undefined ? 600 : undefined} style={{ flex: '1 1 260px', minWidth: 0 }}>
-            {chosen !== undefined
-              ? t('booking.table.selection', { number: chosen.table.number, count: chosen.table.seats, area: chosen.area.name })
-              : t('booking.table.hint')}
-          </Text>
-          {/* "No preference" second, "Continue" the main action. */}
-          <Group gap={8} justify="flex-end" ml="auto">
-            <Button variant="default" h={44} onClick={noPreference}>
-              {t('booking.table.noPreference')}
-            </Button>
-            <Button h={44} disabled={value === null} onClick={onContinue}>
-              {t('booking.continue')}
-            </Button>
-          </Group>
-        </Box>
-      </Card>
-      {stickyBar && (
-        <Group hiddenFrom="md">
-          <Button variant="default" h={44} onClick={noPreference}>
-            {t('booking.table.noPreference')}
-          </Button>
-        </Group>
-      )}
+        <details className="group rounded-xl border border-border">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-2 rounded-xl px-4 py-2 text-sm font-semibold focus-ring [&::-webkit-details-marker]:hidden">
+            {t('booking.table.showList')}
+            <ChevronDownIcon aria-hidden="true" className="size-4 shrink-0 transition-transform group-open:rotate-180" />
+          </summary>
+          <div className="border-t border-border px-4 py-3">
+            {free.length === 0 ? (
+              <p className="text-sm">{t('booking.table.noneFreeInArea')}</p>
+            ) : (
+              <fieldset>
+                <legend className="mb-2 text-sm font-semibold">{t('booking.table.listLabel', { area: area.name })}</legend>
+                <div className="grid gap-x-4 sm:grid-cols-2">
+                  {free.map((table) => (
+                    <label key={table.id} className="flex min-h-11 cursor-pointer items-center gap-3 text-sm">
+                      <input
+                        type="radio"
+                        name="booking-table"
+                        value={table.id}
+                        checked={table.id === value}
+                        onChange={() => choose(table)}
+                        className="size-4 accent-primary focus-ring"
+                      />
+                      {t('booking.table.option', { number: table.number, count: table.seats })}
+                    </label>
+                  ))}
+                </div>
+              </fieldset>
+            )}
+          </div>
+        </details>
+      </div>
 
-      {free.length === 0 ? (
-        <Text size="sm">{t('booking.table.noneFreeInArea')}</Text>
-      ) : (
-        <Radio.Group
-          label={t('booking.table.listLabel', { area: area.name })}
-          value={free.some((table) => table.id === value) ? value : null}
-          onChange={(id) => choose(free.find((table) => table.id === id)!)}
-          styles={{ label: { fontWeight: 600, marginBottom: 8 } }}
-        >
-          <SimpleGrid cols={{ base: 1, xs: 2, sm: 3 }} spacing={8} verticalSpacing={0}>
-            {free.map((table) => (
-              <Radio
-                key={table.id}
-                value={table.id}
-                label={t('booking.table.option', { number: table.number, count: table.seats })}
-                styles={{ body: { alignItems: 'center', minHeight: 44 }, labelWrapper: { justifyContent: 'center' } }}
-              />
-            ))}
-          </SimpleGrid>
-        </Radio.Group>
-      )}
-    </Stack>
+      <div className="flex flex-col gap-5">
+        <div role="group" aria-label={t('booking.table.areasLabel')} className="hidden flex-col gap-2 md:flex">
+          {areas.data.map((option) => (
+            <AreaCard key={option.id} area={option} freeCount={freeCount(option)} selected={option.id === area.id} onSelect={() => setActiveArea(option.id)} />
+          ))}
+        </div>
+
+        <ul aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-2 text-sm md:flex-col">
+          <LegendItem swatch="border-[3px] border-primary bg-[color-mix(in_srgb,var(--primary)_18%,var(--card))]" label={t('booking.table.legend.free')} />
+          <LegendItem
+            swatch="border-[3px] border-foreground bg-primary text-primary-foreground"
+            label={t('booking.table.legend.selected')}
+            icon={<CheckIcon className="size-3" strokeWidth={3} />}
+          />
+          <LegendItem
+            swatch="border border-muted-foreground bg-[repeating-linear-gradient(45deg,var(--input)_0_2px,var(--muted)_2px_5px)]"
+            label={t('booking.table.legend.unavailable')}
+          />
+        </ul>
+
+        <div className="hidden flex-col gap-3 rounded-xl border border-border bg-muted/50 p-4 md:flex">
+          <p aria-live="polite" className={cn('text-sm', chosen !== undefined && 'font-semibold')}>
+            {selection}
+          </p>
+        </div>
+
+        <Button variant="outline" className="self-start md:self-stretch" onClick={noPreference}>
+          {t('booking.table.noPreference')}
+        </Button>
+      </div>
+
+      <StepActions className="md:col-start-2 md:self-end">
+        <p className="text-sm font-semibold md:hidden">{selection}</p>
+        <Button size="lg" className="w-full" disabled={value === null} onClick={onContinue}>
+          {t('booking.continue')}
+        </Button>
+      </StepActions>
+    </div>
+  )
+}
+
+/** A zoom button inside the plan, from the design system. */
+function ZoomButton({ label, icon, disabled, onClick }: ZoomButtonProps) {
+  return (
+    <Button variant="outline" size="icon" aria-label={label} disabled={disabled} onClick={onClick} className="size-11 bg-card shadow-card">
+      {icon}
+    </Button>
   )
 }
 
 /**
- * An area as a card: its photo (fading in; without one, or when it cannot be loaded, a calm surface with a chair), name, description and how many suitable tables are free.
- * Without a free table it is disabled and says "Fully booked". The chosen area has an accent border and a check.
+ * An area as a small card: its photo (without one, or when it cannot be loaded, a calm surface with a chair), its name and
+ * how many suitable tables are free. Without a free table it is disabled and says "Fully booked"; the chosen one has a ring
+ * in the accent colour.
  */
-function AreaCard({ area, selected, onSelect }: { area: PublicArea; selected: boolean; onSelect: () => void }) {
+function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; freeCount: number; selected: boolean; onSelect: () => void }) {
   const { t } = useTranslation()
-  const dark = useMantineColorScheme().colorScheme === 'dark'
-  const freeCount = area.tables.filter((table) => table.available).length
   const full = freeCount === 0
 
   return (
-    <UnstyledButton
+    <button
+      type="button"
       onClick={onSelect}
       disabled={full}
       aria-pressed={selected}
-      className="mantine-focus-auto"
-      style={{
-        flex: '1 0 240px',
-        maxWidth: 360,
-        scrollSnapAlign: 'start',
-        borderRadius: 'var(--mantine-radius-md)',
-        // Always 2 px, so choosing a card does not move anything.
-        border: `2px solid ${selected ? 'var(--mantine-primary-color-filled)' : 'var(--mantine-color-default-border)'}`,
-        backgroundColor: dark ? 'var(--mantine-color-dark-6)' : 'var(--mantine-color-white)',
-        overflow: 'hidden',
-        cursor: full ? 'not-allowed' : 'pointer',
-      }}
+      className={cn(
+        'flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-2 text-left transition-colors focus-ring disabled:cursor-not-allowed',
+        selected ? 'border-primary ring-1 ring-primary' : 'border-border hover:bg-accent',
+      )}
     >
-      <Box pos="relative">
-        <AspectRatio ratio={16 / 9}>
-          <Photo
-            src={area.photoUrl}
-            alt={t('booking.table.areaPhoto', { area: area.name })}
-            placeholder={dark ? 'var(--mantine-color-dark-5)' : 'var(--mantine-color-gray-1)'}
-            imageStyle={full ? { filter: 'grayscale(1)' } : undefined}
-            fallback={
-              <Box c="dimmed" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ArmchairIcon size={40} strokeWidth={1.5} />
-              </Box>
-            }
-          />
-        </AspectRatio>
-        {selected && (
-          <Box
-            pos="absolute"
-            top={8}
-            right={8}
-            w={32}
-            h={32}
-            bg="var(--mantine-primary-color-filled)"
-            c="var(--mantine-primary-color-contrast)"
-            style={{ borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-          >
-            <CheckIcon size={20} strokeWidth={3} />
-          </Box>
-        )}
-      </Box>
-      <Stack gap={4} p={16}>
-        <Text fw={600} lh={1.3}>
-          {area.name}
-        </Text>
-        {area.description !== null && (
-          <Text size="sm" c="dimmed" lineClamp={2}>
-            {area.description}
-          </Text>
-        )}
-        {full ? (
-          <Group gap={4} wrap="nowrap">
-            <BanIcon size={16} />
-            <Text size="sm" fw={600}>
-              {t('booking.table.fullyBooked')}
-            </Text>
-          </Group>
-        ) : (
-          <Text size="sm" fw={600}>
-            {t('booking.table.freeCount', { count: freeCount })}
-          </Text>
-        )}
-      </Stack>
-    </UnstyledButton>
+      <Photo
+        src={area.photoUrl}
+        alt={t('booking.table.areaPhoto', { area: area.name })}
+        className="size-14 shrink-0 rounded-lg"
+        imageClassName={full ? 'grayscale' : undefined}
+        fallback={
+          <span className="flex items-center justify-center text-muted-foreground">
+            <ArmchairIcon aria-hidden="true" className="size-6" />
+          </span>
+        }
+      />
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate font-semibold">{area.name}</span>
+        <span className={cn('flex items-center gap-1 text-sm', full ? 'text-muted-foreground' : 'text-primary-text')}>
+          {full && <BanIcon aria-hidden="true" className="size-3.5" />}
+          {full ? t('booking.table.fullyBooked') : t('booking.table.freeCount', { count: freeCount })}
+        </span>
+      </span>
+      {selected && (
+        <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+          <CheckIcon className="size-4" strokeWidth={3} />
+        </span>
+      )}
+    </button>
   )
 }
 
-/** The hatching of the tables that are not available, in both colour schemes; referred to by `tableLooks`. */
-function HatchPatterns() {
+/** The hatching of the tables that are not available, in the tokens of the page; referred to by `tableLooks`. */
+function HatchPattern() {
   return (
-    <svg width={0} height={0} aria-hidden="true" focusable="false" style={{ position: 'absolute' }}>
+    <svg width={0} height={0} aria-hidden="true" focusable="false" className="absolute">
       <defs>
-        {(['light', 'dark'] as const).map((scheme) => (
-          // In the plan's units (plan widths), so the stripes are as dense as the tables are large.
-          <pattern
-            key={scheme}
-            id={unavailableHatchId[scheme]}
-            patternUnits="userSpaceOnUse"
-            width={0.008}
-            height={0.008}
-            patternTransform="rotate(45)"
-          >
-            <rect width={0.008} height={0.008} style={{ fill: tableLooks[scheme].hatch.background }} />
-            <rect width={0.003} height={0.008} style={{ fill: tableLooks[scheme].hatch.stripes }} />
-          </pattern>
-        ))}
+        {/* In the plan's units (plan widths), so the stripes are as dense as the tables are large. */}
+        <pattern id={unavailableHatchId} patternUnits="userSpaceOnUse" width={0.008} height={0.008} patternTransform="rotate(45)">
+          <rect width={0.008} height={0.008} className="fill-(--muted)" />
+          <rect width={0.003} height={0.008} className="fill-(--input)" />
+        </pattern>
       </defs>
     </svg>
   )
 }
 
-type LegendItemProps = {
-  look: Look['free']
-  hatch?: Look['hatch']
-  check?: boolean
-  label: string
-}
-
-function LegendItem({ look, hatch, check, label }: LegendItemProps) {
+function LegendItem({ swatch, label, icon }: { swatch: string; label: string; icon?: ReactNode }) {
   return (
-    <Group gap={8} wrap="nowrap">
-      <Box
-        w={20}
-        h={20}
-        c={look.color}
-        style={{
-          flexShrink: 0,
-          // The hatching as a CSS stripe pattern, like the pattern on the tables.
-          background:
-            hatch !== undefined
-              ? `repeating-linear-gradient(45deg, ${hatch.stripes} 0 2px, ${hatch.background} 2px 5px)`
-              : look.fill,
-          border: `${look.strokeWidth >= 2 ? 2 : 1}px solid ${look.stroke}`,
-          borderRadius: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        {check === true && <CheckIcon size={14} strokeWidth={3} />}
-      </Box>
-      <Text size="sm">{label}</Text>
-    </Group>
+    <li className="flex items-center gap-2">
+      <span className={cn('flex size-5 shrink-0 items-center justify-center rounded', swatch)}>{icon}</span>
+      {label}
+    </li>
   )
 }

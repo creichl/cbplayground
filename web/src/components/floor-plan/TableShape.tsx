@@ -1,4 +1,3 @@
-import { useMantineColorScheme } from '@mantine/core'
 import { type CSSProperties, type HTMLAttributes, type ReactNode, type Ref, type SVGProps, useId } from 'react'
 import type { TableRotation, TableShape as Shape } from '../../api/areas.ts'
 import { UserIcon } from '../icons.tsx'
@@ -25,6 +24,8 @@ type TableShapeProps = Omit<HTMLAttributes<HTMLDivElement>, 'children'> & {
   strokeWidth?: number
   /** A short text under the table, e.g. "until 20:00". */
   note?: ReactNode
+  /** A dark plan (the restaurant's dark mode): the rim and the shadow suit it. */
+  dark?: boolean
   style?: CSSProperties
   ref?: Ref<HTMLDivElement>
 }
@@ -50,10 +51,10 @@ export function TableShape({
   color,
   strokeWidth = 1.5,
   note,
+  dark = false,
   style,
   ...others
 }: TableShapeProps) {
-  const dark = useMantineColorScheme().colorScheme === 'dark'
   // Gradients need an id that is unique on the page; useId may contain characters that do not work in url().
   const sheenId = `table-sheen-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`
   // Drawn at 100 %; the box around it carries the table scale.
@@ -189,7 +190,8 @@ export function TableShape({
             fontSize: 10,
             lineHeight: 1.4,
             whiteSpace: 'nowrap',
-            color: 'var(--mantine-color-dark-7)',
+            // Mantine's dark.7, on the white plate.
+            color: '#242424',
             backgroundColor: 'rgba(255, 255, 255, 0.9)',
             pointerEvents: 'none',
           }}

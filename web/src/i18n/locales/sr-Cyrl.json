@@ -120,12 +120,12 @@
       "infoTitle": "Информације и контакт",
       "closedToday": "Данас затворено",
       "openUntil": "Сада отворено до {{time}}",
-      "opensAt": "Данас отворено од {{time}}",
-      "closedNow": "Сада затворено",
-      "today": "{{day}} (данас)",
-      "more": "Више",
-      "less": "Мање",
-      "routeTo": "Како стићи: {{address}}"
+      "routeTo": "Како стићи: {{address}}",
+      "openToday": "Данас отворено · {{hours}}",
+      "about": "О нама",
+      "directions": "Како до нас и контакт",
+      "todayBadge": "Данас",
+      "todayDiffers": "Данас другачије:"
     },
     "partySize": {
       "moreThan_one": "Више од {{count}} особе",
@@ -135,7 +135,8 @@
       "callText_one": "Онлајн можете резервисати за највише {{count}} особу. За веће групе позовите нас:",
       "callText_few": "Онлајн можете резервисати за највише {{count}} особе. За веће групе позовите нас:",
       "callText_other": "Онлајн можете резервисати за највише {{count}} особа. За веће групе позовите нас:",
-      "noPhone": "Обратите се директно ресторану."
+      "noPhone": "Обратите се директно ресторану.",
+      "more": "Више"
     },
     "calendar": {
       "full": "попуњено",
@@ -175,7 +176,15 @@
       "selection_other": "Сто {{number}} · до {{count}} особа · {{area}}",
       "freeCount_one": "{{count}} слободан сто",
       "freeCount_few": "{{count}} слободна стола",
-      "freeCount_other": "{{count}} слободних столова"
+      "freeCount_other": "{{count}} слободних столова",
+      "freeShort_one": "{{count}} слободан",
+      "freeShort_few": "{{count}} слободна",
+      "freeShort_other": "{{count}} слободних",
+      "tooltip_one": "Сто {{number}} · до {{count}} особе",
+      "tooltip_few": "Сто {{number}} · до {{count}} особе",
+      "tooltip_other": "Сто {{number}} · до {{count}} особа",
+      "tooltipUnavailable": "Сто {{number}} · није доступан",
+      "showList": "Прикажи столове као листу"
     },
     "details": {
       "name": "Име",
@@ -218,11 +227,11 @@
       "table": "Сто",
       "addToCalendar": "Додај у календар",
       "manageLink": "Управљај резервацијом",
-      "manageLinkLabel": "Линк до ваше резервације",
       "manageLinkHint": "Сачувајте линк да бисте касније могли да откажете.",
-      "copy": "Копирај",
       "copied": "Копирано",
-      "tableInArea": "Сто {{number}} · {{area}}"
+      "tableInArea": "Сто {{number}} · {{area}}",
+      "address": "Адреса",
+      "copyLink": "Копирај линк"
     },
     "calendarEvent": {
       "title": "Резервација стола – {{restaurant}}",
@@ -234,12 +243,20 @@
       "text": "Овај ресторан тренутно не прима онлајн резервације. Позовите:"
     },
     "reserveTable": "Резервишите сто",
-    "change": "Измени",
     "bar": {
       "guests": "Број особа",
-      "date": "Датум",
-      "time": "Време",
-      "timePlaceholder": "Изаберите време"
+      "date": "Датум"
+    },
+    "card": {
+      "instantMode": "Тренутна потврда",
+      "requestMode": "Захтев – ресторан потврђује",
+      "freeCancellation": "Бесплатно отказивање преко линка"
+    },
+    "dialog": {
+      "stepTable": "Сто",
+      "stepDetails": "Контакт подаци",
+      "stepDone": "Потврда",
+      "stepOf": "Корак {{step}} од {{total}}"
     }
   },
   "embed": {

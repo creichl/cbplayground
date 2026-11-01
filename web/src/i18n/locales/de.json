@@ -118,12 +118,12 @@
       "infoTitle": "Info & Kontakt",
       "closedToday": "Heute geschlossen",
       "openUntil": "Jetzt geöffnet bis {{time}}",
-      "opensAt": "Heute geöffnet ab {{time}}",
-      "closedNow": "Jetzt geschlossen",
-      "today": "{{day}} (heute)",
-      "more": "Mehr",
-      "less": "Weniger",
-      "routeTo": "Route zu {{address}}"
+      "routeTo": "Route zu {{address}}",
+      "openToday": "Heute geöffnet · {{hours}}",
+      "about": "Über uns",
+      "directions": "Anfahrt & Kontakt",
+      "todayBadge": "Heute",
+      "todayDiffers": "Heute abweichend:"
     },
     "partySize": {
       "moreThan_one": "Mehr als {{count}} Person",
@@ -131,7 +131,8 @@
       "callTitle": "Bitte rufen Sie uns an",
       "callText_one": "Online können Sie für bis zu {{count}} Person reservieren. Für größere Gruppen rufen Sie uns bitte an:",
       "callText_other": "Online können Sie für bis zu {{count}} Personen reservieren. Für größere Gruppen rufen Sie uns bitte an:",
-      "noPhone": "Bitte wenden Sie sich direkt an das Restaurant."
+      "noPhone": "Bitte wenden Sie sich direkt an das Restaurant.",
+      "more": "Mehr"
     },
     "calendar": {
       "full": "ausgebucht",
@@ -168,7 +169,13 @@
       "selection_one": "Tisch {{number}} · bis {{count}} Person · {{area}}",
       "selection_other": "Tisch {{number}} · bis {{count}} Personen · {{area}}",
       "freeCount_one": "{{count}} Tisch frei",
-      "freeCount_other": "{{count}} Tische frei"
+      "freeCount_other": "{{count}} Tische frei",
+      "freeShort_one": "{{count}} frei",
+      "freeShort_other": "{{count}} frei",
+      "tooltip_one": "Tisch {{number}} · bis {{count}} Person",
+      "tooltip_other": "Tisch {{number}} · bis {{count}} Personen",
+      "tooltipUnavailable": "Tisch {{number}} · nicht verfügbar",
+      "showList": "Tische als Liste anzeigen"
     },
     "details": {
       "name": "Name",
@@ -210,11 +217,11 @@
       "table": "Tisch",
       "addToCalendar": "Zum Kalender hinzufügen",
       "manageLink": "Reservierung verwalten",
-      "manageLinkLabel": "Link zu Ihrer Reservierung",
       "manageLinkHint": "Link speichern, um später zu stornieren.",
-      "copy": "Kopieren",
       "copied": "Kopiert",
-      "tableInArea": "Tisch {{number}} · {{area}}"
+      "tableInArea": "Tisch {{number}} · {{area}}",
+      "address": "Adresse",
+      "copyLink": "Link kopieren"
     },
     "calendarEvent": {
       "title": "Tischreservierung – {{restaurant}}",
@@ -226,12 +233,20 @@
       "text": "Dieses Restaurant nimmt derzeit keine Online-Reservierungen an. Bitte rufen Sie an:"
     },
     "reserveTable": "Tisch reservieren",
-    "change": "Ändern",
     "bar": {
       "guests": "Personen",
-      "date": "Datum",
-      "time": "Uhrzeit",
-      "timePlaceholder": "Uhrzeit wählen"
+      "date": "Datum"
+    },
+    "card": {
+      "instantMode": "Sofortige Bestätigung",
+      "requestMode": "Anfrage – das Restaurant bestätigt",
+      "freeCancellation": "Kostenlos stornierbar über den Link"
+    },
+    "dialog": {
+      "stepTable": "Tisch",
+      "stepDetails": "Kontaktdaten",
+      "stepDone": "Bestätigung",
+      "stepOf": "Schritt {{step}} von {{total}}"
     }
   },
   "embed": {

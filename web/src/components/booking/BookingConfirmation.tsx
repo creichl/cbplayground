@@ -1,12 +1,11 @@
-import { Anchor, Box, Button, Card, CopyButton, Group, Stack, Text, TextInput, ThemeIcon, Title, VisuallyHidden } from '@mantine/core'
-import { useEffect, useRef } from 'react'
+import { ArmchairIcon, CalendarIcon, CalendarPlusIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, MapPinIcon, RouteIcon, UsersIcon } from 'lucide-react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type BookingResult, managePath, type PublicRestaurant } from '../../api/publicBooking.ts'
 import { formatLongDate, formatTime } from '../../i18n/format.ts'
-import { ArmchairIcon, CalendarIcon, CheckIcon, ClockIcon, MapPinIcon, UsersIcon } from '../icons.tsx'
+import { Button } from '../../ui/button.tsx'
 import { calendarFile, downloadCalendarFile } from './calendarFile.ts'
 import { formatAddress, mapSearchUrl } from './format.ts'
-import { headerHeight } from './layout.ts'
 
 type BookingConfirmationProps = {
   result: BookingResult
@@ -16,20 +15,27 @@ type BookingConfirmationProps = {
 }
 
 /**
- * The end of the booking: a clear success state (a check when confirmed, a clock for a request, which the restaurant still
- * has to confirm), the reference code and what was booked. Then "Add to calendar" as the main action, the route to the
- * restaurant, and the link to view and cancel the reservation later with a copy button and the hint to save it.
+ * The end of the booking: a clear success state (a check that draws itself, unless the guest asked for less motion; for a
+ * request, which the restaurant still has to confirm, a clock and "Request sent" with what happens next), then a card like a
+ * ticket with the reference code and what was booked (date, time, people, table and area, address), and the actions: "Add to
+ * calendar" (.ics), "Copy link" (the link to view and cancel the reservation, with the hint to save it), "Manage
+ * reservation" and "Directions". The heading (`title`) is the dialog's.
  */
-export function BookingConfirmation({ result, slug, restaurant, timeZoneId }: BookingConfirmationProps) {
+export function BookingConfirmation({ result, slug, restaurant, timeZoneId, title }: BookingConfirmationProps & { title: ReactNode }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const requested = result.status === 'Requested'
-  const titleRef = useRef<HTMLHeadingElement>(null)
   const manageUrl = `${window.location.origin}${managePath(slug, result.referenceCode, result.manageToken)}`
   const address = formatAddress(restaurant)
+  const [copied, setCopied] = useState(false)
 
-  // Screen reader and keyboard users land on the result.
-  useEffect(() => titleRef.current?.focus(), [])
+  useEffect(() => {
+    if (!copied) {
+      return
+    }
+    const timeout = setTimeout(() => setCopied(false), 2000)
+    return () => clearTimeout(timeout)
+  }, [copied])
 
   const rows = [
     { icon: <CalendarIcon />, label: t('booking.confirmation.date'), value: formatLongDate(result.date, language) },
@@ -40,6 +46,7 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId }: Bo
       label: t('booking.confirmation.table'),
       value: t('booking.confirmation.tableInArea', { number: result.tableNumber, area: result.area }),
     },
+    ...(address !== '' ? [{ icon: <MapPinIcon />, label: t('booking.confirmation.address'), value: address }] : []),
   ]
 
   const addToCalendar = () =>
@@ -62,97 +69,91 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId }: Bo
       }),
     )
 
+  const copyLink = () =>
+    void navigator.clipboard
+      ?.writeText(manageUrl)
+      .then(() => setCopied(true))
+      .catch(() => setCopied(false))
+
   return (
-    <Card p={{ base: 16, sm: 32 }}>
-      <Stack gap={32}>
-        <Stack gap={16} align="center" ta="center">
-          <ThemeIcon size={64} radius="xl" color={requested ? 'yellow' : 'green'} autoContrast>
-            {requested ? <ClockIcon size={32} /> : <CheckIcon size={32} strokeWidth={3} />}
-          </ThemeIcon>
-          <Stack gap={8} align="center">
-            <Title order={2} ref={titleRef} tabIndex={-1} data-step-heading=""
-            // Focused after a change of step; below the fixed header of the booking page.
-            style={{ outline: 'none', scrollMarginTop: headerHeight + 16 }}>
-              {requested ? t('booking.confirmation.requestTitle') : t('booking.confirmation.confirmedTitle')}
-            </Title>
-            <Text maw="60ch">{requested ? t('booking.confirmation.requestText') : t('booking.confirmation.confirmedText')}</Text>
-          </Stack>
-          <Stack gap={4} align="center">
-            <Text size="sm" c="dimmed">
-              {t('booking.confirmation.referenceCode')}
-            </Text>
-            <Text fz={28} fw={700} ff="monospace" style={{ letterSpacing: '0.15em' }}>
-              {result.referenceCode}
-            </Text>
-          </Stack>
-        </Stack>
+    <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-8 pt-2 pb-6 text-center md:pb-2">
+      <div className="flex flex-col items-center gap-4">
+        {requested ? (
+          <span aria-hidden="true" className="flex size-16 animate-check-circle items-center justify-center rounded-full bg-warning/15 text-warning motion-reduce:animate-none">
+            <ClockIcon className="size-8" />
+          </span>
+        ) : (
+          <span aria-hidden="true" className="flex size-16 animate-check-circle items-center justify-center rounded-full bg-success/15 text-success motion-reduce:animate-none">
+            <svg viewBox="0 0 24 24" className="size-9" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} strokeDasharray={1} className="animate-check-draw motion-reduce:animate-none" />
+            </svg>
+          </span>
+        )}
+        <div className="flex flex-col gap-2">
+          {title}
+          <p className="text-muted-foreground">{requested ? t('booking.confirmation.requestText') : t('booking.confirmation.confirmedText')}</p>
+        </div>
+      </div>
 
-        <Card withBorder shadow="none" padding={16} bg="var(--mantine-color-default-hover)" w="100%" maw={480} mx="auto">
-          <Stack gap={8}>
-            <Text fw={600}>{restaurant.name}</Text>
-            <Stack gap={8} component="ul" m={0} p={0} style={{ listStyle: 'none' }}>
-              {rows.map((row) => (
-                <Group key={row.label} component="li" gap={8} wrap="nowrap" align="flex-start">
-                  <Box c="dimmed" style={{ display: 'flex', flexShrink: 0, paddingTop: 3 }} aria-hidden="true">
-                    {row.icon}
-                  </Box>
-                  <Text>
-                    {/* The icon says it on screen. */}
-                    <VisuallyHidden>{`${row.label}: `}</VisuallyHidden>
-                    {row.value}
-                  </Text>
-                </Group>
-              ))}
-            </Stack>
-          </Stack>
-        </Card>
+      {/* Like a ticket: the code at the top, a perforation with two notches, what was booked below it. */}
+      <div className="w-full rounded-2xl border border-border bg-card text-left shadow-card">
+        <div className="flex flex-col gap-1 px-6 pt-5 pb-4">
+          <p className="font-display text-lg">{restaurant.name}</p>
+          <p className="text-sm text-muted-foreground">{t('booking.confirmation.referenceCode')}</p>
+          <p className="font-mono text-3xl font-bold tracking-[0.15em] text-primary-text">{result.referenceCode}</p>
+        </div>
+        <div aria-hidden="true" className="relative h-0 border-t-2 border-dashed border-border">
+          <span className="absolute top-0 -left-px size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-card [clip-path:inset(0_0_0_50%)]" />
+          <span className="absolute top-0 -right-px size-5 translate-x-1/2 -translate-y-1/2 rounded-full border border-border bg-card [clip-path:inset(0_50%_0_0)]" />
+        </div>
+        <ul className="flex flex-col gap-3 px-6 pt-4 pb-5">
+          {rows.map((row) => (
+            <li key={row.label} className="flex items-start gap-3">
+              <span aria-hidden="true" className="mt-0.5 text-muted-foreground [&_svg]:size-4.5">
+                {row.icon}
+              </span>
+              <span>
+                {/* The icon says it on screen. */}
+                <span className="sr-only">{`${row.label}: `}</span>
+                {row.value}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
 
-        <Group justify="center" gap={8}>
-          <Button h={48} leftSection={<CalendarIcon />} onClick={addToCalendar}>
+      <div className="flex w-full flex-col gap-3">
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Button size="lg" onClick={addToCalendar}>
+            <CalendarPlusIcon aria-hidden="true" />
             {t('booking.confirmation.addToCalendar')}
           </Button>
+          <Button size="lg" variant="outline" onClick={copyLink}>
+            {copied ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
+            {copied ? t('booking.confirmation.copied') : t('booking.confirmation.copyLink')}
+          </Button>
+          {/* A new tab, so the link also works from the booking embedded in the restaurant's website. */}
+          <Button size="lg" variant="outline" asChild>
+            <a href={manageUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLinkIcon aria-hidden="true" />
+              {t('booking.confirmation.manageLink')}
+            </a>
+          </Button>
           {address !== '' && (
-            <Button
-              component="a"
-              href={mapSearchUrl(address)}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant="default"
-              h={48}
-              leftSection={<MapPinIcon />}
-            >
-              {t('booking.restaurant.route')}
+            <Button size="lg" variant="outline" asChild>
+              <a href={mapSearchUrl(address)} target="_blank" rel="noopener noreferrer">
+                <RouteIcon aria-hidden="true" />
+                {t('booking.restaurant.route')}
+              </a>
             </Button>
           )}
-        </Group>
-
-        <Stack gap={8} w="100%" maw={480} mx="auto">
-          <Text fw={600}>{t('booking.confirmation.manageLinkLabel')}</Text>
-          <Text size="sm">{t('booking.confirmation.manageLinkHint')}</Text>
-          <Group gap={8} wrap="nowrap" align="flex-end">
-            <TextInput
-              readOnly
-              value={manageUrl}
-              aria-label={t('booking.confirmation.manageLinkLabel')}
-              onFocus={(event) => event.currentTarget.select()}
-              styles={{ input: { height: 44 } }}
-              style={{ flex: 1 }}
-              miw={0}
-            />
-            <CopyButton value={manageUrl}>
-              {({ copied, copy }) => (
-                <Button variant="default" h={44} leftSection={copied ? <CheckIcon /> : undefined} onClick={copy} style={{ flexShrink: 0 }}>
-                  {copied ? t('booking.confirmation.copied') : t('booking.confirmation.copy')}
-                </Button>
-              )}
-            </CopyButton>
-          </Group>
-          {/* A new tab, so the link also works from the booking embedded in the restaurant's website. */}
-          <Anchor href={manageUrl} target="_blank" rel="noopener noreferrer" fw={600} lh="44px" c="var(--mantine-color-text)" underline="always">
-            {t('booking.confirmation.manageLink')}
-          </Anchor>
-        </Stack>
-      </Stack>
-    </Card>
+        </div>
+        <p className="text-sm text-muted-foreground">{t('booking.confirmation.manageLinkHint')}</p>
+        {/* Tells screen reader users that the link was copied. */}
+        <p role="status" className="sr-only">
+          {copied ? t('booking.confirmation.copied') : ''}
+        </p>
+      </div>
+    </div>
   )
 }

@@ -5,6 +5,7 @@ import { type FloorArea, type FloorTable, formatMinutes, type Reservation, toMin
 import { formatTime } from '../../i18n/format.ts'
 import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
 import { FloorPlan } from '../floor-plan/FloorPlan.tsx'
+import { FloorPlanZoomButton } from '../FloorPlanZoomButton.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
@@ -93,6 +94,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
                 roomElements={area.roomElements}
                 tables={area.tables}
                 tableScale={area.tableScale}
+                zoomButton={FloorPlanZoomButton}
               >
                 {area.tables.map((table) => (
                   <TableStatus

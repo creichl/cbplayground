@@ -1,17 +1,16 @@
-import { Anchor, Group, Stack } from '@mantine/core'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Outlet, useParams, useSearchParams } from 'react-router'
 import { usePublicRestaurant } from '../api/publicBooking.ts'
 import { BrandTheme } from '../components/BrandTheme.tsx'
-import { LanguageMenu } from '../components/LanguageSwitcher.tsx'
+import { LanguageMenu } from '../ui/language-menu.tsx'
 
 /** The message with which the embed tells the page around it its height, e.g. { type: 'cbplayground:height', height: 812 }. */
 export const heightMessageType = 'cbplayground:height'
 
 /**
- * Layout of the booking embedded in a restaurant's website: no header and no outer spacing, the language as a small menu
- * and a discreet link to the platform. It carries the restaurant's colour, fonts and light or dark mode (BrandTheme), but no
+ * Layout of the booking embedded in a restaurant's website, built with the design system (src/ui): no header and no outer
+ * spacing, the language as a small menu at the top right and a discreet "Powered by" link at the bottom. It carries the restaurant's colour, fonts and light or dark mode (BrandTheme), but no
  * cover image or logo: the website around it already is the restaurant. Every change of its height is sent to the page
  * around it, so the snippet can fit the iframe.
  */
@@ -43,9 +42,10 @@ export function EmbedLayout() {
 
   return (
     <BrandTheme brandStyle={restaurant.data?.branding ?? null} fullHeight>
-      <Stack ref={contentRef} gap={8}>
-        <Group justify="flex-end">
+      <div ref={contentRef} className="flex flex-col gap-2 bg-background font-sans text-foreground">
+        <div className="flex justify-end">
           <LanguageMenu
+            className="h-8 text-xs"
             onChange={(language) => {
               // The choice stays in the address and is not stored, so the language of the platform itself stays as it is.
               void i18n.changeLanguage(language)
@@ -58,14 +58,14 @@ export function EmbedLayout() {
               )
             }}
           />
-        </Group>
+        </div>
         <Outlet />
-        <Group justify="center">
-          <Anchor href="/" target="_blank" rel="noopener" size="sm" c="dimmed" lh="44px">
+        <div className="flex justify-center">
+          <a href="/" target="_blank" rel="noopener" className="inline-flex min-h-11 items-center rounded-sm text-sm text-muted-foreground underline-offset-4 hover:underline focus-ring">
             {t('embed.poweredBy')}
-          </Anchor>
-        </Group>
-      </Stack>
+          </a>
+        </div>
+      </div>
     </BrandTheme>
   )
 }

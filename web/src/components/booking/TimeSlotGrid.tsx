@@ -1,10 +1,12 @@
-import { Alert, Button, Group, Select, SimpleGrid, Skeleton, Stack, Text, Title } from '@mantine/core'
+import { CalendarXIcon, TriangleAlertIcon } from 'lucide-react'
 import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { type Availability, useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
 import { formatShortDate, formatTime } from '../../i18n/format.ts'
-import { ErrorAlert } from '../ErrorAlert.tsx'
-import { barInputStyles } from './layout.ts'
+import { cn } from '../../lib/utils.ts'
+import { Alert, AlertDescription } from '../../ui/alert.tsx'
+import { Skeleton } from '../../ui/skeleton.tsx'
+import { RequestError } from './RequestError.tsx'
 
 type TimeSlotGridProps = {
   slug: string
@@ -19,6 +21,9 @@ type TimeSlotGridProps = {
   onChangeDate: (date: string) => void
 }
 
+/** The attribute of a time chip, by which the focus finds it again when the booking dialog closes. */
+export const timeChipAttribute = 'data-time-chip'
+
 /** Name of an opening window after the time it starts. */
 function periodLabel(start: string): ParseKeys {
   const hour = Number(start.slice(0, 2))
@@ -32,9 +37,13 @@ function freePeriods(availability: Availability | undefined) {
     .filter((period) => period.times.length > 0)
 }
 
+/** Chips of times and days: 44 px high, in a grid that keeps them the same width. */
+const chipClassName =
+  'inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-3 text-sm font-medium tabular-nums transition-colors focus-ring'
+
 /**
- * The free start times of a day as chips below the booking bar, grouped by opening window; times that are not available
- * are left out. A click on a time leads on. A fully booked day offers the next free days instead.
+ * The free start times of a day as chips, grouped by opening window ("Lunch 11:30–14:30"); times that are not available are
+ * left out. A click on a time opens the booking dialog. A fully booked day offers the next free days instead.
  */
 export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onChange, onChangeDate }: TimeSlotGridProps) {
   const { t, i18n } = useTranslation()
@@ -45,109 +54,89 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
   const nextFreeDays = useNextFreeDays(slug, date, maxDate, guests, full)
 
   return (
-    <Stack gap={16}>
+    <div className="flex flex-col gap-5">
       {notice !== null && (
-        <Alert color="yellow" variant="light" role="alert">
-          {t(notice)}
+        <Alert variant="warning" role="alert">
+          <TriangleAlertIcon aria-hidden="true" />
+          <AlertDescription>{t(notice)}</AlertDescription>
         </Alert>
       )}
 
       {availability.isPending ? (
         // In the shape of the times, so nothing jumps when they arrive.
-        <Stack gap={8} aria-hidden="true">
-          <Skeleton h={24} w={160} />
-          <SimpleGrid cols={{ base: 3, xs: 4, sm: 5 }} spacing={8} verticalSpacing={8}>
-            {Array.from({ length: 10 }, (_, i) => (
-              <Skeleton key={i} h={44} radius="xl" />
+        <div className="flex flex-col gap-3" aria-hidden="true">
+          <Skeleton className="h-5 w-40" />
+          <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+            {Array.from({ length: 8 }, (_, i) => (
+              <Skeleton key={i} className="h-11 rounded-full" />
             ))}
-          </SimpleGrid>
-        </Stack>
+          </div>
+        </div>
       ) : availability.isError ? (
-        <ErrorAlert error={availability.error} onRetry={() => void availability.refetch()} />
+        <RequestError error={availability.error} onRetry={() => void availability.refetch()} />
       ) : full ? (
-        <Stack gap={8}>
-          <Text fw={600}>{t('booking.time.noTables')}</Text>
+        <div className="flex flex-col gap-3">
+          <p className="flex items-center gap-2 font-semibold">
+            <CalendarXIcon aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
+            {t('booking.time.noTables')}
+          </p>
           {nextFreeDays.isPending ? (
-            <Group gap={8} aria-hidden="true">
-              <Skeleton h={44} w={120} radius="xl" />
-              <Skeleton h={44} w={120} radius="xl" />
-              <Skeleton h={44} w={120} radius="xl" />
-            </Group>
+            <div className="flex flex-wrap gap-2" aria-hidden="true">
+              <Skeleton className="h-11 w-28 rounded-full" />
+              <Skeleton className="h-11 w-28 rounded-full" />
+              <Skeleton className="h-11 w-28 rounded-full" />
+            </div>
           ) : nextFreeDays.days.length === 0 ? (
-            <Text size="sm">{t('booking.time.noFreeDays')}</Text>
+            <p className="text-sm text-muted-foreground">{t('booking.time.noFreeDays')}</p>
           ) : (
-            <Group gap={8}>
+            <ul className="flex flex-wrap gap-2">
               {nextFreeDays.days.map((day) => (
-                <Button key={day} variant="default" radius="xl" h={44} onClick={() => onChangeDate(day)}>
-                  {formatShortDate(day, language)}
-                </Button>
+                <li key={day}>
+                  <button
+                    type="button"
+                    onClick={() => onChangeDate(day)}
+                    className={cn(chipClassName, 'border-input bg-background px-4 hover:border-primary hover:bg-primary-50 dark:hover:bg-accent')}
+                  >
+                    {formatShortDate(day, language)}
+                  </button>
+                </li>
               ))}
-            </Group>
+            </ul>
           )}
-        </Stack>
+        </div>
       ) : (
         periods.map((period) => (
-          <Stack key={period.start} gap={8}>
-            <Group gap={8} align="baseline">
-              <Title order={3} ff="text" fz="md" fw={700}>
-                {periods.length > 1 ? t(periodLabel(period.start)) : t('booking.time.freeTimes')}
-              </Title>
-              <Text size="sm" c="dimmed">
+          <section key={period.start} className="flex flex-col gap-2" aria-labelledby={`period-${period.start}`}>
+            <h3 id={`period-${period.start}`} className="flex flex-wrap items-baseline gap-x-2 text-sm">
+              <span className="font-semibold">{periods.length > 1 ? t(periodLabel(period.start)) : t('booking.time.freeTimes')}</span>
+              <span className="text-muted-foreground">
                 {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
-              </Text>
-            </Group>
-            <SimpleGrid cols={{ base: 3, xs: 4, sm: 5 }} spacing={8} verticalSpacing={8}>
+              </span>
+            </h3>
+            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
               {period.times.map(({ time }) => (
-                <Button
-                  key={time}
-                  radius="xl"
-                  h={44}
-                  px={0}
-                  variant={value === time ? 'filled' : 'default'}
-                  aria-pressed={value === time}
-                  onClick={() => onChange(time)}
-                >
-                  {formatTime(time, language)}
-                </Button>
+                <li key={time}>
+                  <button
+                    type="button"
+                    {...{ [timeChipAttribute]: time }}
+                    aria-pressed={value === time}
+                    onClick={() => onChange(time)}
+                    className={cn(
+                      chipClassName,
+                      'w-full',
+                      value === time
+                        ? 'border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
+                        : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
+                    )}
+                  >
+                    {formatTime(time, language)}
+                  </button>
+                </li>
               ))}
-            </SimpleGrid>
-          </Stack>
+            </ul>
+          </section>
         ))
       )}
-    </Stack>
-  )
-}
-
-type TimeSelectProps = { slug: string; date: string | null; guests: number; value: string | null; onChange: (time: string) => void }
-
-/** The time in the booking bar: the same free times as the chips below it, as a list grouped by opening window. */
-export function TimeSelect({ slug, date, guests, value, onChange }: TimeSelectProps) {
-  const { t, i18n } = useTranslation()
-  const language = i18n.resolvedLanguage ?? 'en'
-  const availability = useAvailability(slug, date ?? '', guests, date !== null)
-  const periods = freePeriods(availability.data)
-  const data = periods.map((period) => ({
-    group: `${t(periodLabel(period.start))} · ${t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}`,
-    items: period.times.map(({ time }) => ({ value: time, label: formatTime(time, language) })),
-  }))
-
-  return (
-    <Select
-      label={t('booking.bar.time')}
-      placeholder={t('booking.bar.timePlaceholder')}
-      data={data}
-      value={periods.some((period) => period.times.some((option) => option.time === value)) ? value : null}
-      onChange={(selected) => {
-        if (selected !== null) {
-          onChange(selected)
-        }
-      }}
-      disabled={periods.length === 0}
-      allowDeselect={false}
-      size="md"
-      styles={barInputStyles}
-      comboboxProps={{ shadow: 'md' }}
-      maxDropdownHeight={320}
-    />
+    </div>
   )
 }
