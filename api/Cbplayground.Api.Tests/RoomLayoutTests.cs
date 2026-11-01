@@ -127,7 +127,7 @@ public class RoomLayoutTests
         var entrance = Assert.Single(small, e => e.Kind == RoomElementKind.Entrance);
         Assert.Equal((0.5, 0), (entrance.PosX, entrance.Rotation));
         Assert.Equal(1, entrance.PosY + entrance.Height / 2, 10);
-        Assert.NotEmpty(small.Where(e => e.Kind == RoomElementKind.Window));
+        Assert.Contains(small, e => e.Kind == RoomElementKind.Window);
         Assert.All(small.Where(e => e.Kind == RoomElementKind.Window), w => Assert.Equal((0, 180), (w.PosY - w.Height / 2, w.Rotation)));
         var plants = small.Where(e => e.Kind == RoomElementKind.Plant).ToList();
         Assert.Equal(2, plants.Count);

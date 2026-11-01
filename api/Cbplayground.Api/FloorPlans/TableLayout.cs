@@ -210,25 +210,30 @@ public static class TableLayout
             return [];
         }
 
-        // The largest chair space (at most the scaled ChairSpace) with which the tables fit without overlapping.
+        // The largest chair space (at most the scaled ChairSpace) with which the tables fit without overlapping;
+        // none when they do not even fit without it.
         var best = BestLayout(sizes, chairSpace, obstacles);
         if (best.Gap < 0)
         {
-            var low = 0.0;
-            var high = chairSpace;
-            for (var i = 0; i < 30; i++)
+            best = BestLayout(sizes, 0, obstacles);
+            if (best.Gap >= 0)
             {
-                var middle = (low + high) / 2;
-                if (BestLayout(sizes, middle, obstacles).Gap >= 0)
+                var low = 0.0;
+                var high = chairSpace;
+                for (var i = 0; i < 30; i++)
                 {
-                    low = middle;
+                    var middle = (low + high) / 2;
+                    if (BestLayout(sizes, middle, obstacles).Gap >= 0)
+                    {
+                        low = middle;
+                    }
+                    else
+                    {
+                        high = middle;
+                    }
                 }
-                else
-                {
-                    high = middle;
-                }
+                best = BestLayout(sizes, low, obstacles);
             }
-            best = BestLayout(sizes, low, obstacles);
         }
 
         // Overlapping the room elements is the last resort.
