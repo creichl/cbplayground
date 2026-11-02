@@ -1,7 +1,7 @@
 import * as PopoverPrimitive from '@radix-ui/react-popover'
 import { type ComponentProps, useContext } from 'react'
-import { ThemeRootContext } from '@/brandTheme'
-import { cn } from '@/lib/utils'
+import { ThemeRootContext } from '../brandTheme.ts'
+import { cn } from '../lib/utils.ts'
 
 function Popover(props: ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />

@@ -1,5 +1,5 @@
 import type { ComponentProps } from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '../lib/utils.ts'
 
 /** 16 px text, so phones do not zoom in when the field gets the focus. */
 function Input({ className, type, ...props }: ComponentProps<'input'>) {
