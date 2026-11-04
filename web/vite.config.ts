@@ -1,4 +1,3 @@
-import tailwindcss from '@tailwindcss/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig, type Connect } from 'vite'
 
@@ -13,7 +12,6 @@ const frameAncestors: Connect.NextHandleFunction = (req, res, next) => {
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(),
     {
       name: 'frame-ancestors',
       configureServer: (server) => void server.middlewares.use(frameAncestors),
