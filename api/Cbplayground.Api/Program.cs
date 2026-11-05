@@ -24,6 +24,10 @@ var connectionString = SqliteConnectionStrings.Resolve(
     builder.Environment.ContentRootPath);
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 
+// In Development: a lock on the database for as long as this API runs, so a second start on the same database aborts
+// instead of deleting the data of this one with "--reset-demo-data" (see DemoDataReset.Lock).
+using var developmentLock = builder.Environment.IsDevelopment() ? DemoDataReset.Lock(connectionString) : null;
+
 // "dotnet run -- --reset-demo-data": deletes the database and the uploaded images before anything opens them, so this start
 // migrates and seeds from scratch. Only in Development; elsewhere it aborts the start without deleting anything.
 if (args.Contains(DemoDataReset.Argument))
