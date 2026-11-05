@@ -5,6 +5,9 @@ const ratios = { '4/3': 'aspect-4/3', '16/9': 'aspect-video' } as const
 
 type PhotoProps = {
   src: string | null
+  /** The same photo in several widths (`srcset`) and the width it is shown in (`sizes`), so a phone loads a smaller file. */
+  srcSet?: string
+  sizes?: string
   /** What the photo shows, e.g. "Area Rooftop"; empty for a photo that only decorates. */
   alt: string
   /** Shown without photo and when it cannot be loaded (404, error), so there is never a broken image. Fills the frame. */
@@ -25,7 +28,7 @@ type PhotoProps = {
  * A photo cropped to fill its frame of fixed size, so nothing moves while it loads: the frame shows a calm placeholder
  * colour, the photo fades in once loaded, and a photo that cannot be loaded gives way to the fallback.
  */
-function Photo({ src, alt, fallback, ratio, priority = false, onError, className, imageClassName }: PhotoProps) {
+function Photo({ src, srcSet, sizes, alt, fallback, ratio, priority = false, onError, className, imageClassName }: PhotoProps) {
   // Per source, so a new photo starts over.
   const [loaded, setLoaded] = useState<string | null>(null)
   const [failed, setFailed] = useState<string | null>(null)
@@ -38,6 +41,8 @@ function Photo({ src, alt, fallback, ratio, priority = false, onError, className
       ) : (
         <img
           src={src}
+          srcSet={srcSet}
+          sizes={sizes}
           alt={alt}
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
