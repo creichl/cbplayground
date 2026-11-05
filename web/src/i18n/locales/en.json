@@ -534,8 +534,48 @@
       "saved": "The cover image has been saved.",
       "removed": "The cover image has been removed."
     },
+    "gallery": {
+      "title": "Gallery",
+      "count": "{{count}} / {{max}} photos",
+      "hint": "PNG, JPEG or WebP, at most 10 MB each, up to 20 photos. Dishes, drinks, the ambience and the view work best – in landscape format, at least 1600 pixels wide.",
+      "viewOnBookingPage": "View the gallery on the booking page",
+      "emptyTitle": "No photos in your gallery yet",
+      "emptyText": "Show your guests what awaits them: your best dishes, the drinks, the ambience in the evening or the view from the terrace. Drop photos here or choose several at once.",
+      "dropHint": "Drop more photos here or choose them – several at once, too.",
+      "fullHint": "The gallery is full ({{max}} photos). Delete a photo to upload a new one.",
+      "choose": "Choose photos",
+      "upload": {
+        "waiting": "Waiting",
+        "uploading": "Uploading… {{percent}} %",
+        "done": "Uploaded",
+        "clear": "Hide list"
+      },
+      "sortHint": "Drag a photo by its handle to a new place, or move it with the arrows. The order is saved right away and is the same on your booking page.",
+      "largeImage": "Large image in the gallery",
+      "photoAlt": "Gallery photo {{number}}",
+      "dragHandle": "Drag to move the photo",
+      "moveForward": "Move forward",
+      "moveBack": "Move back",
+      "caption": "Caption",
+      "captionPlaceholder": "Add a caption (optional)",
+      "captionCount": "{{count}} / {{max}}",
+      "captionSaved": "The caption has been saved.",
+      "delete": "Delete photo",
+      "deleteTitle": "Delete this photo?",
+      "deleteText": "The photo disappears from the gallery on your booking page right away. This cannot be undone.",
+      "deleteConfirm": "Delete",
+      "deleted": "The photo has been deleted.",
+      "orderError": "The order could not be saved",
+      "errors": {
+        "galleryFull": "The gallery is full (at most 20 photos).",
+        "invalidCaption": "The caption is too long (at most 120 characters).",
+        "invalidOrder": "The gallery has changed in the meantime. Please try again.",
+        "tooLarge": "Too large (at most 10 MB).",
+        "typeInvalid": "Format not supported – please use PNG, JPEG or WebP."
+      }
+    },
     "dropHint": "Drop an image here or choose one.",
-    "imagesSavedRightAway": "Logo and cover image are saved as soon as you upload or remove them.",
+    "imagesSavedRightAway": "Logo, cover image and gallery photos are saved as soon as you upload, change or remove them.",
     "preview": {
       "title": "Preview",
       "hint": "Shows your changes before you save them."

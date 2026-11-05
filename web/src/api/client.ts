@@ -117,3 +117,43 @@ export function apiPut<T>(path: string, body: unknown): Promise<T> {
 export function apiDelete<T = void>(path: string): Promise<T> {
   return request<T>('DELETE', path)
 }
+
+/**
+ * POSTs a file as it is (like apiPut with a File) and reports the share of it sent so far, 0–1, to `onProgress`.
+ * Uses XMLHttpRequest, because fetch does not report the progress of an upload. Returns the JSON answer; throws ApiError like the others.
+ */
+export function apiPostFile<T>(path: string, file: File, onProgress: (sent: number) => void): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `/api${path}`)
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream')
+    xhr.upload.onprogress = (event) => {
+      if (event.lengthComputable && event.total > 0) {
+        onProgress(event.loaded / event.total)
+      }
+    }
+    xhr.onerror = () => reject(new ApiError('network', null, `POST /api${path} could not reach the server`))
+    xhr.onload = () => {
+      if (xhr.status < 200 || xhr.status >= 300) {
+        let code: string | null = null
+        try {
+          const errorBody: unknown = JSON.parse(xhr.responseText)
+          if (typeof errorBody === 'object' && errorBody !== null && 'error' in errorBody && typeof errorBody.error === 'string') {
+            code = errorBody.error
+          }
+        } catch {
+          // Most error responses have no JSON body.
+        }
+        reject(new ApiError('http', xhr.status, `POST /api${path} failed with HTTP ${xhr.status}`, code))
+        return
+      }
+      try {
+        resolve(JSON.parse(xhr.responseText) as T)
+      } catch (error) {
+        reject(new ApiError('parse', xhr.status, error instanceof Error ? error.message : String(error)))
+      }
+    }
+    xhr.send(file)
+  })
+}

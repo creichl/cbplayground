@@ -534,8 +534,48 @@
       "saved": "Das Titelbild wurde gespeichert.",
       "removed": "Das Titelbild wurde entfernt."
     },
+    "gallery": {
+      "title": "Galerie",
+      "count": "{{count}} / {{max}} Fotos",
+      "hint": "PNG, JPEG oder WebP, je höchstens 10 MB, bis zu 20 Fotos. Am besten wirken Speisen, Getränke, Ambiente und Aussicht – im Querformat, mindestens 1600 Pixel breit.",
+      "viewOnBookingPage": "Galerie auf der Buchungsseite ansehen",
+      "emptyTitle": "Noch keine Fotos in der Galerie",
+      "emptyText": "Zeigen Sie Ihren Gästen, was sie erwartet: Ihre besten Gerichte, die Getränke, das Ambiente am Abend oder den Blick von der Terrasse. Ziehen Sie Fotos hierher oder wählen Sie mehrere auf einmal aus.",
+      "dropHint": "Weitere Fotos hierher ziehen oder auswählen – auch mehrere auf einmal.",
+      "fullHint": "Die Galerie ist voll ({{max}} Fotos). Löschen Sie ein Foto, um ein neues hochzuladen.",
+      "choose": "Fotos auswählen",
+      "upload": {
+        "waiting": "Wartet",
+        "uploading": "Wird hochgeladen… {{percent}} %",
+        "done": "Hochgeladen",
+        "clear": "Liste ausblenden"
+      },
+      "sortHint": "Ziehen Sie ein Foto am Griff an eine neue Stelle oder verschieben Sie es mit den Pfeilen. Die Reihenfolge wird sofort gespeichert und gilt genauso auf Ihrer Buchungsseite.",
+      "largeImage": "Großes Bild in der Galerie",
+      "photoAlt": "Foto {{number}} der Galerie",
+      "dragHandle": "Ziehen, um das Foto zu verschieben",
+      "moveForward": "Nach vorn",
+      "moveBack": "Nach hinten",
+      "caption": "Beschriftung",
+      "captionPlaceholder": "Beschriftung hinzufügen (optional)",
+      "captionCount": "{{count}} / {{max}}",
+      "captionSaved": "Die Beschriftung wurde gespeichert.",
+      "delete": "Foto löschen",
+      "deleteTitle": "Dieses Foto löschen?",
+      "deleteText": "Das Foto verschwindet sofort aus der Galerie auf Ihrer Buchungsseite. Das lässt sich nicht rückgängig machen.",
+      "deleteConfirm": "Löschen",
+      "deleted": "Das Foto wurde gelöscht.",
+      "orderError": "Die Reihenfolge konnte nicht gespeichert werden",
+      "errors": {
+        "galleryFull": "Die Galerie ist voll (höchstens 20 Fotos).",
+        "invalidCaption": "Die Beschriftung ist zu lang (höchstens 120 Zeichen).",
+        "invalidOrder": "Die Galerie hat sich inzwischen geändert. Bitte versuchen Sie es noch einmal.",
+        "tooLarge": "Zu groß (höchstens 10 MB).",
+        "typeInvalid": "Format nicht unterstützt – bitte PNG, JPEG oder WebP."
+      }
+    },
     "dropHint": "Bild hierher ziehen oder auswählen.",
-    "imagesSavedRightAway": "Logo und Titelbild werden sofort beim Hochladen bzw. Entfernen gespeichert.",
+    "imagesSavedRightAway": "Logo, Titelbild und Galeriefotos werden sofort beim Hochladen, Ändern bzw. Entfernen gespeichert.",
     "preview": {
       "title": "Vorschau",
       "hint": "Zeigt Ihre Änderungen schon vor dem Speichern."
