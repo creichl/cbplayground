@@ -472,3 +472,95 @@ public class DevelopmentSeedGalleryTests(ApiFactory factory) : IClassFixture<Api
         Assert.Empty(dunavAfter.Select(p => p.Id).Intersect(dunavGallery.Select(p => p.Id)));
     }
 }
+
+/// <summary>
+/// The seed and images whose files were lost from the uploads folder, on a factory of its own: the other seed tests count the uploaded files.
+/// </summary>
+public class DevelopmentSeedLostImagesTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private async Task SeedAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
+    }
+
+    [Fact]
+    public async Task The_seed_copies_the_demo_images_again_whose_files_were_lost()
+    {
+        await SeedAsync();
+        var filesBefore = Directory.GetFiles(factory.UploadsPath).Length;
+        // The database keeps naming the images, but their files are gone (e.g. a reset of the uploads folder while an API was running).
+        foreach (var file in Directory.GetFiles(factory.UploadsPath))
+        {
+            File.Delete(file);
+        }
+
+        await SeedAsync();
+        await SeedAsync();
+
+        // Every demo image once again, the second run copied nothing.
+        Assert.Equal(filesBefore, Directory.GetFiles(factory.UploadsPath).Length);
+        using var guest = factory.CreateHttpsClient();
+        foreach (var slug in new[] { "zur-linde", "kafana-dunav", "rooftop-belvedere" })
+        {
+            var restaurant = (await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{slug}", Ct))!;
+            Assert.InRange(restaurant.Gallery.Count, 6, 8);
+            var urls = new[] { restaurant.Branding.LogoUrl, restaurant.Branding.CoverUrl }
+                .Concat(restaurant.Areas.Select(a => a.PhotoUrl))
+                .Concat(restaurant.Gallery.Select(p => p.Url));
+            foreach (var url in urls)
+            {
+                Assert.NotNull(url);
+                Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync(url, Ct)).StatusCode);
+            }
+        }
+
+        using var linde = factory.CreateHttpsClient();
+        (await linde.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, Ct)).EnsureSuccessStatusCode();
+        foreach (var area in (await linde.GetFromJsonAsync<List<AreaResponse>>("/api/admin/areas", Ct))!)
+        {
+            Assert.NotNull(area.FloorPlanUrl);
+            Assert.Equal(HttpStatusCode.OK, (await linde.GetAsync(area.FloorPlanUrl, Ct)).StatusCode);
+        }
+    }
+}
+
+/// <summary>
+/// The seed and a lost gallery photo with an own caption, on a factory of its own: the photo stays lost, which the other tests do not expect.
+/// </summary>
+public class DevelopmentSeedLostOwnPhotoTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private async Task SeedAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
+    }
+
+    [Fact]
+    public async Task The_seed_leaves_a_lost_gallery_photo_without_a_demo_caption_as_it_is()
+    {
+        await SeedAsync();
+        using var linde = factory.CreateHttpsClient();
+        (await linde.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, Ct)).EnsureSuccessStatusCode();
+        var photo = (await linde.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))![0];
+        (await linde.PutAsJsonAsync($"/api/admin/gallery/{photo.Id}", new { caption = "Unser Lieblingsbild" }, Ct)).EnsureSuccessStatusCode();
+        string fileName;
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            fileName = (await db.GalleryPhotos.IgnoreQueryFilters().SingleAsync(p => p.Id == photo.Id, Ct)).FileName;
+        }
+        File.Delete(Path.Combine(factory.UploadsPath, fileName));
+
+        await SeedAsync();
+
+        // No demo photo belongs to an own caption, so the seed cannot know which image it was.
+        var after = Assert.Single((await linde.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))!, p => p.Id == photo.Id);
+        Assert.Equal(photo with { Caption = "Unser Lieblingsbild" }, after);
+        Assert.Equal(HttpStatusCode.NotFound, (await linde.GetAsync(after.Url, Ct)).StatusCode);
+    }
+}
