@@ -570,8 +570,48 @@
       "saved": "Naslovna slika je sačuvana.",
       "removed": "Naslovna slika je uklonjena."
     },
+    "gallery": {
+      "title": "Galerija",
+      "count": "{{count}} / {{max}} fotografija",
+      "hint": "PNG, JPEG ili WebP, najviše 10 MB po fotografiji, do 20 fotografija. Najbolje deluju jela, pića, ambijent i pogled – u položenom formatu, najmanje 1600 piksela širine.",
+      "viewOnBookingPage": "Pogledaj galeriju na stranici za rezervacije",
+      "emptyTitle": "Galerija još nema fotografija",
+      "emptyText": "Pokažite gostima šta ih čeka: vaša najbolja jela, pića, večernji ambijent ili pogled sa terase. Prevucite fotografije ovde ili izaberite više njih odjednom.",
+      "dropHint": "Prevucite još fotografija ovde ili ih izaberite – može i više odjednom.",
+      "fullHint": "Galerija je puna ({{max}} fotografija). Obrišite jednu fotografiju da biste otpremili novu.",
+      "choose": "Izaberi fotografije",
+      "upload": {
+        "waiting": "Čeka",
+        "uploading": "Otpremanje… {{percent}} %",
+        "done": "Otpremljeno",
+        "clear": "Sakrij listu"
+      },
+      "sortHint": "Prevucite fotografiju za ručicu na novo mesto ili je pomerite strelicama. Redosled se čuva odmah i isti je na vašoj stranici za rezervacije.",
+      "largeImage": "Velika slika u galeriji",
+      "photoAlt": "Fotografija {{number}} iz galerije",
+      "dragHandle": "Prevucite da biste pomerili fotografiju",
+      "moveForward": "Pomeri napred",
+      "moveBack": "Pomeri nazad",
+      "caption": "Opis",
+      "captionPlaceholder": "Dodajte opis (opciono)",
+      "captionCount": "{{count}} / {{max}}",
+      "captionSaved": "Opis je sačuvan.",
+      "delete": "Obriši fotografiju",
+      "deleteTitle": "Obrisati ovu fotografiju?",
+      "deleteText": "Fotografija odmah nestaje iz galerije na vašoj stranici za rezervacije. Ovo se ne može poništiti.",
+      "deleteConfirm": "Obriši",
+      "deleted": "Fotografija je obrisana.",
+      "orderError": "Redosled nije sačuvan",
+      "errors": {
+        "galleryFull": "Galerija je puna (najviše 20 fotografija).",
+        "invalidCaption": "Opis je predugačak (najviše 120 znakova).",
+        "invalidOrder": "Galerija se u međuvremenu promenila. Pokušajte ponovo.",
+        "tooLarge": "Prevelika (najviše 10 MB).",
+        "typeInvalid": "Format nije podržan – koristite PNG, JPEG ili WebP."
+      }
+    },
     "dropHint": "Prevucite sliku ovde ili je izaberite.",
-    "imagesSavedRightAway": "Logo i naslovna slika čuvaju se odmah pri otpremanju ili uklanjanju.",
+    "imagesSavedRightAway": "Logo, naslovna slika i fotografije galerije čuvaju se odmah pri otpremanju, izmeni ili uklanjanju.",
     "preview": {
       "title": "Pregled",
       "hint": "Prikazuje vaše izmene i pre čuvanja."

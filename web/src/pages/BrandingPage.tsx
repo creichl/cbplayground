@@ -41,6 +41,7 @@ import { backgrounds, colorSchemeOf, contrastRatio, fontPairs, fontStack, loadFo
 import { BrandingImageUpload } from '../components/BrandingImageUpload.tsx'
 import { BrandingPreview } from '../components/BrandingPreview.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { GalleryManager } from '../components/GalleryManager.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
 /** Suggested accent colours, from calm to warm; the first is the platform's own colour. */
@@ -50,8 +51,8 @@ const suggestedColors = ['#127c6e', '#1f5f8b', '#2f4858', '#5a7d3a', '#8a9a5b', 
 const minContrast = 3
 
 /**
- * Admin page "Appearance": accent colour, light or dark, font pair, logo and cover image of the restaurant's guest pages,
- * with a live preview of the unsaved state next to the form (below it on phones).
+ * Admin page "Appearance": accent colour, light or dark, font pair, logo, cover image and photo gallery of the restaurant's
+ * guest pages, with a live preview of the unsaved state next to the form (below it on phones).
  */
 export function BrandingPage() {
   const { t } = useTranslation()
@@ -86,13 +87,13 @@ export function BrandingPage() {
       ) : branding.isError ? (
         <ErrorAlert error={branding.error} onRetry={() => void branding.refetch()} />
       ) : (
-        <BrandingForm branding={branding.data} name={tenant.name} city={profile.data?.city ?? null} />
+        <BrandingForm branding={branding.data} name={tenant.name} slug={tenant.slug} city={profile.data?.city ?? null} />
       )}
     </Stack>
   )
 }
 
-function BrandingForm({ branding, name, city }: { branding: Branding; name: string; city: string | null }) {
+function BrandingForm({ branding, name, slug, city }: { branding: Branding; name: string; slug: string; city: string | null }) {
   const { t, i18n } = useTranslation()
   const [color, setColor] = useState(branding.brandColor ?? '')
   const [themeMode, setThemeMode] = useState<ThemeMode>(branding.themeMode)
@@ -296,6 +297,10 @@ function BrandingForm({ branding, name, city }: { branding: Branding; name: stri
                 removing={deleteCover.isPending}
               />
             </Stack>
+          </Card>
+
+          <Card>
+            <GalleryManager slug={slug} />
           </Card>
 
           {save.isError && (
