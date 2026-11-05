@@ -24,8 +24,9 @@ public static class PublicRestaurantEndpoints
     public const string ReadRateLimitPolicy = "public-read";
 
     /// <summary>
-    /// The restaurant for the booking page: its profile (every field null when empty), how it is booked, its branding and its
-    /// areas open for online booking (to describe the place, also when the system assigns the tables).
+    /// The restaurant for the booking page: its profile (every field null when empty), how it is booked, its branding, its
+    /// areas open for online booking (to describe the place, also when the system assigns the tables) and its photo gallery in
+    /// its order (empty without photos).
     /// </summary>
     public record RestaurantResponse(
         string Name,
@@ -44,7 +45,8 @@ public static class PublicRestaurantEndpoints
         IReadOnlyList<PeriodDto> OpeningHours,
         bool Bookable,
         BrandingEndpoints.BrandingResponse Branding,
-        IReadOnlyList<RestaurantArea> Areas);
+        IReadOnlyList<RestaurantArea> Areas,
+        IReadOnlyList<GalleryEndpoints.GalleryPhotoResponse> Gallery);
 
     /// <summary>An area open for online booking, in the order of the areas; description and photo are null when not given.</summary>
     public record RestaurantArea(string Name, string? Description, string? PhotoUrl);
@@ -159,7 +161,8 @@ public static class PublicRestaurantEndpoints
                 openingHours,
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0,
                 Branding: BrandingEndpoints.ToResponse(tenant),
-                Areas: areas);
+                Areas: areas,
+                Gallery: await GalleryEndpoints.ListAsync(db, tenant.Slug));
         });
 
         group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
@@ -171,6 +174,13 @@ public static class PublicRestaurantEndpoints
         group.MapGet("/cover", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
             var fileName = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CoverFileName).SingleAsync();
+            return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageUploads.CacheControl(fileName, v));
+        });
+
+        // A photo of the gallery; one of another restaurant is not found, because the tenant filter hides it.
+        group.MapGet("/gallery/{id:guid}", async (Guid id, string? v, HttpContext httpContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
+        {
+            var fileName = await db.GalleryPhotos.Where(p => p.Id == id).Select(p => p.FileName).SingleOrDefaultAsync();
             return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageUploads.CacheControl(fileName, v));
         });
 

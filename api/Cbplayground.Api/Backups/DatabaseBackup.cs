@@ -6,7 +6,7 @@ using Microsoft.Data.Sqlite;
 namespace Cbplayground.Api.Backups;
 
 /// <summary>
-/// Backs up the SQLite database together with the uploaded images (floor plans, logos, cover images and area photos): one zip file per run in "Backup:Path"
+/// Backs up the SQLite database together with the uploaded images (floor plans, logos, cover images, area photos and gallery photos): one zip file per run in "Backup:Path"
 /// (relative to the content root), named after the local server time, e.g. "cbplayground-20261031-030000.zip".
 /// Backups older than "Backup:RetentionDays" are deleted.
 /// The Data Protection keys ("DataProtection:KeysPath") are deliberately not backed up: anyone with a backup could forge
