@@ -29,10 +29,11 @@ builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connect
 using var developmentLock = builder.Environment.IsDevelopment() ? DemoDataReset.Lock(connectionString) : null;
 
 // "dotnet run -- --reset-demo-data": deletes the database and the uploaded images before anything opens them, so this start
-// migrates and seeds from scratch. Only in Development; elsewhere it aborts the start without deleting anything.
+// migrates and seeds from scratch. Only in Development, and only when nothing listens on this API's addresses yet ("urls");
+// otherwise it aborts the start without deleting anything.
 if (args.Contains(DemoDataReset.Argument))
 {
-    DemoDataReset.Run(builder.Environment, connectionString, ImageUploads.UploadsDirectory(builder.Configuration, builder.Environment));
+    DemoDataReset.Run(builder.Environment, connectionString, ImageUploads.UploadsDirectory(builder.Configuration, builder.Environment), builder.Configuration["urls"]);
 }
 
 // The keys that protect the sign-in cookie, kept on disk so staff stay signed in when the API restarts.
