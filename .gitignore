@@ -19,3 +19,6 @@ api/Cbplayground.Api/data/backups/
 
 # Data Protection keys of the sign-in cookie (see DataProtection:KeysPath in appsettings.json)
 api/Cbplayground.Api/data/keys/
+
+# Results of the automated tests (web/e2e/run.sh)
+/test-results/
