@@ -18,7 +18,7 @@ public static class DevelopmentSeed
 {
     public record SeedUser(string Email, string Password, string DisplayName, string Role, string? TenantSlug = null);
 
-    /// <summary>Folder of the seed floor plans, logos, cover images and area photos, relative to the content root; the photos' sources are in CREDITS.md there.</summary>
+    /// <summary>Folder of the seed floor plans, logos, cover images, area photos and gallery photos, relative to the content root; the photos' sources are in CREDITS.md there.</summary>
     private static readonly string SeedAssetsPath = Path.Combine("Data", "SeedAssets");
 
     /// <summary>Size of the seed floor plans in pixels; the table positions below are given in pixels of these images.</summary>
@@ -42,6 +42,9 @@ public static class DevelopmentSeed
     /// <summary>A demo branding; <see cref="LogoFile"/> and <see cref="CoverFile"/> are files in <see cref="SeedAssetsPath"/>.</summary>
     private record DemoBranding(string BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string LogoFile, string CoverFile);
 
+    /// <summary>A photo of the demo gallery: a file in <see cref="SeedAssetsPath"/> and its caption in the restaurant's language.</summary>
+    private record DemoGalleryPhoto(string File, string Caption);
+
     private record DemoRestaurant(
         string Name,
         string Slug,
@@ -52,7 +55,8 @@ public static class DevelopmentSeed
         DemoArea[] Areas,
         ReservationSettings Settings,
         DurationRule[] DurationRules,
-        DemoBranding Branding);
+        DemoBranding Branding,
+        DemoGalleryPhoto[] Gallery);
 
     private static readonly DayOfWeek[] TuesdayToSunday =
         [DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
@@ -227,7 +231,7 @@ public static class DevelopmentSeed
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
     /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
-    /// rules (never saved). An existing demo area gets its photo and description when it has neither.
+    /// rules (never saved), the photo gallery with its captions (no photos). An existing demo area gets its photo and description when it has neither.
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
@@ -367,6 +371,17 @@ public static class DevelopmentSeed
                             DurationMinutes = r.DurationMinutes,
                         }));
                     }
+                }
+
+                if (!await db.GalleryPhotos.AnyAsync())
+                {
+                    db.GalleryPhotos.AddRange(demo.Gallery.Select((photo, i) => new GalleryPhoto
+                    {
+                        FileName = CopySeedAsset(photo.File),
+                        Caption = photo.Caption,
+                        SortOrder = i,
+                        CreatedAt = DateTime.UtcNow,
+                    }));
                 }
 
                 await db.SaveChangesAsync();
