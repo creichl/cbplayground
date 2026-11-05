@@ -5,6 +5,7 @@ import { type BookingResult, managePath, type PublicRestaurant } from '../../api
 import { formatLongDate, formatTime } from '../../i18n/format.ts'
 import { Button } from '../../ui/button.tsx'
 import { SuccessMark } from '../../ui/motion/success-mark.tsx'
+import { Photo } from '../../ui/photo.tsx'
 import { calendarFile, downloadCalendarFile } from './calendarFile.ts'
 import { formatAddress, mapSearchUrl } from './format.ts'
 
@@ -13,6 +14,8 @@ type BookingConfirmationProps = {
   slug: string
   restaurant: PublicRestaurant
   timeZoneId: string
+  /** A narrow band with a photo of the restaurant on top of the ticket; not in the embed, whose page shows its own photos. */
+  photoBand?: boolean
 }
 
 /**
@@ -20,14 +23,16 @@ type BookingConfirmationProps = {
  * SuccessMark, unless the guest asked for less motion; for a request, which the restaurant still has to confirm, a clock and
  * "Request sent" with what happens next), then a card like a ticket that slides up, with the reference code and what was booked (date, time, people, table and area, address), and the actions: "Add to
  * calendar" (.ics), "Copy link" (the link to view and cancel the reservation, with the hint to save it), "Manage
- * reservation" and "Directions". The heading (`title`) is the dialog's.
+ * reservation" and "Directions". On top of the ticket, outside the embed, a narrow band with the cover image, otherwise the
+ * first photo of the gallery, otherwise the accent colour. The heading (`title`) is the dialog's.
  */
-export function BookingConfirmation({ result, slug, restaurant, timeZoneId, title }: BookingConfirmationProps & { title: ReactNode }) {
+export function BookingConfirmation({ result, slug, restaurant, timeZoneId, photoBand = false, title }: BookingConfirmationProps & { title: ReactNode }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const requested = result.status === 'Requested'
   const manageUrl = `${window.location.origin}${managePath(slug, result.referenceCode, result.manageToken)}`
   const address = formatAddress(restaurant)
+  const bandPhoto = restaurant.branding.coverUrl ?? restaurant.gallery[0]?.url ?? null
   const [copied, setCopied] = useState(false)
 
   useEffect(() => {
@@ -94,6 +99,13 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, titl
 
       {/* Like a ticket: the code at the top, a perforation with two notches, what was booked below it. */}
       <div className="w-full animate-rise rounded-2xl border border-border bg-card text-left shadow-card [animation-delay:200ms]">
+        {photoBand && (
+          // Only a picture of the place; on the accent colour (almost black in the dark mode) without photo or while it loads.
+          // Its corners follow the card's inside its border; the card itself does not clip, so the notches below cut its border.
+          <div className="h-20 overflow-hidden rounded-t-[calc(var(--radius-2xl)-1px)] bg-primary sm:h-24 dark:bg-stone-900">
+            {bandPhoto !== null && <Photo src={bandPhoto} alt="" fallback={null} className="bg-transparent" />}
+          </div>
+        )}
         <div className="flex flex-col gap-1 px-6 pt-5 pb-4">
           <p className="font-display text-lg">{restaurant.name}</p>
           <p className="text-sm text-muted-foreground">{t('booking.confirmation.referenceCode')}</p>

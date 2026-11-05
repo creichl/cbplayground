@@ -169,6 +169,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
             slug={slug}
             restaurant={restaurant}
             timeZoneId={timeZoneId}
+            photoBand={frame !== 'inline'}
             title={heading(shown.result.status === 'Requested' ? t('booking.confirmation.requestTitle') : t('booking.confirmation.confirmedTitle'))}
           />
         ) : (
