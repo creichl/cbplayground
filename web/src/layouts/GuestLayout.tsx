@@ -41,7 +41,8 @@ export function GuestLayout() {
  * restaurant's logo on the left (without box, 40 px high, see BrandLogo; without logo the name) and the language as a
  * compact menu on the right. While a page's cover image (RestaurantHeader, through HeroContext) is behind it, the header is
  * transparent with white text and the logo has a soft shadow; once the page scrolls past the image it is fixed, opaque with
- * a blur, and on the booking page it adds "Reserve a table", which brings the reservation card into view. The platform
+ * a blur (a layer that fades in, so the change is smooth), and on the booking page it adds "Reserve a table", which brings
+ * the reservation card into view. Links between the guest pages change the page with a view transition. The platform
  * steps back into a plain footer with the staff sign-in and "powered by". An unknown restaurant gets the platform's look.
  */
 function RestaurantLayout({ slug }: { slug: string }) {
@@ -87,20 +88,37 @@ function RestaurantFrame({ slug }: { slug: string }) {
       <div className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
         <header
           className={cn(
-            'fixed inset-x-0 top-0 z-40 h-16 border-b transition-[background-color,border-color,backdrop-filter] duration-(--motion-fast)',
-            overHero ? 'border-transparent bg-transparent text-white' : 'border-border bg-background/85 backdrop-blur-md',
+            'fixed inset-x-0 top-0 z-40 h-16 transition-colors duration-(--motion-slow)',
+            overHero ? 'text-white' : 'text-foreground',
           )}
         >
-          <div className="mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 sm:px-6">
+          {/*
+            The opaque surface with its blur fades in and out as a whole: a blur itself does not change smoothly in every browser.
+            Neither it nor the header carries a view-transition-name: that makes an element a backdrop root, and a blur inside
+            it would only see the header instead of the page behind it.
+          */}
+          <div
+            aria-hidden="true"
+            className={cn(
+              'absolute inset-0 border-b border-border bg-background/85 backdrop-blur-md transition-opacity duration-(--motion-slow)',
+              overHero ? 'opacity-0' : 'opacity-100',
+            )}
+          />
+          {/*
+            Logo and language: their own layer in page transitions, on top of the cover image moving below them (app.css). As
+            large as the row of the start page's header (SiteHeader), so neither is scaled while one becomes the other.
+          */}
+          <div className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 [view-transition-name:site-header] sm:px-6">
             {restaurant.isPending ? (
               <Skeleton className="h-10 w-30" />
             ) : restaurant.isError ? (
-              <Link to="/" className="shrink-0 rounded-lg font-display text-lg text-primary-text focus-ring">
+              <Link to="/" viewTransition className="shrink-0 rounded-lg font-display text-lg text-primary-text focus-ring">
                 {t('app.name')}
               </Link>
             ) : (
               <Link
                 to={`/r/${encodeURIComponent(slug)}`}
+                viewTransition
                 aria-label={restaurant.data.name}
                 // Over the cover image without logo, the name stands large in the image itself.
                 className={cn('flex min-w-0 items-center rounded-lg focus-ring', overHero && logoUrl === null && 'invisible')}
@@ -113,7 +131,12 @@ function RestaurantFrame({ slug }: { slug: string }) {
               </Link>
             )}
             <div className="flex shrink-0 items-center gap-2">
-              {showReserve && <Button onClick={scrollToBooking}>{t('booking.reserveTable')}</Button>}
+              {showReserve && (
+                // It fades in on a wrapper: on the button the focus ring's animation would replace it while focused, and it would play again on blur.
+                <span className="flex animate-fade-in">
+                  <Button onClick={scrollToBooking}>{t('booking.reserveTable')}</Button>
+                </span>
+              )}
               <LanguageMenu className={overHero ? 'text-white hover:bg-white/15 hover:text-white' : undefined} />
             </div>
           </div>
@@ -127,7 +150,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
         <footer className="mt-16 border-t border-border">
           <div className="mx-auto flex max-w-page flex-wrap items-center justify-between gap-2 px-4 py-2 text-sm text-muted-foreground sm:px-6">
             <StaffLink />
-            <Link to="/" className="inline-flex min-h-11 items-center rounded-sm underline-offset-4 hover:underline focus-ring">
+            <Link to="/" viewTransition className="inline-flex min-h-11 items-center rounded-sm underline-offset-4 hover:underline focus-ring">
               {t('embed.poweredBy')}
             </Link>
           </div>

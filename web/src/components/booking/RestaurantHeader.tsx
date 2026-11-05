@@ -1,5 +1,7 @@
 import { use, useState } from 'react'
 import { cn } from '../../lib/utils.ts'
+import { ParallaxImage } from '../../ui/motion/parallax-image.tsx'
+import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Photo } from '../../ui/photo.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { HeroContext } from './layout.ts'
@@ -31,54 +33,62 @@ const heights = {
  * font, the city and, on the booking page, a chip whether it is open today. Without cover image a calm band in the accent
  * colour; a cover image that cannot be loaded shows the band in the cover image's height, so nothing jumps. The logo is not
  * repeated here: it is in the header.
+ *
+ * On the booking page the cover image zooms in once when it has loaded and moves slower than the content while the page
+ * scrolls, darkening (ParallaxImage); name, city and chip rise in one after another (Stagger). In page transitions it is
+ * the element the photo of the start page's card moves into (view-transition-name restaurant-cover, app.css).
  */
 export function RestaurantHeader({ name, city, coverUrl, facts = [], status = null, size = 'page' }: RestaurantHeaderProps) {
   const registerHero = use(HeroContext)
   const details = [city, ...facts].filter((part) => part !== null && part !== '')
   const [failedCover, setFailedCover] = useState<string | null>(null)
   const withCover = coverUrl !== null && failedCover !== coverUrl
+  const page = size === 'page'
+
+  const text = (
+    <div className={cn('relative mx-auto w-full max-w-page px-4 sm:px-6', size === 'preview' ? 'pb-4' : 'pb-6 lg:pb-10')}>
+      <h1 className={cn('font-display text-balance wrap-anywhere', page ? 'text-4xl sm:text-5xl xl:text-6xl' : 'text-2xl')}>{name}</h1>
+      {details.length > 0 && <p className={cn('mt-2 font-medium', size === 'preview' ? 'text-base' : 'text-lg')}>{details.join(' · ')}</p>}
+      {status !== null && (
+        <p
+          className={cn(
+            'mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium backdrop-blur-sm',
+            withCover ? 'bg-black/35 text-white ring-1 ring-white/25' : 'bg-primary-foreground/15 ring-1 ring-primary-foreground/25',
+          )}
+        >
+          {/* The text says it; the dot only repeats it. */}
+          <span aria-hidden="true" className={cn('size-2 rounded-full', status.open ? 'bg-green-400' : 'bg-red-400')} />
+          {status.text}
+        </p>
+      )}
+    </div>
+  )
 
   return (
     <div
-      ref={size === 'preview' ? undefined : registerHero}
+      ref={page ? registerHero : undefined}
       className={cn(
-        'relative flex items-end overflow-hidden',
+        // overflow-clip, not hidden: the parallax of the cover image needs the page as its scroller.
+        'relative flex items-end overflow-clip',
         coverUrl !== null ? heights[size].cover : heights[size].band,
         withCover ? 'bg-primary-900 text-white' : 'bg-primary text-primary-foreground',
+        page && '[view-transition-name:restaurant-cover]',
       )}
     >
       {withCover && (
         <>
           {/* Only a picture of the place: the name below says what it is. The first thing on the page, so not lazy. */}
-          <Photo src={coverUrl} alt="" fallback={null} priority onError={() => setFailedCover(coverUrl)} className="absolute inset-0 bg-primary-900" />
+          {page ? (
+            <ParallaxImage src={coverUrl} alt="" onError={() => setFailedCover(coverUrl)} className="bg-primary-900" />
+          ) : (
+            <Photo src={coverUrl} alt="" fallback={null} priority onError={() => setFailedCover(coverUrl)} className="absolute inset-0 bg-primary-900" />
+          )}
           {/* Darkens the bottom for the name and the top for the header. */}
           <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-black/80 via-black/35 via-45% to-transparent to-75%" />
           <div aria-hidden="true" className="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-black/40 to-transparent" />
         </>
       )}
-      <div className={cn('relative mx-auto w-full max-w-page px-4 sm:px-6', size === 'preview' ? 'pb-4' : 'pb-6 lg:pb-10')}>
-        <h1
-          className={cn(
-            'font-display text-balance wrap-anywhere',
-            size === 'page' ? 'text-4xl sm:text-5xl xl:text-6xl' : 'text-2xl',
-          )}
-        >
-          {name}
-        </h1>
-        {details.length > 0 && <p className={cn('mt-2 font-medium', size === 'preview' ? 'text-base' : 'text-lg')}>{details.join(' · ')}</p>}
-        {status !== null && (
-          <p
-            className={cn(
-              'mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium backdrop-blur-sm',
-              withCover ? 'bg-black/35 text-white ring-1 ring-white/25' : 'bg-primary-foreground/15 ring-1 ring-primary-foreground/25',
-            )}
-          >
-            {/* The text says it; the dot only repeats it. */}
-            <span aria-hidden="true" className={cn('size-2 rounded-full', status.open ? 'bg-green-400' : 'bg-red-400')} />
-            {status.text}
-          </p>
-        )}
-      </div>
+      {page ? <Stagger>{text}</Stagger> : text}
     </div>
   )
 }
@@ -86,5 +96,5 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], status = nu
 /** The cover image while the restaurant loads, in the height of the page's cover image, so nothing jumps. */
 export function RestaurantHeaderSkeleton({ size = 'page' }: Pick<RestaurantHeaderProps, 'size'>) {
   const registerHero = use(HeroContext)
-  return <Skeleton ref={registerHero} className={cn('rounded-none', heights[size].cover)} />
+  return <Skeleton ref={registerHero} className={cn('rounded-none', heights[size].cover, size === 'page' && '[view-transition-name:restaurant-cover]')} />
 }

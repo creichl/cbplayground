@@ -1,12 +1,13 @@
 import { ArrowRightIcon, CircleAlertIcon, RefreshCwIcon, SearchIcon, SearchXIcon, UtensilsCrossedIcon } from 'lucide-react'
 import { type ReactNode, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router'
+import { Link, useViewTransitionState } from 'react-router'
 import { requestErrorMessage } from '../api/client.ts'
 import { type Tenant, useTenants } from '../api/tenants.ts'
 import { primaryVariables } from '../brandTheme.ts'
 import { BrandLogo } from '../components/BrandLogo.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
+import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
@@ -162,6 +163,7 @@ function PageState({ icon, tone = 'neutral', title, text, action }: { icon: Reac
  * rounded corners, zooming in softly under the pointer, with the logo on it; below it the name, the city, the description
  * cut to two lines and "Reserve a table" with an arrow in the restaurant's accent colour. Without photo, or when it cannot be
  * loaded, a calm surface in a light tint of the accent colour (the platform's without one) with the logo or the name.
+ * Opening it, the photo moves into the cover image of the booking page (view transition, app.css).
  */
 function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolean }) {
   const { t } = useTranslation()
@@ -169,6 +171,9 @@ function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolea
   const variables = useMemo(() => (tenant.brandColor !== null ? primaryVariables(tenant.brandColor, 'light') : undefined), [tenant.brandColor])
   const [coverFailed, setCoverFailed] = useState(false)
   const withCover = tenant.coverUrl !== null && !coverFailed
+  const to = `/r/${encodeURIComponent(tenant.slug)}`
+  // Only the card being opened carries the name of the shared element: a name may only be on one element at a time.
+  const opening = useViewTransitionState(to)
 
   const name = (
     <span aria-hidden="true" className="line-clamp-2 text-center font-display text-2xl wrap-anywhere">
@@ -177,9 +182,9 @@ function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolea
   )
 
   return (
-    <Link to={`/r/${encodeURIComponent(tenant.slug)}`} style={variables} className="group flex h-full flex-col gap-4 rounded-xl focus-ring">
+    <Link to={to} viewTransition style={variables} className="group flex h-full flex-col gap-4 rounded-xl focus-ring">
       {/* Photo and logo only accompany the name below, so they have no text alternative. */}
-      <div className="relative">
+      <div className={cn('relative', opening && '[view-transition-name:restaurant-cover]')}>
         <Photo
           src={tenant.coverUrl}
           alt=""

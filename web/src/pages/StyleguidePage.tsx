@@ -1,5 +1,5 @@
 import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon, TriangleAlertIcon, UtensilsCrossedIcon } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
+import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import type { BrandStyle } from '../brandTheme.ts'
@@ -16,6 +16,9 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
 import { LanguageMenu } from '../ui/language-menu.tsx'
+import { ParallaxImage } from '../ui/motion/parallax-image.tsx'
+import { Reveal, Stagger } from '../ui/motion/reveal.tsx'
+import { SuccessMark } from '../ui/motion/success-mark.tsx'
 import { Photo } from '../ui/photo.tsx'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select.tsx'
@@ -216,20 +219,7 @@ export function StyleguidePage() {
           </Section>
 
           <Section title={t('styleguide.motion')}>
-            <div className="flex flex-col gap-3">
-              <p className="text-sm text-muted-foreground">{t('styleguide.motionHint')}</p>
-              <ul className="flex flex-col gap-2 text-sm">
-                <li>
-                  <Code>--motion-fast · 150 ms</Code> {t('styleguide.motionFast')}
-                </li>
-                <li>
-                  <Code>--motion-medium · 200 ms</Code> {t('styleguide.motionMedium')}
-                </li>
-                <li>
-                  <Code>--motion-slow · 300 ms</Code> {t('styleguide.motionSlow')}
-                </li>
-              </ul>
-            </div>
+            <MotionSamples />
           </Section>
 
           <Section title={t('styleguide.focus')}>
@@ -527,6 +517,198 @@ export function StyleguidePage() {
 /** A date as "YYYY-MM-DD" in local time, as the formatters take it. */
 function isoDate(date: Date) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+/** Times for the samples of the motion. */
+const sampleTimes = ['18:00', '18:15', '18:30', '18:45', '19:00', '19:15', '19:30', '19:45']
+
+/**
+ * The motion of the guest pages, each building block with a sample (README, "Design system", Motion). "Simulate reduced
+ * motion" sets data-reduce-motion on the document, so the whole page behaves as with the device's setting, dialogs and
+ * sheets included. "Play again" draws the samples anew.
+ */
+function MotionSamples() {
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
+  const [reduced, setReduced] = useState(false)
+  const [round, setRound] = useState(0)
+  const [time, setTime] = useState<string | null>(null)
+  const [step, setStep] = useState<{ index: number; back: boolean } | null>(null)
+
+  useEffect(() => {
+    if (!reduced) {
+      return
+    }
+    document.documentElement.dataset.reduceMotion = ''
+    return () => {
+      delete document.documentElement.dataset.reduceMotion
+    }
+  }, [reduced])
+
+  const chip = 'relative inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-3 text-sm font-medium tabular-nums press focus-ring'
+
+  return (
+    <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-muted-foreground">{t('styleguide.motionHint')}</p>
+        <ul className="flex flex-col gap-2 text-sm">
+          <li>
+            <Code>--motion-fast · 150 ms</Code> {t('styleguide.motionFast')}
+          </li>
+          <li>
+            <Code>--motion-medium · 200 ms</Code> {t('styleguide.motionMedium')}
+          </li>
+          <li>
+            <Code>--motion-slow · 300 ms</Code> {t('styleguide.motionSlow')}
+          </li>
+          <li>
+            <Code>--motion-long · 600 ms</Code> {t('styleguide.motionLong')}
+          </li>
+          <li>
+            <Code>--ease-out · --ease-spring</Code> {t('styleguide.motionEasing')}
+          </li>
+        </ul>
+        <div className="flex flex-wrap items-center gap-4">
+          <label className="flex min-h-11 cursor-pointer items-center gap-3 text-sm font-medium">
+            <input type="checkbox" checked={reduced} onChange={(event) => setReduced(event.currentTarget.checked)} className="size-4 accent-primary focus-ring" />
+            {t('styleguide.reduceMotion')}
+          </label>
+          <Button variant="outline" onClick={() => setRound((value) => value + 1)}>
+            {t('styleguide.replay')}
+          </Button>
+        </div>
+      </div>
+
+      {/* A new round draws every sample anew, so its entrance plays again. */}
+      <div key={round} className="flex flex-col gap-12">
+        <Block name="Reveal">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionReveal')}</p>
+          <Reveal>
+            <Card className="max-w-md">
+              <CardHeader>
+                <CardTitle>{t('booking.restaurant.about')}</CardTitle>
+                <CardDescription>{t('home.subtitle')}</CardDescription>
+              </CardHeader>
+            </Card>
+          </Reveal>
+        </Block>
+
+        <Block name="Stagger · pulse-ring">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionStagger')}</p>
+          <Stagger>
+            <ul className="grid max-w-md grid-cols-4 gap-2">
+              {sampleTimes.map((option) => (
+                <li key={option}>
+                  <button
+                    type="button"
+                    aria-pressed={time === option}
+                    onClick={() => setTime(option)}
+                    className={cn(
+                      chip,
+                      'w-full',
+                      time === option
+                        ? 'border-primary bg-primary text-primary-foreground pulse-ring hover:bg-primary-hover'
+                        : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
+                    )}
+                  >
+                    {formatTime(option, language)}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </Stagger>
+        </Block>
+
+        <Block name="press · lift">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionPress')}</p>
+          <div className="flex flex-wrap items-start gap-6">
+            <Button>{t('booking.reserveTable')}</Button>
+            <button type="button" className={cn(chip, 'border-input bg-background px-4 hover:bg-accent')}>
+              {t('booking.guestsCount', { count: 2 })}
+            </button>
+            <div className="group flex w-56 flex-col gap-2 lift">
+              <Photo
+                src="/login-photo.webp"
+                alt=""
+                ratio="4/3"
+                className="rounded-xl"
+                imageClassName="transition-[opacity,scale] duration-(--motion-long) group-hover:scale-105"
+                fallback={null}
+              />
+              <span className="font-display text-lg">{t('booking.restaurant.areas')}</span>
+            </div>
+          </div>
+        </Block>
+
+        <Block name="ParallaxImage">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionParallax')}</p>
+          <div className="relative h-64 overflow-clip rounded-xl bg-primary-900">
+            <ParallaxImage src="/login-photo.webp" alt="" />
+          </div>
+        </Block>
+
+        <Block name="animate-slide-in">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionSlide')}</p>
+          <Card className="max-w-md gap-4 overflow-clip px-6">
+            <div
+              key={step?.index ?? 0}
+              className={cn('flex flex-col gap-1', step !== null && 'animate-slide-in', step?.back === true && '[--slide-from:-1.5rem]')}
+            >
+              <span className="text-sm text-muted-foreground">{t('booking.dialog.stepOf', { step: (step?.index ?? 0) + 1, total: 3 })}</span>
+              <span className="font-display text-xl">
+                {t((['booking.dialog.stepTable', 'booking.dialog.stepDetails', 'booking.dialog.stepDone'] as const)[step?.index ?? 0])}
+              </span>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" disabled={(step?.index ?? 0) === 0} onClick={() => setStep({ index: (step?.index ?? 0) - 1, back: true })}>
+                {t('guestReservation.confirm.back')}
+              </Button>
+              <Button disabled={(step?.index ?? 0) === 2} onClick={() => setStep({ index: (step?.index ?? 0) + 1, back: false })}>
+                {t('booking.continue')}
+              </Button>
+            </div>
+          </Card>
+        </Block>
+
+        <Block name="SuccessMark">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionSuccess')}</p>
+          <div className="flex flex-col items-start gap-6">
+            <SuccessMark />
+            <div className="w-full max-w-md animate-rise rounded-2xl border border-border bg-card px-6 py-5 shadow-card [animation-delay:200ms]">
+              <p className="text-sm text-muted-foreground">{t('booking.confirmation.referenceCode')}</p>
+              <p className="font-mono text-3xl font-bold tracking-[0.15em] text-primary-text">K7M2QX</p>
+            </div>
+          </div>
+        </Block>
+
+        <Block name="Skeleton · Dialog">
+          <p className="text-sm text-muted-foreground">{t('styleguide.motionPanels')}</p>
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex w-56 flex-col gap-2" aria-hidden="true">
+              <Skeleton className="h-5 w-3/4" />
+              <Skeleton className="h-11 rounded-full" />
+            </div>
+            <Dialog>
+              <DialogTrigger asChild>
+                <Button variant="outline">{t('styleguide.openDialog')}</Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>{t('guestReservation.confirm.title')}</DialogTitle>
+                  <DialogDescription>{t('guestReservation.confirm.text')}</DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">{t('guestReservation.confirm.back')}</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </Block>
+      </div>
+    </div>
+  )
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {

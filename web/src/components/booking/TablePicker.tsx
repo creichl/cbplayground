@@ -48,8 +48,8 @@ function smallestFreeTable(areas: PublicArea[]) {
  * photo and "N free", the legend, the chosen table, "No preference" and "Continue". On phones the areas are chips above the
  * plan in the full width, and the choice with "Continue" stays at the bottom of the screen. Free tables that fit the party
  * are outlined in the accent colour, the chosen one filled with a check, the others muted and hatched; hovering a table
- * names it ("Table R6 · up to 6 people"). The list of the free tables, folded away below the plan, is the way to choose with
- * the keyboard and screen readers.
+ * names it ("Table R6 · up to 6 people"). A table just chosen gets a short pulse of a ring, and its details slide in. The
+ * list of the free tables, folded away below the plan, is the way to choose with the keyboard and screen readers.
  */
 export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, dark }: TablePickerProps) {
   const { t } = useTranslation()
@@ -129,7 +129,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
                 disabled={count === 0}
                 onClick={() => setActiveArea(option.id)}
                 className={cn(
-                  'inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors focus-ring disabled:cursor-not-allowed disabled:opacity-60',
+                  'inline-flex h-11 shrink-0 cursor-pointer items-center gap-2 rounded-full border px-4 text-sm font-medium whitespace-nowrap press focus-ring disabled:cursor-not-allowed disabled:opacity-60',
                   option.id === area.id ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-background hover:bg-accent',
                 )}
               >
@@ -174,7 +174,11 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
                       {...look}
                       note={selected ? <CheckIcon aria-hidden="true" className="my-px size-3" strokeWidth={3} /> : undefined}
                       onClick={table.available ? () => choose(table) : undefined}
-                      className={table.available ? 'cursor-pointer' : 'cursor-not-allowed'}
+                      className={cn(
+                        table.available ? 'cursor-pointer' : 'cursor-not-allowed',
+                        // The ring around the table and its chairs, once, when it is chosen.
+                        selected && cn('pulse-ring', table.shape === 'Round' ? 'rounded-full' : 'rounded-[20%]'),
+                      )}
                       // Above the other tables, so its check is never covered.
                       style={{ zIndex: selected ? 2 : 1 }}
                     />
@@ -242,9 +246,12 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
           />
         </ul>
 
-        <div className="hidden flex-col gap-3 rounded-xl border border-border bg-muted/50 p-4 md:flex">
+        <div className="hidden flex-col gap-3 overflow-clip rounded-xl border border-border bg-muted/50 p-4 md:flex">
           <p aria-live="polite" className={cn('text-sm', chosen !== undefined && 'font-semibold')}>
-            {selection}
+            {/* A new element per table, so its details slide in; the live region itself stays, so it is announced. */}
+            <span key={chosen?.table.id ?? ''} className="block animate-slide-in">
+              {selection}
+            </span>
           </p>
         </div>
 
@@ -254,7 +261,11 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
       </div>
 
       <StepActions className="md:col-start-2 md:self-end">
-        <p className="text-sm font-semibold md:hidden">{selection}</p>
+        <p className="overflow-clip text-sm font-semibold md:hidden">
+          <span key={chosen?.table.id ?? ''} className="block animate-slide-in">
+            {selection}
+          </span>
+        </p>
         <Button size="lg" className="w-full" disabled={value === null} onClick={onContinue}>
           {t('booking.continue')}
         </Button>
@@ -275,7 +286,7 @@ function ZoomButton({ label, icon, disabled, onClick }: ZoomButtonProps) {
 /**
  * An area as a small card: its photo (without one, or when it cannot be loaded, a calm surface with a chair), its name and
  * how many suitable tables are free. Without a free table it is disabled and says "Fully booked"; the chosen one has a ring
- * in the accent colour.
+ * in the accent colour. Under the pointer it lifts a little and its photo zooms in its frame.
  */
 function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; freeCount: number; selected: boolean; onSelect: () => void }) {
   const { t } = useTranslation()
@@ -288,15 +299,16 @@ function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; f
       disabled={full}
       aria-pressed={selected}
       className={cn(
-        'flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-2 text-left transition-colors focus-ring disabled:cursor-not-allowed',
+        'group flex cursor-pointer items-center gap-3 rounded-xl border bg-card p-2 text-left press focus-ring disabled:cursor-not-allowed',
         selected ? 'border-primary ring-1 ring-primary' : 'border-border hover:bg-accent',
+        !full && 'lift',
       )}
     >
       <Photo
         src={area.photoUrl}
         alt={t('booking.table.areaPhoto', { area: area.name })}
         className="size-14 shrink-0 rounded-lg"
-        imageClassName={full ? 'grayscale' : undefined}
+        imageClassName={full ? 'grayscale' : 'transition-[opacity,scale] duration-(--motion-long) group-hover:scale-110'}
         fallback={
           <span className="flex items-center justify-center text-muted-foreground">
             <ArmchairIcon aria-hidden="true" className="size-6" />

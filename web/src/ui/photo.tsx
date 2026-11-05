@@ -17,7 +17,7 @@ type PhotoProps = {
   onError?: () => void
   /** The frame, e.g. its corners and the calm placeholder colour while the photo loads (default the muted surface). */
   className?: string
-  /** The image itself, e.g. a zoom on hover. */
+  /** The image itself, e.g. a zoom on hover or once it has loaded (`data-loaded:`). */
   imageClassName?: string
 }
 
@@ -42,6 +42,8 @@ function Photo({ src, alt, fallback, ratio, priority = false, onError, className
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : undefined}
           decoding="async"
+          // For motion that starts once the photo is there (data-loaded:…), e.g. the zoom of the cover image.
+          data-loaded={loaded === src ? '' : undefined}
           onLoad={() => setLoaded(src)}
           onError={() => {
             setFailed(src)

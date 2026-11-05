@@ -22,6 +22,25 @@
 @custom-variant dark (&:where(.dark, .dark *));
 /* Touch screens: controls get at least 44 px. */
 @custom-variant touch (@media (pointer: coarse));
+/*
+ * Less motion: when the device asks for it, or inside an element with the attribute data-reduce-motion (the styleguide's
+ * switch "Simulate reduced motion"). Replaces Tailwind's own variants, which only know the media query.
+ */
+@custom-variant motion-reduce {
+  @media (prefers-reduced-motion: reduce) {
+    @slot;
+  }
+  &:where([data-reduce-motion], [data-reduce-motion] *) {
+    @slot;
+  }
+}
+@custom-variant motion-safe {
+  @media (prefers-reduced-motion: no-preference) {
+    &:not(:where([data-reduce-motion], [data-reduce-motion] *)) {
+      @slot;
+    }
+  }
+}
 
 /*
  * Colours, light. Neutrals from Tailwind's Stone: a warm grey that sits well with food, wood and linen and with the warm
@@ -73,10 +92,20 @@
   --elevation-float: 0 2px 4px rgb(28 25 23 / 0.04), 0 8px 16px -4px rgb(28 25 23 / 0.1), 0 16px 32px -8px rgb(28 25 23 / 0.08);
   --elevation-dialog: 0 4px 8px rgb(28 25 23 / 0.04), 0 16px 32px -8px rgb(28 25 23 / 0.14), 0 32px 64px -16px rgb(28 25 23 / 0.2);
 
-  /* Motion: hover and press, fades, sheets and dialogs. */
+  /* Motion: hover and press, fades, sheets and dialogs, fading in on scroll. */
   --motion-fast: 150ms;
   --motion-medium: 200ms;
   --motion-slow: 300ms;
+  --motion-long: 600ms;
+  /* A soft spring for what opens (dialogs, sheets): a little past the goal and back. Without linear() a bezier like it. */
+  --ease-spring: cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@supports (transition-timing-function: linear(0, 1)) {
+  :root {
+    /* A damped spring (damping ratio 0.72), about 4 % past the goal, at rest after 70 % of the time. */
+    --ease-spring: linear(0, 0.084, 0.266, 0.471, 0.657, 0.805, 0.911, 0.979, 1.017, 1.035, 1.038, 1.034, 1.027, 1.019, 1.012, 1.007, 1.003, 1.001, 0.999, 1);
+  }
 }
 
 /* Colours, dark: depth from lighter surfaces instead of shadows. */
@@ -105,12 +134,46 @@
   --elevation-dialog: 0 0 #0000;
 }
 
+/*
+ * Less motion (the device's setting, or data-reduce-motion in the styleguide): no animation and no transition anywhere,
+ * only the immediate change of state. Everything that fades in is visible right away, everything stays operable.
+ */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --motion-fast: 0s;
     --motion-medium: 0s;
     --motion-slow: 0s;
+    --motion-long: 0s;
   }
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+[data-reduce-motion] {
+  --motion-fast: 0s;
+  --motion-medium: 0s;
+  --motion-slow: 0s;
+  --motion-long: 0s;
+}
+[data-reduce-motion],
+[data-reduce-motion] *,
+[data-reduce-motion] ::before,
+[data-reduce-motion] ::after {
+  animation-duration: 0s !important;
+  animation-delay: 0s !important;
+  transition-duration: 0s !important;
+  transition-delay: 0s !important;
 }
 
 /* The tokens as Tailwind utilities (bg-background, text-primary-foreground, font-display, shadow-card …). */
@@ -158,13 +221,24 @@
 
   --animate-fade-in: fade-in var(--motion-slow) var(--ease-out);
   --animate-fade-out: fade-out var(--motion-medium) var(--ease-in);
-  --animate-dialog-in: dialog-in var(--motion-slow) var(--ease-out);
+  --animate-dialog-in: dialog-in var(--motion-slow) var(--ease-spring);
   --animate-dialog-out: dialog-out var(--motion-medium) var(--ease-in);
   --animate-pop-in: pop-in var(--motion-fast) var(--ease-out);
   --animate-pop-out: pop-out var(--motion-fast) var(--ease-in);
   /* The check of a confirmed booking: the circle pops in, then the check is drawn. */
   --animate-check-circle: pop-in var(--motion-slow) var(--ease-out) both;
   --animate-check-draw: check-draw 400ms var(--ease-out) 200ms both;
+  /* Fading in from a little below (Reveal, Stagger, the ticket of the confirmation). */
+  --animate-rise: rise var(--motion-long) var(--ease-out) backwards;
+  /* A step or a panel slides in from the side; --slide-from sets from where (default from the right). */
+  --animate-slide-in: slide-in var(--motion-medium) var(--ease-out) backwards;
+  /* The cover image of the booking page: once, slowly, from a little larger to its size. */
+  --animate-hero-zoom: hero-zoom 1200ms var(--ease-out) backwards;
+  /* The calm sweep of light over a skeleton. */
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+  /* The circle of a successful booking pops in with a spring; the particles fly out once around it. */
+  --animate-success-pop: success-pop var(--motion-slow) var(--ease-spring) backwards;
+  --animate-particle: particle var(--motion-long) var(--ease-out) 250ms both;
 }
 
 @theme {
@@ -232,6 +306,79 @@
       stroke-dashoffset: 0;
     }
   }
+  @keyframes slide-in {
+    from {
+      opacity: 0;
+      translate: var(--slide-from, 1.5rem) 0;
+    }
+  }
+  @keyframes hero-zoom {
+    from {
+      scale: 1.06;
+    }
+  }
+  @keyframes shimmer {
+    from {
+      translate: -100% 0;
+    }
+    to {
+      translate: 100% 0;
+    }
+  }
+  @keyframes success-pop {
+    from {
+      opacity: 0;
+      scale: 0.5;
+    }
+  }
+  /* From the edge of the circle outwards; --angle is the particle's direction. */
+  @keyframes particle {
+    from {
+      opacity: 0;
+      transform: rotate(var(--angle)) translateY(-2rem) scale(1);
+    }
+    20% {
+      opacity: 1;
+    }
+    to {
+      opacity: 0;
+      transform: rotate(var(--angle)) translateY(-3.25rem) scale(0.3);
+    }
+  }
+}
+
+/* Outside @theme, as the rules of Reveal and Stagger below use it directly. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 1rem;
+  }
+}
+@keyframes pulse-ring {
+  from {
+    opacity: 0.8;
+    scale: 1;
+  }
+  to {
+    opacity: 0;
+    scale: 1.3;
+  }
+}
+@keyframes focus-ring-in {
+  from {
+    outline-color: transparent;
+    outline-offset: 6px;
+  }
+}
+@keyframes parallax {
+  to {
+    translate: 0 30%;
+  }
+}
+@keyframes parallax-shade {
+  to {
+    opacity: 1;
+  }
 }
 
 /* Headings in the display font of the font pair, in its heading weight (Cormorant Garamond only comes in 600). */
@@ -240,10 +387,169 @@
   font-weight: var(--font-display-weight);
 }
 
-/* The focus ring of everything that can be operated: 2 px in the ring colour, 2 px away, only for the keyboard. */
+/*
+ * The focus ring of everything that can be operated: 2 px in the ring colour, 2 px away, only for the keyboard. It glides in
+ * with an animation, which replaces any other animation of the element while it is focused: an entrance of something with
+ * a focus ring belongs on a wrapper around it, or it plays again when the focus leaves.
+ */
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+    animation: focus-ring-in var(--motion-fast) var(--ease-out);
   }
+}
+
+/*
+ * Motion of the guest pages (README, "Design system", Motion). Only transform (translate, scale), opacity and filter move,
+ * never the layout. press and lift share their list of transitions, so they can be combined in any order. Entrances fill
+ * backwards only, so once they are over, hover and press move the element again.
+ */
+
+/* Press feedback: buttons and chips give way a little while pressed. Replaces transition-colors. */
+@utility press {
+  transition-property: color, background-color, border-color, translate, scale;
+  transition-duration: var(--motion-fast);
+  transition-timing-function: var(--ease-out);
+  &:active {
+    scale: 0.97;
+  }
+  @variant motion-reduce {
+    &:active {
+      scale: none;
+    }
+  }
+}
+
+/* A photo card lifts a little under the pointer; its photo zooms in its frame with group-hover:scale-105. */
+@utility lift {
+  transition-property: color, background-color, border-color, translate, scale;
+  transition-duration: var(--motion-medium);
+  transition-timing-function: var(--ease-out);
+  @media (hover: hover) {
+    &:hover {
+      translate: 0 -0.25rem;
+    }
+  }
+  @variant motion-reduce {
+    &:hover {
+      translate: none;
+    }
+  }
+}
+
+/*
+ * A short pulse of a ring in the accent colour around what was just chosen (a time, a table), once, when the class is set.
+ * The element needs a position (relative or absolute); the ring takes its corners.
+ */
+@utility pulse-ring {
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--primary);
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0;
+    animation: pulse-ring var(--motion-long) var(--ease-out);
+  }
+}
+
+@layer components {
+  /*
+   * Reveal and Stagger (src/ui/motion/reveal.tsx): what is below the first screen waits invisible (data-reveal="hidden")
+   * and rises in once when it comes into view. A Stagger's children follow one another by 40 ms. Only on screens and with
+   * motion: printed, or with less motion, everything is there right away.
+   */
+  @media screen and (prefers-reduced-motion: no-preference) {
+    [data-reveal='hidden']:not([data-stagger]):not(:where([data-reduce-motion] *)),
+    [data-stagger][data-reveal='hidden']:not(:where([data-reduce-motion] *)) > * {
+      opacity: 0;
+    }
+    [data-reveal='shown']:not([data-stagger]),
+    [data-stagger]:not([data-reveal='hidden']) > * {
+      animation: rise var(--motion-long) var(--ease-out) backwards;
+    }
+    [data-stagger] > :nth-child(2) {
+      animation-delay: 40ms;
+    }
+    [data-stagger] > :nth-child(3) {
+      animation-delay: 80ms;
+    }
+    [data-stagger] > :nth-child(4) {
+      animation-delay: 120ms;
+    }
+    [data-stagger] > :nth-child(5) {
+      animation-delay: 160ms;
+    }
+    [data-stagger] > :nth-child(6) {
+      animation-delay: 200ms;
+    }
+    [data-stagger] > :nth-child(7) {
+      animation-delay: 240ms;
+    }
+    [data-stagger] > :nth-child(n + 8) {
+      animation-delay: 280ms;
+    }
+  }
+
+  /*
+   * ParallaxImage (src/ui/motion/parallax-image.tsx): while the page scrolls past it, the image moves down by up to 30 % of
+   * its height (slower than the content) and a shade darkens it. With scroll-driven animations off the main thread; where
+   * the browser has none (Firefox), parallax-image.tsx sets --parallax-progress (0–1) while scrolling.
+   */
+  [data-parallax-shade] {
+    opacity: 0;
+  }
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      [data-parallax]:not(:where([data-reduce-motion] *)) {
+        view-timeline: --parallax block;
+        & [data-parallax-layer] {
+          animation: parallax linear both;
+          animation-timeline: --parallax;
+          animation-range: exit 0% exit 100%;
+        }
+        & [data-parallax-shade] {
+          animation: parallax-shade linear both;
+          animation-timeline: --parallax;
+          animation-range: exit 0% exit 100%;
+        }
+      }
+    }
+    @supports not (animation-timeline: view()) {
+      [data-parallax]:not(:where([data-reduce-motion] *)) {
+        & [data-parallax-layer] {
+          translate: 0 calc(var(--parallax-progress, 0) * 30%);
+        }
+        & [data-parallax-shade] {
+          opacity: var(--parallax-progress, 0);
+        }
+      }
+    }
+  }
+}
+
+/*
+ * Page transitions (View Transitions API, `viewTransition` on the links of the guest pages): the pages cross-fade, the
+ * cover image of a restaurant (view-transition-name restaurant-cover) moves from the card of the start page into the cover
+ * image of the booking page, and the header stays on top. Without the API the page simply changes.
+ */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-group(restaurant-cover) {
+  overflow: clip;
+  animation-duration: 400ms;
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(restaurant-cover),
+::view-transition-new(restaurant-cover) {
+  height: 100%;
+  object-fit: cover;
+}
+::view-transition-group(site-header) {
+  z-index: 1;
 }

@@ -23,6 +23,9 @@ const stepLabels: Record<DialogStep, ParseKeys> = {
   done: 'booking.dialog.stepDone',
 }
 
+/** The order of the steps, for the direction in which a new step slides in. */
+const stepOrder: DialogStep[] = ['table', 'details', 'done']
+
 /**
  * Where the steps are shown: in the dialog (from 768 px on), in the full-screen sheet (phones) or, in the embed, as steps
  * below the reservation card. Each frame has its own title element, so the dialog and the sheet are named by the step.
@@ -41,7 +44,9 @@ type BookingStepsProps = {
  * The booking dialog's content. At the top the choices in short (people · date · time · table; each leads back to where it
  * is chosen), the steps with the current one marked and, outside the dialog that has its own, "Close". Below it the step:
  * the table, the contact details or the confirmation. After a change of step the focus moves to the step's heading, so
- * keyboard and screen reader users follow along. While the dialog closes it keeps showing the step it closes from.
+ * keyboard and screen reader users follow along. A new step slides in from the side it lies on: forward from the right,
+ * back from the left; the first step does not, as the dialog itself opens. While the dialog closes it keeps showing the
+ * step it closes from.
  */
 export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: BookingStepsProps) {
   const { t, i18n } = useTranslation()
@@ -53,7 +58,12 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
   const current: { step: DialogStep; result: BookingResult | null } | null =
     flow.result !== null ? { step: 'done', result: flow.result } : flow.step !== 'time' ? { step: flow.step, result: null } : null
   const [shown, setShown] = useState(current)
+  // From where the step slid in; null until the first change of step.
+  const [direction, setDirection] = useState<'forward' | 'back' | null>(null)
   if (current !== null && (current.step !== shown?.step || current.result !== shown.result)) {
+    if (shown !== null && current.step !== shown.step) {
+      setDirection(stepOrder.indexOf(current.step) < stepOrder.indexOf(shown.step) ? 'back' : 'forward')
+    }
     setShown(current)
   }
 
@@ -97,7 +107,8 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
   }
 
   return (
-    <div className="flex min-h-full flex-col">
+    // Clipped sideways, so a step sliding in never makes the dialog or the sheet scroll horizontally.
+    <div className="flex min-h-full flex-col overflow-x-clip">
       <header className={cn('sticky top-0 z-20 flex items-start gap-3 border-b border-border bg-card px-4 py-3 md:px-6 md:py-4', frame === 'dialog' && 'rounded-t-xl pr-14')}>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           {step !== 'done' && parts.length > 0 && (
@@ -108,7 +119,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
                     type="button"
                     onClick={part.onClick}
                     aria-label={t('booking.changePart', { part: part.label })}
-                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-muted px-3 text-sm font-medium whitespace-nowrap transition-colors hover:bg-accent hover:text-accent-foreground focus-ring touch:h-11 [&_svg]:size-3.5 [&_svg]:text-muted-foreground"
+                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-muted px-3 text-sm font-medium whitespace-nowrap press hover:bg-accent hover:text-accent-foreground focus-ring touch:h-11 [&_svg]:size-3.5 [&_svg]:text-muted-foreground"
                   >
                     <span aria-hidden="true" className="flex">
                       {part.icon}
@@ -143,7 +154,15 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
         )}
       </header>
 
-      <div className="flex flex-1 flex-col gap-5 px-4 pt-5 pb-0 md:px-6 md:py-6">
+      <div
+        // A new element per step, so its slide starts over.
+        key={step}
+        className={cn(
+          'flex flex-1 flex-col gap-5 px-4 pt-5 pb-0 md:px-6 md:py-6',
+          direction !== null && 'animate-slide-in',
+          direction === 'back' && '[--slide-from:-1.5rem]',
+        )}
+      >
         {step === 'done' && shown.result !== null ? (
           <BookingConfirmation
             result={shown.result}

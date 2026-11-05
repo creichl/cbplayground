@@ -6,7 +6,7 @@ import { cn } from '../lib/utils.ts'
 const buttonVariants = cva(
   [
     'inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-lg font-medium whitespace-nowrap',
-    'transition-[color,background-color,border-color,scale] focus-ring active:scale-98 motion-reduce:active:scale-100',
+    'press focus-ring',
     'disabled:pointer-events-none disabled:opacity-50',
     "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
   ],

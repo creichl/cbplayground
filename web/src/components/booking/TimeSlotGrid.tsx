@@ -5,6 +5,7 @@ import { type Availability, useAvailability, useNextFreeDays } from '../../api/p
 import { formatShortDate, formatTime } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
+import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { RequestError } from './RequestError.tsx'
 
@@ -37,13 +38,14 @@ function freePeriods(availability: Availability | undefined) {
     .filter((period) => period.times.length > 0)
 }
 
-/** Chips of times and days: 44 px high, in a grid that keeps them the same width. */
+/** Chips of times and days: 44 px high, in a grid that keeps them the same width; they give way a little while pressed. */
 const chipClassName =
-  'inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-3 text-sm font-medium tabular-nums transition-colors focus-ring'
+  'relative inline-flex h-11 cursor-pointer items-center justify-center rounded-full border px-3 text-sm font-medium tabular-nums press focus-ring'
 
 /**
  * The free start times of a day as chips, grouped by opening window ("Lunch 11:30–14:30"); times that are not available are
- * left out. A click on a time opens the booking dialog. A fully booked day offers the next free days instead.
+ * left out. They appear one after another (Stagger), and the chosen one gets a short pulse in the accent colour. A click on
+ * a time opens the booking dialog. A fully booked day offers the next free days instead.
  */
 export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onChange, onChangeDate }: TimeSlotGridProps) {
   const { t, i18n } = useTranslation()
@@ -89,19 +91,21 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
           ) : nextFreeDays.days.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t('booking.time.noFreeDays')}</p>
           ) : (
-            <ul className="flex flex-wrap gap-2">
-              {nextFreeDays.days.map((day) => (
-                <li key={day}>
-                  <button
-                    type="button"
-                    onClick={() => onChangeDate(day)}
-                    className={cn(chipClassName, 'border-input bg-background px-4 hover:border-primary hover:bg-primary-50 dark:hover:bg-accent')}
-                  >
-                    {formatShortDate(day, language)}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <Stagger>
+              <ul className="flex flex-wrap gap-2">
+                {nextFreeDays.days.map((day) => (
+                  <li key={day}>
+                    <button
+                      type="button"
+                      onClick={() => onChangeDate(day)}
+                      className={cn(chipClassName, 'border-input bg-background px-4 hover:border-primary hover:bg-primary-50 dark:hover:bg-accent')}
+                    >
+                      {formatShortDate(day, language)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Stagger>
           )}
         </div>
       ) : (
@@ -113,27 +117,29 @@ export function TimeSlotGrid({ slug, date, guests, value, maxDate, notice, onCha
                 {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
               </span>
             </h3>
-            <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {period.times.map(({ time }) => (
-                <li key={time}>
-                  <button
-                    type="button"
-                    {...{ [timeChipAttribute]: time }}
-                    aria-pressed={value === time}
-                    onClick={() => onChange(time)}
-                    className={cn(
-                      chipClassName,
-                      'w-full',
-                      value === time
-                        ? 'border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
-                        : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
-                    )}
-                  >
-                    {formatTime(time, language)}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <Stagger>
+              <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                {period.times.map(({ time }) => (
+                  <li key={time}>
+                    <button
+                      type="button"
+                      {...{ [timeChipAttribute]: time }}
+                      aria-pressed={value === time}
+                      onClick={() => onChange(time)}
+                      className={cn(
+                        chipClassName,
+                        'w-full',
+                        value === time
+                          ? 'border-primary bg-primary text-primary-foreground pulse-ring hover:bg-primary-hover'
+                          : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
+                      )}
+                    >
+                      {formatTime(time, language)}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </Stagger>
           </section>
         ))
       )}

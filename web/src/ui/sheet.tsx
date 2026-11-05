@@ -5,8 +5,9 @@ import { cn } from '../lib/utils.ts'
 
 // A sheet (vaul): from the bottom on phones, where it can be dragged down to close, or from the side (`direction="right"`).
 // vaul animates it itself (with its own stylesheet); its duration follows the motion token for sheets, also when the user
-// asked for less motion.
+// asked for less motion, and it opens with the soft spring of the dialogs.
 const motion = { animationDuration: 'var(--motion-slow)' }
+const contentMotion = { ...motion, animationTimingFunction: 'var(--ease-spring)' }
 
 function Sheet(props: ComponentProps<typeof DrawerPrimitive.Root>) {
   return <DrawerPrimitive.Root data-slot="sheet" {...props} />
@@ -33,7 +34,7 @@ function SheetContent({ className, children, style, ...props }: ComponentProps<t
           'border-border',
           className,
         )}
-        style={{ ...motion, ...style }}
+        style={{ ...contentMotion, ...style }}
         {...props}
       >
         {/* The handle: shows that the sheet can be dragged down. */}
