@@ -14,7 +14,8 @@ function SiteHeader() {
   const user = currentUser.data
 
   return (
-    <header className="border-b border-border bg-background">
+    // Its own layer in page transitions, so it stays on top of the cover image moving below it (app.css).
+    <header className="border-b border-border bg-background [view-transition-name:site-header]">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-2 px-4 sm:px-6">
         <Link to="/" className="shrink-0 rounded-lg font-display text-lg text-primary-text focus-ring">
           {t('app.name')}
