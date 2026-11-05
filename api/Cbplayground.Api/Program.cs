@@ -224,6 +224,7 @@ app.MapSpecialDayEndpoints();
 app.MapReservationSettingsEndpoints();
 app.MapProfileEndpoints();
 app.MapBrandingEndpoints();
+app.MapGalleryEndpoints();
 app.MapPublicRestaurantEndpoints();
 app.MapStaffReservationEndpoints();
 
