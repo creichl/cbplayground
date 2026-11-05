@@ -387,7 +387,11 @@
   font-weight: var(--font-display-weight);
 }
 
-/* The focus ring of everything that can be operated: 2 px in the ring colour, 2 px away, only for the keyboard. It glides in. */
+/*
+ * The focus ring of everything that can be operated: 2 px in the ring colour, 2 px away, only for the keyboard. It glides in
+ * with an animation, which replaces any other animation of the element while it is focused: an entrance of something with
+ * a focus ring belongs on a wrapper around it, or it plays again when the focus leaves.
+ */
 @utility focus-ring {
   &:focus-visible {
     outline: 2px solid var(--ring);

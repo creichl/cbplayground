@@ -104,7 +104,10 @@ function RestaurantFrame({ slug }: { slug: string }) {
               overHero ? 'opacity-0' : 'opacity-100',
             )}
           />
-          {/* Logo and language: their own layer in page transitions, on top of the cover image moving below them (app.css). */}
+          {/*
+            Logo and language: their own layer in page transitions, on top of the cover image moving below them (app.css). As
+            large as the row of the start page's header (SiteHeader), so neither is scaled while one becomes the other.
+          */}
           <div className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 [view-transition-name:site-header] sm:px-6">
             {restaurant.isPending ? (
               <Skeleton className="h-10 w-30" />
@@ -129,9 +132,10 @@ function RestaurantFrame({ slug }: { slug: string }) {
             )}
             <div className="flex shrink-0 items-center gap-2">
               {showReserve && (
-                <Button onClick={scrollToBooking} className="animate-fade-in">
-                  {t('booking.reserveTable')}
-                </Button>
+                // It fades in on a wrapper: on the button the focus ring's animation would replace it while focused, and it would play again on blur.
+                <span className="flex animate-fade-in">
+                  <Button onClick={scrollToBooking}>{t('booking.reserveTable')}</Button>
+                </span>
               )}
               <LanguageMenu className={overHero ? 'text-white hover:bg-white/15 hover:text-white' : undefined} />
             </div>
