@@ -89,7 +89,31 @@
     "noMatchTitle": "Kein Restaurant passt zu „{{query}}“",
     "noMatch": "Prüfen Sie die Schreibweise oder versuchen Sie einen anderen Namen oder Ort.",
     "resetSearch": "Suche zurücksetzen",
-    "reserve": "Tisch reservieren"
+    "reserve": "Tisch reservieren",
+    "restaurants": "Restaurants",
+    "restaurantsCount_one": "{{count}} Restaurant",
+    "restaurantsCount_other": "{{count}} Restaurants",
+    "howItWorks": {
+      "heading": "So funktioniert’s",
+      "restaurantTitle": "Restaurant wählen",
+      "restaurantText": "Finden Sie ein Restaurant nach Name oder Ort und öffnen Sie seine Seite.",
+      "tableTitle": "Zeit und Tisch aussuchen",
+      "tableText": "Wählen Sie Tag und Uhrzeit und, wo das Restaurant es anbietet, Ihren Tisch im Raumplan.",
+      "confirmationTitle": "Bestätigung erhalten",
+      "confirmationText": "Ihre Reservierung ist sofort bestätigt oder sobald das Restaurant sie annimmt – mit einem Link, um sie anzusehen oder zu stornieren."
+    },
+    "forRestaurants": {
+      "eyebrow": "Für Restaurants",
+      "heading": "Ihre Tische, online buchbar",
+      "text": "cbplayground bringt die Reservierungen Ihrer Gäste und Ihren Raumplan an einem Ort zusammen.",
+      "bookingTitle": "Online-Buchung mit Raumplan",
+      "bookingText": "Gäste buchen rund um die Uhr und wählen ihren Tisch direkt in Ihrem Raumplan.",
+      "designTitle": "Eigene Gestaltung",
+      "designText": "Logo, Farben, Schriften und Fotos machen die Buchungsseite zu Ihrer eigenen.",
+      "frontDeskTitle": "Empfang und Tischübersicht",
+      "frontDeskText": "Die Reservierungen des Tages, Gäste ohne Reservierung und der Stand jedes Tisches auf einen Blick.",
+      "signIn": "Anmelden"
+    }
   },
   "guest": {
     "staffLogin": "Für Restaurants: Anmelden",

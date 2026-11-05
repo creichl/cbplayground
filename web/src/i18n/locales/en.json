@@ -89,7 +89,31 @@
     "noMatchTitle": "No restaurant matches “{{query}}”",
     "noMatch": "Check the spelling or try another name or city.",
     "resetSearch": "Reset search",
-    "reserve": "Reserve a table"
+    "reserve": "Reserve a table",
+    "restaurants": "Restaurants",
+    "restaurantsCount_one": "{{count}} restaurant",
+    "restaurantsCount_other": "{{count}} restaurants",
+    "howItWorks": {
+      "heading": "How it works",
+      "restaurantTitle": "Choose a restaurant",
+      "restaurantText": "Find a restaurant by name or city and open its page.",
+      "tableTitle": "Pick a time and table",
+      "tableText": "Choose the day and time and, where the restaurant offers it, your table on the floor plan.",
+      "confirmationTitle": "Get your confirmation",
+      "confirmationText": "Your reservation is confirmed right away or as soon as the restaurant accepts it – with a link to view or cancel it."
+    },
+    "forRestaurants": {
+      "eyebrow": "For restaurants",
+      "heading": "Your tables, bookable online",
+      "text": "cbplayground brings your guests’ reservations and your floor plan together in one place.",
+      "bookingTitle": "Online booking with floor plan",
+      "bookingText": "Guests book around the clock and choose their table right on your floor plan.",
+      "designTitle": "Your own look",
+      "designText": "Your logo, colours, fonts and photos make the booking page your own.",
+      "frontDeskTitle": "Reception and table overview",
+      "frontDeskText": "Today’s reservations, walk-ins and the state of every table at a glance.",
+      "signIn": "Sign in"
+    }
   },
   "guest": {
     "staffLogin": "For restaurants: Sign in",

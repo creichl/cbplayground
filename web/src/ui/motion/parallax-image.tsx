@@ -4,6 +4,9 @@ import { Photo } from '../photo.tsx'
 
 type ParallaxImageProps = {
   src: string
+  /** The image in several widths and the width it is shown in, as on Photo. */
+  srcSet?: string
+  sizes?: string
   /** What the image shows; empty for an image that only decorates. */
   alt: string
   /** Called once the image has failed to load. */
@@ -20,7 +23,7 @@ type ParallaxImageProps = {
  * The scrolling runs as a scroll-driven animation in CSS (app.css). Where the browser has none, a passive scroll listener
  * hands the progress (0–1) to the CSS once per frame. With less motion the image stands still.
  */
-function ParallaxImage({ src, alt, onError, className }: ParallaxImageProps) {
+function ParallaxImage({ src, srcSet, sizes, alt, onError, className }: ParallaxImageProps) {
   const ref = useRef<HTMLDivElement>(null)
 
   useLayoutEffect(() => {
@@ -51,7 +54,7 @@ function ParallaxImage({ src, alt, onError, className }: ParallaxImageProps) {
     // overflow-clip, not hidden: a scroll container would become the scroll-driven animation's scroller.
     <div ref={ref} data-parallax="" className={cn('absolute inset-0 overflow-clip', className)}>
       <div data-parallax-layer="" className="absolute inset-0">
-        <Photo src={src} alt={alt} fallback={null} priority onError={onError} className="bg-transparent" imageClassName="data-loaded:animate-hero-zoom" />
+        <Photo src={src} srcSet={srcSet} sizes={sizes} alt={alt} fallback={null} priority onError={onError} className="bg-transparent" imageClassName="data-loaded:animate-hero-zoom" />
       </div>
       <div data-parallax-shade="" aria-hidden="true" className="absolute inset-0 bg-black/45" />
     </div>
