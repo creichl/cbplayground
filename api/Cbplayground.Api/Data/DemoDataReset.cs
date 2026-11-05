@@ -12,6 +12,39 @@ public static class DemoDataReset
 {
     public const string Argument = "--reset-demo-data";
 
+    /// <summary>
+    /// In Development, the API holds this lock on its database file (<c>&lt;database&gt;.lock</c>) for as long as it runs. A second
+    /// start on the same database, above all one with <see cref="Argument"/>, aborts before it touches anything: the reset would
+    /// delete the database and the images of the running API, which then keeps serving its deleted database and answers every
+    /// logo, cover image and photo with 404.
+    /// </summary>
+    /// <param name="connectionString">The resolved connection string (absolute "Data Source").</param>
+    /// <returns>The lock, held until it is disposed (or the process ends); null for an in-memory database, which no other process can open.</returns>
+    /// <exception cref="InvalidOperationException">Another API holds the lock.</exception>
+    public static FileStream? Lock(string connectionString)
+    {
+        var builder = new SqliteConnectionStringBuilder(connectionString);
+        if (builder.Mode == SqliteOpenMode.Memory || builder.DataSource is "" or ":memory:")
+        {
+            return null;
+        }
+
+        var lockPath = $"{builder.DataSource}.lock";
+        Directory.CreateDirectory(Path.GetDirectoryName(lockPath)!);
+        try
+        {
+            // FileShare.None: on Windows a sharing violation, on Linux and macOS an exclusive flock for another process.
+            return new FileStream(lockPath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        }
+        catch (IOException exception)
+        {
+            throw new InvalidOperationException(
+                $"Another API is already running with the database '{builder.DataSource}' (it holds '{lockPath}'). Stop it first, " +
+                $"then start again; with {Argument} the start would delete the database and the images of the running API. Nothing was deleted.",
+                exception);
+        }
+    }
+
     /// <param name="connectionString">The resolved connection string (absolute "Data Source"); an in-memory database has no file.</param>
     /// <param name="uploadsPath">The absolute uploads folder ("Uploads:Path"); the folder itself stays.</param>
     public static void Run(IHostEnvironment environment, string connectionString, string uploadsPath)
