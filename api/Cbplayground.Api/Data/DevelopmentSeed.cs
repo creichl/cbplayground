@@ -261,6 +261,8 @@ public static class DevelopmentSeed
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
     /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
     /// rules (never saved), the photo gallery with its captions (no photos). An existing demo area gets its photo and description when it has neither.
+    /// A demo image whose file is no longer in the uploads folder (logo, cover image, floor plan and photo of a demo area, gallery photo
+    /// with a demo caption) gets a new copy of its seed asset, so the restaurants show all their images again after the files were lost.
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
@@ -277,6 +279,9 @@ public static class DevelopmentSeed
             File.Copy(Path.Combine(environment.ContentRootPath, SeedAssetsPath, file), Path.Combine(uploads, fileName));
             return fileName;
         }
+
+        // An image the database names but the uploads folder no longer has; the API answers it with 404.
+        bool IsLost(string? fileName) => fileName is not null && !File.Exists(Path.Combine(uploads, fileName));
 
         foreach (var demo in Restaurants)
         {
@@ -312,6 +317,14 @@ public static class DevelopmentSeed
                     tenant.ThemeMode = demo.Branding.ThemeMode;
                     tenant.FontStyle = demo.Branding.FontStyle;
                     tenant.LogoFileName = CopySeedAsset(demo.Branding.LogoFile);
+                    tenant.CoverFileName = CopySeedAsset(demo.Branding.CoverFile);
+                }
+                if (IsLost(tenant.LogoFileName))
+                {
+                    tenant.LogoFileName = CopySeedAsset(demo.Branding.LogoFile);
+                }
+                if (IsLost(tenant.CoverFileName))
+                {
                     tenant.CoverFileName = CopySeedAsset(demo.Branding.CoverFile);
                 }
                 await db.SaveChangesAsync();
@@ -381,6 +394,23 @@ public static class DevelopmentSeed
                             area.PhotoFileName = CopySeedAsset(demoArea.PhotoFile);
                         }
                     }
+
+                    // Demo areas whose floor plan or photo file was lost.
+                    foreach (var area in await db.Areas.ToListAsync())
+                    {
+                        if (demo.Areas.SingleOrDefault(d => d.Name == area.Name) is not { } demoArea)
+                        {
+                            continue;
+                        }
+                        if (IsLost(area.FloorPlanFileName) && demoArea.FloorPlanFile is not null)
+                        {
+                            area.FloorPlanFileName = CopySeedAsset(demoArea.FloorPlanFile);
+                        }
+                        if (IsLost(area.PhotoFileName))
+                        {
+                            area.PhotoFileName = CopySeedAsset(demoArea.PhotoFile);
+                        }
+                    }
                 }
 
                 if (!await db.ReservationSettings.AnyAsync())
@@ -411,6 +441,17 @@ public static class DevelopmentSeed
                         SortOrder = i,
                         CreatedAt = DateTime.UtcNow,
                     }));
+                }
+                else
+                {
+                    // Gallery photos with a demo caption whose file was lost.
+                    foreach (var photo in (await db.GalleryPhotos.ToListAsync()).Where(p => IsLost(p.FileName)))
+                    {
+                        if (demo.Gallery.FirstOrDefault(d => d.Caption == photo.Caption) is { } demoPhoto)
+                        {
+                            photo.FileName = CopySeedAsset(demoPhoto.File);
+                        }
+                    }
                 }
 
                 await db.SaveChangesAsync();
