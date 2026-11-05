@@ -74,6 +74,30 @@ public sealed class BackupTests : IDisposable
     }
 
     [Fact]
+    public async Task Create_ContainsTheGalleryPhotos()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        byte[] jpeg = [0xFF, 0xD8, 0xFF, 0xE0, 4];
+        byte[] webp = [.. "RIFF"u8, 0x24, 0x00, 0x00, 0x00, .. "WEBPVP8 "u8, 5];
+        using var admin = factory.CreateHttpsClient();
+        (await admin.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, ct)).EnsureSuccessStatusCode();
+        var first = (await (await admin.PostAsync("/api/admin/gallery", new ByteArrayContent(jpeg), ct)).Content.ReadFromJsonAsync<GalleryEndpoints.GalleryPhotoResponse>(ct))!;
+        var second = (await (await admin.PostAsync("/api/admin/gallery", new ByteArrayContent(webp), ct)).Content.ReadFromJsonAsync<GalleryEndpoints.GalleryPhotoResponse>(ct))!;
+
+        var file = Backup.Create(new DateTime(2026, 11, 5, 3, 0, 0));
+
+        ZipFile.ExtractToDirectory(file, extractPath);
+        Assert.Equal(jpeg, File.ReadAllBytes(Path.Combine(extractPath, "uploads", first.Url.Split("?v=")[1] + ".jpg")));
+        Assert.Equal(webp, File.ReadAllBytes(Path.Combine(extractPath, "uploads", second.Url.Split("?v=")[1] + ".webp")));
+        var database = Assert.Single(Directory.GetFiles(extractPath, "*.db"));
+        using var connection = new SqliteConnection(new SqliteConnectionStringBuilder { DataSource = database, Pooling = false }.ToString());
+        connection.Open();
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT COUNT(*) FROM GalleryPhotos";
+        Assert.Equal(2L, command.ExecuteScalar());
+    }
+
+    [Fact]
     public void DeleteExpired_DeletesOnlyBackupsOlderThanTheRetentionPeriod()
     {
         Directory.CreateDirectory(factory.BackupPath);

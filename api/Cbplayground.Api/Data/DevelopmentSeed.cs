@@ -18,7 +18,7 @@ public static class DevelopmentSeed
 {
     public record SeedUser(string Email, string Password, string DisplayName, string Role, string? TenantSlug = null);
 
-    /// <summary>Folder of the seed floor plans, logos, cover images and area photos, relative to the content root; the photos' sources are in CREDITS.md there.</summary>
+    /// <summary>Folder of the seed floor plans, logos, cover images, area photos and gallery photos, relative to the content root; the photos' sources are in CREDITS.md there.</summary>
     private static readonly string SeedAssetsPath = Path.Combine("Data", "SeedAssets");
 
     /// <summary>Size of the seed floor plans in pixels; the table positions below are given in pixels of these images.</summary>
@@ -42,6 +42,9 @@ public static class DevelopmentSeed
     /// <summary>A demo branding; <see cref="LogoFile"/> and <see cref="CoverFile"/> are files in <see cref="SeedAssetsPath"/>.</summary>
     private record DemoBranding(string BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string LogoFile, string CoverFile);
 
+    /// <summary>A photo of the demo gallery: a file in <see cref="SeedAssetsPath"/> and its caption in the restaurant's language.</summary>
+    private record DemoGalleryPhoto(string File, string Caption);
+
     private record DemoRestaurant(
         string Name,
         string Slug,
@@ -52,7 +55,8 @@ public static class DevelopmentSeed
         DemoArea[] Areas,
         ReservationSettings Settings,
         DurationRule[] DurationRules,
-        DemoBranding Branding);
+        DemoBranding Branding,
+        DemoGalleryPhoto[] Gallery);
 
     private static readonly DayOfWeek[] TuesdayToSunday =
         [DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
@@ -114,7 +118,17 @@ public static class DevelopmentSeed
                 new DurationRule { MinGuests = 3, MaxGuests = 6, DurationMinutes = 120 },
             ],
             // A warm green, like the linden tree.
-            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.jpg")),
+            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.jpg"),
+            Gallery:
+            [
+                new("zur-linde-gallery-schweinsbraten.jpg", "Schweinsbraten mit Knödel und Blaukraut"),
+                new("zur-linde-gallery-holzfass.jpg", "Dunkles frisch vom Holzfass"),
+                new("zur-linde-gallery-kachelofen.jpg", "Die Stube mit dem grünen Kachelofen"),
+                new("zur-linde-gallery-biergarten.jpg", "Biergarten unter alten Kastanien"),
+                new("zur-linde-gallery-weisswurst-brezn.jpg", "Weißwurst mit Brezn und süßem Senf"),
+                new("zur-linde-gallery-helles.jpg", "Ein frisches Helles im Garten"),
+                new("zur-linde-gallery-kaiserschmarrn.jpg", "Kaiserschmarrn mit Apfelmus"),
+            ]),
         new(
             Name: "Kafana Dunav",
             Slug: "kafana-dunav",
@@ -163,7 +177,16 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Danube blue.
-            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.jpg")),
+            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.jpg"),
+            Gallery:
+            [
+                new("kafana-dunav-gallery-riblja-corba.jpg", "Riblja čorba iz kotlića"),
+                new("kafana-dunav-gallery-rostilj.jpg", "Mešano meso sa roštilja"),
+                new("kafana-dunav-gallery-vino.jpg", "Čaša crnog vina u suton"),
+                new("kafana-dunav-gallery-dunav.jpg", "Veče na Dunavu"),
+                new("kafana-dunav-gallery-tamburasi.jpg", "Tamburaši petkom i subotom"),
+                new("kafana-dunav-gallery-sto.jpg", "Postavljen sto čeka goste"),
+            ]),
         new(
             Name: "Rooftop Belvedere",
             Slug: "rooftop-belvedere",
@@ -210,7 +233,17 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Dark and elegant with a champagne gold accent.
-            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg")),
+            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg"),
+            Gallery:
+            [
+                new("rooftop-belvedere-gallery-cocktails.jpg", "Signature-Cocktails auf der Terrasse"),
+                new("rooftop-belvedere-gallery-sharing-plates.jpg", "Sharing-Plates zum Teilen"),
+                new("rooftop-belvedere-gallery-bar.jpg", "An der Bar am Abend"),
+                new("rooftop-belvedere-gallery-sonnenuntergang.jpg", "Wien im Licht des Sonnenuntergangs"),
+                new("rooftop-belvedere-gallery-lounge.jpg", "Die Lounge-Ecke"),
+                new("rooftop-belvedere-gallery-champagner.jpg", "Champagner zum Anstoßen"),
+                new("rooftop-belvedere-gallery-blick.jpg", "Blick über die Dächer Wiens"),
+            ]),
     ];
 
     /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
@@ -227,7 +260,7 @@ public static class DevelopmentSeed
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
     /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
-    /// rules (never saved). An existing demo area gets its photo and description when it has neither.
+    /// rules (never saved), the photo gallery with its captions (no photos). An existing demo area gets its photo and description when it has neither.
     /// </summary>
     public static async Task SeedRestaurantsAsync(IServiceProvider services)
     {
@@ -367,6 +400,17 @@ public static class DevelopmentSeed
                             DurationMinutes = r.DurationMinutes,
                         }));
                     }
+                }
+
+                if (!await db.GalleryPhotos.AnyAsync())
+                {
+                    db.GalleryPhotos.AddRange(demo.Gallery.Select((photo, i) => new GalleryPhoto
+                    {
+                        FileName = CopySeedAsset(photo.File),
+                        Caption = photo.Caption,
+                        SortOrder = i,
+                        CreatedAt = DateTime.UtcNow,
+                    }));
                 }
 
                 await db.SaveChangesAsync();

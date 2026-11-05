@@ -16,6 +16,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<RoomElement> RoomElements => Set<RoomElement>();
 
+    public DbSet<GalleryPhoto> GalleryPhotos => Set<GalleryPhoto>();
+
     public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
 
     public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
@@ -136,6 +138,17 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(e => e.AreaId)
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<GalleryPhoto>(photo =>
+        {
+            photo.Property(p => p.FileName).HasMaxLength(100);
+            photo.Property(p => p.Caption).HasMaxLength(GalleryPhoto.MaxCaptionLength);
+            photo.HasIndex(p => new { p.TenantId, p.SortOrder });
+            photo.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(p => p.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ReservationSettings>(settings =>

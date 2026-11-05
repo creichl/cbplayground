@@ -66,8 +66,10 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
             Assert.Equal(HttpStatusCode.OK, image.StatusCode);
             Assert.Equal("image/webp", image.Content.Headers.ContentType?.MediaType);
         }
-        // Five floor plans, logo and cover image of each of the three restaurants and a photo of each of the six areas, copied once.
-        Assert.Equal(17, Directory.GetFiles(factory.UploadsPath).Length);
+        // Five floor plans, logo and cover image of each of the three restaurants, a photo of each of the six areas and the
+        // gallery photos, copied once.
+        var seedAssets = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
+        Assert.Equal(17 + Directory.GetFiles(seedAssets, "*-gallery-*").Length, Directory.GetFiles(factory.UploadsPath).Length);
 
         var hours = (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Ct))!;
         Assert.Equal(12, hours.Periods!.Count);
@@ -210,6 +212,40 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var settings = await db.ReservationSettings.SingleAsync(Ct);
         Assert.Equal(120, settings.DefaultDurationMinutes);
         Assert.Equal(1, await db.Tenants.CountAsync(t => t.Slug == "rooftop-belvedere", Ct));
+    }
+
+    [Fact]
+    public async Task Every_demo_restaurant_has_a_gallery_of_6_to_8_captioned_photos_that_guests_can_load()
+    {
+        await SeedAsync();
+        await SeedAsync();
+
+        using var guest = factory.CreateHttpsClient();
+        foreach (var slug in new[] { "zur-linde", "kafana-dunav", "rooftop-belvedere" })
+        {
+            var restaurant = (await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{slug}", Ct))!;
+            Assert.InRange(restaurant.Gallery.Count, 6, 8);
+            Assert.All(restaurant.Gallery, p => Assert.InRange(p.Caption?.Length ?? 0, 1, GalleryPhoto.MaxCaptionLength));
+            Assert.Equal(restaurant.Gallery.Count, restaurant.Gallery.Select(p => p.Caption).Distinct().Count());
+            foreach (var photo in restaurant.Gallery)
+            {
+                Assert.StartsWith($"/api/public/restaurants/{slug}/gallery/{photo.Id}?v=", photo.Url);
+                var image = await guest.GetAsync(photo.Url, Ct);
+                Assert.Equal(HttpStatusCode.OK, image.StatusCode);
+                Assert.Contains(image.Content.Headers.ContentType?.MediaType, new[] { "image/jpeg", "image/webp" });
+            }
+        }
+    }
+
+    [Fact]
+    public void The_gallery_photos_are_JPEG_or_WebP_of_at_most_about_350_KB()
+    {
+        var folder = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
+        var files = Directory.GetFiles(folder, "*-gallery-*");
+
+        Assert.InRange(files.Length, 18, 24);
+        Assert.All(files, f => Assert.Contains(Path.GetExtension(f), new[] { ".jpg", ".webp" }));
+        Assert.All(files, f => Assert.InRange(new FileInfo(f).Length, 1, 360 * 1024));
     }
 
     [Fact]
@@ -391,5 +427,48 @@ public class DevelopmentSeedAreaPhotoTests(ApiFactory factory) : IClassFixture<A
         Assert.Equal(terrasse.Description, terrasseAfter.Description);
         Assert.NotNull(terrasseAfter.PhotoUrl);
         Assert.NotEqual(terrasse.PhotoUrl, terrasseAfter.PhotoUrl);
+    }
+}
+
+/// <summary>
+/// The seed and a gallery the admin maintained, on a factory of its own: the other seed tests count the uploaded files.
+/// </summary>
+public class DevelopmentSeedGalleryTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private async Task SeedAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
+    }
+
+    [Fact]
+    public async Task The_seed_adds_the_gallery_only_to_a_restaurant_without_photos()
+    {
+        await SeedAsync();
+        using var linde = factory.CreateHttpsClient();
+        (await linde.PostAsJsonAsync("/api/auth/login", new { email = "admin@zur-linde.test", password = ApiFactory.Password }, Ct)).EnsureSuccessStatusCode();
+        using var dunav = factory.CreateHttpsClient();
+        (await dunav.PostAsJsonAsync("/api/auth/login", new { email = "admin@kafana-dunav.test", password = ApiFactory.Password }, Ct)).EnsureSuccessStatusCode();
+        // Linde keeps one photo with an own caption; Dunav deletes all of its photos.
+        var lindeGallery = (await linde.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))!;
+        foreach (var photo in lindeGallery.Skip(1))
+        {
+            (await linde.DeleteAsync($"/api/admin/gallery/{photo.Id}", Ct)).EnsureSuccessStatusCode();
+        }
+        (await linde.PutAsJsonAsync($"/api/admin/gallery/{lindeGallery[0].Id}", new { caption = "Unser Lieblingsbild" }, Ct)).EnsureSuccessStatusCode();
+        var dunavGallery = (await dunav.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))!;
+        foreach (var photo in dunavGallery)
+        {
+            (await dunav.DeleteAsync($"/api/admin/gallery/{photo.Id}", Ct)).EnsureSuccessStatusCode();
+        }
+
+        await SeedAsync();
+
+        Assert.Equal([lindeGallery[0] with { Caption = "Unser Lieblingsbild" }], await linde.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct));
+        var dunavAfter = (await dunav.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))!;
+        Assert.Equal(dunavGallery.Select(p => p.Caption), dunavAfter.Select(p => p.Caption));
+        Assert.Empty(dunavAfter.Select(p => p.Id).Intersect(dunavGallery.Select(p => p.Id)));
     }
 }
