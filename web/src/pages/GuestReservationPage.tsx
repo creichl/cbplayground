@@ -48,6 +48,7 @@ import { Alert, AlertDescription } from '../ui/alert.tsx'
 import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog.tsx'
+import { Reveal } from '../ui/motion/reveal.tsx'
 import { Photo } from '../ui/photo.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
@@ -59,8 +60,11 @@ import { NotFound } from './NotFoundPage.tsx'
  */
 const pageClassName = '-mb-12 min-h-[calc(100dvh-4rem)] bg-background pb-16 font-sans text-foreground'
 
-/** The narrow band of the cover image below the header, and the column of the cards, which overlaps it a little. */
-const bandClassName = 'h-28 sm:h-44'
+/**
+ * The narrow band of the cover image below the header, and the column of the cards, which overlaps it a little. In page
+ * transitions the band is the element the cover image of the booking page moves into, and back (app.css).
+ */
+const bandClassName = 'h-28 sm:h-44 [view-transition-name:restaurant-cover]'
 const columnClassName = 'relative mx-auto -mt-12 flex max-w-3xl flex-col gap-6 px-4 sm:-mt-20 sm:px-6'
 
 /** The colours of a state: the surface of its symbol and the line on top of its card. Never by colour alone: each has its icon and title. */
@@ -287,7 +291,7 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
             {statusText !== null && <p className="max-w-[60ch] text-lg text-muted-foreground">{statusText}</p>}
             {closed && (
               <Button asChild size="lg" className="mt-2 self-start">
-                <Link to={`/r/${encodeURIComponent(slug)}`}>
+                <Link to={`/r/${encodeURIComponent(slug)}`} viewTransition>
                   {t('guestReservation.bookAgain')}
                   <ArrowRightIcon aria-hidden="true" />
                 </Link>
@@ -297,70 +301,75 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
         </div>
       </Card>
 
-      <Card className="gap-0 py-0">
-        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-8">
-          <div className="flex flex-col">
-            <span className="text-sm text-muted-foreground">{t('guestReservation.referenceCode')}</span>
-            <span className="font-mono text-2xl font-semibold tracking-[0.15em]">{reservation.referenceCode}</span>
+      {/* Below the first screen (on phones) the cards rise in as they are scrolled into view. */}
+      <Reveal>
+        <Card className="gap-0 py-0">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-8">
+            <div className="flex flex-col">
+              <span className="text-sm text-muted-foreground">{t('guestReservation.referenceCode')}</span>
+              <span className="font-mono text-2xl font-semibold tracking-[0.15em]">{reservation.referenceCode}</span>
+            </div>
+            <CopyButton value={reservation.referenceCode} />
           </div>
-          <CopyButton value={reservation.referenceCode} />
-        </div>
 
-        <div className="flex flex-col gap-4 px-6 py-6 sm:px-8">
-          <h2 className="font-display text-xl wrap-anywhere">{restaurant.name}</h2>
-          <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-            {details.map((row) => (
-              <div key={row.label} className="flex min-w-0 flex-col gap-0.5">
-                <dt className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
-                  <span aria-hidden="true" className="flex">
-                    {row.icon}
-                  </span>
-                  {row.label}
-                </dt>
-                <dd className={cn('pl-6 font-medium wrap-anywhere', closed && 'text-muted-foreground line-through')}>{row.value}</dd>
-              </div>
-            ))}
-          </dl>
-        </div>
+          <div className="flex flex-col gap-4 px-6 py-6 sm:px-8">
+            <h2 className="font-display text-xl wrap-anywhere">{restaurant.name}</h2>
+            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
+              {details.map((row) => (
+                <div key={row.label} className="flex min-w-0 flex-col gap-0.5">
+                  <dt className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
+                    <span aria-hidden="true" className="flex">
+                      {row.icon}
+                    </span>
+                    {row.label}
+                  </dt>
+                  <dd className={cn('pl-6 font-medium wrap-anywhere', closed && 'text-muted-foreground line-through')}>{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
 
-        <RestaurantContact restaurant={restaurant} />
-      </Card>
+          <RestaurantContact restaurant={restaurant} />
+        </Card>
+      </Reveal>
 
       {upcoming && (
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {timeZoneId !== null && (
-              <Button size="lg" onClick={() => addToCalendar(timeZoneId)}>
-                <CalendarPlusIcon aria-hidden="true" />
-                {t('booking.confirmation.addToCalendar')}
-              </Button>
-            )}
-            {reservation.canCancel && (
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="lg" className="text-destructive hover:bg-destructive/10 hover:text-destructive sm:ml-auto">
-                  <XIcon aria-hidden="true" />
-                  {t('guestReservation.cancel')}
+        <Reveal>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              {timeZoneId !== null && (
+                <Button size="lg" onClick={() => addToCalendar(timeZoneId)}>
+                  <CalendarPlusIcon aria-hidden="true" />
+                  {t('booking.confirmation.addToCalendar')}
                 </Button>
-              </DialogTrigger>
+              )}
+              {reservation.canCancel && (
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="lg" className="text-destructive hover:bg-destructive/10 hover:text-destructive sm:ml-auto">
+                    <XIcon aria-hidden="true" />
+                    {t('guestReservation.cancel')}
+                  </Button>
+                </DialogTrigger>
+              )}
+            </div>
+
+            {!reservation.canCancel && reservation.status !== 'Arrived' && (
+              <Alert role="note" className="items-center">
+                <PhoneIcon aria-hidden="true" />
+                <AlertDescription className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span>{t('guestReservation.cannotCancel')}</span>
+                  {restaurant.phone !== null && (
+                    <Button asChild variant="outline">
+                      <a href={phoneHref(restaurant.phone)} className="whitespace-nowrap">
+                        {restaurant.phone}
+                      </a>
+                    </Button>
+                  )}
+                </AlertDescription>
+              </Alert>
             )}
           </div>
-
-          {!reservation.canCancel && reservation.status !== 'Arrived' && (
-            <Alert role="note" className="items-center">
-              <PhoneIcon aria-hidden="true" />
-              <AlertDescription className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <span>{t('guestReservation.cannotCancel')}</span>
-                {restaurant.phone !== null && (
-                  <Button asChild variant="outline">
-                    <a href={phoneHref(restaurant.phone)} className="whitespace-nowrap">
-                      {restaurant.phone}
-                    </a>
-                  </Button>
-                )}
-              </AlertDescription>
-            </Alert>
-          )}
-        </div>
+        </Reveal>
       )}
 
       {cancel.isError && (

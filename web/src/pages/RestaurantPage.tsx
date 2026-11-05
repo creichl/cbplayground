@@ -13,6 +13,7 @@ import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
 import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/booking/RestaurantHeader.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { Button } from '../ui/button.tsx'
+import { Reveal, Stagger } from '../ui/motion/reveal.tsx'
 import { Photo } from '../ui/photo.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
@@ -28,7 +29,8 @@ const infoColumnClassName = 'flex flex-col gap-12 pt-12 lg:col-span-7 lg:row-sta
  * 1024 px on, the information on the left (7 of 12 columns: about us, areas, opening hours, directions and contact) and the
  * reservation card on the right, which stays in view below the header. On phones the card comes right below the cover
  * image, the information after it, and a bar "Reserve a table" appears at the bottom of the screen once the card is
- * scrolled out of view.
+ * scrolled out of view. The sections below the first screen rise in once as they are scrolled into view (Reveal), the
+ * area cards one after another (Stagger).
  */
 export function RestaurantPage() {
   const { t } = useTranslation()
@@ -131,41 +133,47 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
 /**
  * The restaurant's areas as photo cards with name and description, only to show the place: where the guest chooses the
  * table, the choice comes in the booking dialog. Without photo, or when it cannot be loaded, a calm surface with a chair.
+ * Under the pointer a card lifts a little and its photo zooms softly in its frame.
  */
 function AreaCards({ areas }: { areas: PublicRestaurant['areas'] }) {
   const { t } = useTranslation()
 
   return (
-    <ul className="grid gap-6 sm:grid-cols-2">
-      {areas.map((area) => (
-        <li key={area.name} className="flex flex-col gap-3">
-          <Photo
-            src={area.photoUrl}
-            alt={t('booking.table.areaPhoto', { area: area.name })}
-            ratio="4/3"
-            className="rounded-xl"
-            fallback={
-              <span className="flex items-center justify-center text-muted-foreground">
-                <ArmchairIcon aria-hidden="true" className="size-10" strokeWidth={1.5} />
-              </span>
-            }
-          />
-          <div className="flex flex-col gap-1">
-            <h3 className="font-display text-xl">{area.name}</h3>
-            {area.description !== null && <p className="text-muted-foreground">{area.description}</p>}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <Stagger>
+      <ul className="grid gap-6 sm:grid-cols-2">
+        {areas.map((area) => (
+          <li key={area.name} className="group flex flex-col gap-3 lift">
+            <Photo
+              src={area.photoUrl}
+              alt={t('booking.table.areaPhoto', { area: area.name })}
+              ratio="4/3"
+              className="rounded-xl"
+              imageClassName="transition-[opacity,scale] duration-(--motion-long) group-hover:scale-105"
+              fallback={
+                <span className="flex items-center justify-center text-muted-foreground">
+                  <ArmchairIcon aria-hidden="true" className="size-10" strokeWidth={1.5} />
+                </span>
+              }
+            />
+            <div className="flex flex-col gap-1">
+              <h3 className="font-display text-xl">{area.name}</h3>
+              {area.description !== null && <p className="text-muted-foreground">{area.description}</p>}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </Stagger>
   )
 }
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="font-display text-2xl sm:text-3xl">{title}</h2>
-      {children}
-    </section>
+    <Reveal>
+      <section className="flex flex-col gap-4">
+        <h2 className="font-display text-2xl sm:text-3xl">{title}</h2>
+        {children}
+      </section>
+    </Reveal>
   )
 }
 

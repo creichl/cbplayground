@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { type BookingResult, managePath, type PublicRestaurant } from '../../api/publicBooking.ts'
 import { formatLongDate, formatTime } from '../../i18n/format.ts'
 import { Button } from '../../ui/button.tsx'
+import { SuccessMark } from '../../ui/motion/success-mark.tsx'
 import { calendarFile, downloadCalendarFile } from './calendarFile.ts'
 import { formatAddress, mapSearchUrl } from './format.ts'
 
@@ -15,9 +16,9 @@ type BookingConfirmationProps = {
 }
 
 /**
- * The end of the booking: a clear success state (a check that draws itself, unless the guest asked for less motion; for a
- * request, which the restaurant still has to confirm, a clock and "Request sent" with what happens next), then a card like a
- * ticket with the reference code and what was booked (date, time, people, table and area, address), and the actions: "Add to
+ * The end of the booking: a clear success state (a check that draws itself with a few particles in the accent colour,
+ * SuccessMark, unless the guest asked for less motion; for a request, which the restaurant still has to confirm, a clock and
+ * "Request sent" with what happens next), then a card like a ticket that slides up, with the reference code and what was booked (date, time, people, table and area, address), and the actions: "Add to
  * calendar" (.ics), "Copy link" (the link to view and cancel the reservation, with the hint to save it), "Manage
  * reservation" and "Directions". The heading (`title`) is the dialog's.
  */
@@ -83,11 +84,7 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, titl
             <ClockIcon className="size-8" />
           </span>
         ) : (
-          <span aria-hidden="true" className="flex size-16 animate-check-circle items-center justify-center rounded-full bg-success/15 text-success motion-reduce:animate-none">
-            <svg viewBox="0 0 24 24" className="size-9" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} strokeDasharray={1} className="animate-check-draw motion-reduce:animate-none" />
-            </svg>
-          </span>
+          <SuccessMark />
         )}
         <div className="flex flex-col gap-2">
           {title}
@@ -96,7 +93,7 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, titl
       </div>
 
       {/* Like a ticket: the code at the top, a perforation with two notches, what was booked below it. */}
-      <div className="w-full rounded-2xl border border-border bg-card text-left shadow-card">
+      <div className="w-full animate-rise rounded-2xl border border-border bg-card text-left shadow-card [animation-delay:200ms]">
         <div className="flex flex-col gap-1 px-6 pt-5 pb-4">
           <p className="font-display text-lg">{restaurant.name}</p>
           <p className="text-sm text-muted-foreground">{t('booking.confirmation.referenceCode')}</p>
