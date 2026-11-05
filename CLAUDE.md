@@ -24,6 +24,13 @@ demo data (Development environment, `--reset-demo-data`, its database and upload
 again. Both ports must be free: stop a running `dotnet run` or `npm run dev` first. It needs no Docker and no root.
 Exit code 0 means all tests passed.
 
+Chromium needs system libraries (glib, nss, atk, X11, gbm, …) and a font, which the toolkit "Browser for Playwright"
+brings. When they are missing and there is no root for `npx playwright install --with-deps chromium`,
+`web/e2e/browser-libs.sh` (sourced by the script) fetches the Ubuntu 24.04 packages that contain them from
+archive.ubuntu.com into `~/.cache/cbplayground-browser-libs`, checked like apt does (signed InRelease, SHA-256 of every
+package), and points Chromium at them. Once Chromium finds all its libraries, it does nothing; delete the cache folder to
+fetch them anew.
+
 The results are in `test-results/` in the repository root (ignored by git):
 
 - `report.md`: every test with its result, and the errors of the failed ones;
