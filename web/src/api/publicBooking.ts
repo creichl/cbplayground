@@ -64,8 +64,9 @@ export type PublicTable = {
 }
 
 /**
- * An area open for online booking with all its tables; `tableScale` (50–200 %) scales the drawn tables. Without floor plan
- * image the plan is drawn as a room of `roomStyle` with `roomElements`. `description` and `photoUrl` (a photo of the area,
+ * An area open for online booking with all its tables; `tableScale` (in percent) scales the drawn tables. Without floor plan
+ * image the plan is drawn as a room of `roomStyle` with `roomElements`. `widthMeters` is the real width of the plan, null
+ * when unknown; with it the tables are drawn at their real size. `description` and `photoUrl` (a photo of the area,
  * not its floor plan) are null when the restaurant has not given them.
  */
 export type PublicArea = {
@@ -78,6 +79,7 @@ export type PublicArea = {
   tables: PublicTable[]
   roomStyle: RoomStyle
   roomElements: RoomElement[]
+  widthMeters: number | null
 }
 
 export type BookingRequest = {

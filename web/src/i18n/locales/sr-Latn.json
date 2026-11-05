@@ -213,7 +213,8 @@
       "tooltip_few": "Sto {{number}} · do {{count}} osobe",
       "tooltip_other": "Sto {{number}} · do {{count}} osoba",
       "tooltipUnavailable": "Sto {{number}} · nije dostupan",
-      "showList": "Prikaži stolove kao listu"
+      "showList": "Prikaži stolove kao listu",
+      "toScale": "Plan i stolovi u razmeri"
     },
     "details": {
       "name": "Ime",
@@ -636,7 +637,24 @@
       "invalidFontStyle": "Par fontova nije ispravan.",
       "logoTooLarge": "Logo je prevelik (najviše 2 MB).",
       "coverTooLarge": "Naslovna slika je prevelika (najviše 10 MB).",
-      "imageTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku."
+      "imageTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku.",
+      "invalidTableStyle": "Stil stolova nije ispravan."
+    },
+    "tables": {
+      "title": "Stolovi na planu",
+      "description": "Kako gosti vide stolove na planu kada biraju jedan. Pregled prikazuje slobodan, izabran i nedostupan sto.",
+      "styles": {
+        "Classic": "Klasičan",
+        "Natural": "Prirodan",
+        "Minimal": "Minimalan",
+        "Glow": "Svetleći"
+      },
+      "descriptions": {
+        "Classic": "Stolovi i stolice u vašoj boji naglaska, sa mekom senkom.",
+        "Natural": "Pravi nameštaj: drveni stolovi sa platnenim stolicama; slobodni stolovi stoje u oreolu vaše boje naglaska.",
+        "Minimal": "Ravni oblici kao plan sedenja, mesta kao tačke; mirno i vrlo jasno.",
+        "Glow": "Tamno staklo sa svetlim linijama; slobodni stolovi blago svetle u vašoj boji naglaska. Za tamne stranice."
+      }
     }
   },
   "staff": {
@@ -909,7 +927,12 @@
       "description": "Opis",
       "descriptionHint": "Kratak tekst koji gosti vide kada biraju prostor.",
       "descriptionPlaceholder": "npr. Krovna terasa sa pogledom na grad",
-      "descriptionCounter": "{{length}} / {{max}}"
+      "descriptionCounter": "{{length}} / {{max}}",
+      "widthMeters": "Stvarna širina plana",
+      "widthMetersHintRoom": "Širina prostorije u metrima; duboka je dve trećine toga. Tako se stolovi crtaju u stvarnoj veličini (sto za 4 je 85 cm), a gosti vide razmernik.",
+      "widthMetersHintImage": "Širina koju prikazuje slika plana, u metrima. Tako se stolovi crtaju u stvarnoj veličini (sto za 4 je 85 cm), a gosti vide razmernik.",
+      "widthMetersPlaceholder": "npr. 18",
+      "tableScaleReal": "Stolovi se crtaju u stvarnoj veličini ({{percent}} %)."
     },
     "table": {
       "title": "Sto {{number}}",
@@ -953,7 +976,8 @@
       "roomElementPositionInvalid": "Element prostorije mora da leži u prostoriji.",
       "roomElementLabelInvalid": "Unesite natpis od najviše 40 znakova.",
       "tooManyRoomElements": "Prostorija može imati najviše 60 elemenata.",
-      "roomNotSaved": "Prostorija nije mogla da se sačuva"
+      "roomNotSaved": "Prostorija nije mogla da se sačuva",
+      "widthInvalid": "Unesite širinu od 5 do 80 m ili ostavite polje prazno."
     },
     "roomDragHint": "Prevucite stolove i elemente prostorije da biste ih pomerili; strelice pomeraju izabrani element. Kliknite na njega da biste ga izmenili.",
     "photo": {

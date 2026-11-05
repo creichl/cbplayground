@@ -29,12 +29,13 @@ public static class DevelopmentSeed
     private record DemoTable(string Number, int Seats, TableShape Shape, double X = 0, double Y = 0, int Rotation = 0);
 
     /// <summary>
-    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. With one, <see cref="TableScale"/> fits the
-    /// tables to the scale of the plan (a table for 4 about as large as in the room). <see cref="PhotoFile"/> is a photo in
+    /// A demo area; without <see cref="FloorPlanFile"/> it has no floor plan image. <see cref="WidthMeters"/> is the real width
+    /// of the plan (of the image, or of the drawn room); the table scale follows from it, so the tables are drawn at their real
+    /// size (a table for 4 is 85 cm, <see cref="TableLayout.RealSizeScale"/>). <see cref="PhotoFile"/> is a photo in
     /// <see cref="SeedAssetsPath"/>, <see cref="Description"/> is in the restaurant's language. <see cref="Room"/> creates the
     /// elements of its room, new ones on every call.
     /// </summary>
-    private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, int TableScale, DemoTable[] Tables,
+    private record DemoArea(string Name, string? FloorPlanFile, int OnlineCapacityPercent, double WidthMeters, DemoTable[] Tables,
         string Description, string PhotoFile, RoomStyle RoomStyle = RoomStyle.Indoor, Func<List<RoomElement>>? Room = null);
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
@@ -88,7 +89,7 @@ public static class DevelopmentSeed
             Areas:
             [
                 // A room of 11.8 × 7.5 m: tiled stove with its bench, corner bench, bar with stools, entrance at the bottom.
-                new("Gaststube", "gaststube.webp", 100, 90,
+                new("Gaststube", "gaststube.webp", 100, 13,
                 [
                     new("1", 2, Square, 443, 194), new("2", 4, Square, 658, 208), new("3", 4, Square, 900, 208),
                     new("4", 2, Square, 1115, 194), new("5", 2, Square, 1308, 194),
@@ -98,7 +99,7 @@ public static class DevelopmentSeed
                 Description: "Gemütliche Stube mit Holzbänken und Herrgottswinkel, wie früher beim Wirt im Dorf.",
                 PhotoFile: "gaststube-photo.jpg"),
                 // 13 × 8 m of stone slabs between the house and the hedges, the chestnut with its round bench at the bottom right.
-                new("Terrasse", "terrasse.webp", 50, 85,
+                new("Terrasse", "terrasse.webp", 50, 14,
                 [
                     new("T1", 4, Round, 206, 257), new("T2", 4, Round, 476, 309), new("T3", 6, Rectangle, 1363, 257),
                     new("T4", 2, Round, 206, 720), new("T5", 4, Round, 540, 823), new("T6", 2, Round, 874, 540),
@@ -147,7 +148,7 @@ public static class DevelopmentSeed
             Areas:
             [
                 // A room of 13.8 × 8.8 m: bar with stools at the top right, a podium for the musicians at the bottom right.
-                new("Sala", "sala.webp", 100, 80,
+                new("Sala", "sala.webp", 100, 15,
                 [
                     new("1", 2, Square, 240, 168), new("2", 4, Square, 480, 180), new("3", 4, Square, 720, 180),
                     new("4", 6, Rectangle, 1152, 240, Rotation: 90),
@@ -159,7 +160,7 @@ public static class DevelopmentSeed
                 Description: "Topla sala sa domaćom atmosferom, za porodične ručkove i veća društva.",
                 PhotoFile: "sala-photo.jpg"),
                 // The garden has no floor plan image: the web draws its room, the suggested garden with the river at the top.
-                new("Bašta", null, 100, 100,
+                new("Bašta", null, 100, 12,
                 [
                     new("B1", 2, Round), new("B2", 4, Square), new("B3", 4, Round),
                     new("B4", 6, Rectangle), new("B5", 8, Rectangle), new("B6", 2, Square),
@@ -206,7 +207,7 @@ public static class DevelopmentSeed
             Areas:
             [
                 // A deck of 16 × 10 m behind glass: stairs and lift at the top left, the bar at the back, planters, the view at the bottom.
-                new("Rooftop", "rooftop.webp", 70, 68,
+                new("Rooftop", "rooftop.webp", 70, 18,
                 [
                     new("R1", 2, Round, 650, 450), new("R2", 2, Round, 870, 450), new("R3", 4, Square, 1110, 450),
                     new("R4", 4, Round, 1400, 460),
@@ -217,7 +218,7 @@ public static class DevelopmentSeed
                 PhotoFile: "rooftop-photo.jpg",
                 RoomStyle.Rooftop),
                 // A room of 13 × 8.2 m: panorama windows at the top, a sofa at each side wall, a small bar at the bottom right.
-                new("Lounge", "lounge.webp", 100, 85,
+                new("Lounge", "lounge.webp", 100, 14,
                 [
                     new("L1", 2, Round, 386, 231), new("L2", 4, Square, 720, 244), new("L3", 4, Round, 1080, 244),
                     new("L4", 6, Rectangle, 540, 694), new("L5", 8, Rectangle, 1003, 643),
@@ -355,7 +356,8 @@ public static class DevelopmentSeed
                             Description = demoArea.Description,
                             PhotoFileName = CopySeedAsset(demoArea.PhotoFile),
                             OnlineCapacityPercent = demoArea.OnlineCapacityPercent,
-                            TableScale = demoArea.TableScale,
+                            TableScale = TableLayout.RealSizeScale(demoArea.WidthMeters),
+                            WidthMeters = demoArea.WidthMeters,
                             RoomStyle = demoArea.RoomStyle,
                         };
                         db.Areas.Add(area);

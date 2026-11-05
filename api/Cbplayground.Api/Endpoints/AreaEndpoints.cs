@@ -20,7 +20,7 @@ public static class AreaEndpoints
     public const int MaxRoomElements = 60;
 
     /// <summary><see cref="Description"/> and the URLs are null when empty.</summary>
-    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, string? Description, string? PhotoUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent, int TableScale, RoomStyle RoomStyle);
+    public record AreaResponse(Guid Id, string Name, int SortOrder, string? FloorPlanUrl, string? Description, string? PhotoUrl, bool OnlineBookingEnabled, int OnlineCapacityPercent, int TableScale, RoomStyle RoomStyle, double? WidthMeters);
 
     public record RoomElementResponse(Guid Id, RoomElementKind Kind, double PosX, double PosY, double Width, double Height, int Rotation, string? Label);
 
@@ -41,8 +41,11 @@ public static class AreaEndpoints
     /// <summary>
     /// Without <see cref="TableScale"/> or <see cref="Description"/> the stored value stays. The description is trimmed, an empty one
     /// is stored as null; longer than <see cref="Area.MaxDescriptionLength"/> characters: 400 "invalid_area_description".
+    /// <see cref="WidthMeters"/> is the real width of the plan, rounded to 0.1 m; null or missing: none. With it the table scale
+    /// follows from it (<see cref="TableLayout.RealSizeScale"/>) and <see cref="TableScale"/> is ignored; outside
+    /// <see cref="Area.MinWidthMeters"/>–<see cref="Area.MaxWidthMeters"/>: 400 "area_width_invalid".
     /// </summary>
-    public record UpdateAreaRequest(string? Name, bool OnlineBookingEnabled, int OnlineCapacityPercent, int? TableScale, string? Description);
+    public record UpdateAreaRequest(string? Name, bool OnlineBookingEnabled, int OnlineCapacityPercent, int? TableScale, string? Description, double? WidthMeters = null);
 
     /// <summary>All area ids of the restaurant in their new order.</summary>
     public record ReorderAreasRequest(List<Guid>? AreaIds);
@@ -86,7 +89,13 @@ public static class AreaEndpoints
             {
                 return ErrorResponse.Result("online_capacity_percent_invalid", StatusCodes.Status400BadRequest);
             }
-            if (request.TableScale is < 50 or > 200)
+            var widthMeters = request.WidthMeters is { } width ? Math.Round(width, 1, MidpointRounding.AwayFromZero) : (double?)null;
+            if (widthMeters is < Area.MinWidthMeters or > Area.MaxWidthMeters)
+            {
+                return ErrorResponse.Result("area_width_invalid", StatusCodes.Status400BadRequest);
+            }
+            // With a real width the table scale follows from it, so a table scale sent along is ignored, whatever its value.
+            if (widthMeters is null && request.TableScale is < 50 or > 200)
             {
                 return ErrorResponse.Result("table_scale_invalid", StatusCodes.Status400BadRequest);
             }
@@ -99,7 +108,8 @@ public static class AreaEndpoints
             area.Name = name!;
             area.OnlineBookingEnabled = request.OnlineBookingEnabled;
             area.OnlineCapacityPercent = request.OnlineCapacityPercent;
-            area.TableScale = request.TableScale ?? area.TableScale;
+            area.WidthMeters = widthMeters;
+            area.TableScale = widthMeters is { } real ? TableLayout.RealSizeScale(real) : request.TableScale ?? area.TableScale;
             if (description is not null)
             {
                 area.Description = description.Length == 0 ? null : description;
@@ -369,7 +379,8 @@ public static class AreaEndpoints
         area.OnlineBookingEnabled,
         area.OnlineCapacityPercent,
         area.TableScale,
-        area.RoomStyle);
+        area.RoomStyle,
+        area.WidthMeters);
 
     /// <summary>The public URL of the area's floor plan image; null without floor plan.</summary>
     internal static string? FloorPlanUrl(Area area) =>

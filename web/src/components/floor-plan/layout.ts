@@ -18,6 +18,18 @@ const rectangleDepth = 0.06
 /** The shortest long side of a rectangular table. */
 const rectangleMinLength = 0.08
 
+/** The real length of a table per seat in metres: a table for 4 is 85 cm. */
+const realSizePerSeatMeters = 0.2125
+
+/** The smallest and the largest real width of a plan in metres, as the API accepts it. */
+export const minWidthMeters = 5
+export const maxWidthMeters = 80
+
+/** The table scale at which the tables of a plan `widthMeters` wide have their real size, as the API derives it. */
+export function realSizeScale(widthMeters: number) {
+  return Math.round((100 * realSizePerSeatMeters) / (sizePerSeat * widthMeters))
+}
+
 /** Room for the chairs on every side of a table. */
 export const chairSpace = 0.02
 
@@ -321,3 +333,12 @@ export type RoomColors = (typeof roomColors)['light']
  * table's edge at least 3:1 against every floor (and most plan images), whatever the accent or status colour of the table.
  */
 export const tableRim = { light: 'rgba(28, 24, 20, 0.75)', dark: 'rgba(244, 239, 231, 0.72)' }
+
+/**
+ * The furniture of the table style Natural: a wooden top (its gradient from `light` to `dark`, its `edge` and `grain`) and
+ * chairs with a wooden `frame` and a linen `seat`; oak in the light mode, walnut in the dark one.
+ */
+export const naturalColors = {
+  light: { light: '#d6b088', dark: '#a97b51', edge: '#6e4b2f', grain: 'rgba(92, 60, 34, 0.32)', frame: '#7b5537', seat: '#efe6d8' },
+  dark: { light: '#93694a', dark: '#5f4029', edge: '#2a1c12', grain: 'rgba(30, 18, 10, 0.45)', frame: '#4a3121', seat: '#d4c8b6' },
+}

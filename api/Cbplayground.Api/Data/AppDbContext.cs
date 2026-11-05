@@ -58,6 +58,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             tenant.Property(t => t.BrandColor).HasMaxLength(Tenant.BrandColorLength);
             tenant.Property(t => t.ThemeMode).HasConversion<string>().HasMaxLength(20);
             tenant.Property(t => t.FontStyle).HasConversion<string>().HasMaxLength(20);
+            tenant.Property(t => t.TableStyle).HasConversion<string>().HasMaxLength(20);
             tenant.Property(t => t.LogoFileName).HasMaxLength(100);
             tenant.Property(t => t.CoverFileName).HasMaxLength(100);
         });

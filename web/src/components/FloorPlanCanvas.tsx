@@ -9,8 +9,10 @@ import { TableShape } from './floor-plan/TableShape.tsx'
 type FloorPlanCanvasProps = {
   /** The floor plan image; without one the tables lie in the drawn room. */
   imageUrl: string | null
-  /** The area's table scale, 50–200 %. */
+  /** The area's table scale in percent. */
   tableScale: number
+  /** The real width of the plan in metres, for its scale bar; null when unknown. */
+  widthMeters: number | null
   /** The tables of the area, with their current (possibly not yet saved) positions. */
   tables: Table[]
   selectedTableId: string | null
@@ -67,6 +69,7 @@ const arrowSteps: Record<string, [number, number]> = {
 export function FloorPlanCanvas({
   imageUrl,
   tableScale,
+  widthMeters,
   tables,
   selectedTableId,
   onSelect,
@@ -171,6 +174,7 @@ export function FloorPlanCanvas({
       roomElements={elements}
       tables={tables}
       tableScale={tableScale}
+      widthMeters={widthMeters}
       planRef={containerRef}
       onPlanClick={() => onSelect(null)}
       zoomButton={FloorPlanZoomButton}

@@ -1,6 +1,7 @@
 import { ArmchairIcon, BanIcon, CheckIcon, ChevronDownIcon, TriangleAlertIcon } from 'lucide-react'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import type { TableStyle } from '../../api/branding.ts'
 import { type PublicArea, type PublicTable, usePublicTables } from '../../api/publicBooking.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
@@ -12,7 +13,7 @@ import { FloorPlan, type ZoomButtonProps } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
 import { RequestError } from './RequestError.tsx'
 import { StepActions } from './StepActions.tsx'
-import { tableLooks, unavailableHatchId } from './tableLooks.ts'
+import { tableLook, tableLooks, unavailableHatchId } from './tableLooks.ts'
 
 type TablePickerProps = {
   slug: string
@@ -26,6 +27,10 @@ type TablePickerProps = {
   onChangeTime: () => void
   /** The restaurant's dark mode: the drawn room and the tables suit it. */
   dark: boolean
+  /** How the tables look, the restaurant's table style. */
+  tableStyle: TableStyle
+  /** In the large dialog: the step fills the dialog's height, and the plan takes all the room left. */
+  fill: boolean
 }
 
 /**
@@ -44,14 +49,17 @@ function smallestFreeTable(areas: PublicArea[]) {
 
 /**
  * The guest's choice of table in the booking dialog. From 768 px on the plan of the chosen area large on the left (its floor
- * plan image or its drawn room, with the zoom buttons in its corner) and a column on the right: the areas as small cards with
- * photo and "N free", the legend, the chosen table, "No preference" and "Continue". On phones the areas are chips above the
- * plan in the full width, and the choice with "Continue" stays at the bottom of the screen. Free tables that fit the party
- * are outlined in the accent colour, the chosen one filled with a check, the others muted and hatched; hovering a table
- * names it ("Table R6 · up to 6 people"). A table just chosen gets a short pulse of a ring, and its details slide in. The
- * list of the free tables, folded away below the plan, is the way to choose with the keyboard and screen readers.
+ * plan image or its drawn room, with the zoom buttons in its corner, and a scale bar when its real width is known) and a
+ * column on the right: the areas as small cards with photo and "N free", the legend, the chosen table, "No preference" and
+ * "Continue"; in the large dialog (`fill`) the plan takes all the height left. On phones the areas are chips above the plan
+ * in the full width, and the choice with "Continue" stays at the bottom of the screen. The tables are drawn in the
+ * restaurant's table style (tableLooks): free tables that fit the party in the accent colour, the chosen one with a check,
+ * the others muted; each has a badge with its number (and its seats on a large table) that stays readable however small
+ * the table is. Hovering a free table lifts it a little and names it ("Table R6 · up to 6 people"). A table just chosen gets
+ * a short pulse of a ring, and its details slide in. The list of the free tables, folded away below the plan, is the way to
+ * choose with the keyboard and screen readers.
  */
-export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, dark }: TablePickerProps) {
+export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, dark, tableStyle, fill }: TablePickerProps) {
   const { t } = useTranslation()
   const areas = usePublicTables(slug, date, time, guests)
   const [activeArea, setActiveArea] = useState<string | null>(null)
@@ -113,10 +121,15 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
 
   return (
     // A grid around the whole step, so the actions at its end stay at the bottom of the screen on phones (StepActions).
-    <div className="grid gap-x-6 gap-y-5 md:grid-cols-[minmax(0,1fr)_17rem] md:grid-rows-[auto_1fr]">
+    <div
+      className={cn(
+        'grid gap-x-6 gap-y-5 md:grid-cols-[minmax(0,1fr)_17rem] md:grid-rows-[auto_1fr]',
+        fill && 'md:min-h-0 md:flex-1 lg:grid-cols-[minmax(0,1fr)_20rem]',
+      )}
+    >
       <HatchPattern />
 
-      <div className="flex min-w-0 flex-col gap-4 md:row-span-2">
+      <div className={cn('flex min-w-0 flex-col gap-4 md:row-span-2', fill && 'md:min-h-0')}>
         {/* On phones the areas as chips that scroll sideways; the page itself never does. */}
         <div role="group" aria-label={t('booking.table.areasLabel')} className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 md:hidden">
           {areas.data.map((option) => {
@@ -155,10 +168,12 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
             zoomControls="inside"
             zoomButton={ZoomButton}
             dark={dark}
+            widthMeters={area.widthMeters}
+            fill={fill}
           >
             {area.tables.map((table) => {
               const selected = table.id === value
-              const look = selected ? tableLooks.selected : table.available ? tableLooks.free : tableLooks.unavailable
+              const look = tableLook(tableStyle, selected ? 'selected' : table.available ? 'free' : 'unavailable')
               return (
                 <Tooltip key={table.id}>
                   <TooltipTrigger asChild>
@@ -175,12 +190,14 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
                       note={selected ? <CheckIcon aria-hidden="true" className="my-px size-3" strokeWidth={3} /> : undefined}
                       onClick={table.available ? () => choose(table) : undefined}
                       className={cn(
-                        table.available ? 'cursor-pointer' : 'cursor-not-allowed',
+                        // Above the other tables, so its check is never covered; under the pointer above all of them.
+                        selected ? 'z-2' : 'z-1',
+                        table.available
+                          ? 'cursor-pointer transition-[scale] duration-(--motion-fast) hover:z-3 motion-safe:hover:scale-110'
+                          : 'cursor-not-allowed',
                         // The ring around the table and its chairs, once, when it is chosen.
                         selected && cn('pulse-ring', table.shape === 'Round' ? 'rounded-full' : 'rounded-[20%]'),
                       )}
-                      // Above the other tables, so its check is never covered.
-                      style={{ zIndex: selected ? 2 : 1 }}
                     />
                   </TooltipTrigger>
                   <TooltipContent side="top">
@@ -234,16 +251,14 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
         </div>
 
         <ul aria-hidden="true" className="flex flex-wrap gap-x-4 gap-y-2 text-sm md:flex-col">
-          <LegendItem swatch="border-[3px] border-primary bg-[color-mix(in_srgb,var(--primary)_18%,var(--card))]" label={t('booking.table.legend.free')} />
+          <LegendItem swatch={tableLooks[tableStyle].free.swatch} label={t('booking.table.legend.free')} />
           <LegendItem
-            swatch="border-[3px] border-foreground bg-primary text-primary-foreground"
+            swatch={tableLooks[tableStyle].selected.swatch}
             label={t('booking.table.legend.selected')}
             icon={<CheckIcon className="size-3" strokeWidth={3} />}
           />
-          <LegendItem
-            swatch="border border-muted-foreground bg-[repeating-linear-gradient(45deg,var(--input)_0_2px,var(--muted)_2px_5px)]"
-            label={t('booking.table.legend.unavailable')}
-          />
+          <LegendItem swatch={tableLooks[tableStyle].unavailable.swatch} label={t('booking.table.legend.unavailable')} />
+          {area.widthMeters !== null && <li className="text-muted-foreground">{t('booking.table.toScale')}</li>}
         </ul>
 
         <div className="hidden flex-col gap-3 overflow-clip rounded-xl border border-border bg-muted/50 p-4 md:flex">
@@ -332,7 +347,7 @@ function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; f
 }
 
 /** The hatching of the tables that are not available, in the tokens of the page; referred to by `tableLooks`. */
-function HatchPattern() {
+export function HatchPattern() {
   return (
     <svg width={0} height={0} aria-hidden="true" focusable="false" className="absolute">
       <defs>

@@ -1,10 +1,13 @@
 import { Box, Button, Group, SimpleGrid, Stack, Text } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
+import type { TableStyle } from '../api/branding.ts'
 import type { BrandStyle } from '../brandTheme.ts'
 import { RestaurantHeader } from './booking/RestaurantHeader.tsx'
-import { tableLooks } from './booking/tableLooks.ts'
+import { tableLook } from './booking/tableLooks.ts'
+import { HatchPattern } from './booking/TablePicker.tsx'
 import { BrandLogo } from './BrandLogo.tsx'
 import { BrandTheme } from './BrandTheme.tsx'
+import { Room } from './floor-plan/Room.tsx'
 import { TableShape } from './floor-plan/TableShape.tsx'
 
 type BrandingPreviewProps = {
@@ -13,14 +16,17 @@ type BrandingPreviewProps = {
   brandStyle: BrandStyle
   logoUrl: string | null
   coverUrl: string | null
+  /** How the sample tables look. */
+  tableStyle: TableStyle
 }
 
 /**
  * The top of the booking page in a given branding, saved or not: the header with logo (as on the booking page, a logo with
  * its own background on a surface in that colour) or name, the cover image with name
- * and city, a sample button and a free and a chosen sample table.
+ * and city, sample buttons and, on a strip of drawn floor, a free, a chosen and a sample table that is not available in the
+ * table style.
  */
-export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: BrandingPreviewProps) {
+export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl, tableStyle }: BrandingPreviewProps) {
   const { t } = useTranslation()
   const dark = brandStyle.themeMode === 'Dark'
 
@@ -42,24 +48,24 @@ export function BrandingPreview({ name, city, brandStyle, logoUrl, coverUrl }: B
             <Button variant="light">{t('booking.continue')}</Button>
           </Group>
           <Stack gap={4}>
-            <Box
-              pos="relative"
-              style={{
-                aspectRatio: '3 / 1',
-                borderRadius: 'var(--mantine-radius-sm)',
-                backgroundColor: dark ? 'var(--mantine-color-dark-7)' : 'var(--mantine-color-gray-0)',
-                boxShadow: `inset 0 0 0 2px var(--mantine-color-${dark ? 'dark-4' : 'gray-3'})`,
-              }}
-            >
-              <TableShape number="1" seats={4} shape="Square" rotation={0} posX={0.25} posY={0.5} tableScale={200} dark={dark} {...tableLooks.free} />
-              <TableShape number="2" seats={4} shape="Round" rotation={0} posX={0.75} posY={0.5} tableScale={200} dark={dark} {...tableLooks.selected} />
+            <Box pos="relative" style={{ aspectRatio: '3 / 1', borderRadius: 'var(--mantine-radius-sm)', overflow: 'hidden' }}>
+              <HatchPattern />
+              <Box pos="absolute" inset={0}>
+                <Room roomStyle="Indoor" elements={[]} dark={dark} viewBox="0 50 300 100" />
+              </Box>
+              <TableShape number="1" seats={4} shape="Square" rotation={0} posX={0.18} posY={0.5} tableScale={200} dark={dark} {...tableLook(tableStyle, 'free')} />
+              <TableShape number="2" seats={4} shape="Round" rotation={0} posX={0.5} posY={0.5} tableScale={200} dark={dark} {...tableLook(tableStyle, 'selected')} />
+              <TableShape number="3" seats={2} shape="Square" rotation={0} posX={0.82} posY={0.5} tableScale={200} dark={dark} {...tableLook(tableStyle, 'unavailable')} />
             </Box>
-            <SimpleGrid cols={2}>
+            <SimpleGrid cols={3}>
               <Text size="xs" c="dimmed" ta="center">
                 {t('booking.table.legend.free')}
               </Text>
               <Text size="xs" c="dimmed" ta="center">
                 {t('booking.table.legend.selected')}
+              </Text>
+              <Text size="xs" c="dimmed" ta="center">
+                {t('booking.table.legend.unavailable')}
               </Text>
             </SimpleGrid>
           </Stack>

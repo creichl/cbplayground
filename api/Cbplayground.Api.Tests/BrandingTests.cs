@@ -54,7 +54,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
     {
         var (_, admin) = await CreateRestaurantAsync();
 
-        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
+        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null, TableStyle.Classic), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
     }
 
     [Fact]
@@ -65,7 +65,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var put = await admin.PutAsJsonAsync(Path, new { brandColor = " #C9A96E ", themeMode = "Dark", fontStyle = "Elegant" }, Ct);
 
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
-        var expected = new BrandingResponse("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, null, null);
+        var expected = new BrandingResponse("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, null, null, TableStyle.Classic);
         Assert.Equal(expected, await put.Content.ReadFromJsonAsync<BrandingResponse>(Ct));
         Assert.Equal(expected, await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
     }
@@ -79,7 +79,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var put = await admin.PutAsJsonAsync(Path, new { brandColor = "", themeMode = "", fontStyle = (string?)null }, Ct);
 
         Assert.Equal(HttpStatusCode.OK, put.StatusCode);
-        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
+        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null, TableStyle.Classic), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
         using var scope = factory.Services.CreateScope();
         var tenant = scope.ServiceProvider.GetRequiredService<AppDbContext>().Tenants.Single(t => t.Id == restaurant.Id);
         Assert.Null(tenant.BrandColor);
@@ -130,6 +130,54 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("invalid_font_style", await ErrorOf(response));
     }
 
+    [Theory]
+    [InlineData("Classic", TableStyle.Classic)]
+    [InlineData("Natural", TableStyle.Natural)]
+    [InlineData("Minimal", TableStyle.Minimal)]
+    [InlineData("Glow", TableStyle.Glow)]
+    public async Task The_table_style_is_saved_and_given_to_the_guests(string tableStyle, TableStyle expected)
+    {
+        var (restaurant, admin) = await CreateRestaurantAsync();
+
+        var put = await admin.PutAsJsonAsync(Path, new { brandColor = "#123456", themeMode = "Dark", fontStyle = "Urban", tableStyle }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+        Assert.Equal(expected, (await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct))!.TableStyle);
+        using var guest = factory.CreateClient();
+        var publicRestaurant = await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{restaurant.Slug}", Ct);
+        Assert.Equal(expected, publicRestaurant!.Branding.TableStyle);
+    }
+
+    [Fact]
+    public async Task Without_table_style_the_tables_look_classic()
+    {
+        var (restaurant, admin) = await CreateRestaurantAsync();
+        await admin.PutAsJsonAsync(Path, new { brandColor = "#123456", themeMode = "Dark", fontStyle = "Urban", tableStyle = "Glow" }, Ct);
+
+        var put = await admin.PutAsJsonAsync(Path, new { brandColor = "#123456", themeMode = "Dark", fontStyle = "Urban", tableStyle = "" }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, put.StatusCode);
+        Assert.Equal(TableStyle.Classic, (await put.Content.ReadFromJsonAsync<BrandingResponse>(Ct))!.TableStyle);
+        using var scope = factory.Services.CreateScope();
+        Assert.Null(scope.ServiceProvider.GetRequiredService<AppDbContext>().Tenants.Single(t => t.Id == restaurant.Id).TableStyle);
+    }
+
+    [Theory]
+    [InlineData("Wood")]
+    [InlineData("glow")]
+    [InlineData("2")]
+    public async Task An_invalid_table_style_is_rejected(string tableStyle)
+    {
+        var (_, admin) = await CreateRestaurantAsync();
+        await admin.PutAsJsonAsync(Path, new { brandColor = "#123456", themeMode = "Dark", fontStyle = "Urban", tableStyle = "Minimal" }, Ct);
+
+        var response = await admin.PutAsJsonAsync(Path, new { brandColor = "#123456", themeMode = "Dark", fontStyle = "Urban", tableStyle }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("invalid_table_style", await ErrorOf(response));
+        Assert.Equal(TableStyle.Minimal, (await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct))!.TableStyle);
+    }
+
     [Fact]
     public async Task A_rejected_save_changes_nothing()
     {
@@ -139,7 +187,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var response = await admin.PutAsJsonAsync(Path, new { brandColor = "#654321", themeMode = "Light", fontStyle = "Comic" }, Ct);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal(new BrandingResponse("#123456", ThemeMode.Dark, FontStyle.Urban, null, null), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
+        Assert.Equal(new BrandingResponse("#123456", ThemeMode.Dark, FontStyle.Urban, null, null, TableStyle.Classic), await admin.GetFromJsonAsync<BrandingResponse>(Path, Ct));
     }
 
     [Theory]
@@ -310,7 +358,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var listItem = Assert.Single((await guest.GetFromJsonAsync<List<TenantEndpoints.TenantListItem>>("/api/tenants", Ct))!, t => t.Slug == restaurant.Slug);
 
         Assert.Equal(branding, publicRestaurant!.Branding);
-        Assert.Equal(new BrandingResponse("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, branding.LogoUrl, branding.CoverUrl), branding);
+        Assert.Equal(new BrandingResponse("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, branding.LogoUrl, branding.CoverUrl, TableStyle.Classic), branding);
         Assert.Equal((branding.LogoUrl, branding.CoverUrl, "#c9a96e"), (listItem.LogoUrl, listItem.CoverUrl, listItem.BrandColor));
     }
 
@@ -324,7 +372,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var publicRestaurant = await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{restaurant.Slug}", Ct);
 
         Assert.Equal((null, null, null), (listItem.LogoUrl, listItem.CoverUrl, listItem.BrandColor));
-        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null), publicRestaurant!.Branding);
+        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null, TableStyle.Classic), publicRestaurant!.Branding);
         Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/public/restaurants/{restaurant.Slug}/logo", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/public/restaurants/{restaurant.Slug}/cover", Ct)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync("/api/public/restaurants/no-such-restaurant/logo", Ct)).StatusCode);
@@ -360,7 +408,7 @@ public class BrandingTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var brandingA = await UploadOkAsync(adminA, "cover", Png);
 
         // B reads only its own branding, and every change of B lands in B's restaurant.
-        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null), await adminB.GetFromJsonAsync<BrandingResponse>(Path, Ct));
+        Assert.Equal(new BrandingResponse(null, ThemeMode.Light, FontStyle.Modern, null, null, TableStyle.Classic), await adminB.GetFromJsonAsync<BrandingResponse>(Path, Ct));
         await adminB.PutAsJsonAsync(Path, new { brandColor = "#000000", themeMode = "Light", fontStyle = "Urban" }, Ct);
         var logoB = (await UploadOkAsync(adminB, "logo", Jpeg, "image/jpeg")).LogoUrl!;
         Assert.Equal(HttpStatusCode.OK, (await adminB.DeleteAsync($"{Path}/cover", Ct)).StatusCode);

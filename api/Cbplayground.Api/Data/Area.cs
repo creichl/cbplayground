@@ -21,6 +21,10 @@ public class Area : ITenantOwned
 {
     public const int MaxDescriptionLength = 200;
 
+    /// <summary>The smallest and the largest real width of a plan in metres.</summary>
+    public const double MinWidthMeters = 5;
+    public const double MaxWidthMeters = 80;
+
     public Guid Id { get; set; }
 
     public Guid TenantId { get; set; }
@@ -45,8 +49,18 @@ public class Area : ITenantOwned
     /// <summary>Share of the area's seats that guests can book online, 0–100. The rest stays for phone bookings and walk-ins.</summary>
     public int OnlineCapacityPercent { get; set; } = 100;
 
-    /// <summary>Size of the drawn tables of this area in percent, 50–200, so they match an uploaded floor plan.</summary>
+    /// <summary>
+    /// Size of the drawn tables of this area in percent, so they match an uploaded floor plan: 50–200 as the admin sets it,
+    /// or derived from <see cref="WidthMeters"/> (<see cref="FloorPlans.TableLayout.RealSizeScale"/>) when that is set.
+    /// </summary>
     public int TableScale { get; set; } = 100;
+
+    /// <summary>
+    /// The real width of the plan in metres, <see cref="MinWidthMeters"/>–<see cref="MaxWidthMeters"/>: of the floor plan image,
+    /// or of the drawn room, which is 3:2 and so two thirds as deep. With it the tables are drawn at their real size and the
+    /// plan gets a scale bar; null: unknown, the admin sets <see cref="TableScale"/>.
+    /// </summary>
+    public double? WidthMeters { get; set; }
 
     /// <summary>The kind of room. Stored also for an area with floor plan image, but only drawn without one.</summary>
     public RoomStyle RoomStyle { get; set; } = RoomStyle.Indoor;
