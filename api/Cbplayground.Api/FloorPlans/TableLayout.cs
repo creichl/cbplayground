@@ -28,6 +28,16 @@ public static class TableLayout
     /// <summary>Room for the chairs on every side of a table, scaled like the tables. The arrangement keeps it free as long as the tables fit.</summary>
     public const double ChairSpace = 0.02;
 
+    /// <summary>The real length of a table per seat in metres: a table for 4 is 85 cm, as in most restaurants.</summary>
+    public const double RealSizePerSeatMeters = 0.2125;
+
+    /// <summary>
+    /// The table scale in percent at which the tables of a plan <paramref name="widthMeters"/> wide are drawn at their real size
+    /// (<see cref="RealSizePerSeatMeters"/>), rounded to whole percent: 18 m give 67 %, 12 m 101 %.
+    /// </summary>
+    public static int RealSizeScale(double widthMeters) =>
+        (int)Math.Round(100 * RealSizePerSeatMeters / (SizePerSeat * widthMeters), MidpointRounding.AwayFromZero);
+
     /// <summary>The plan height in plan widths.</summary>
     private const double PlanHeight = 1 / AspectRatio;
 

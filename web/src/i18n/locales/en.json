@@ -203,7 +203,8 @@
       "tooltip_one": "Table {{number}} · up to {{count}} person",
       "tooltip_other": "Table {{number}} · up to {{count}} people",
       "tooltipUnavailable": "Table {{number}} · not available",
-      "showList": "Show tables as a list"
+      "showList": "Show tables as a list",
+      "toScale": "Plan and tables to scale"
     },
     "details": {
       "name": "Name",
@@ -624,7 +625,24 @@
       "invalidFontStyle": "The font pair is not valid.",
       "logoTooLarge": "The logo is too large (at most 2 MB).",
       "coverTooLarge": "The cover image is too large (at most 10 MB).",
-      "imageTypeInvalid": "Please choose a PNG, JPEG or WebP image."
+      "imageTypeInvalid": "Please choose a PNG, JPEG or WebP image.",
+      "invalidTableStyle": "The table style is not valid."
+    },
+    "tables": {
+      "title": "Tables on the plan",
+      "description": "How guests see the tables on the floor plan when they choose one. The preview shows a free, a chosen and an unavailable table.",
+      "styles": {
+        "Classic": "Classic",
+        "Natural": "Natural",
+        "Minimal": "Minimal",
+        "Glow": "Glow"
+      },
+      "descriptions": {
+        "Classic": "Tables and chairs in your accent colour, with a soft shadow.",
+        "Natural": "Real furniture: wooden tables with linen chairs; free tables stand in a halo of your accent colour.",
+        "Minimal": "Flat shapes like a seat map, the seats as dots; calm and very clear.",
+        "Glow": "Dark glass with light lines; free tables glow softly in your accent colour. Made for dark pages."
+      }
     }
   },
   "staff": {
@@ -895,7 +913,12 @@
       "description": "Description",
       "descriptionHint": "A short text guests see when they choose the area.",
       "descriptionPlaceholder": "e.g. Roof terrace with a view over the city",
-      "descriptionCounter": "{{length}} / {{max}}"
+      "descriptionCounter": "{{length}} / {{max}}",
+      "widthMeters": "Real width of the plan",
+      "widthMetersHintRoom": "Width of the room in metres; it is two thirds as deep. With it, the tables are drawn at their real size (a table for 4 is 85 cm) and guests see a scale bar.",
+      "widthMetersHintImage": "Width the floor plan image shows, in metres. With it, the tables are drawn at their real size (a table for 4 is 85 cm) and guests see a scale bar.",
+      "widthMetersPlaceholder": "e.g. 18",
+      "tableScaleReal": "The tables are drawn at their real size ({{percent}} %)."
     },
     "table": {
       "title": "Table {{number}}",
@@ -939,7 +962,8 @@
       "roomElementPositionInvalid": "A room element must lie in the room.",
       "roomElementLabelInvalid": "Please enter a label of at most 40 characters.",
       "tooManyRoomElements": "A room can have at most 60 elements.",
-      "roomNotSaved": "The room could not be saved"
+      "roomNotSaved": "The room could not be saved",
+      "widthInvalid": "Please enter a width from 5 to 80 m, or leave the field empty."
     },
     "roomDragHint": "Drag tables and room elements to move them; the arrow keys move a selected element. Click one to edit it.",
     "photo": {

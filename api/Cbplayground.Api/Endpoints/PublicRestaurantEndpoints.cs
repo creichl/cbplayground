@@ -62,7 +62,7 @@ public static class PublicRestaurantEndpoints
 
     public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
 
-    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements);
+    public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements, double? WidthMeters);
 
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
@@ -273,7 +273,8 @@ public static class PublicRestaurantEndpoints
                     .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation, freeTableIds.Contains(t.Id)))
                     .ToList(),
                 area.RoomStyle,
-                elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList()))
+                elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList(),
+                area.WidthMeters))
                 .ToList());
         }).RequireRateLimiting(ReadRateLimitPolicy);
 

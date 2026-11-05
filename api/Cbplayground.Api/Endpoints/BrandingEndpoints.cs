@@ -17,15 +17,17 @@ public static partial class BrandingEndpoints
 
     /// <summary>
     /// The branding as the web uses it. <see cref="BrandColor"/> null: the platform's colour; without saved values
-    /// <see cref="ThemeMode"/> is <c>Light</c> and <see cref="FontStyle"/> <c>Modern</c>; the URLs are null without image.
+    /// <see cref="ThemeMode"/> is <c>Light</c>, <see cref="FontStyle"/> <c>Modern</c> and <see cref="TableStyle"/> <c>Classic</c>;
+    /// the URLs are null without image.
     /// </summary>
-    public record BrandingResponse(string? BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string? LogoUrl, string? CoverUrl);
+    public record BrandingResponse(string? BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string? LogoUrl, string? CoverUrl, TableStyle TableStyle);
 
     /// <summary>
     /// The branding to save; empty values are stored as null (the platform's default). Errors (400): "invalid_brand_color"
-    /// (not "#RRGGBB"), "invalid_theme_mode" (not "Light" or "Dark"), "invalid_font_style" (not "Modern", "Classic", "Elegant", "Rustic" or "Urban").
+    /// (not "#RRGGBB"), "invalid_theme_mode" (not "Light" or "Dark"), "invalid_font_style" (not "Modern", "Classic", "Elegant", "Rustic" or "Urban"),
+    /// "invalid_table_style" (not "Classic", "Natural", "Minimal" or "Glow").
     /// </summary>
-    public record BrandingRequest(string? BrandColor, string? ThemeMode, string? FontStyle);
+    public record BrandingRequest(string? BrandColor, string? ThemeMode, string? FontStyle, string? TableStyle = null);
 
     [GeneratedRegex("^#[0-9a-fA-F]{6}$")]
     private static partial Regex BrandColorPattern();
@@ -52,11 +54,16 @@ public static partial class BrandingEndpoints
             {
                 return Error("invalid_font_style");
             }
+            if (!TryParse<TableStyle>(request.TableStyle, out var tableStyle))
+            {
+                return Error("invalid_table_style");
+            }
 
             var tenant = await db.Tenants.SingleAsync(t => t.Id == tenantContext.TenantId);
             tenant.BrandColor = brandColor?.ToLowerInvariant();
             tenant.ThemeMode = themeMode;
             tenant.FontStyle = fontStyle;
+            tenant.TableStyle = tableStyle;
             await db.SaveChangesAsync();
             return Results.Ok(ToResponse(tenant));
         });
@@ -121,7 +128,8 @@ public static partial class BrandingEndpoints
         tenant.ThemeMode ?? ThemeMode.Light,
         tenant.FontStyle ?? FontStyle.Modern,
         LogoUrl(tenant),
-        CoverUrl(tenant));
+        CoverUrl(tenant),
+        tenant.TableStyle ?? TableStyle.Classic);
 
     /// <summary>The public URL of the logo, with its version, so a new logo gets a new URL; null without logo.</summary>
     public static string? LogoUrl(Tenant tenant) =>

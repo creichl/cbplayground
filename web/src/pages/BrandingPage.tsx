@@ -30,6 +30,8 @@ import {
   isValidBrandColor,
   maxCoverBytes,
   maxLogoBytes,
+  type TableStyle,
+  tableStyles,
   type ThemeMode,
   useBranding,
   useDeleteBrandingImage,
@@ -51,8 +53,8 @@ const suggestedColors = ['#127c6e', '#1f5f8b', '#2f4858', '#5a7d3a', '#8a9a5b', 
 const minContrast = 3
 
 /**
- * Admin page "Appearance": accent colour, light or dark, font pair, logo, cover image and photo gallery of the restaurant's
- * guest pages, with a live preview of the unsaved state next to the form (below it on phones).
+ * Admin page "Appearance": accent colour, light or dark, font pair, the look of the tables on the guest's plan, logo, cover
+ * image and photo gallery of the restaurant's guest pages, with a live preview of the unsaved state next to the form (below it on phones).
  */
 export function BrandingPage() {
   const { t } = useTranslation()
@@ -98,6 +100,7 @@ function BrandingForm({ branding, name, slug, city }: { branding: Branding; name
   const [color, setColor] = useState(branding.brandColor ?? '')
   const [themeMode, setThemeMode] = useState<ThemeMode>(branding.themeMode)
   const [fontStyle, setFontStyle] = useState<FontStyle>(branding.fontStyle)
+  const [tableStyle, setTableStyle] = useState<TableStyle>(branding.tableStyle)
   const save = useSaveBranding()
   const uploadLogo = useUploadBrandingImage('logo')
   const uploadCover = useUploadBrandingImage('cover')
@@ -112,7 +115,11 @@ function BrandingForm({ branding, name, slug, city }: { branding: Branding; name
   // While a colour is being typed, the preview keeps the saved one.
   const previewColor = trimmedColor === '' ? null : colorValid ? trimmedColor : branding.brandColor
   const contrast = trimmedColor !== '' && colorValid ? contrastRatio(trimmedColor, backgrounds[colorSchemeOf(themeMode)]) : null
-  const dirty = (branding.brandColor ?? '') !== trimmedColor.toLowerCase() || branding.themeMode !== themeMode || branding.fontStyle !== fontStyle
+  const dirty =
+    (branding.brandColor ?? '') !== trimmedColor.toLowerCase() ||
+    branding.themeMode !== themeMode ||
+    branding.fontStyle !== fontStyle ||
+    branding.tableStyle !== tableStyle
 
   function upload(image: 'logo' | 'cover', file: File) {
     const maxBytes = image === 'logo' ? maxLogoBytes : maxCoverBytes
@@ -146,7 +153,7 @@ function BrandingForm({ branding, name, slug, city }: { branding: Branding; name
       return
     }
     save.mutate(
-      { brandColor: trimmedColor === '' ? null : trimmedColor, themeMode, fontStyle },
+      { brandColor: trimmedColor === '' ? null : trimmedColor, themeMode, fontStyle, tableStyle },
       {
         onSuccess: (saved) => {
           setColor(saved.brandColor ?? '')
@@ -272,6 +279,33 @@ function BrandingForm({ branding, name, slug, city }: { branding: Branding; name
           </Card>
 
           <Card>
+            <Radio.Group
+              value={tableStyle}
+              onChange={(value) => setTableStyle(value as TableStyle)}
+              label={<Title order={3}>{t('branding.tables.title')}</Title>}
+              description={t('branding.tables.description')}
+            >
+              <SimpleGrid cols={{ base: 1, sm: 2 }} mt="md" spacing="sm">
+                {tableStyles.map((style) => (
+                  <Radio.Card key={style} value={style} radius="md" p="md">
+                    <Group gap="sm" wrap="nowrap" align="flex-start">
+                      <Radio.Indicator mt={2} />
+                      <Stack gap={4} miw={0}>
+                        <Text fw={600} size="sm">
+                          {t(`branding.tables.styles.${style}`)}
+                        </Text>
+                        <Text c="dimmed" size="sm">
+                          {t(`branding.tables.descriptions.${style}`)}
+                        </Text>
+                      </Stack>
+                    </Group>
+                  </Radio.Card>
+                ))}
+              </SimpleGrid>
+            </Radio.Group>
+          </Card>
+
+          <Card>
             <Stack gap="md">
               <Title order={3}>{t('branding.logo.title')}</Title>
               <BrandingImageUpload
@@ -335,6 +369,7 @@ function BrandingForm({ branding, name, slug, city }: { branding: Branding; name
               name={name}
               city={city}
               brandStyle={{ brandColor: previewColor, themeMode, fontStyle }}
+              tableStyle={tableStyle}
               logoUrl={branding.logoUrl}
               coverUrl={branding.coverUrl}
             />

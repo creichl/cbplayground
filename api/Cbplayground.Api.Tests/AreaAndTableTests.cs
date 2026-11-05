@@ -174,6 +174,103 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(area, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id));
     }
 
+    [Fact]
+    public async Task With_a_real_width_the_tables_get_their_real_size_and_the_table_scale_is_ignored()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 150, widthMeters = 18.04 }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var saved = Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id);
+        Assert.Equal((18.0, 67), (saved.WidthMeters, saved.TableScale));
+        // A table for 4 is 7 % of the plan width at 100 %: at 67 % on a plan 18 m wide it is 84 cm.
+        Assert.Equal(0.85, TableLayout.TableSize(TableShape.Square, 4, 0, saved.TableScale).Width * 18, 0.02);
+    }
+
+    [Fact]
+    public async Task Without_a_real_width_the_table_scale_is_set_again_and_kept()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters = 12 }, Ct);
+
+        var cleared = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100 }, Ct);
+        var scaled = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 80, widthMeters = (double?)null }, Ct);
+
+        var afterClearing = (await cleared.Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+        Assert.Equal(((double?)null, 101), (afterClearing.WidthMeters, afterClearing.TableScale));
+        var saved = Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id);
+        Assert.Equal(((double?)null, 80), (saved.WidthMeters, saved.TableScale));
+        Assert.Equal(HttpStatusCode.OK, scaled.StatusCode);
+    }
+
+    [Fact]
+    public async Task An_area_wider_than_25_metres_can_be_saved_again_with_its_derived_table_scale()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var first = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters = 30 }, Ct);
+        var saved = (await first.Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+        // Saved again as the panel's form had it before: with the derived table scale of 40 %, below the 50 % of the slider.
+        var second = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "Saal", onlineBookingEnabled = true, onlineCapacityPercent = 80, tableScale = saved.TableScale, widthMeters = 30 }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal((30.0, 40), (saved.WidthMeters, saved.TableScale));
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var again = Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id);
+        Assert.Equal(("Saal", 80, 30.0, 40), (again.Name, again.OnlineCapacityPercent, again.WidthMeters, again.TableScale));
+    }
+
+    [Fact]
+    public async Task Without_a_real_width_a_table_scale_outside_50_to_200_percent_is_still_rejected()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters = 30 }, Ct);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 40 }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("table_scale_invalid", await ErrorOf(response));
+        Assert.Equal(30.0, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).WidthMeters);
+    }
+
+    [Theory]
+    [InlineData(5.0, 243)]
+    [InlineData(12.0, 101)]
+    [InlineData(80.0, 15)]
+    public async Task A_real_width_may_be_5_to_80_metres(double widthMeters, int tableScale)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var saved = (await response.Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+        Assert.Equal((widthMeters, tableScale), (saved.WidthMeters, saved.TableScale));
+    }
+
+    [Theory]
+    [InlineData(4.9)]
+    [InlineData(80.1)]
+    [InlineData(0)]
+    [InlineData(-12)]
+    public async Task A_real_width_outside_5_to_80_metres_is_rejected(double widthMeters)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "Neu", onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("area_width_invalid", await ErrorOf(response));
+        Assert.Equal(area, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id));
+    }
+
     [Theory]
     [InlineData(-1)]
     [InlineData(101)]

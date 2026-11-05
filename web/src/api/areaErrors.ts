@@ -16,6 +16,7 @@ const errorKeys = {
   shape_invalid: 'areas.errors.shapeInvalid',
   rotation_invalid: 'areas.errors.rotationInvalid',
   table_scale_invalid: 'areas.errors.tableScaleInvalid',
+  area_width_invalid: 'areas.errors.widthInvalid',
   invalid_area_description: 'areas.errors.descriptionInvalid',
   invalid_room_style: 'areas.errors.roomStyleInvalid',
   invalid_room_element: 'areas.errors.roomElementInvalid',

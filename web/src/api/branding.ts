@@ -9,6 +9,11 @@ export type FontStyle = 'Modern' | 'Classic' | 'Elegant' | 'Rustic' | 'Urban'
 
 export const fontStyles: readonly FontStyle[] = ['Modern', 'Classic', 'Elegant', 'Rustic', 'Urban']
 
+/** How the tables look on the guest's floor plan; TableShape draws them. */
+export type TableStyle = 'Classic' | 'Natural' | 'Minimal' | 'Glow'
+
+export const tableStyles: readonly TableStyle[] = ['Classic', 'Natural', 'Minimal', 'Glow']
+
 /**
  * A restaurant's branding, as in GET /api/admin/branding and in the public restaurant. `brandColor` is "#rrggbb" or null
  * for the platform's colour; the URLs are null without image.
@@ -19,10 +24,11 @@ export type Branding = {
   fontStyle: FontStyle
   logoUrl: string | null
   coverUrl: string | null
+  tableStyle: TableStyle
 }
 
 /** The body of PUT /api/admin/branding; an empty or null colour is the platform's colour. */
-export type BrandingRequest = Pick<Branding, 'brandColor' | 'themeMode' | 'fontStyle'>
+export type BrandingRequest = Pick<Branding, 'brandColor' | 'themeMode' | 'fontStyle' | 'tableStyle'>
 
 /** The image types the API accepts for logo and cover image, and their largest size. */
 export const brandingImageTypes = ['image/png', 'image/jpeg', 'image/webp']
@@ -86,6 +92,7 @@ const errorKeys = {
   invalid_brand_color: 'branding.errors.invalidBrandColor',
   invalid_theme_mode: 'branding.errors.invalidThemeMode',
   invalid_font_style: 'branding.errors.invalidFontStyle',
+  invalid_table_style: 'branding.errors.invalidTableStyle',
   logo_too_large: 'branding.errors.logoTooLarge',
   floor_plan_too_large: 'branding.errors.coverTooLarge',
   floor_plan_type_invalid: 'branding.errors.imageTypeInvalid',

@@ -136,6 +136,9 @@ namespace Cbplayground.Api.Migrations
                     b.Property<Guid>("TenantId")
                         .HasColumnType("TEXT");
 
+                    b.Property<double?>("WidthMeters")
+                        .HasColumnType("REAL");
+
                     b.HasKey("Id");
 
                     b.HasIndex("TenantId");
@@ -591,6 +594,10 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<string>("Street")
                         .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("TableStyle")
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("ThemeMode")

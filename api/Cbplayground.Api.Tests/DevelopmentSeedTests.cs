@@ -80,8 +80,10 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(TableSelectionMode.SystemAssigns, settings.TableSelectionMode);
         Assert.Equal([new DurationRuleDto(1, 2, 90), new DurationRuleDto(3, 6, 120)], settings.DurationRules);
 
-        // On the floor plan images, the table scale fits the plan's scale; the tables lie within the plan without overlapping.
-        Assert.Equal([90, 85], areas.Select(a => a.TableScale));
+        // Every demo area has its real width; the table scale follows from it, so the tables have their real size, and they lie
+        // within the plan without overlapping.
+        Assert.Equal([13.0, 14.0], areas.Select(a => a.WidthMeters));
+        Assert.Equal([93, 87], areas.Select(a => a.TableScale));
         foreach (var area in areas)
         {
             AssertArrangedWithoutOverlap(tables.Where(t => t.AreaId == area.Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), area.TableScale);
@@ -95,13 +97,13 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var dunavTables = (await dunav.GetFromJsonAsync<List<TableResponse>>("/api/admin/tables", Ct))!;
         Assert.Equal(18, dunavTables.Count);
         Assert.Equal(12, dunavTables.Count(t => t.AreaId == dunavAreas[0].Id));
-        Assert.Equal(80, dunavAreas[0].TableScale);
+        Assert.Equal((15.0, 81), (dunavAreas[0].WidthMeters, dunavAreas[0].TableScale));
         AssertArrangedWithoutOverlap(dunavTables.Where(t => t.AreaId == dunavAreas[0].Id).Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), dunavAreas[0].TableScale);
 
         // "Bašta" has no floor plan image; its tables of mixed size and shape are arranged without overlapping.
         var basta = dunavAreas[1];
         Assert.Null(basta.FloorPlanUrl);
-        Assert.Equal(100, basta.TableScale);
+        Assert.Equal((12.0, 101), (basta.WidthMeters, basta.TableScale));
         var bastaTables = dunavTables.Where(t => t.AreaId == basta.Id).ToList();
         Assert.Equal(6, bastaTables.Count);
         Assert.Equal(2, bastaTables.Min(t => t.Seats));
@@ -188,7 +190,8 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(["Rooftop", "Lounge"], areas.Select(a => a.Name));
         Assert.All(areas, a => Assert.EndsWith(".webp", a.FloorPlanFileName));
         Assert.All(areas, a => Assert.True(File.Exists(Path.Combine(factory.UploadsPath, a.FloorPlanFileName!))));
-        Assert.Equal([68, 85], areas.Select(a => a.TableScale));
+        Assert.Equal([18.0, 14.0], areas.Select(a => a.WidthMeters));
+        Assert.Equal([67, 87], areas.Select(a => a.TableScale));
         Assert.All(areas, a => Assert.NotNull(a.PhotoFileName));
         Assert.Equal("Dachterrasse mit Blick über die Stadt, Cocktails unter freiem Himmel.", areas[0].Description);
         Assert.Equal([70, 100], areas.Select(a => a.OnlineCapacityPercent));
@@ -385,7 +388,7 @@ public class DevelopmentSeedBrandingTests(ApiFactory factory) : IClassFixture<Ap
             await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
         }
 
-        Assert.Equal(new BrandingResponse("#112233", ThemeMode.Dark, FontStyle.Urban, null, null), await linde.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct));
+        Assert.Equal(new BrandingResponse("#112233", ThemeMode.Dark, FontStyle.Urban, null, null, TableStyle.Classic), await linde.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct));
         Assert.Equal(dunavLogo, await dunav.GetFromJsonAsync<BrandingResponse>("/api/admin/branding", Ct));
         Assert.Null(dunavLogo.CoverUrl);
     }

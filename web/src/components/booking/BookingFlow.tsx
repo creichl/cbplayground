@@ -24,7 +24,7 @@ type BookingFlowProps = {
 
 /**
  * The guest books a table: the reservation card with the free times, and from a time on the booking dialog (from 768 px on
- * a large dialog, on phones a full-screen sheet) with the table (only when the guest chooses it), the contact details and the
+ * a dialog of nearly the whole window, on phones a full-screen sheet) with the table (only when the guest chooses it), the contact details and the
  * confirmation. Used by the booking page (/r/:slug) and the embed (/embed/:slug). A restaurant that cannot be booked online
  * shows a hint with its phone number instead.
  */
@@ -102,10 +102,15 @@ function Booking({ slug, restaurant, timeZoneId, inline, className }: Required<O
       <ReservationCard ref={cardRef} slug={slug} restaurant={restaurant} flow={flow} className={className} />
       {wide ? (
         <Dialog open={flow.dialogOpen} onOpenChange={onOpenChange}>
+          {/* Nearly the whole window, so the plan of a large restaurant has room; the dialog scrolls inside when its step is higher. */}
           <DialogContent
             ref={contentRef}
-            aria-describedby={undefined} onOpenAutoFocus={focusHeading} onCloseAutoFocus={returnFocus} className="max-w-240 gap-0 p-0">
-            {steps('dialog')}
+            aria-describedby={undefined}
+            onOpenAutoFocus={focusHeading}
+            onCloseAutoFocus={returnFocus}
+            className="flex h-[calc(100dvh-2rem)] max-w-[min(120rem,calc(100vw-2rem))] flex-col gap-0 overflow-hidden p-0"
+          >
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">{steps('dialog')}</div>
           </DialogContent>
         </Dialog>
       ) : (
