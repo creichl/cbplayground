@@ -26,6 +26,12 @@ public class Table : ITenantOwned
     /// <summary>Number of guests, at least 1.</summary>
     public int Seats { get; set; }
 
+    /// <summary>
+    /// The smallest party the table is given to online, 1 to <see cref="Seats"/>; 1: every party that fits. So a large table stays
+    /// free for a large group (e.g. an 8-seat table from 5 people). Staff can still give the table to a smaller party.
+    /// </summary>
+    public int MinGuests { get; set; } = 1;
+
     /// <summary>Horizontal position of the table's centre relative to the floor plan, 0 (left) to 1 (right).</summary>
     public double PosX { get; set; }
 

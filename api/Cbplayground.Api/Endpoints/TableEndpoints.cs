@@ -11,17 +11,20 @@ public static class TableEndpoints
 {
     public const int MaxNumberLength = 20;
 
-    public record TableResponse(Guid Id, Guid AreaId, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation);
+    public record TableResponse(Guid Id, Guid AreaId, string Number, int Seats, int MinGuests, double PosX, double PosY, TableShape Shape, int Rotation);
 
     /// <summary>
     /// A new table is placed in the middle of the floor plan image, or, in an area without one, on the first free place of the
     /// arrangement beside the room elements (<see cref="TableLayout.FreePosition"/>). Without <see cref="Shape"/> it gets the default for its seats,
-    /// without <see cref="Rotation"/> 0.
+    /// without <see cref="Rotation"/> 0, without <see cref="MinGuests"/> 1.
     /// </summary>
-    public record CreateTableRequest(Guid AreaId, string? Number, int Seats, string? Shape, int? Rotation);
+    public record CreateTableRequest(Guid AreaId, string? Number, int Seats, string? Shape, int? Rotation, int? MinGuests);
 
-    /// <summary>Without <see cref="Shape"/> or <see cref="Rotation"/> the stored value stays.</summary>
-    public record UpdateTableRequest(string? Number, int Seats, string? Shape, int? Rotation);
+    /// <summary>
+    /// Without <see cref="Shape"/>, <see cref="Rotation"/> or <see cref="MinGuests"/> the stored value stays; a stored
+    /// <see cref="MinGuests"/> above the new seats is lowered to them.
+    /// </summary>
+    public record UpdateTableRequest(string? Number, int Seats, string? Shape, int? Rotation, int? MinGuests);
 
     /// <summary>New position of a table, relative to the floor plan image (0–1).</summary>
     public record TablePosition(Guid Id, double PosX, double PosY);
@@ -44,7 +47,7 @@ public static class TableEndpoints
             }
 
             var number = request.Number?.Trim();
-            if (await ValidateAsync(db, null, number, request.Seats, request.Shape, request.Rotation) is { } error)
+            if (await ValidateAsync(db, null, number, request.Seats, request.Shape, request.Rotation, request.MinGuests) is { } error)
             {
                 return error;
             }
@@ -54,6 +57,7 @@ public static class TableEndpoints
                 AreaId = area.Id,
                 Number = number!,
                 Seats = request.Seats,
+                MinGuests = request.MinGuests ?? 1,
                 Shape = ParseShape(request.Shape) ?? Table.DefaultShape(request.Seats),
                 Rotation = request.Rotation ?? 0,
                 PosX = 0.5,
@@ -78,13 +82,14 @@ public static class TableEndpoints
             }
 
             var number = request.Number?.Trim();
-            if (await ValidateAsync(db, id, number, request.Seats, request.Shape, request.Rotation) is { } error)
+            if (await ValidateAsync(db, id, number, request.Seats, request.Shape, request.Rotation, request.MinGuests) is { } error)
             {
                 return error;
             }
 
             table.Number = number!;
             table.Seats = request.Seats;
+            table.MinGuests = request.MinGuests ?? Math.Min(table.MinGuests, request.Seats);
             table.Shape = ParseShape(request.Shape) ?? table.Shape;
             table.Rotation = request.Rotation ?? table.Rotation;
             await db.SaveChangesAsync();
@@ -138,8 +143,11 @@ public static class TableEndpoints
         });
     }
 
-    /// <summary>Checks a new (<paramref name="id"/> null) or changed table; null when it is fine. Shape and rotation may be missing.</summary>
-    private static async Task<IResult?> ValidateAsync(AppDbContext db, Guid? id, string? number, int seats, string? shape, int? rotation)
+    /// <summary>
+    /// Checks a new (<paramref name="id"/> null) or changed table; null when it is fine. Shape, rotation and the smallest party
+    /// may be missing.
+    /// </summary>
+    private static async Task<IResult?> ValidateAsync(AppDbContext db, Guid? id, string? number, int seats, string? shape, int? rotation, int? minGuests)
     {
         if (string.IsNullOrEmpty(number) || number.Length > MaxNumberLength)
         {
@@ -148,6 +156,10 @@ public static class TableEndpoints
         if (seats < 1)
         {
             return ErrorResponse.Result("seats_invalid", StatusCodes.Status400BadRequest);
+        }
+        if (minGuests is not null && (minGuests < 1 || minGuests > seats))
+        {
+            return ErrorResponse.Result("min_guests_invalid", StatusCodes.Status400BadRequest);
         }
         if (shape is not null && ParseShape(shape) is null)
         {
@@ -171,5 +183,5 @@ public static class TableEndpoints
         Enum.GetValues<TableShape>().Select(s => (TableShape?)s).FirstOrDefault(s => string.Equals(s.ToString(), shape, StringComparison.OrdinalIgnoreCase));
 
     internal static TableResponse ToResponse(Table table) =>
-        new(table.Id, table.AreaId, table.Number, table.Seats, table.PosX, table.PosY, table.Shape, table.Rotation);
+        new(table.Id, table.AreaId, table.Number, table.Seats, table.MinGuests, table.PosX, table.PosY, table.Shape, table.Rotation);
 }

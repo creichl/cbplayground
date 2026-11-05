@@ -15,7 +15,10 @@ type TablePanelProps = {
 
 const shapes: TableShape[] = ['Round', 'Square', 'Rectangle']
 
-/** Properties of the selected table: number, seats, shape and rotation, and its deletion after a confirmation. */
+/**
+ * Properties of the selected table: number, seats, the smallest party online, shape and rotation, and its deletion after a
+ * confirmation.
+ */
 export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
   const { t } = useTranslation()
   const updateTable = useUpdateTable()
@@ -28,7 +31,13 @@ export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
   }
 
   const form = useForm({
-    initialValues: { number: table.number, seats: table.seats as number | string, shape: table.shape, rotation: table.rotation },
+    initialValues: {
+      number: table.number,
+      seats: table.seats as number | string,
+      minGuests: table.minGuests as number | string,
+      shape: table.shape,
+      rotation: table.rotation,
+    },
     onValuesChange: (values) => onPreview(values.shape, values.rotation),
     validate: {
       number: (value) => {
@@ -36,6 +45,10 @@ export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
         return number.length === 0 || number.length > 20 ? t('areas.errors.tableNumberInvalid') : null
       },
       seats: (value) => (typeof value === 'number' && Number.isInteger(value) && value >= 1 ? null : t('areas.errors.seatsInvalid')),
+      minGuests: (value, values) =>
+        typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= Number(values.seats)
+          ? null
+          : t('areas.errors.minGuestsInvalid'),
     },
   })
 
@@ -44,7 +57,14 @@ export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
       <form
         onSubmit={form.onSubmit((values) =>
           updateTable.mutate(
-            { id: table.id, number: values.number.trim(), seats: Number(values.seats), shape: values.shape, rotation: values.rotation },
+            {
+              id: table.id,
+              number: values.number.trim(),
+              seats: Number(values.seats),
+              minGuests: Number(values.minGuests),
+              shape: values.shape,
+              rotation: values.rotation,
+            },
             {
               onSuccess: () => notifications.show({ color: 'brand', message: t('areas.table.saved') }),
               onError: (error) => {
@@ -53,6 +73,8 @@ export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
                   form.setFieldError('number', errorMessage(error, t))
                 } else if (code === 'seats_invalid') {
                   form.setFieldError('seats', errorMessage(error, t))
+                } else if (code === 'min_guests_invalid') {
+                  form.setFieldError('minGuests', errorMessage(error, t))
                 } else if (code === 'shape_invalid') {
                   form.setFieldError('shape', errorMessage(error, t))
                 } else if (code === 'rotation_invalid') {
@@ -69,6 +91,15 @@ export function TablePanel({ table, onPreview, onClose }: TablePanelProps) {
           <Title order={4}>{t('areas.table.title', { number: table.number })}</Title>
           <TextInput label={t('areas.table.number')} maxLength={20} {...form.getInputProps('number')} />
           <NumberInput label={t('areas.table.seats')} min={1} allowDecimal={false} allowNegative={false} {...form.getInputProps('seats')} />
+          <NumberInput
+            label={t('areas.table.minGuests')}
+            description={t('areas.table.minGuestsHint')}
+            min={1}
+            max={typeof form.values.seats === 'number' ? form.values.seats : undefined}
+            allowDecimal={false}
+            allowNegative={false}
+            {...form.getInputProps('minGuests')}
+          />
           <Input.Wrapper label={t('areas.table.shape')} error={form.errors.shape}>
             <SegmentedControl
               fullWidth

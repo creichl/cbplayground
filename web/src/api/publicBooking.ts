@@ -56,6 +56,8 @@ export type PublicTable = {
   id: string
   number: string
   seats: number
+  /** The smallest party the table is given to; a smaller one finds it not available. */
+  minGuests: number
   posX: number
   posY: number
   shape: TableShape
