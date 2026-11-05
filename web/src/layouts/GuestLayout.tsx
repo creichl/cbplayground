@@ -87,13 +87,16 @@ function RestaurantFrame({ slug }: { slug: string }) {
     <HeroContext value={setHero}>
       <div className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
         <header
-          // Its own layer in page transitions, so it stays on top of the cover image moving below it (app.css).
           className={cn(
-            'fixed inset-x-0 top-0 z-40 h-16 transition-colors duration-(--motion-slow) [view-transition-name:site-header]',
+            'fixed inset-x-0 top-0 z-40 h-16 transition-colors duration-(--motion-slow)',
             overHero ? 'text-white' : 'text-foreground',
           )}
         >
-          {/* The opaque surface with its blur fades in and out as a whole: a blur itself does not change smoothly in every browser. */}
+          {/*
+            The opaque surface with its blur fades in and out as a whole: a blur itself does not change smoothly in every browser.
+            Neither it nor the header carries a view-transition-name: that makes an element a backdrop root, and a blur inside
+            it would only see the header instead of the page behind it.
+          */}
           <div
             aria-hidden="true"
             className={cn(
@@ -101,7 +104,8 @@ function RestaurantFrame({ slug }: { slug: string }) {
               overHero ? 'opacity-0' : 'opacity-100',
             )}
           />
-          <div className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 sm:px-6">
+          {/* Logo and language: their own layer in page transitions, on top of the cover image moving below them (app.css). */}
+          <div className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 [view-transition-name:site-header] sm:px-6">
             {restaurant.isPending ? (
               <Skeleton className="h-10 w-30" />
             ) : restaurant.isError ? (

@@ -14,7 +14,8 @@ function SiteHeader() {
   const user = currentUser.data
 
   return (
-    // Its own layer in page transitions, so it stays on top of the cover image moving below it (app.css).
+    // Its own layer in page transitions, so it stays on top of the cover image moving below it (app.css). It has no
+    // backdrop-filter inside: a view-transition-name makes it a backdrop root, so such a blur would not see the page.
     <header className="border-b border-border bg-background [view-transition-name:site-header]">
       <div className="mx-auto flex h-16 max-w-page items-center justify-between gap-2 px-4 sm:px-6">
         <Link to="/" className="shrink-0 rounded-lg font-display text-lg text-primary-text focus-ring">
