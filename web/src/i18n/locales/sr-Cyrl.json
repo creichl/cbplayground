@@ -287,7 +287,18 @@
       "stepDetails": "Контакт подаци",
       "stepDone": "Потврда",
       "stepOf": "Корак {{step}} од {{total}}"
+    },
+    "gallery": {
+      "title": "Фотографије",
+      "showAll": "Све фотографије ({{total}})",
+      "more": "+{{number}}"
     }
+  },
+  "lightbox": {
+    "photo": "Фотографија {{index}} од {{total}}",
+    "position": "{{index}} / {{total}}",
+    "previous": "Претходна фотографија",
+    "next": "Следећа фотографија"
   },
   "embed": {
     "notFound": "Онлајн резервација за овај ресторан није доступна.",

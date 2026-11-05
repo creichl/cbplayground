@@ -276,7 +276,18 @@
       "stepDetails": "Kontaktdaten",
       "stepDone": "Bestätigung",
       "stepOf": "Schritt {{step}} von {{total}}"
+    },
+    "gallery": {
+      "title": "Fotos",
+      "showAll": "Alle Fotos ({{total}})",
+      "more": "+{{number}}"
     }
+  },
+  "lightbox": {
+    "photo": "Foto {{index}} von {{total}}",
+    "position": "{{index}} / {{total}}",
+    "previous": "Vorheriges Foto",
+    "next": "Nächstes Foto"
   },
   "embed": {
     "notFound": "Die Online-Buchung ist für dieses Restaurant nicht verfügbar.",

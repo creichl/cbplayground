@@ -33,7 +33,12 @@ export type PublicRestaurant = {
    * `description` and `photoUrl` are null when the restaurant has not given them.
    */
   areas: { name: string; description: string | null; photoUrl: string | null }[]
+  /** The photo gallery in its order; empty without photos. `caption` is null without one. */
+  gallery: GalleryPhoto[]
 }
+
+/** A photo of the restaurant's gallery; `url` is the public URL of the image with its version. */
+export type GalleryPhoto = { id: string; url: string; caption: string | null }
 
 /** A day of the date picker. "closed" also covers closing days, days in the past and days beyond the restaurant's booking horizon. */
 export type CalendarDay = { date: string; status: 'closed' | 'full' | 'available' }
