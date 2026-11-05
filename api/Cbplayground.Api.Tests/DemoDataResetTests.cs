@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Sockets;
 using Cbplayground.Api.Data;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Extensions.Hosting;
@@ -39,7 +41,7 @@ public sealed class DemoDataResetTests : IDisposable
     {
         var before = AllFiles();
 
-        var error = Assert.Throws<InvalidOperationException>(() => DemoDataReset.Run(new Environment(environmentName), ConnectionString, UploadsPath));
+        var error = Assert.Throws<InvalidOperationException>(() => DemoDataReset.Run(new Environment(environmentName), ConnectionString, UploadsPath, urls: null));
 
         Assert.Contains("--reset-demo-data", error.Message);
         Assert.Contains("Development", error.Message);
@@ -49,7 +51,7 @@ public sealed class DemoDataResetTests : IDisposable
     [Fact]
     public void In_Development_the_reset_deletes_the_database_and_empties_the_uploads_folder_but_nothing_else()
     {
-        DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath);
+        DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath, urls: null);
 
         Assert.False(File.Exists(DatabasePath));
         Assert.False(File.Exists($"{DatabasePath}-wal"));
@@ -67,9 +69,51 @@ public sealed class DemoDataResetTests : IDisposable
     {
         Directory.Delete(directory, recursive: true);
 
-        DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath);
+        DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath, urls: null);
 
         Assert.False(Directory.Exists(directory));
+    }
+
+    [Theory]
+    [InlineData("http://localhost:{0}")]
+    [InlineData("http://+:{0}")]
+    [InlineData("https://localhost:7000;http://localhost:{0}")]
+    public void While_something_listens_on_the_API_address_the_reset_aborts_and_deletes_nothing(string urls)
+    {
+        // An API that is still running, e.g. one started before the database lock existed, which holds no lock.
+        var runningApi = new TcpListener(IPAddress.Loopback, 0);
+        runningApi.Start();
+        try
+        {
+            var port = ((IPEndPoint)runningApi.LocalEndpoint).Port;
+            var before = AllFiles();
+
+            var error = Assert.Throws<InvalidOperationException>(
+                () => DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath, string.Format(urls, port)));
+
+            Assert.Contains("already listening", error.Message);
+            Assert.Contains($"lsof -i :{port}", error.Message);
+            Assert.Contains("Nothing was deleted", error.Message);
+            Assert.Equal(before, AllFiles());
+        }
+        finally
+        {
+            runningApi.Stop();
+        }
+    }
+
+    [Fact]
+    public void When_nothing_listens_on_the_API_address_the_reset_deletes()
+    {
+        var stoppedApi = new TcpListener(IPAddress.Loopback, 0);
+        stoppedApi.Start();
+        var port = ((IPEndPoint)stoppedApi.LocalEndpoint).Port;
+        stoppedApi.Stop();
+
+        DemoDataReset.Run(new Environment(Environments.Development), ConnectionString, UploadsPath, $"http://localhost:{port}");
+
+        Assert.False(File.Exists(DatabasePath));
+        Assert.Empty(Directory.EnumerateFileSystemEntries(UploadsPath));
     }
 
     [Fact]
