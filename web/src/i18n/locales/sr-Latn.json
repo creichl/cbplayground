@@ -90,7 +90,32 @@
     "noMatchTitle": "Nijedan restoran ne odgovara upitu „{{query}}“",
     "noMatch": "Proverite unos ili pokušajte sa drugim nazivom ili mestom.",
     "resetSearch": "Poništi pretragu",
-    "reserve": "Rezerviši sto"
+    "reserve": "Rezerviši sto",
+    "restaurants": "Restorani",
+    "restaurantsCount_one": "{{count}} restoran",
+    "restaurantsCount_few": "{{count}} restorana",
+    "restaurantsCount_other": "{{count}} restorana",
+    "howItWorks": {
+      "heading": "Kako funkcioniše",
+      "restaurantTitle": "Izaberite restoran",
+      "restaurantText": "Pronađite restoran po nazivu ili mestu i otvorite njegovu stranicu.",
+      "tableTitle": "Izaberite vreme i sto",
+      "tableText": "Izaberite dan i vreme i, gde restoran to nudi, svoj sto na planu prostora.",
+      "confirmationTitle": "Dobijte potvrdu",
+      "confirmationText": "Vaša rezervacija je potvrđena odmah ili čim je restoran prihvati – uz link da je pogledate ili otkažete."
+    },
+    "forRestaurants": {
+      "eyebrow": "Za restorane",
+      "heading": "Vaši stolovi, za rezervaciju onlajn",
+      "text": "cbplayground na jednom mestu objedinjuje rezervacije vaših gostiju i plan vašeg prostora.",
+      "bookingTitle": "Onlajn rezervacija sa planom prostora",
+      "bookingText": "Gosti rezervišu u bilo koje doba i biraju sto direktno na vašem planu prostora.",
+      "designTitle": "Sopstveni izgled",
+      "designText": "Logo, boje, fontovi i fotografije čine stranicu za rezervaciju vašom.",
+      "frontDeskTitle": "Prijem i pregled stolova",
+      "frontDeskText": "Današnje rezervacije, gosti bez rezervacije i stanje svakog stola na prvi pogled.",
+      "signIn": "Prijavi se"
+    }
   },
   "guest": {
     "staffLogin": "Za restorane: prijava",

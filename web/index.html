@@ -3,8 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Reserve a table directly with the restaurant: choose a restaurant, pick a time and table, and get your confirmation." />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>cbplayground</title>
+    <script>
+      // The start page's large photo is its largest element: loaded right away, before the code that shows it (HomePage.tsx).
+      if (location.pathname === '/') {
+        const link = document.createElement('link')
+        link.rel = 'preload'
+        link.as = 'image'
+        link.href = '/home-hero-1200.webp'
+        link.imageSrcset = '/home-hero-1200.webp 1200w, /home-hero-2400.webp 2400w'
+        link.imageSizes = '100vw'
+        link.fetchPriority = 'high'
+        document.head.append(link)
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

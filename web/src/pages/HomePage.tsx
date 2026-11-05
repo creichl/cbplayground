@@ -1,16 +1,33 @@
-import { ArrowRightIcon, CircleAlertIcon, RefreshCwIcon, SearchIcon, SearchXIcon, UtensilsCrossedIcon } from 'lucide-react'
+import {
+  ArrowRightIcon,
+  CalendarCheckIcon,
+  CalendarClockIcon,
+  CircleAlertIcon,
+  CircleCheckIcon,
+  ConciergeBellIcon,
+  PaletteIcon,
+  RefreshCwIcon,
+  SearchIcon,
+  SearchXIcon,
+  StoreIcon,
+  UtensilsCrossedIcon,
+} from 'lucide-react'
 import { type ReactNode, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useViewTransitionState } from 'react-router'
+import { homePath, useCurrentUser } from '../api/auth.ts'
 import { requestErrorMessage } from '../api/client.ts'
 import { type Tenant, useTenants } from '../api/tenants.ts'
 import { primaryVariables } from '../brandTheme.ts'
 import { BrandLogo } from '../components/BrandLogo.tsx'
+import { headerHeight } from '../components/booking/layout.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { Input } from '../ui/input.tsx'
 import { Label } from '../ui/label.tsx'
+import { ParallaxImage } from '../ui/motion/parallax-image.tsx'
+import { Reveal, Stagger } from '../ui/motion/reveal.tsx'
 import { Photo } from '../ui/photo.tsx'
 import { SiteFooter } from '../ui/site-footer.tsx'
 import { SiteHeader } from '../ui/site-header.tsx'
@@ -24,18 +41,39 @@ function searchable(text: string) {
 /** 1 column on phones, 2 on tablets, 3 on desktops. */
 const gridClassName = 'grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2 lg:grid-cols-3'
 
+/** The photos of the start page, in `web/public/` (see CREDITS.md there). The large one comes in two widths. */
+const heroPhoto = '/home-hero-1200.webp'
+const heroPhotoSet = '/home-hero-1200.webp 1200w, /home-hero-2400.webp 2400w'
+
+/** The three steps of "How it works", each with its picture and symbol. */
+const steps = [
+  { key: 'restaurant', photo: '/home-step-restaurant.webp', icon: <StoreIcon /> },
+  { key: 'table', photo: '/home-step-table.webp', icon: <CalendarClockIcon /> },
+  { key: 'confirmation', photo: '/home-step-confirmation.webp', icon: <CircleCheckIcon /> },
+] as const
+
+/** What the platform offers a restaurant, in "For restaurants". */
+const benefits = [
+  { key: 'booking', icon: <CalendarCheckIcon /> },
+  { key: 'design', icon: <PaletteIcon /> },
+  { key: 'frontDesk', icon: <ConciergeBellIcon /> },
+] as const
+
 /**
- * The start page, in the platform's look (design system, src/ui): a short introduction with a large search by name or city
- * that filters the restaurants as you type, and the restaurants as a grid of cards with photo. Each card carries the
- * restaurant's accent colour.
+ * The start page, the platform's entrance, in its look (design system, src/ui), in five parts: a large photo of a laid table
+ * in the evening (zooming in once, ParallaxImage) with the header lying transparently on it, the heading and a large search
+ * by name or city that filters the restaurants as you type and scrolls softly down to them; the restaurants as photo cards
+ * that rise in one after another; "How it works" in three steps; "For restaurants" with the sign-in (or the way to the
+ * own area); and the plain footer.
  */
 export function HomePage() {
   const { t } = useTranslation()
   useDocumentTitle(t('home.title'), null)
   const tenants = useTenants()
   const [query, setQuery] = useState('')
+  const [hero, setHero] = useState<HTMLElement | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
-  const searchId = useId()
+  const id = useId()
 
   const search = searchable(query.trim())
   const matches =
@@ -45,6 +83,19 @@ export function HomePage() {
   // The search is offered while the restaurants load and when there are any.
   const withSearch = tenants.isPending || (tenants.isSuccess && tenants.data.length > 0)
 
+  function changeQuery(value: string) {
+    setQuery(value)
+    // What is typed shows in the cards below, so they come into view: the page scrolls until the search field is just below
+    // the header, with the cards below it. Not further, or the browser scrolls back to the field with the next letter.
+    const input = searchInput.current
+    if (value.trim() !== '' && input !== null) {
+      const top = input.getBoundingClientRect().top + window.scrollY - headerHeight - 16
+      if (window.scrollY < top) {
+        window.scrollTo({ top, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
+      }
+    }
+  }
+
   function resetSearch() {
     setQuery('')
     searchInput.current?.focus()
@@ -52,35 +103,43 @@ export function HomePage() {
 
   return (
     <div className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
-      <SiteHeader />
+      <SiteHeader hero={hero} />
 
       <main className="flex-1">
-        <section className="bg-linear-to-b from-primary-50 to-background">
-          <div className="mx-auto max-w-page px-4 pt-12 pb-10 sm:px-6 sm:pt-20 sm:pb-12">
-            <h1 className="max-w-3xl font-display text-4xl text-balance sm:text-5xl">{t('home.heading')}</h1>
-            <p className="mt-4 max-w-2xl text-lg text-muted-foreground">{t('home.subtitle')}</p>
+        <section ref={setHero} className="relative flex h-[70svh] max-h-180 min-h-120 items-end overflow-clip bg-stone-900 text-white">
+          {/* Only the mood of the page: the text on it says what it is about. The largest element of the page, loaded first. */}
+          <ParallaxImage src={heroPhoto} srcSet={heroPhotoSet} sizes="100vw" alt="" className="bg-stone-900" />
+          {/* Darkens the bottom for the text and the top for the header. */}
+          <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-black/85 via-black/50 via-50% to-black/20" />
+          <div aria-hidden="true" className="absolute inset-x-0 top-0 h-24 bg-linear-to-b from-black/40 to-transparent" />
+          <div className="relative mx-auto w-full max-w-page px-4 pt-24 pb-10 sm:px-6 sm:pb-16">
+            <h1 className="max-w-3xl font-display text-4xl text-balance sm:text-5xl lg:text-6xl">{t('home.heading')}</h1>
+            <p className="mt-4 max-w-2xl text-lg text-white/90 sm:text-xl">{t('home.subtitle')}</p>
             {withSearch && (
               <div role="search" className="relative mt-8 max-w-2xl">
-                <Label htmlFor={searchId} className="sr-only">
+                <Label htmlFor={`${id}-search`} className="sr-only">
                   {t('home.search')}
                 </Label>
-                <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 size-5 -translate-y-1/2 text-muted-foreground" />
+                <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   ref={searchInput}
-                  id={searchId}
+                  id={`${id}-search`}
                   type="search"
                   placeholder={t('home.search')}
                   value={query}
-                  onChange={(event) => setQuery(event.currentTarget.value)}
+                  onChange={(event) => changeQuery(event.currentTarget.value)}
                   autoComplete="off"
-                  className="h-14 rounded-xl pl-12 text-lg shadow-card touch:h-14"
+                  className="h-14 rounded-xl border-transparent pl-12 text-lg shadow-float touch:h-14"
                 />
               </div>
             )}
           </div>
         </section>
 
-        <div className="mx-auto max-w-page px-4 pt-6 pb-16 sm:px-6 sm:pb-24">
+        <section aria-labelledby={`${id}-restaurants`} className="mx-auto max-w-page px-4 pt-12 pb-16 sm:px-6 sm:pt-16 sm:pb-24">
+          <h2 id={`${id}-restaurants`} className="mb-8 font-display text-3xl">
+            {tenants.isSuccess && tenants.data.length > 0 ? t('home.restaurantsCount', { count: matches.length }) : t('home.restaurants')}
+          </h2>
           {/* Tells screen reader users how many restaurants the search leaves, as they type. */}
           <p role="status" className="sr-only">
             {tenants.isPending ? t('home.loading') : search !== '' ? t('home.results', { count: matches.length }) : ''}
@@ -119,19 +178,124 @@ export function HomePage() {
               }
             />
           ) : (
-            <ul className={gridClassName}>
-              {matches.map((tenant, index) => (
-                <li key={tenant.id}>
-                  <RestaurantCard tenant={tenant} priority={index === 0} />
-                </li>
-              ))}
-            </ul>
+            <Stagger>
+              <ul className={gridClassName}>
+                {matches.map((tenant) => (
+                  <li key={tenant.id}>
+                    <RestaurantCard tenant={tenant} />
+                  </li>
+                ))}
+              </ul>
+            </Stagger>
           )}
-        </div>
+        </section>
+
+        <HowItWorks />
+        <ForRestaurants />
       </main>
 
       <SiteFooter />
     </div>
+  )
+}
+
+/** "How it works": the three steps of a booking, each with a small picture, its symbol and one sentence. */
+function HowItWorks() {
+  const { t } = useTranslation()
+  const id = useId()
+
+  return (
+    <section aria-labelledby={id} className="bg-muted">
+      <div className="mx-auto max-w-page px-4 py-16 sm:px-6 sm:py-24">
+        <Reveal>
+          <h2 id={id} className="font-display text-3xl sm:text-4xl">
+            {t('home.howItWorks.heading')}
+          </h2>
+        </Reveal>
+        <Stagger>
+          <ol className="mt-10 grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-3">
+            {steps.map((step, index) => (
+              <li key={step.key} className="flex flex-col gap-4">
+                <div className="relative">
+                  {/* Only pictures of the step: its title says what it is. */}
+                  <Photo src={step.photo} alt="" ratio="4/3" fallback={null} className="rounded-xl bg-stone-200" />
+                  <span aria-hidden="true" className="absolute top-3 left-3 flex size-8 items-center justify-center rounded-full bg-background/90 text-sm font-semibold tabular-nums shadow-card">
+                    {index + 1}
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className="absolute -bottom-5 left-4 flex size-11 items-center justify-center rounded-full bg-primary text-primary-foreground ring-4 ring-muted [&_svg]:size-5"
+                  >
+                    {step.icon}
+                  </span>
+                </div>
+                <div className="flex flex-col gap-1 pt-4">
+                  <h3 className="font-display text-xl">{t(`home.howItWorks.${step.key}Title`)}</h3>
+                  <p className="text-muted-foreground">{t(`home.howItWorks.${step.key}Text`)}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </Stagger>
+      </div>
+    </section>
+  )
+}
+
+/**
+ * "For restaurants": a photo from a restaurant's kitchen beside what the platform offers a restaurant in three points, and
+ * the way in: "Sign in", or for a signed-in user the way to their own area, like the link in the header.
+ */
+function ForRestaurants() {
+  const { t } = useTranslation()
+  const currentUser = useCurrentUser()
+  const user = currentUser.data
+  const id = useId()
+
+  return (
+    <Reveal>
+      <section aria-labelledby={id} className="mx-auto max-w-page px-4 py-16 sm:px-6 sm:py-24">
+        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-16">
+          {/* Only the mood: the text beside it says what it is about. */}
+          <Photo src="/home-for-restaurants.webp" alt="" ratio="4/3" fallback={null} className="rounded-xl bg-stone-800" />
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-3">
+              <p className="text-sm font-semibold tracking-wide text-primary-text uppercase">{t('home.forRestaurants.eyebrow')}</p>
+              <h2 id={id} className="font-display text-3xl text-balance sm:text-4xl">
+                {t('home.forRestaurants.heading')}
+              </h2>
+              <p className="text-lg text-muted-foreground">{t('home.forRestaurants.text')}</p>
+            </div>
+            <ul className="flex flex-col gap-5">
+              {benefits.map((benefit) => (
+                <li key={benefit.key} className="flex gap-4">
+                  <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-full bg-primary-50 text-primary-text [&_svg]:size-5">
+                    {benefit.icon}
+                  </span>
+                  <div className="flex flex-col gap-1">
+                    <h3 className="font-semibold">{t(`home.forRestaurants.${benefit.key}Title`)}</h3>
+                    <p className="text-muted-foreground">{t(`home.forRestaurants.${benefit.key}Text`)}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+            <div>
+              {/* Until it is known whether someone is signed in, a placeholder of the button's size, so nothing moves. */}
+              {user === undefined ? (
+                <Skeleton className="h-12 w-40" />
+              ) : (
+                <Button asChild size="lg">
+                  <Link to={user !== null ? homePath(user.role) : '/login'}>
+                    {user !== null ? t('guest.toManagement') : t('home.forRestaurants.signIn')}
+                    <ArrowRightIcon aria-hidden="true" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      </section>
+    </Reveal>
   )
 }
 
@@ -150,7 +314,7 @@ function PageState({ icon, tone = 'neutral', title, text, action }: { icon: Reac
         {icon}
       </span>
       <div className="flex flex-col gap-2">
-        <h2 className="font-display text-2xl wrap-anywhere">{title}</h2>
+        <h3 className="font-display text-2xl wrap-anywhere">{title}</h3>
         <p className="text-muted-foreground">{text}</p>
       </div>
       {action}
@@ -160,12 +324,13 @@ function PageState({ icon, tone = 'neutral', title, text, action }: { icon: Reac
 
 /**
  * A restaurant as a card that is one link to its booking page, in the style of large marketplaces: the photo in 4:3 with
- * rounded corners, zooming in softly under the pointer, with the logo on it; below it the name, the city, the description
- * cut to two lines and "Reserve a table" with an arrow in the restaurant's accent colour. Without photo, or when it cannot be
- * loaded, a calm surface in a light tint of the accent colour (the platform's without one) with the logo or the name.
- * Opening it, the photo moves into the cover image of the booking page (view transition, app.css).
+ * rounded corners, the card lifting a little and the photo zooming in softly under the pointer, with the logo as a badge on
+ * a light surface in its lower left corner; below it the name, the city, the description cut to two lines and "Reserve a
+ * table" with an arrow in the restaurant's accent colour. Without photo, or when it cannot be loaded, a calm surface in a
+ * light tint of the accent colour (the platform's without one) with the logo or the name. Opening it, the photo moves into
+ * the cover image of the booking page (view transition, app.css).
  */
-function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolean }) {
+function RestaurantCard({ tenant }: { tenant: Tenant }) {
   const { t } = useTranslation()
   // The card's own accent colour, as on the restaurant's light pages; without one, the platform's stays.
   const variables = useMemo(() => (tenant.brandColor !== null ? primaryVariables(tenant.brandColor, 'light') : undefined), [tenant.brandColor])
@@ -182,14 +347,13 @@ function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolea
   )
 
   return (
-    <Link to={to} viewTransition style={variables} className="group flex h-full flex-col gap-4 rounded-xl focus-ring">
+    <Link to={to} viewTransition style={variables} className="group flex h-full flex-col gap-4 rounded-xl lift focus-ring">
       {/* Photo and logo only accompany the name below, so they have no text alternative. */}
       <div className={cn('relative', opening && '[view-transition-name:restaurant-cover]')}>
         <Photo
           src={tenant.coverUrl}
           alt=""
           ratio="4/3"
-          priority={priority}
           onError={() => setCoverFailed(true)}
           className="rounded-xl bg-primary-50"
           imageClassName="transition-[opacity,scale] duration-(--motion-medium) group-hover:scale-105 motion-reduce:group-hover:scale-100"
@@ -204,13 +368,9 @@ function RestaurantCard({ tenant, priority }: { tenant: Tenant; priority: boolea
           }
         />
         {withCover && tenant.logoUrl !== null && (
-          <>
-            {/* Darkens the bottom of the photo a little, so a light logo stands out. */}
-            <span aria-hidden="true" className="pointer-events-none absolute inset-0 rounded-xl bg-linear-to-t from-black/45 to-transparent to-50%" />
-            <span className="absolute right-4 bottom-4 left-4">
-              <BrandLogo src={tenant.logoUrl} height={56} maxWidth={200} accent="var(--primary)" onPhoto loading="lazy" />
-            </span>
-          </>
+          <span className="absolute bottom-3 left-3 flex max-w-[calc(100%-1.5rem)] rounded-lg bg-white/90 px-3 py-2 shadow-card backdrop-blur-sm">
+            <BrandLogo src={tenant.logoUrl} height={36} maxWidth={160} accent="var(--primary)" loading="lazy" />
+          </span>
         )}
       </div>
 
