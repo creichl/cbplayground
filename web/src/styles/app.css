@@ -553,3 +553,18 @@
 ::view-transition-group(site-header) {
   z-index: 1;
 }
+
+/* The light around a free table in the table style "Glow" breathes softly; with less motion it stays still. */
+@keyframes table-glow {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@utility table-glow-breathe {
+  @variant motion-safe {
+    animation: table-glow 1.8s ease-in-out infinite alternate;
+  }
+}

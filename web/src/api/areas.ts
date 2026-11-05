@@ -15,10 +15,12 @@ export type Area = {
   onlineBookingEnabled: boolean
   /** Share of the seats that can be booked online, 0–100. */
   onlineCapacityPercent: number
-  /** Scales the drawn tables of this area, whole percent from 50 to 200. */
+  /** Scales the drawn tables of this area in whole percent: 50 to 200 as set, or derived from `widthMeters`. */
   tableScale: number
   /** Floor and boundary of the drawn room; only drawn without floor plan image. */
   roomStyle: RoomStyle
+  /** The real width of the plan in metres (5–80), null when unknown; with it the tables have their real size. */
+  widthMeters: number | null
 }
 
 /** The kind of room of an area without floor plan image: it sets the drawn floor and boundary. */
@@ -99,7 +101,7 @@ export function useUpdateArea() {
     mutationFn: ({
       id,
       ...area
-    }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale'> & { description: string }) =>
+    }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale' | 'widthMeters'> & { description: string }) =>
       apiPut<Area>(`/admin/areas/${id}`, area),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
   })

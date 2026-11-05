@@ -137,6 +137,87 @@ test.describe('Booking', () => {
   })
 })
 
+/** Sets the table style of Rooftop Belvedere through the API, signed in as its admin; keeps its demo branding. */
+async function setRooftopTableStyle(page: Page, tableStyle: string) {
+  await page.goto('/login')
+  await page.getByLabel('Email').fill('admin@rooftop-belvedere.local')
+  await page.getByLabel('Password', { exact: true }).fill('Demo1234!')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(/\/admin$/)
+  const response = await page.request.put('/api/admin/branding', {
+    data: { brandColor: '#c9a96e', themeMode: 'Dark', fontStyle: 'Elegant', tableStyle },
+  })
+  expect(response.status()).toBe(200)
+}
+
+/** Opens the booking dialog of Rooftop Belvedere at its first free time, at the table step. */
+async function openRooftopTableStep(page: Page) {
+  await page.goto('/r/rooftop-belvedere')
+  await page.locator('[data-time-chip]').first().click()
+  const dialog = page.getByRole('dialog')
+  await expect(dialog.getByRole('heading', { name: 'Choose your table' })).toBeVisible()
+  await expect(dialog.locator('[data-floor-table]')).toHaveCount(8)
+  return dialog
+}
+
+test.describe('Table choice', () => {
+  test('uses nearly the whole window and shows the plan to scale', async ({ page }) => {
+    await setRooftopTableStyle(page, 'Classic')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const dialog = await openRooftopTableStep(page)
+
+    // The dialog leaves 1 rem around it; the plan fills the height left beside the column of the areas.
+    const box = (await dialog.boundingBox())!
+    expect(box.width).toBeGreaterThan(1440 - 40)
+    expect(box.height).toBeGreaterThan(900 - 40)
+    const plan = (await dialog.locator('[data-vaul-no-drag]').boundingBox())!
+    expect(plan.width).toBeGreaterThan(850)
+    // The rooftop is 18 m wide: a bar of 2 m, and the legend says the plan is to scale.
+    await expect(dialog.locator('[data-scale-bar]')).toHaveText('2 m')
+    await expect(dialog.getByText('Plan and tables to scale')).toBeVisible()
+    // Every table has its badge with its number, readable at 12 px or more however small the table is.
+    const badge = dialog.locator('[data-floor-table]').filter({ hasText: 'R1' }).getByText('R1')
+    await expect(badge).toHaveCSS('font-size', /^(1[1-5])(\.\d+)?px$/)
+    await screenshot(page, 'table-choice', 'dialog-1440')
+
+    await dialog.getByText('Show tables as a list').click()
+    await dialog.getByRole('radio').first().click()
+    await expect(dialog.getByRole('button', { name: 'Continue' })).toBeEnabled()
+    await screenshot(page, 'table-choice', 'dialog-1440-chosen')
+  })
+
+  test('fits a laptop screen', async ({ page }) => {
+    await setRooftopTableStyle(page, 'Classic')
+    await page.setViewportSize({ width: 1280, height: 720 })
+    const dialog = await openRooftopTableStep(page)
+    const plan = (await dialog.locator('[data-vaul-no-drag]').boundingBox())!
+    expect(plan.height).toBeGreaterThanOrEqual(280)
+    await screenshot(page, 'table-choice', 'dialog-1280x720')
+  })
+
+  for (const tableStyle of ['Classic', 'Natural', 'Minimal', 'Glow']) {
+    test(`draws the tables in the table style ${tableStyle}`, async ({ page }) => {
+      await setRooftopTableStyle(page, tableStyle)
+      const dialog = await openRooftopTableStep(page)
+      // The lounge, the second area, with one of its tables chosen.
+      await dialog.getByRole('button', { name: /Lounge/ }).click()
+      await expect(dialog.locator('[data-floor-table]')).toHaveCount(5)
+      await dialog.getByText('Show tables as a list').click()
+      await dialog.getByRole('radio').first().click()
+      await expect(dialog.getByText(/· Lounge$/).first()).toBeVisible()
+      await screenshot(page, 'table-choice', `style-${tableStyle.toLowerCase()}`)
+    })
+  }
+
+  test('keeps the full-screen sheet on phones', async ({ page }) => {
+    await setRooftopTableStyle(page, 'Classic')
+    await page.setViewportSize({ width: 375, height: 812 })
+    await openRooftopTableStep(page)
+    await expect(page.locator('[data-scale-bar]')).toHaveText('2 m')
+    await screenshot(page, 'table-choice', 'sheet-375')
+  })
+})
+
 test.describe('Not found', () => {
   for (const width of [375, 1280]) {
     test(`shows the not found page with its photo for an unknown address at ${width} px`, async ({ page }) => {

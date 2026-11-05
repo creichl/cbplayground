@@ -15,6 +15,7 @@ import {
 } from '../api/areas.ts'
 import { errorCode, errorMessage } from '../api/areaErrors.ts'
 import { AreaPhotoUpload } from './AreaPhotoUpload.tsx'
+import { maxWidthMeters, minWidthMeters, realSizeScale } from './floor-plan/layout.ts'
 
 type AreaPanelProps = {
   area: Area
@@ -24,8 +25,8 @@ type AreaPanelProps = {
   onMove: (direction: -1 | 1) => void
   moving: boolean
   onDeleted: () => void
-  /** The table size as set with the slider, before it is saved, so the plan shows it right away. */
-  onTableScaleChange: (tableScale: number) => void
+  /** The table size and the real width as set, before they are saved, so the plan shows them right away. */
+  onPreviewChange: (preview: { tableScale: number; widthMeters: number | null }) => void
   /** Called after the tables have been arranged anew. */
   onArranged: () => void
 }
@@ -36,9 +37,15 @@ const tableScaleMarks = [50, 100, 150, 200].map((value) => ({ value, label: `${v
 /** The longest description of an area, as the API accepts it. */
 const maxDescriptionLength = 200
 
+/** The real width as typed: a number in the range, or null when the field is empty or invalid. */
+function widthOf(value: number | string) {
+  return typeof value === 'number' && value >= minWidthMeters && value <= maxWidthMeters ? value : null
+}
+
 /**
- * Settings of the selected area: name, description, online booking and quota, table size, its photo, the automatic
- * arrangement of its tables, order and deletion.
+ * Settings of the selected area: name, description, online booking and quota, the real width of its plan or else the table
+ * size, its photo, the automatic arrangement of its tables, order and deletion. With a real width the tables have their real
+ * size, so the table size follows from it instead of the slider.
  */
 export function AreaPanel({
   area,
@@ -48,7 +55,7 @@ export function AreaPanel({
   onMove,
   moving,
   onDeleted,
-  onTableScaleChange,
+  onPreviewChange,
   onArranged,
 }: AreaPanelProps) {
   const { t } = useTranslation()
@@ -67,8 +74,12 @@ export function AreaPanel({
       onlineBookingEnabled: area.onlineBookingEnabled,
       onlineCapacityPercent: area.onlineCapacityPercent as number | string,
       tableScale: area.tableScale,
+      widthMeters: (area.widthMeters ?? '') as number | string,
     },
-    onValuesChange: (values) => onTableScaleChange(values.tableScale),
+    onValuesChange: (values) => {
+      const widthMeters = widthOf(values.widthMeters)
+      onPreviewChange({ tableScale: widthMeters === null ? values.tableScale : realSizeScale(widthMeters), widthMeters })
+    },
     validate: {
       name: (value) => {
         const name = value.trim()
@@ -77,8 +88,13 @@ export function AreaPanel({
       description: (value) => (value.trim().length > maxDescriptionLength ? t('areas.errors.descriptionInvalid') : null),
       onlineCapacityPercent: (value) =>
         typeof value === 'number' && Number.isInteger(value) && value >= 0 && value <= 100 ? null : t('areas.errors.percentInvalid'),
+      widthMeters: (value) => (value === '' || widthOf(value) !== null ? null : t('areas.errors.widthInvalid')),
     },
   })
+  const widthMeters = widthOf(form.values.widthMeters)
+  // The table size the plan shows: from the real width, or as set with the slider.
+  const tableScale = widthMeters === null ? form.values.tableScale : realSizeScale(widthMeters)
+  const sizeChanged = tableScale !== area.tableScale || widthMeters !== area.widthMeters
 
   function uploadAreaPhoto(file: File) {
     if (!floorPlanTypes.includes(file.type)) {
@@ -109,6 +125,7 @@ export function AreaPanel({
               onlineBookingEnabled: values.onlineBookingEnabled,
               onlineCapacityPercent: Number(values.onlineCapacityPercent),
               tableScale: values.tableScale,
+              widthMeters: widthOf(values.widthMeters),
               description: values.description.trim(),
             },
             {
@@ -123,6 +140,8 @@ export function AreaPanel({
                   form.setFieldError('description', errorMessage(error, t))
                 } else if (code === 'table_scale_invalid') {
                   form.setFieldError('tableScale', errorMessage(error, t))
+                } else if (code === 'area_width_invalid') {
+                  form.setFieldError('widthMeters', errorMessage(error, t))
                 } else {
                   notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) })
                 }
@@ -165,20 +184,38 @@ export function AreaPanel({
             disabled={!form.values.onlineBookingEnabled}
             {...form.getInputProps('onlineCapacityPercent')}
           />
-          <Input.Wrapper label={t('areas.area.tableScale')} description={t('areas.area.tableScaleHint')} error={form.errors.tableScale}>
-            <Slider
-              mt="xs"
-              mb="xl"
-              min={50}
-              max={200}
-              step={5}
-              marks={tableScaleMarks}
-              label={(value) => `${value} %`}
-              thumbLabel={t('areas.area.tableScale')}
-              value={form.values.tableScale}
-              onChange={(value) => form.setFieldValue('tableScale', value)}
-            />
-          </Input.Wrapper>
+          <NumberInput
+            label={t('areas.area.widthMeters')}
+            description={t(area.floorPlanUrl === null ? 'areas.area.widthMetersHintRoom' : 'areas.area.widthMetersHintImage')}
+            min={minWidthMeters}
+            max={maxWidthMeters}
+            step={0.5}
+            decimalScale={1}
+            allowNegative={false}
+            suffix=" m"
+            placeholder={t('areas.area.widthMetersPlaceholder')}
+            {...form.getInputProps('widthMeters')}
+          />
+          {widthMeters !== null ? (
+            <Text size="sm" c="dimmed">
+              {t('areas.area.tableScaleReal', { percent: tableScale })}
+            </Text>
+          ) : (
+            <Input.Wrapper label={t('areas.area.tableScale')} description={t('areas.area.tableScaleHint')} error={form.errors.tableScale}>
+              <Slider
+                mt="xs"
+                mb="xl"
+                min={50}
+                max={200}
+                step={5}
+                marks={tableScaleMarks}
+                label={(value) => `${value} %`}
+                thumbLabel={t('areas.area.tableScale')}
+                value={form.values.tableScale}
+                onChange={(value) => form.setFieldValue('tableScale', value)}
+              />
+            </Input.Wrapper>
+          )}
           <Group>
             <Button type="submit" loading={updateArea.isPending}>
               {t('common.save')}
@@ -217,10 +254,10 @@ export function AreaPanel({
           {t('areas.area.arrangeTitle')}
         </Text>
         <Text size="xs" c="dimmed">
-          {form.values.tableScale !== area.tableScale ? t('areas.area.arrangeSaveFirst') : t('areas.area.arrangeHint')}
+          {sizeChanged ? t('areas.area.arrangeSaveFirst') : t('areas.area.arrangeHint')}
         </Text>
         <Group>
-          <Button variant="default" size="xs" disabled={tableCount === 0 || form.values.tableScale !== area.tableScale} onClick={openArrange}>
+          <Button variant="default" size="xs" disabled={tableCount === 0 || sizeChanged} onClick={openArrange}>
             {t('areas.area.arrange')}
           </Button>
         </Group>

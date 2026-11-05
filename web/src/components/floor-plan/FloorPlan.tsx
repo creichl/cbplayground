@@ -43,6 +43,13 @@ type FloorPlanProps = {
   zoomButton: ComponentType<ZoomButtonProps>
   /** A dark page (the restaurant's dark mode): the drawn room is dark too. */
   dark?: boolean
+  /** The real width of the plan in metres: the plan shows a scale bar. Null or missing: none. */
+  widthMeters?: number | null
+  /**
+   * The plan fills its parent, a flex column of a given height: as large as fits in its width and the height left, at least
+   * 18rem high. Without, it fits the width.
+   */
+  fill?: boolean
   /** The tables, as TableShape, and in the editor the room elements' handles. */
   children: ReactNode
 }
@@ -84,6 +91,8 @@ export function FloorPlan({
   zoomControls = 'below',
   zoomButton: ZoomButton,
   dark = false,
+  widthMeters = null,
+  fill = false,
   children,
 }: FloorPlanProps) {
   const { t } = useTranslation()
@@ -100,6 +109,8 @@ export function FloorPlan({
   const margin = overhang(tables, tableScale, planHeight, imageUrl === null ? roomBoundary + 0.003 : 0.005)
   // Padding in percent refers to the width around the plan: margin × plan width = padding × (plan width + 2 × padding).
   const padding = margin / (1 + 2 * margin)
+  // Height : width of the viewport with the padding around the plan; until the image is loaded, as for the 3:2 room.
+  const viewportHeight = (1 - 2 * padding) * (planHeight ?? 1 / aspectRatio) + 2 * padding
 
   /** Keeps the zoomed plan covering the viewport. */
   function clamp(next: View): View {
@@ -218,74 +229,88 @@ export function FloorPlan({
     </>
   )
 
-  return (
-    <div className="flex flex-col gap-2.5">
+  const viewport = (
+    <div
+      ref={viewportRef}
+      // Unzoomed, a vertical swipe still scrolls the page; zoomed, every move pans the plan. A sheet (vaul) around the plan
+      // is not dragged by it (data-vaul-no-drag).
+      className={`relative overflow-hidden rounded-sm select-none ${view.scale === 1 ? 'touch-pan-y' : 'touch-none'}`}
+      data-vaul-no-drag=""
+      onPointerDownCapture={() => {
+        if (pointers.current.size === 0) {
+          suppressClick.current = false
+        }
+      }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerEnd}
+      onPointerCancel={handlePointerEnd}
+      onClickCapture={(event) => {
+        if (suppressClick.current) {
+          suppressClick.current = false
+          event.stopPropagation()
+        }
+      }}
+      onClick={(event) => {
+        if (
+          onPlanClick !== undefined &&
+          !(event.target instanceof Element && event.target.closest('[data-floor-table], [data-room-element]'))
+        ) {
+          onPlanClick()
+        }
+      }}
+    >
       <div
-        ref={viewportRef}
-        // Unzoomed, a vertical swipe still scrolls the page; zoomed, every move pans the plan. A sheet (vaul) around the plan
-        // is not dragged by it (data-vaul-no-drag).
-        className={`relative overflow-hidden rounded-sm select-none ${view.scale === 1 ? 'touch-pan-y' : 'touch-none'}`}
-        data-vaul-no-drag=""
-        onPointerDownCapture={() => {
-          if (pointers.current.size === 0) {
-            suppressClick.current = false
-          }
-        }}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerEnd}
-        onPointerCancel={handlePointerEnd}
-        onClickCapture={(event) => {
-          if (suppressClick.current) {
-            suppressClick.current = false
-            event.stopPropagation()
-          }
-        }}
-        onClick={(event) => {
-          if (
-            onPlanClick !== undefined &&
-            !(event.target instanceof Element && event.target.closest('[data-floor-table], [data-room-element]'))
-          ) {
-            onPlanClick()
-          }
+        aria-hidden={ariaHidden || undefined}
+        style={{
+          padding: `${padding * 100}%`,
+          transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
+          transformOrigin: '0 0',
         }}
       >
         <div
-          aria-hidden={ariaHidden || undefined}
-          style={{
-            padding: `${padding * 100}%`,
-            transform: `translate(${view.x}px, ${view.y}px) scale(${view.scale})`,
-            transformOrigin: '0 0',
-          }}
+          ref={planRef}
+          style={imageUrl === null ? { position: 'relative', aspectRatio: `${aspectRatio}` } : { position: 'relative' }}
         >
-          <div
-            ref={planRef}
-            style={imageUrl === null ? { position: 'relative', aspectRatio: `${aspectRatio}` } : { position: 'relative' }}
-          >
-            {imageUrl === null && <Room roomStyle={roomStyle} elements={roomElements} dark={dark} />}
-            {imageUrl !== null && (
-              <img
-                src={imageUrl}
-                alt={imageAlt}
-                draggable={false}
-                style={{ display: 'block', width: '100%' }}
-                onLoad={(event) => setImageHeight(event.currentTarget.naturalHeight / event.currentTarget.naturalWidth)}
-              />
-            )}
-            {children}
+          {imageUrl === null && <Room roomStyle={roomStyle} elements={roomElements} dark={dark} />}
+          {imageUrl !== null && (
+            <img
+              src={imageUrl}
+              alt={imageAlt}
+              draggable={false}
+              style={{ display: 'block', width: '100%' }}
+              onLoad={(event) => setImageHeight(event.currentTarget.naturalHeight / event.currentTarget.naturalWidth)}
+            />
+          )}
+          {widthMeters !== null && <ScaleBar widthMeters={widthMeters} dark={dark} />}
+          {children}
+        </div>
+      </div>
+      {zoomControls === 'inside' && (
+        // Not part of the plan's gestures: a press on a button neither pans the plan nor counts as a click on it.
+        <div
+          className="absolute right-2 bottom-2 flex flex-nowrap items-center gap-1"
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => event.stopPropagation()}
+        >
+          {controls}
+        </div>
+      )}
+    </div>
+  )
+
+  return (
+    <div className={fill ? 'flex min-h-0 flex-1 flex-col gap-2.5' : 'flex flex-col gap-2.5'}>
+      {fill ? (
+        // The viewport as wide as the width and the height left allow, centred.
+        <div className="relative min-h-72 flex-1 [container-type:size]">
+          <div className="mx-auto" style={{ width: `min(100cqw, 100cqh / ${viewportHeight})` }}>
+            {viewport}
           </div>
         </div>
-        {zoomControls === 'inside' && (
-          // Not part of the plan's gestures: a press on a button neither pans the plan nor counts as a click on it.
-          <div
-            className="absolute right-2 bottom-2 flex flex-nowrap items-center gap-1"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => event.stopPropagation()}
-          >
-            {controls}
-          </div>
-        )}
-      </div>
+      ) : (
+        viewport
+      )}
       {zoomControls === 'below' && <div className="flex flex-wrap items-center justify-end gap-1.5">{controls}</div>}
     </div>
   )
@@ -308,4 +333,35 @@ function overhang(tables: PlannedTable[], tableScale: number, planHeight: number
     }
   }
   return margin
+}
+
+/**
+ * The scale bar in the lower left corner of a plan whose real width is known: a bar of 1, 2, 5, 10 or 20 metres, about a
+ * sixth of the plan wide at most, with its length. It is part of the plan, so it zooms with it.
+ */
+function ScaleBar({ widthMeters, dark }: { widthMeters: number; dark: boolean }) {
+  const { i18n } = useTranslation()
+  const length = [1, 2, 5, 10, 20].filter((meters) => meters <= widthMeters / 6).at(-1) ?? 1
+  const label = new Intl.NumberFormat(i18n.resolvedLanguage, { style: 'unit', unit: 'meter', unitDisplay: 'short' }).format(length)
+  const color = dark ? '#f4efe7' : '#292524'
+  return (
+    <div data-scale-bar="" style={{ position: 'absolute', left: 0, right: 0, bottom: '2.5%', pointerEvents: 'none' }}>
+      <div
+        style={{
+          marginLeft: '2.5%',
+          width: `calc(${(length / widthMeters) * 100}% + 12px)`,
+          padding: '2px 6px 4px',
+          borderRadius: 4,
+          backgroundColor: dark ? 'rgba(28, 25, 23, 0.82)' : 'rgba(255, 255, 255, 0.85)',
+          color,
+          fontSize: 11,
+          fontWeight: 600,
+          lineHeight: 1.3,
+        }}
+      >
+        {label}
+        <div style={{ height: 5, border: `2px solid ${color}`, borderTop: 'none' }} />
+      </div>
+    </div>
+  )
 }

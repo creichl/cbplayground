@@ -203,7 +203,8 @@
       "tooltip_one": "Tisch {{number}} · bis {{count}} Person",
       "tooltip_other": "Tisch {{number}} · bis {{count}} Personen",
       "tooltipUnavailable": "Tisch {{number}} · nicht verfügbar",
-      "showList": "Tische als Liste anzeigen"
+      "showList": "Tische als Liste anzeigen",
+      "toScale": "Plan und Tische maßstabsgetreu"
     },
     "details": {
       "name": "Name",
@@ -624,7 +625,24 @@
       "invalidFontStyle": "Das Schriftpaar ist ungültig.",
       "logoTooLarge": "Das Logo ist zu groß (höchstens 2 MB).",
       "coverTooLarge": "Das Titelbild ist zu groß (höchstens 10 MB).",
-      "imageTypeInvalid": "Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild."
+      "imageTypeInvalid": "Bitte wählen Sie ein PNG-, JPEG- oder WebP-Bild.",
+      "invalidTableStyle": "Der Tischstil ist ungültig."
+    },
+    "tables": {
+      "title": "Tische im Plan",
+      "description": "So sehen Gäste die Tische im Grundriss, wenn sie einen wählen. Die Vorschau zeigt einen freien, einen gewählten und einen nicht verfügbaren Tisch.",
+      "styles": {
+        "Classic": "Klassisch",
+        "Natural": "Natürlich",
+        "Minimal": "Minimal",
+        "Glow": "Leuchtend"
+      },
+      "descriptions": {
+        "Classic": "Tische und Stühle in Ihrer Akzentfarbe, mit weichem Schatten.",
+        "Natural": "Echte Möbel: Holztische mit Leinenstühlen; freie Tische stehen in einem Lichthof Ihrer Akzentfarbe.",
+        "Minimal": "Flache Formen wie ein Sitzplan, die Plätze als Punkte; ruhig und sehr klar.",
+        "Glow": "Dunkles Glas mit Lichtlinien; freie Tische leuchten sanft in Ihrer Akzentfarbe. Für dunkle Seiten gemacht."
+      }
     }
   },
   "staff": {
@@ -895,7 +913,12 @@
       "description": "Beschreibung",
       "descriptionHint": "Ein kurzer Text, den Gäste bei der Wahl des Bereichs sehen.",
       "descriptionPlaceholder": "z. B. Dachterrasse mit Blick über die Stadt",
-      "descriptionCounter": "{{length}} / {{max}}"
+      "descriptionCounter": "{{length}} / {{max}}",
+      "widthMeters": "Echte Breite des Plans",
+      "widthMetersHintRoom": "Breite des Raums in Metern; er ist zwei Drittel so tief. Damit werden die Tische in echter Größe gezeichnet (ein Tisch für 4 ist 85 cm) und Gäste sehen einen Maßstab.",
+      "widthMetersHintImage": "Breite, die das Grundrissbild zeigt, in Metern. Damit werden die Tische in echter Größe gezeichnet (ein Tisch für 4 ist 85 cm) und Gäste sehen einen Maßstab.",
+      "widthMetersPlaceholder": "z. B. 18",
+      "tableScaleReal": "Die Tische werden in echter Größe gezeichnet ({{percent}} %)."
     },
     "table": {
       "title": "Tisch {{number}}",
@@ -939,7 +962,8 @@
       "roomElementPositionInvalid": "Ein Raumelement muss im Raum liegen.",
       "roomElementLabelInvalid": "Bitte geben Sie eine Beschriftung mit höchstens 40 Zeichen ein.",
       "tooManyRoomElements": "Ein Raum kann höchstens 60 Elemente haben.",
-      "roomNotSaved": "Der Raum konnte nicht gespeichert werden"
+      "roomNotSaved": "Der Raum konnte nicht gespeichert werden",
+      "widthInvalid": "Bitte geben Sie eine Breite von 5 bis 80 m ein oder lassen Sie das Feld leer."
     },
     "roomDragHint": "Ziehen Sie Tische und Raumelemente, um sie zu verschieben; die Pfeiltasten verschieben ein gewähltes Element. Klicken Sie darauf, um es zu bearbeiten.",
     "photo": {

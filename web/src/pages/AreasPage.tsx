@@ -205,7 +205,7 @@ export function AreasPage() {
   const savedRoom = useRoom(roomAreaId)
   // Not yet saved values of the panel, shown in the plan.
   const [tablePreview, setTablePreview] = useState<TablePreview | null>(null)
-  const [tableScalePreview, setTableScalePreview] = useState<number | null>(null)
+  const [scalePreview, setScalePreview] = useState<{ tableScale: number; widthMeters: number | null } | null>(null)
   const [createOpened, { open: openCreate, close: closeCreate }] = useDisclosure()
 
   if (areas.isPending || tables.isPending) {
@@ -243,7 +243,7 @@ export function AreasPage() {
     setSelectedTableId(null)
     setSelectedElementId(null)
     setTablePreview(null)
-    setTableScalePreview(null)
+    setScalePreview(null)
   }
 
   /** Selecting a table shows its panel instead of the area's, so an unsaved table size is dropped. */
@@ -255,7 +255,7 @@ export function AreasPage() {
     setSelectedTableId(tableId)
     setTablePreview(null)
     if (tableId !== null) {
-      setTableScalePreview(null)
+      setScalePreview(null)
     }
   }
 
@@ -263,7 +263,7 @@ export function AreasPage() {
   function selectElement(elementId: string) {
     selectTable(null)
     setSelectedElementId(elementId)
-    setTableScalePreview(null)
+    setScalePreview(null)
   }
 
   /** Changes the room of the shown area; it is saved shortly after. */
@@ -384,7 +384,8 @@ export function AreasPage() {
                   <FloorPlanCanvas
                     key={area.id}
                     imageUrl={area.floorPlanUrl}
-                    tableScale={tableScalePreview ?? area.tableScale}
+                    tableScale={scalePreview?.tableScale ?? area.tableScale}
+                    widthMeters={scalePreview !== null ? scalePreview.widthMeters : area.widthMeters}
                     tables={areaTables}
                     selectedTableId={selectedTableId}
                     onSelect={selectTable}
@@ -471,7 +472,7 @@ export function AreasPage() {
                     onMove={(direction) => moveArea(area, direction)}
                     moving={reorderAreas.isPending}
                     onDeleted={() => selectArea(null)}
-                    onTableScaleChange={setTableScalePreview}
+                    onPreviewChange={setScalePreview}
                     onArranged={() => discard(areaTables.map((table) => table.id))}
                   />
                 )}

@@ -159,6 +159,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
         key={step}
         className={cn(
           'flex flex-1 flex-col gap-5 px-4 pt-5 pb-0 md:px-6 md:py-6',
+          // In the large dialog the table's plan takes its whole width; the contact details and the confirmation keep the width
+          // they read best in.
+          frame === 'dialog' && step !== 'table' && 'md:mx-auto md:w-full md:max-w-240',
           direction !== null && 'animate-slide-in',
           direction === 'back' && '[--slide-from:-1.5rem]',
         )}
@@ -191,6 +194,8 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
                 onContinue={() => flow.goToStep('details')}
                 onChangeTime={flow.closeDialog}
                 dark={dark}
+                tableStyle={restaurant.branding.tableStyle}
+                fill={frame === 'dialog'}
               />
             ) : step === 'details' ? (
               <GuestDetailsForm
