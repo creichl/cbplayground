@@ -554,7 +554,7 @@
   z-index: 1;
 }
 
-/* The light around a free table in the table style "Glow" breathes softly; with less motion it stays still. */
+/* The light around the chosen table in the table style "Glow" breathes softly; with less motion it stays still. */
 @keyframes table-glow {
   from {
     opacity: 0.45;

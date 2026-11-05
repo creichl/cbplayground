@@ -73,7 +73,8 @@ export function AreaPanel({
       description: area.description ?? '',
       onlineBookingEnabled: area.onlineBookingEnabled,
       onlineCapacityPercent: area.onlineCapacityPercent as number | string,
-      tableScale: area.tableScale,
+      // Derived from a real width it may lie outside the slider's 50–200 %; when the width is removed, the slider starts in it.
+      tableScale: Math.min(200, Math.max(50, area.tableScale)),
       widthMeters: (area.widthMeters ?? '') as number | string,
     },
     onValuesChange: (values) => {
@@ -124,7 +125,8 @@ export function AreaPanel({
               name: values.name.trim(),
               onlineBookingEnabled: values.onlineBookingEnabled,
               onlineCapacityPercent: Number(values.onlineCapacityPercent),
-              tableScale: values.tableScale,
+              // With a real width the API derives the table scale; the slider's value is only sent without one.
+              ...(widthOf(values.widthMeters) === null ? { tableScale: values.tableScale } : {}),
               widthMeters: widthOf(values.widthMeters),
               description: values.description.trim(),
             },

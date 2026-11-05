@@ -89,14 +89,15 @@ public static class AreaEndpoints
             {
                 return ErrorResponse.Result("online_capacity_percent_invalid", StatusCodes.Status400BadRequest);
             }
-            if (request.TableScale is < 50 or > 200)
-            {
-                return ErrorResponse.Result("table_scale_invalid", StatusCodes.Status400BadRequest);
-            }
             var widthMeters = request.WidthMeters is { } width ? Math.Round(width, 1, MidpointRounding.AwayFromZero) : (double?)null;
             if (widthMeters is < Area.MinWidthMeters or > Area.MaxWidthMeters)
             {
                 return ErrorResponse.Result("area_width_invalid", StatusCodes.Status400BadRequest);
+            }
+            // With a real width the table scale follows from it, so a table scale sent along is ignored, whatever its value.
+            if (widthMeters is null && request.TableScale is < 50 or > 200)
+            {
+                return ErrorResponse.Result("table_scale_invalid", StatusCodes.Status400BadRequest);
             }
             var description = request.Description?.Trim();
             if (description?.Length > Area.MaxDescriptionLength)

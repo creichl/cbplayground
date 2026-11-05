@@ -1,4 +1,4 @@
-import { type ComponentType, type PointerEvent, type ReactNode, type Ref, useRef, useState } from 'react'
+import { type ComponentType, type PointerEvent, type ReactNode, type Ref, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from '../../api/areas.ts'
 import { MinusIcon, PlusIcon, ZoomResetIcon } from '../icons.tsx'
@@ -111,6 +111,19 @@ export function FloorPlan({
   const padding = margin / (1 + 2 * margin)
   // Height : width of the viewport with the padding around the plan; until the image is loaded, as for the 3:2 room.
   const viewportHeight = (1 - 2 * padding) * (planHeight ?? 1 / aspectRatio) + 2 * padding
+  // With `fill`: the room the plan has, measured. Not with container query units: Chromium resolves them to 0 while the
+  // room is held at its minimum height (e.g. with the list of tables open below the plan), and the plan disappears.
+  const roomRef = useRef<HTMLDivElement>(null)
+  const [room, setRoom] = useState<{ width: number; height: number } | null>(null)
+  useEffect(() => {
+    const element = roomRef.current
+    if (!fill || element === null) {
+      return
+    }
+    const observer = new ResizeObserver(() => setRoom({ width: element.clientWidth, height: element.clientHeight }))
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [fill])
 
   /** Keeps the zoomed plan covering the viewport. */
   function clamp(next: View): View {
@@ -303,8 +316,9 @@ export function FloorPlan({
     <div className={fill ? 'flex min-h-0 flex-1 flex-col gap-2.5' : 'flex flex-col gap-2.5'}>
       {fill ? (
         // The viewport as wide as the width and the height left allow, centred.
-        <div className="relative min-h-72 flex-1 [container-type:size]">
-          <div className="mx-auto" style={{ width: `min(100cqw, 100cqh / ${viewportHeight})` }}>
+        // Its size does not depend on the plan inside (contain: size), so the plan can follow it.
+        <div ref={roomRef} className="relative min-h-72 flex-1 [contain:size]">
+          <div className="mx-auto" style={{ width: room === null ? '100%' : Math.min(room.width, room.height / viewportHeight) }}>
             {viewport}
           </div>
         </div>

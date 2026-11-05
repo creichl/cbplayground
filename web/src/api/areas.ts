@@ -101,7 +101,11 @@ export function useUpdateArea() {
     mutationFn: ({
       id,
       ...area
-    }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'tableScale' | 'widthMeters'> & { description: string }) =>
+    }: Pick<Area, 'id' | 'name' | 'onlineBookingEnabled' | 'onlineCapacityPercent' | 'widthMeters'> & {
+      description: string
+      /** Without it the stored value stays; ignored by the API while a real width is set. */
+      tableScale?: number
+    }) =>
       apiPut<Area>(`/admin/areas/${id}`, area),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: areasKey }),
   })

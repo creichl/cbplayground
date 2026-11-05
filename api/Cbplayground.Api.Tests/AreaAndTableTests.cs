@@ -206,6 +206,38 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(HttpStatusCode.OK, scaled.StatusCode);
     }
 
+    [Fact]
+    public async Task An_area_wider_than_25_metres_can_be_saved_again_with_its_derived_table_scale()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var first = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters = 30 }, Ct);
+        var saved = (await first.Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+        // Saved again as the panel's form had it before: with the derived table scale of 40 %, below the 50 % of the slider.
+        var second = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = "Saal", onlineBookingEnabled = true, onlineCapacityPercent = 80, tableScale = saved.TableScale, widthMeters = 30 }, Ct);
+
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Equal((30.0, 40), (saved.WidthMeters, saved.TableScale));
+        Assert.Equal(HttpStatusCode.OK, second.StatusCode);
+        var again = Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id);
+        Assert.Equal(("Saal", 80, 30.0, 40), (again.Name, again.OnlineCapacityPercent, again.WidthMeters, again.TableScale));
+    }
+
+    [Fact]
+    public async Task Without_a_real_width_a_table_scale_outside_50_to_200_percent_is_still_rejected()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, widthMeters = 30 }, Ct);
+
+        var response = await client.PutAsJsonAsync($"/api/admin/areas/{area.Id}", new { name = area.Name, onlineBookingEnabled = true, onlineCapacityPercent = 100, tableScale = 40 }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("table_scale_invalid", await ErrorOf(response));
+        Assert.Equal(30.0, Assert.Single((await GetAreasAsync(client))!, a => a.Id == area.Id).WidthMeters);
+    }
+
     [Theory]
     [InlineData(5.0, 243)]
     [InlineData(12.0, 101)]

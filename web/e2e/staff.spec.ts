@@ -84,6 +84,45 @@ test.describe('Table style and real size', () => {
     await expect(page.getByText('Table size', { exact: true })).toBeVisible()
     await expect(page.locator('[data-scale-bar]')).toHaveCount(0)
   })
+
+  test('saves a hall wider than 25 metres again and again', async ({ page }) => {
+    await signIn(page, 'admin@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    await page.goto('/admin/areas')
+    await page.getByRole('tab', { name: 'Bašta' }).click()
+    const width = page.getByLabel('Real width of the plan')
+    await expect(width).toHaveValue('12 m')
+
+    // 30 m give a table scale of 40 %, below the slider's 50 %.
+    await width.fill('30')
+    await expect(page.getByText('The tables are drawn at their real size (40 %).')).toBeVisible()
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByText('The area has been saved.').first()).toBeVisible()
+    // Saved a second time with another quota, after reloading: the panel starts from the saved area.
+    await page.reload()
+    await page.getByRole('tab', { name: 'Bašta' }).click()
+    await expect(width).toHaveValue('30 m')
+    await page.getByLabel('Online quota').fill('80')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByText('The area has been saved.').first()).toBeVisible()
+    await expect(page.getByText('The table scale', { exact: false })).toHaveCount(0)
+    await screenshot(page, 'table-style', 'area-30-metres')
+    let areas = (await (await page.request.get('/api/admin/areas')).json()) as { name: string; widthMeters: number | null; tableScale: number; onlineCapacityPercent: number }[]
+    expect(areas.find((area) => area.name === 'Bašta')).toMatchObject({ widthMeters: 30, tableScale: 40, onlineCapacityPercent: 80 })
+
+    // Without the width the slider starts at 50 %, the derived 40 % brought into its range, and the area saves.
+    await width.fill('')
+    await expect(page.getByRole('slider', { name: 'Table size' })).toHaveAttribute('aria-valuenow', '50')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByText('The area has been saved.').first()).toBeVisible()
+    areas = (await (await page.request.get('/api/admin/areas')).json()) as typeof areas
+    expect(areas.find((area) => area.name === 'Bašta')).toMatchObject({ widthMeters: null, tableScale: 50 })
+
+    // Back to the demo's 12 m for the other tests.
+    await width.fill('12')
+    await page.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(page.getByText('The area has been saved.').first()).toBeVisible()
+  })
 })
 
 test.describe('Front desk', () => {

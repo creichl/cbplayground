@@ -24,8 +24,9 @@ const badges = {
  * - Natural: wooden furniture; free with a halo in the accent colour on the floor, chosen with a filled halo, not available
  *   faded to grey without halo.
  * - Minimal: flat; free in the accent colour, chosen in the text colour, not available in `muted`.
- * - Glow: dark glass with light lines; free in the accent colour with a breathing light, chosen filled with a steady light,
- *   not available in grey lines without light.
+ * - Glow: dark glass with light lines; free in the accent colour with a steady light, chosen filled with a breathing light
+ *   (only the one table, as every animated table costs the phone a layer of its own), not available in grey lines without
+ *   light.
  * The outlines keep at least 3:1 against the plan's background, the badges' text 4.5:1 against the badge.
  */
 export const tableLooks: Record<
@@ -121,7 +122,6 @@ export const tableLooks: Record<
       color: 'var(--foreground)',
       strokeWidth: 2,
       glow: 'var(--primary)',
-      breathe: true,
       swatch: 'border-2 border-primary bg-stone-900 shadow-[0_0_8px_var(--primary)]',
     },
     selected: {
@@ -130,6 +130,7 @@ export const tableLooks: Record<
       color: 'var(--primary-foreground)',
       strokeWidth: 2.5,
       glow: 'var(--primary)',
+      breathe: true,
       swatch: 'border-2 border-primary bg-primary text-primary-foreground shadow-[0_0_10px_var(--primary)]',
     },
     unavailable: {

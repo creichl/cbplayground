@@ -161,29 +161,39 @@ export function TableShape({
         }}
       />
       {glow !== undefined && (
-        // The light around the table, behind it: its outlines blurred in the glow colour, so it follows table and chairs.
-        <svg
-          viewBox={viewBox}
-          aria-hidden="true"
-          focusable="false"
-          className={breathe ? 'table-glow-breathe' : undefined}
-          style={{ ...svgStyle, filter: `drop-shadow(0 0 3px ${glow}) drop-shadow(0 0 9px ${glow})` }}
-        >
-          <g fill="none" stroke={glow} strokeWidth={3} vectorEffect="non-scaling-stroke">
-            {seatsAround.map((chair, i) => (
-              <rect
-                key={i}
-                x={-chairWidth * 0.45}
-                y={-chairDepth / 2}
-                width={chairWidth * 0.9}
-                height={chairDepth}
-                rx={chairDepth * 0.3}
-                transform={`translate(${chair.x} ${chair.y}) rotate(${chair.angle})`}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-            {top({ vectorEffect: 'non-scaling-stroke' })}
-          </g>
+        // The light around the table, behind it: its outlines in the glow colour as wide, faint strokes over each other, so it
+        // fades outwards and follows table and chairs. No blur filter: it costs much memory and time on phones, the more so
+        // while the light breathes.
+        <svg viewBox={viewBox} aria-hidden="true" focusable="false" className={breathe ? 'table-glow-breathe' : undefined} style={svgStyle}>
+          {[
+            { width: 14, opacity: 0.1 },
+            { width: 9, opacity: 0.16 },
+            { width: 5, opacity: 0.28 },
+          ].map((halo) => (
+            <g
+              key={halo.width}
+              fill="none"
+              stroke={glow}
+              strokeOpacity={halo.opacity}
+              strokeWidth={halo.width}
+              strokeLinejoin="round"
+              vectorEffect="non-scaling-stroke"
+            >
+              {seatsAround.map((chair, i) => (
+                <rect
+                  key={i}
+                  x={-chairWidth * 0.45}
+                  y={-chairDepth / 2}
+                  width={chairWidth * 0.9}
+                  height={chairDepth}
+                  rx={chairDepth * 0.3}
+                  transform={`translate(${chair.x} ${chair.y}) rotate(${chair.angle})`}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {top({ vectorEffect: 'non-scaling-stroke' })}
+            </g>
+          ))}
         </svg>
       )}
       <svg

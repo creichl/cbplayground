@@ -1,4 +1,4 @@
-import { expect, type Page, test } from '@playwright/test'
+import { expect, type Locator, type Page, test } from '@playwright/test'
 import { screenshot } from './screenshot.ts'
 
 /**
@@ -150,6 +150,24 @@ async function setRooftopTableStyle(page: Page, tableStyle: string) {
   expect(response.status()).toBe(200)
 }
 
+/**
+ * Waits until the dialog's entrance and every other finite animation in time are over, so a screenshot shows the dialog as
+ * it stays. Endless ones (the light of the table style Glow breathes on) and the cover image's parallax, which follows the
+ * scrolling instead of the time, are left out.
+ */
+async function settle(page: Page) {
+  await page.waitForFunction(
+    "document.getAnimations().every((animation) => animation.playState !== 'running' || animation.timeline !== document.timeline || animation.effect?.getComputedTiming().iterations === Infinity)",
+  )
+}
+
+/** The plan in the dialog is drawn: its image or room has a size (it once shrank to nothing with the list open). */
+async function expectPlanDrawn(dialog: Locator) {
+  const plan = (await dialog.locator('[data-vaul-no-drag]').boundingBox())!
+  expect(plan.width).toBeGreaterThan(300)
+  expect(plan.height).toBeGreaterThan(200)
+}
+
 /** Opens the booking dialog of Rooftop Belvedere at its first free time, at the table step. */
 async function openRooftopTableStep(page: Page) {
   await page.goto('/r/rooftop-belvedere')
@@ -177,13 +195,17 @@ test.describe('Table choice', () => {
     await expect(dialog.getByText('Plan and tables to scale')).toBeVisible()
     // Every table has its badge with its number, readable at 12 px or more however small the table is.
     const badge = dialog.locator('[data-floor-table]').filter({ hasText: 'R1' }).getByText('R1')
-    await expect(badge).toHaveCSS('font-size', /^(1[1-5])(\.\d+)?px$/)
-    await screenshot(page, 'table-choice', 'dialog-1440')
+    await expect(badge).toHaveCSS('font-size', /^(1[2-5])(\.\d+)?px$/)
+    await settle(page)
+    await screenshot(page, 'table-choice', 'dialog-1440', { fullPage: false })
 
     await dialog.getByText('Show tables as a list').click()
     await dialog.getByRole('radio').first().click()
     await expect(dialog.getByRole('button', { name: 'Continue' })).toBeEnabled()
-    await screenshot(page, 'table-choice', 'dialog-1440-chosen')
+    // With the list open the plan keeps its place and size.
+    await expectPlanDrawn(dialog)
+    await settle(page)
+    await screenshot(page, 'table-choice', 'dialog-1440-chosen', { fullPage: false })
   })
 
   test('fits a laptop screen', async ({ page }) => {
@@ -192,20 +214,29 @@ test.describe('Table choice', () => {
     const dialog = await openRooftopTableStep(page)
     const plan = (await dialog.locator('[data-vaul-no-drag]').boundingBox())!
     expect(plan.height).toBeGreaterThanOrEqual(280)
-    await screenshot(page, 'table-choice', 'dialog-1280x720')
+    await settle(page)
+    await screenshot(page, 'table-choice', 'dialog-1280x720', { fullPage: false })
+    // The list of the lounge's free tables open below the plan: the plan stays drawn, at least 18 rem high.
+    await dialog.getByRole('button', { name: /Lounge/ }).click()
+    await expect(dialog.locator('[data-floor-table]')).toHaveCount(5)
+    await dialog.getByText('Show tables as a list').click()
+    await dialog.getByRole('radio').first().click()
+    await expectPlanDrawn(dialog)
+    await settle(page)
+    await screenshot(page, 'table-choice', 'dialog-1280x720-list', { fullPage: false })
   })
 
   for (const tableStyle of ['Classic', 'Natural', 'Minimal', 'Glow']) {
     test(`draws the tables in the table style ${tableStyle}`, async ({ page }) => {
       await setRooftopTableStyle(page, tableStyle)
+      await page.setViewportSize({ width: 1440, height: 900 })
       const dialog = await openRooftopTableStep(page)
-      // The lounge, the second area, with one of its tables chosen.
-      await dialog.getByRole('button', { name: /Lounge/ }).click()
-      await expect(dialog.locator('[data-floor-table]')).toHaveCount(5)
-      await dialog.getByText('Show tables as a list').click()
-      await dialog.getByRole('radio').first().click()
-      await expect(dialog.getByText(/· Lounge$/).first()).toBeVisible()
-      await screenshot(page, 'table-choice', `style-${tableStyle.toLowerCase()}`)
+      // A free table chosen on the plan itself, so the three states show side by side: free, chosen, not available.
+      await dialog.locator('[data-floor-table].cursor-pointer').first().click()
+      await expect(dialog.getByRole('button', { name: 'Continue' })).toBeEnabled()
+      await expectPlanDrawn(dialog)
+      await settle(page)
+      await screenshot(page, 'table-choice', `style-${tableStyle.toLowerCase()}`, { fullPage: false })
     })
   }
 
