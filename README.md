@@ -173,6 +173,8 @@ dotnet run -- --reset-demo-data
 
 Before the start, this deletes the database file of the connection string together with its `-wal` and `-shm` files and empties the folder `Uploads:Path`; then the start migrates and seeds as on a fresh checkout (`Data/DemoDataReset.cs`). Only these configured paths are touched: the sign-in keys (`DataProtection:KeysPath`) and the backups stay. The reset only works in Development: in any other environment the start aborts with the message that `--reset-demo-data` is only allowed in Development, and nothing is deleted.
 
+In Development, the running API holds a lock on its database (`data/cbplayground.db.lock`, ignored by git). A second start on the same database, with or without `--reset-demo-data`, aborts before it touches anything, with the message that another API is already running with this database. Without this lock, a reset while the API was still running deleted the running API's images: the new start failed on the port that was still in use, and the old API kept serving its deleted database, so the logos, cover images, area photos and gallery photos were missing (404). Stop the running API first (Ctrl+C in its terminal, or find it with `lsof -i :5025`), then start again.
+
 #### Demo data
 
 In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so all three are ready to try right after the first start:
