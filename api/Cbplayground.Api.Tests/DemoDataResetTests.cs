@@ -72,6 +72,47 @@ public sealed class DemoDataResetTests : IDisposable
         Assert.False(Directory.Exists(directory));
     }
 
+    [Fact]
+    public void A_second_API_on_the_same_database_cannot_take_the_lock_and_deletes_nothing()
+    {
+        using var runningApi = DemoDataReset.Lock(ConnectionString);
+        Assert.NotNull(runningApi);
+        var before = AllFiles();
+
+        var error = Assert.Throws<InvalidOperationException>(() => DemoDataReset.Lock(ConnectionString));
+
+        Assert.Contains("already running", error.Message);
+        Assert.Contains(DatabasePath, error.Message);
+        Assert.Contains("--reset-demo-data", error.Message);
+        Assert.Equal(before, AllFiles());
+    }
+
+    [Fact]
+    public void Once_the_running_API_has_stopped_the_next_start_takes_the_lock()
+    {
+        DemoDataReset.Lock(ConnectionString)!.Dispose();
+
+        using var nextStart = DemoDataReset.Lock(ConnectionString);
+
+        Assert.NotNull(nextStart);
+    }
+
+    [Fact]
+    public void On_a_fresh_checkout_the_lock_creates_the_data_folder()
+    {
+        Directory.Delete(directory, recursive: true);
+
+        using var firstStart = DemoDataReset.Lock(ConnectionString);
+
+        Assert.True(File.Exists($"{DatabasePath}.lock"));
+    }
+
+    [Fact]
+    public void An_in_memory_database_needs_no_lock()
+    {
+        Assert.Null(DemoDataReset.Lock("Data Source=:memory:"));
+    }
+
     private string[] AllFiles() =>
         [.. Directory.GetFiles(DataPath, "*", SearchOption.AllDirectories).Select(f => Path.GetRelativePath(DataPath, f)).Order()];
 
