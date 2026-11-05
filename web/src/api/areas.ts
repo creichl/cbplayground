@@ -61,6 +61,8 @@ export type Table = {
   areaId: string
   number: string
   seats: number
+  /** The smallest party the table is given to online, 1 to `seats`; staff can give it to any party that fits. */
+  minGuests: number
   posX: number
   posY: number
   shape: TableShape
@@ -210,7 +212,7 @@ export function useCreateTable() {
 export function useUpdateTable() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, ...table }: Pick<Table, 'id' | 'number' | 'seats' | 'shape' | 'rotation'>) => apiPut<Table>(`/admin/tables/${id}`, table),
+    mutationFn: ({ id, ...table }: Pick<Table, 'id' | 'number' | 'seats' | 'minGuests' | 'shape' | 'rotation'>) => apiPut<Table>(`/admin/tables/${id}`, table),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tablesKey }),
   })
 }

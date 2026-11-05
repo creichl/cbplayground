@@ -12,6 +12,7 @@ const errorKeys = {
   table_number_taken: 'areas.errors.tableNumberTaken',
   table_not_found: 'areas.errors.tableNotFound',
   seats_invalid: 'areas.errors.seatsInvalid',
+  min_guests_invalid: 'areas.errors.minGuestsInvalid',
   position_invalid: 'areas.errors.positionInvalid',
   shape_invalid: 'areas.errors.shapeInvalid',
   rotation_invalid: 'areas.errors.rotationInvalid',

@@ -55,9 +55,10 @@ function smallestFreeTable(areas: PublicArea[]) {
  * in the full width, and the choice with "Continue" stays at the bottom of the screen. The tables are drawn in the
  * restaurant's table style (tableLooks): free tables that fit the party in the accent colour, the chosen one with a check,
  * the others muted; each has a badge with its number (and its seats on a large table) that stays readable however small
- * the table is. Hovering a free table lifts it a little and names it ("Table R6 · up to 6 people"). A table just chosen gets
- * a short pulse of a ring, and its details slide in. The list of the free tables, folded away below the plan, is the way to
- * choose with the keyboard and screen readers.
+ * the table is. Hovering a free table lifts it a little and names it ("Table R6 · up to 6 people"); a table kept for larger
+ * groups (its smallest party above the guests) says so ("Table R6 · too large for 2 people"), and the legend then notes that
+ * larger tables stay free for larger groups. A table just chosen gets a short pulse of a ring, and its details slide in.
+ * The list of the free tables, folded away below the plan, is the way to choose with the keyboard and screen readers.
  */
 export function TablePicker({ slug, date, time, guests, value, onChange, onContinue, onChangeTime, dark, tableStyle, fill }: TablePickerProps) {
   const { t } = useTranslation()
@@ -102,6 +103,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
   const area = areas.data.find((option) => option.id === activeArea) ?? defaultArea
   const chosen = areas.data.flatMap((option) => option.tables.map((table) => ({ table, area: option }))).find(({ table }) => table.id === value)
   const free = area.tables.filter((table) => table.available)
+  const tooLarge = (table: PublicTable) => !table.available && guests < table.minGuests
   const selection =
     chosen !== undefined
       ? t('booking.table.selection', { number: chosen.table.number, count: chosen.table.seats, area: chosen.area.name })
@@ -203,7 +205,9 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
                   <TooltipContent side="top">
                     {table.available
                       ? t('booking.table.tooltip', { number: table.number, count: table.seats })
-                      : t('booking.table.tooltipUnavailable', { number: table.number, count: table.seats })}
+                      : tooLarge(table)
+                        ? t('booking.table.tooltipTooLarge', { number: table.number, count: guests })
+                        : t('booking.table.tooltipUnavailable', { number: table.number, count: table.seats })}
                   </TooltipContent>
                 </Tooltip>
               )
@@ -260,6 +264,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
           <LegendItem swatch={tableLooks[tableStyle].unavailable.swatch} label={t('booking.table.legend.unavailable')} />
           {area.widthMeters !== null && <li className="text-muted-foreground">{t('booking.table.toScale')}</li>}
         </ul>
+        {area.tables.some(tooLarge) && <p className="-mt-2 text-sm text-muted-foreground">{t('booking.table.largeTablesNote')}</p>}
 
         <div className="hidden flex-col gap-3 overflow-clip rounded-xl border border-border bg-muted/50 p-4 md:flex">
           <p aria-live="polite" className={cn('text-sm', chosen !== undefined && 'font-semibold')}>
