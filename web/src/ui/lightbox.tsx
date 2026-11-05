@@ -160,8 +160,10 @@ function Lightbox({ photos, index, onIndexChange, onClose, title, returnFocus }:
 
   const label = (position: number) =>
     photos[position]?.caption ?? t('lightbox.photo', { index: position + 1, total: photos.length })
+  // At the first and the last photo the arrow is only marked as unavailable (aria-disabled), never disabled: a disabled
+  // button loses the focus to the page, outside the dialog, where the arrow keys no longer work.
   const arrowClassName =
-    'absolute top-1/2 z-10 flex size-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-stone-950/60 text-white transition-colors hover:bg-stone-800 focus-ring disabled:pointer-events-none disabled:opacity-0 sm:size-12'
+    'absolute top-1/2 z-10 flex size-11 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-stone-950/60 text-white transition-colors hover:bg-stone-800 focus-ring aria-disabled:cursor-default aria-disabled:opacity-35 aria-disabled:hover:bg-stone-950/60 sm:size-12'
 
   return (
     <Dialog open={index !== null} onOpenChange={(open) => !open && onClose()}>
@@ -226,7 +228,7 @@ function Lightbox({ photos, index, onIndexChange, onClose, title, returnFocus }:
             <button
               type="button"
               className={cn(arrowClassName, 'left-2 sm:left-4')}
-              disabled={current === null || current === 0}
+              aria-disabled={current === null || current === 0}
               onClick={() => current !== null && go(current - 1)}
             >
               <ChevronLeftIcon aria-hidden="true" className="size-6" />
@@ -235,7 +237,7 @@ function Lightbox({ photos, index, onIndexChange, onClose, title, returnFocus }:
             <button
               type="button"
               className={cn(arrowClassName, 'right-2 sm:right-4')}
-              disabled={current === null || current === photos.length - 1}
+              aria-disabled={current === null || current === photos.length - 1}
               onClick={() => current !== null && go(current + 1)}
             >
               <ChevronRightIcon aria-hidden="true" className="size-6" />
