@@ -5,6 +5,7 @@ import { useParams } from 'react-router'
 import { requestErrorMessage } from '../api/client.ts'
 import { isNotFound, type PublicRestaurant, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
+import { Gallery } from '../components/booking/Gallery.tsx'
 import { bookingSectionId, scrollToBooking } from '../components/booking/layout.ts'
 import { OpeningHoursList } from '../components/booking/OpeningHoursList.tsx'
 import { useOpeningStatus } from '../components/booking/openingStatus.ts'
@@ -26,9 +27,9 @@ const infoColumnClassName = 'flex flex-col gap-12 pt-12 lg:col-span-7 lg:row-sta
 /**
  * The booking page of a restaurant, like the restaurant pages of Resy, OpenTable or Tock. At the top its cover image (about
  * 60 % of the screen, at most 640 px; about 45 % on phones) with name, city and whether it is open today. Below it, from
- * 1024 px on, the information on the left (7 of 12 columns: about us, areas, opening hours, directions and contact) and the
- * reservation card on the right, which stays in view below the header. On phones the card comes right below the cover
- * image, the information after it, and a bar "Reserve a table" appears at the bottom of the screen once the card is
+ * 1024 px on, the information on the left (7 of 12 columns: the photo gallery, about us, areas, opening hours, directions and
+ * contact) and the reservation card on the right, which stays in view below the header. On phones the card comes right
+ * below the cover image, the information after it, and a bar "Reserve a table" appears at the bottom of the screen once the card is
  * scrolled out of view. The sections below the first screen rise in once as they are scrolled into view (Reveal), the
  * area cards one after another (Stagger).
  */
@@ -103,6 +104,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
         </div>
 
         <div className={infoColumnClassName}>
+          <Gallery photos={restaurant.gallery} restaurantName={name} />
           {description !== null && (
             <Section title={t('booking.restaurant.about')}>
               <p className="max-w-prose text-lg leading-relaxed whitespace-pre-line">{description}</p>
