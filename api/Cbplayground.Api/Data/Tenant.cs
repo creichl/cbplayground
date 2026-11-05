@@ -21,6 +21,20 @@ public enum FontStyle
     Urban,
 }
 
+/// <summary>
+/// How the tables look on the guest's floor plan when the guest picks one. The API only knows the key; the web draws them:
+/// <see cref="Classic"/> furniture in the accent colour, <see cref="Natural"/> wooden furniture with a halo in the accent
+/// colour, <see cref="Minimal"/> flat shapes with seats as dots, <see cref="Glow"/> luminous outlines.
+/// </summary>
+[JsonConverter(typeof(JsonStringEnumConverter<TableStyle>))]
+public enum TableStyle
+{
+    Classic,
+    Natural,
+    Minimal,
+    Glow,
+}
+
 /// <summary>A tenant is one restaurant. All tenants share one database.</summary>
 public class Tenant
 {
@@ -91,6 +105,9 @@ public class Tenant
 
     /// <summary>Null: <see cref="Data.FontStyle.Modern"/>.</summary>
     public FontStyle? FontStyle { get; set; }
+
+    /// <summary>Null: <see cref="Data.TableStyle.Classic"/>.</summary>
+    public TableStyle? TableStyle { get; set; }
 
     /// <summary>File name of the logo in "Uploads:Path", chosen by the server.</summary>
     public string? LogoFileName { get; set; }
