@@ -373,6 +373,8 @@ public static class DevelopmentSeed
                             AreaId = area.Id,
                             Number = t.Number,
                             Seats = t.Seats,
+                            // Online the large tables stay for groups, as a restaurant would set them.
+                            MinGuests = t.Seats switch { >= 8 => 5, >= 6 => 3, _ => 1 },
                             Shape = t.Shape,
                             Rotation = t.Rotation,
                             PosX = t.X / PlanWidth,
@@ -585,6 +587,7 @@ public static class DevelopmentSeed
                             && tableById[r.TableId].Area.Id == entry.Area.Id)
                         .Sum(r => tableById[r.TableId].Table.Seats);
                     var source = entry.Area.OnlineBookingEnabled && onlineSeats + entry.Table.Seats <= onlineLimit && random.NextDouble() < 0.5
+                        && partySize >= entry.Table.MinGuests
                         ? ReservationSource.Online
                         : ReservationSource.Staff;
 

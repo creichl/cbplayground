@@ -353,7 +353,7 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var table = await CreateTableAsync(client, area.Id, " 12 ", 4);
         var second = await CreateTableAsync(client, area.Id, seats: 2);
 
-        Assert.Equal(new TableResponse(table.Id, area.Id, "12", 4, 0.5, 0.5, TableShape.Square, 0), table);
+        Assert.Equal(new TableResponse(table.Id, area.Id, "12", 4, 1, 0.5, 0.5, TableShape.Square, 0), table);
         Assert.Equal((0.5, 0.5), (second.PosX, second.PosY));
         Assert.Contains(table, (await GetTablesAsync(client))!);
     }
@@ -581,6 +581,47 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("seats_invalid", await ErrorOf(create));
         Assert.Equal(HttpStatusCode.BadRequest, update.StatusCode);
         Assert.Equal("seats_invalid", await ErrorOf(update));
+    }
+
+    [Fact]
+    public async Task A_table_keeps_its_smallest_party_from_1_to_its_seats()
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+
+        var created = await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = UniqueNumber(), seats = 8, minGuests = 5 }, Ct);
+        var table = (await created.Content.ReadFromJsonAsync<TableResponse>(Ct))!;
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        Assert.Equal(5, table.MinGuests);
+        // Without minGuests a new table takes every party, and a change keeps the stored value.
+        Assert.Equal(1, (await CreateTableAsync(client, area.Id, seats: 8)).MinGuests);
+        var kept = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 8 }, Ct);
+        Assert.Equal(5, (await kept.Content.ReadFromJsonAsync<TableResponse>(Ct))!.MinGuests);
+        // Fewer seats than the stored smallest party lower it to the seats.
+        var lowered = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 4 }, Ct);
+        Assert.Equal(4, (await lowered.Content.ReadFromJsonAsync<TableResponse>(Ct))!.MinGuests);
+        var changed = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 6, minGuests = 3 }, Ct);
+        Assert.Equal(3, (await changed.Content.ReadFromJsonAsync<TableResponse>(Ct))!.MinGuests);
+        Assert.Equal(3, (await GetTablesAsync(client))!.Single(t => t.Id == table.Id).MinGuests);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(7)]
+    public async Task The_smallest_party_of_a_table_lies_between_1_and_its_seats(int minGuests)
+    {
+        using var client = await LoginAsync(AdminA);
+        var area = await CreateAreaAsync(client);
+        var table = await CreateTableAsync(client, area.Id, seats: 6);
+
+        var create = await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = UniqueNumber(), seats = 6, minGuests }, Ct);
+        var update = await client.PutAsJsonAsync($"/api/admin/tables/{table.Id}", new { number = table.Number, seats = 6, minGuests }, Ct);
+
+        Assert.Equal(HttpStatusCode.BadRequest, create.StatusCode);
+        Assert.Equal("min_guests_invalid", await ErrorOf(create));
+        Assert.Equal(HttpStatusCode.BadRequest, update.StatusCode);
+        Assert.Equal("min_guests_invalid", await ErrorOf(update));
     }
 
     [Theory]

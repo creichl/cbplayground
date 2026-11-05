@@ -85,6 +85,17 @@ test.describe('Table style and real size', () => {
     await expect(page.locator('[data-scale-bar]')).toHaveCount(0)
   })
 
+  test('shows from how many people a table is offered online', async ({ page }) => {
+    await signIn(page, 'admin@rooftop-belvedere.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    await page.goto('/admin/areas')
+    await page.getByRole('button', { name: /^Table R6/ }).press('Enter')
+    await expect(page.getByRole('heading', { name: 'Table R6' })).toBeVisible()
+    await expect(page.getByLabel('Online from (people)')).toHaveValue('3')
+    await expect(page.getByText('Staff can still give it to smaller ones.', { exact: false })).toBeVisible()
+    await screenshot(page, 'tables', 'min-guests')
+  })
+
   test('saves a hall wider than 25 metres again and again', async ({ page }) => {
     await signIn(page, 'admin@kafana-dunav.local')
     await expect(page).toHaveURL(/\/admin$/)

@@ -240,6 +240,20 @@ test.describe('Table choice', () => {
     })
   }
 
+  test('keeps the large tables for larger groups', async ({ page }) => {
+    await setRooftopTableStyle(page, 'Classic')
+    await page.setViewportSize({ width: 1440, height: 900 })
+    const dialog = await openRooftopTableStep(page)
+    // R6 seats 6 and is for 3 people or more online: for the 2 guests it is muted and says why.
+    const r6 = dialog.locator('[data-floor-table]').filter({ hasText: 'R6' })
+    await expect(r6).toHaveClass(/cursor-not-allowed/)
+    await expect(dialog.getByText('Larger tables are kept for larger groups.')).toBeVisible()
+    await r6.hover()
+    await expect(page.getByRole('tooltip')).toContainText('Table R6 · too large for 2 people')
+    await settle(page)
+    await screenshot(page, 'table-choice', 'too-large-tables', { fullPage: false })
+  })
+
   test('keeps the full-screen sheet on phones', async ({ page }) => {
     await setRooftopTableStyle(page, 'Classic')
     await page.setViewportSize({ width: 375, height: 812 })
