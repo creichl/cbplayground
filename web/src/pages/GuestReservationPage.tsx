@@ -134,7 +134,7 @@ function phoneHref(phone: string) {
 
 /**
  * The guest's page of a reservation, opened through the link from the booking (/r/:slug/reservation/:code?t=token), branded
- * like the booking page: below the header a narrow band of the cover image, on it a large status card (symbol, colour and
+ * like the booking page: below the header a narrow band of the cover image (otherwise the first photo of the gallery), on it a large status card (symbol, colour and
  * title per status), below it the details card as in the confirmation (reference code to copy, what was booked, the
  * restaurant's address with directions and its contact) and the actions: "Add to calendar" and, until the start, a quiet
  * "Cancel" that asks first; afterwards the hint to call. After cancelling, the status card confirms it and offers
@@ -196,13 +196,16 @@ export function GuestReservationPage() {
     )
   }
 
+  const bandPhoto = restaurant.data.branding.coverUrl ?? restaurant.data.gallery[0]?.url ?? null
+
   return (
     <div className={pageClassName}>
       <div className={cn(bandClassName, 'bg-primary dark:bg-stone-900')}>
-        {/* Only a picture of the place. The first thing on the page, so not lazy; on the band's colour while it loads or when it fails. */}
-        {restaurant.data.branding.coverUrl !== null && (
-          <Photo src={restaurant.data.branding.coverUrl} alt="" priority fallback={null} className="bg-transparent" />
-        )}
+        {/*
+          Only a picture of the place: the cover image, otherwise the first photo of the gallery. The first thing on the page,
+          so not lazy; on the band's colour while it loads or when it fails.
+        */}
+        {bandPhoto !== null && <Photo src={bandPhoto} alt="" priority fallback={null} className="bg-transparent" />}
       </div>
       <div className={columnClassName}>
         <ReservationView slug={slug} code={code} token={token} restaurant={restaurant.data} reservation={reservation.data} />
