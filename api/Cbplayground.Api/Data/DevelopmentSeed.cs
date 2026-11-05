@@ -118,7 +118,17 @@ public static class DevelopmentSeed
                 new DurationRule { MinGuests = 3, MaxGuests = 6, DurationMinutes = 120 },
             ],
             // A warm green, like the linden tree.
-            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.jpg")),
+            Branding: new("#5a7d3a", ThemeMode.Light, FontStyle.Rustic, "zur-linde-logo.png", "zur-linde-cover.jpg"),
+            Gallery:
+            [
+                new("zur-linde-gallery-schweinsbraten.jpg", "Schweinsbraten mit Knödel und Blaukraut"),
+                new("zur-linde-gallery-holzfass.jpg", "Dunkles frisch vom Holzfass"),
+                new("zur-linde-gallery-kachelofen.jpg", "Die Stube mit dem grünen Kachelofen"),
+                new("zur-linde-gallery-biergarten.jpg", "Biergarten unter alten Kastanien"),
+                new("zur-linde-gallery-weisswurst-brezn.jpg", "Weißwurst mit Brezn und süßem Senf"),
+                new("zur-linde-gallery-helles.jpg", "Ein frisches Helles im Garten"),
+                new("zur-linde-gallery-kaiserschmarrn.jpg", "Kaiserschmarrn mit Apfelmus"),
+            ]),
         new(
             Name: "Kafana Dunav",
             Slug: "kafana-dunav",
@@ -167,7 +177,16 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Danube blue.
-            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.jpg")),
+            Branding: new("#1f5f8b", ThemeMode.Light, FontStyle.Classic, "kafana-dunav-logo.png", "kafana-dunav-cover.jpg"),
+            Gallery:
+            [
+                new("kafana-dunav-gallery-riblja-corba.jpg", "Riblja čorba iz kotlića"),
+                new("kafana-dunav-gallery-rostilj.jpg", "Mešano meso sa roštilja"),
+                new("kafana-dunav-gallery-vino.jpg", "Čaša crnog vina u suton"),
+                new("kafana-dunav-gallery-dunav.jpg", "Veče na Dunavu"),
+                new("kafana-dunav-gallery-tamburasi.jpg", "Tamburaši petkom i subotom"),
+                new("kafana-dunav-gallery-sto.jpg", "Postavljen sto čeka goste"),
+            ]),
         new(
             Name: "Rooftop Belvedere",
             Slug: "rooftop-belvedere",
@@ -214,7 +233,17 @@ public static class DevelopmentSeed
             },
             DurationRules: [],
             // Dark and elegant with a champagne gold accent.
-            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg")),
+            Branding: new("#c9a96e", ThemeMode.Dark, FontStyle.Elegant, "rooftop-belvedere-logo.png", "rooftop-belvedere-cover.jpg"),
+            Gallery:
+            [
+                new("rooftop-belvedere-gallery-cocktails.jpg", "Signature-Cocktails auf der Terrasse"),
+                new("rooftop-belvedere-gallery-sharing-plates.jpg", "Sharing-Plates zum Teilen"),
+                new("rooftop-belvedere-gallery-bar.jpg", "An der Bar am Abend"),
+                new("rooftop-belvedere-gallery-sonnenuntergang.jpg", "Wien im Licht des Sonnenuntergangs"),
+                new("rooftop-belvedere-gallery-lounge.jpg", "Die Lounge-Ecke"),
+                new("rooftop-belvedere-gallery-champagner.jpg", "Champagner zum Anstoßen"),
+                new("rooftop-belvedere-gallery-blick.jpg", "Blick über die Dächer Wiens"),
+            ]),
     ];
 
     /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
