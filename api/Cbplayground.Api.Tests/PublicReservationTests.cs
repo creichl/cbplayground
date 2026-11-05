@@ -219,6 +219,50 @@ public class PublicReservationTests(ApiFactory factory) : IClassFixture<ApiFacto
     }
 
     [Fact]
+    public async Task A_large_table_is_kept_for_groups_online_but_staff_can_give_it_to_a_smaller_party()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 2), ("2", 4), ("8", 8))],
+            tableSelectionMode: TableSelectionMode.GuestChooses);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        (await admin.PutAsJsonAsync($"/api/admin/tables/{restaurant.Tables["8"]}", new { number = "8", seats = 8, minGuests = 5 }, Token)).EnsureSuccessStatusCode();
+        using var anonymous = factory.CreateHttpsClient();
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var date = TestRestaurants.NextOpenDay(factory);
+
+        // The table list tells the guest that the 8-seat table is for 5 people or more.
+        var areas = await anonymous.GetFromJsonAsync<List<PublicArea>>(PathOf(restaurant, $"/tables?date={date:yyyy-MM-dd}&time=18:00&guests=3"), Token);
+        Assert.Equal([("1", 1, false), ("2", 1, true), ("8", 5, false)], Assert.Single(areas!).Tables.Select(t => (t.Number, t.MinGuests, t.Available)));
+        Assert.Equal("table_unavailable", await ErrorOf(await BookAsync(anonymous, restaurant, date, "18:00", 3, restaurant.Tables["8"]), HttpStatusCode.Conflict));
+
+        // Once the 4-seat table is taken, the time is fully booked online for 3, although the large table is still free.
+        await BookedAsync(anonymous, restaurant, date, "18:00", 3, restaurant.Tables["2"]);
+        Assert.False(IsAvailable(await AvailabilityAsync(anonymous, restaurant, date, 3), "18:00"));
+        Assert.True(IsAvailable(await AvailabilityAsync(anonymous, restaurant, date, 5), "18:00"));
+
+        // Staff can still give it to 3 people, e.g. on the phone.
+        var staffBooking = await frontDesk.PostAsJsonAsync("/api/staff/reservations",
+            new { date = $"{date:yyyy-MM-dd}", time = "18:00", guests = 3, tableId = restaurant.Tables["8"], name = "Telefon Gast" }, Token);
+        Assert.Equal(HttpStatusCode.Created, staffBooking.StatusCode);
+        // A group of 5 gets it online.
+        Assert.Equal("8", (await BookedAsync(anonymous, restaurant, date, "20:00", 5, restaurant.Tables["8"])).TableNumber);
+    }
+
+    [Fact]
+    public async Task When_the_system_assigns_it_gives_no_party_a_table_below_its_smallest_party_online()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("2", 4), ("8", 8))]);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        (await admin.PutAsJsonAsync($"/api/admin/tables/{restaurant.Tables["8"]}", new { number = "8", seats = 8, minGuests = 5 }, Token)).EnsureSuccessStatusCode();
+        using var anonymous = factory.CreateHttpsClient();
+        var date = TestRestaurants.NextOpenDay(factory);
+
+        Assert.Equal("2", (await BookedAsync(anonymous, restaurant, date, "18:00", 4)).TableNumber);
+
+        Assert.Equal("slot_unavailable", await ErrorOf(await BookAsync(anonymous, restaurant, date, "18:00", 4), HttpStatusCode.Conflict));
+        Assert.Equal("8", (await BookedAsync(anonymous, restaurant, date, "18:00", 5)).TableNumber);
+    }
+
+    [Fact]
     public async Task The_table_list_shows_the_shape_and_rotation_of_the_tables_and_the_table_scale_of_the_areas()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom, tableSelectionMode: TableSelectionMode.GuestChooses);

@@ -60,7 +60,7 @@ public static class PublicRestaurantEndpoints
 
     public record AvailabilityResponse(DateOnly Date, int Guests, int DurationMinutes, IReadOnlyList<AvailabilityPeriod> Periods);
 
-    public record PublicTable(Guid Id, string Number, int Seats, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
+    public record PublicTable(Guid Id, string Number, int Seats, int MinGuests, double PosX, double PosY, TableShape Shape, int Rotation, bool Available);
 
     public record PublicArea(Guid Id, string Name, string? FloorPlanUrl, string? Description, string? PhotoUrl, int TableScale, IReadOnlyList<PublicTable> Tables, RoomStyle RoomStyle, IReadOnlyList<AreaEndpoints.RoomElementResponse> RoomElements, double? WidthMeters);
 
@@ -270,7 +270,7 @@ public static class PublicRestaurantEndpoints
                 area.TableScale,
                 tables
                     .Where(t => t.AreaId == area.Id)
-                    .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.PosX, t.PosY, t.Shape, t.Rotation, freeTableIds.Contains(t.Id)))
+                    .Select(t => new PublicTable(t.Id, t.Number, t.Seats, t.MinGuests, t.PosX, t.PosY, t.Shape, t.Rotation, freeTableIds.Contains(t.Id)))
                     .ToList(),
                 area.RoomStyle,
                 elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList(),

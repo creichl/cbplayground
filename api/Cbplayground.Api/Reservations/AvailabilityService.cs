@@ -20,10 +20,10 @@ public record BookingCheck(string? Error, FreeTable? Table);
 public record WalkInCheck(string? Error, DateTime Start, IReadOnlyList<FreeTable> FreeTables);
 
 /// <summary>
-/// When the current restaurant has a table free. Online bookings only get tables of areas open for online booking and
-/// within the area's online quota, and are bound to the restaurant's lead time, booking horizon and largest online party
-/// (<see cref="ReservationSettings"/>); staff bookings get every table. The opening hours and the buffer after every
-/// reservation apply to both.
+/// When the current restaurant has a table free. Online bookings only get tables of areas open for online booking, within
+/// the area's online quota and whose smallest party (<see cref="Table.MinGuests"/>) the party reaches, and are bound to the
+/// restaurant's lead time, booking horizon and largest online party (<see cref="ReservationSettings"/>); staff bookings get
+/// every table that seats the party. The opening hours and the buffer after every reservation apply to both.
 /// </summary>
 public interface IAvailabilityService
 {
@@ -275,8 +275,9 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     }
 
     /// <summary>
-    /// The tables free from <paramref name="start"/> to <paramref name="end"/> that seat the party, smallest first. Every
-    /// reservation, the new one as well, occupies its table for <paramref name="bufferMinutes"/> after its end.
+    /// The tables free from <paramref name="start"/> to <paramref name="end"/> that seat the party, smallest first; online only
+    /// those whose smallest party it reaches, so a small party never gets a large table online, also when no smaller one is
+    /// free. Every reservation, the new one as well, occupies its table for <paramref name="bufferMinutes"/> after its end.
     /// </summary>
     private static List<FreeTable> FreeTables(List<TableInfo> tables, List<BusyTable> busy, DateTime start, DateTime end, int bufferMinutes,
         int guests, ReservationSource channel)
@@ -294,6 +295,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             // Online quota: the seats of the area's online reservations in this time plus the new table
             // must not exceed the area's online share of its seats.
             free = free.Where(t => t.Area.OnlineBookingEnabled
+                && guests >= t.Table.MinGuests
                 && overlapping.Where(r => r.Source == ReservationSource.Online && r.AreaId == t.Area.Id).Sum(r => r.Seats) + t.Table.Seats
                     <= OnlineSeatLimit(tables, t.Area));
         }

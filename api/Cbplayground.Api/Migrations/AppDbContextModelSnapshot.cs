@@ -493,6 +493,9 @@ namespace Cbplayground.Api.Migrations
                     b.Property<Guid>("AreaId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("MinGuests")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Number")
                         .IsRequired()
                         .HasMaxLength(20)
