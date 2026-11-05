@@ -168,6 +168,37 @@ public sealed class TenantIsolationTests : IDisposable
     }
 
     [Fact]
+    public void Gallery_photos_are_only_read_and_changed_by_their_tenant()
+    {
+        using (var db = CreateContext(null))
+        {
+            db.Tenants.Add(new Tenant { Id = TenantA, Name = "A", Slug = "a", CreatedAt = DateTime.UtcNow });
+            db.SaveChanges();
+        }
+        Guid photoOfA;
+        using (var db = CreateContext(TenantA))
+        {
+            var photo = new GalleryPhoto { FileName = "a.jpg", Caption = "Brezn", CreatedAt = DateTime.UtcNow };
+            db.GalleryPhotos.Add(photo);
+            db.SaveChanges();
+            photoOfA = photo.Id;
+        }
+
+        using (var dbB = CreateContext(TenantB))
+        {
+            Assert.Empty(dbB.GalleryPhotos.ToList());
+            Assert.Equal(0, dbB.GalleryPhotos.ExecuteUpdate(s => s.SetProperty(p => p.Caption, "changed by B")));
+            Assert.Equal(0, dbB.GalleryPhotos.ExecuteDelete());
+            dbB.GalleryPhotos.Remove(new GalleryPhoto { Id = photoOfA, TenantId = TenantA, FileName = "a.jpg" });
+            Assert.Throws<InvalidOperationException>(() => dbB.SaveChanges());
+        }
+
+        using var dbA = CreateContext(TenantA);
+        var kept = Assert.Single(dbA.GalleryPhotos.ToList());
+        Assert.Equal((TenantA, "Brezn"), (kept.TenantId, kept.Caption));
+    }
+
+    [Fact]
     public void A_tenant_can_change_its_own_data()
     {
         using (var db = CreateContext(TenantA))
