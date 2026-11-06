@@ -18,10 +18,11 @@ bash web/e2e/run.sh
 ```
 
 The script installs the web dependencies (`npm ci`) and Playwright's Chromium (`npx playwright install chromium`),
-builds the API, and runs `npx playwright test` in `web/`. Playwright starts the API on http://localhost:5025 with fresh
-demo data (Development environment, `--reset-demo-data`, its database and uploads in `<tmp>/cbplayground-e2e`, not in
-`api/Cbplayground.Api/data/`) and the Vite dev server on http://localhost:5173, runs the tests headless and stops both
-again. Both ports must be free: stop a running `dotnet run` or `npm run dev` first. It needs no Docker and no root.
+builds the API, and runs `playwright test` in `web/` (from `node_modules/.bin`, not through `npx`, whose process would
+stay in memory). Playwright starts the API on http://localhost:5025 with fresh demo data (Development environment,
+`--reset-demo-data`, its database and uploads in `<tmp>/cbplayground-e2e`, not in `api/Cbplayground.Api/data/`) and the
+Vite dev server on http://localhost:5173, runs the tests headless and stops both again. Both ports must be free: stop a
+running `dotnet run` or `npm run dev` first. It needs no Docker and no root.
 Exit code 0 means all tests passed.
 
 Chromium needs system libraries (glib, nss, atk, X11, gbm, …) and a font, which the toolkit "Browser for Playwright"
