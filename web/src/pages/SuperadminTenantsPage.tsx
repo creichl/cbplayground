@@ -1,14 +1,33 @@
-import { Alert, Anchor, Badge, Button, Group, Modal, Select, Skeleton, Stack, Table, Text, TextInput, Title } from '@mantine/core'
+import { Alert, Anchor, Badge, Button, Group, Modal, SegmentedControl, Select, SimpleGrid, Skeleton, Stack, Table, Text, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { countryCodes, regionCodes, type CountryCode, type RegionCode } from '../api/openingHours.ts'
-import { useCreateTenant, useSuperadminTenants } from '../api/superadmin.ts'
+import { lastActivityAtUtc, setupDoneCount, setupSteps, type SuperadminTenant, useCreateTenant, useSuperadminTenants } from '../api/superadmin.ts'
 import { superadminErrorMessage } from '../api/superadminErrors.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { ActivityTime, KeyFigure, SetupProgress } from '../components/superadmin/TenantFigures.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
+
+/** Which restaurants the list shows. */
+type Filter = 'all' | 'active' | 'inactive' | 'setupIncomplete'
+
+const filters: Record<Filter, (tenant: SuperadminTenant) => boolean> = {
+  all: () => true,
+  active: (tenant) => tenant.isActive,
+  inactive: (tenant) => !tenant.isActive,
+  setupIncomplete: (tenant) => setupDoneCount(tenant) < setupSteps.length,
+}
+
+type Sort = 'name' | 'activity'
+
+/** By name as the API sorts them, or the most recent activity first (online booking or staff sign-in), never active ones last. */
+const sorts: Record<Sort, (a: SuperadminTenant, b: SuperadminTenant) => number> = {
+  name: () => 0,
+  activity: (a, b) => (Date.parse(lastActivityAtUtc(b) ?? '') || 0) - (Date.parse(lastActivityAtUtc(a) ?? '') || 0),
+}
 
 /** The longest slug the API accepts. */
 const maxSlugLength = 50
@@ -134,18 +153,29 @@ function CreateTenantModal({ onClose }: { onClose: () => void }) {
   )
 }
 
-/** The Superadmin's start page: all restaurants with their status and key figures, a search and "Create restaurant". */
+/**
+ * The Superadmin's start page: the platform's key figures, all restaurants with their status, setup and activity,
+ * a search, filters, the sorting and "Create restaurant".
+ */
 export function SuperadminTenantsPage() {
   const { t } = useTranslation()
   useDocumentTitle(t('superadmin.title'))
   const tenants = useSuperadminTenants()
   const [search, setSearch] = useState('')
+  const [filter, setFilter] = useState<Filter>('all')
+  const [sort, setSort] = useState<Sort>('name')
   const [creating, setCreating] = useState(false)
 
+  const all = tenants.data ?? []
   const query = search.trim().toLowerCase()
-  const visible = (tenants.data ?? []).filter(
-    (tenant) => query === '' || tenant.name.toLowerCase().includes(query) || tenant.slug.includes(query),
-  )
+  // toSorted is stable, so restaurants with the same activity stay sorted by name.
+  const visible = all
+    .filter((tenant) => query === '' || tenant.name.toLowerCase().includes(query) || tenant.slug.includes(query))
+    .filter(filters[filter])
+    .toSorted(sorts[sort])
+
+  const activeCount = all.filter(filters.active).length
+  const setupIncompleteCount = all.filter(filters.setupIncomplete).length
 
   return (
     <Stack gap="lg">
@@ -157,13 +187,40 @@ export function SuperadminTenantsPage() {
         <Button onClick={() => setCreating(true)}>{t('superadmin.create.button')}</Button>
       </Group>
 
-      <TextInput
-        aria-label={t('superadmin.search')}
-        placeholder={t('superadmin.searchPlaceholder')}
-        value={search}
-        onChange={(event) => setSearch(event.currentTarget.value)}
-        maw={360}
-      />
+      {tenants.data !== undefined && (
+        <SimpleGrid cols={{ base: 1, xs: 3 }} spacing="sm">
+          <KeyFigure label={t('superadmin.stats.active')} value={`${activeCount} / ${all.length}`} />
+          <KeyFigure label={t('superadmin.stats.setupIncomplete')} value={setupIncompleteCount} highlight={setupIncompleteCount > 0} />
+          <KeyFigure
+            label={t('superadmin.stats.bookingsLast7Days')}
+            value={all.reduce((sum, tenant) => sum + tenant.reservationsLast7Days, 0)}
+          />
+        </SimpleGrid>
+      )}
+
+      <Group gap="sm" align="flex-end">
+        <TextInput
+          aria-label={t('superadmin.search')}
+          placeholder={t('superadmin.searchPlaceholder')}
+          value={search}
+          onChange={(event) => setSearch(event.currentTarget.value)}
+          w={280}
+        />
+        <SegmentedControl
+          aria-label={t('superadmin.filter.label')}
+          value={filter}
+          onChange={(value) => setFilter(value as Filter)}
+          data={(['all', 'active', 'inactive', 'setupIncomplete'] as const).map((value) => ({ value, label: t(`superadmin.filter.${value}`) }))}
+        />
+        <Select
+          label={t('superadmin.sort.label')}
+          value={sort}
+          onChange={(value) => setSort((value as Sort | null) ?? 'name')}
+          allowDeselect={false}
+          data={(['name', 'activity'] as const).map((value) => ({ value, label: t(`superadmin.sort.${value}`) }))}
+          w={200}
+        />
+      </Group>
 
       {tenants.isPending ? (
         <Stack gap="sm">
@@ -176,16 +233,19 @@ export function SuperadminTenantsPage() {
       ) : visible.length === 0 ? (
         <Text c="dimmed">{t(tenants.data.length === 0 ? 'superadmin.empty' : 'superadmin.noMatch')}</Text>
       ) : (
-        <Table.ScrollContainer minWidth={720}>
+        <Table.ScrollContainer minWidth={1040}>
           <Table verticalSpacing="sm" highlightOnHover bg="white" withTableBorder>
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>{t('superadmin.fields.name')}</Table.Th>
-                <Table.Th>{t('superadmin.fields.slug')}</Table.Th>
                 <Table.Th>{t('superadmin.fields.status')}</Table.Th>
+                <Table.Th>{t('superadmin.fields.setup')}</Table.Th>
                 <Table.Th ta="right">{t('superadmin.fields.admins')}</Table.Th>
                 <Table.Th ta="right">{t('superadmin.fields.tables')}</Table.Th>
-                <Table.Th ta="right">{t('superadmin.fields.upcomingReservations')}</Table.Th>
+                <Table.Th ta="right">{t('superadmin.fields.last7Days')}</Table.Th>
+                <Table.Th ta="right">{t('superadmin.fields.next7Days')}</Table.Th>
+                <Table.Th>{t('superadmin.fields.lastOnlineBooking')}</Table.Th>
+                <Table.Th>{t('superadmin.fields.lastSignIn')}</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
@@ -195,20 +255,29 @@ export function SuperadminTenantsPage() {
                     <Anchor component={Link} to={`/superadmin/tenants/${tenant.id}`} fw={500} size="sm" c={tenant.isActive ? undefined : 'dimmed'}>
                       {tenant.name}
                     </Anchor>
-                  </Table.Td>
-                  <Table.Td>
-                    <Text size="sm" ff="monospace" c="dimmed">
+                    <Text size="xs" ff="monospace" c="dimmed">
                       {tenant.slug}
                     </Text>
                   </Table.Td>
                   <Table.Td>
-                    <Badge variant="dot" color={tenant.isActive ? 'green' : 'gray'}>
+                    {/* The label keeps its width, so the table does not squeeze it to "Deact…". */}
+                    <Badge variant="dot" color={tenant.isActive ? 'green' : 'gray'} styles={{ label: { overflow: 'visible' } }}>
                       {t(tenant.isActive ? 'superadmin.status.active' : 'superadmin.status.inactive')}
                     </Badge>
                   </Table.Td>
+                  <Table.Td>
+                    <SetupProgress tenant={tenant} />
+                  </Table.Td>
                   <Table.Td ta="right">{tenant.adminCount}</Table.Td>
                   <Table.Td ta="right">{tenant.tableCount}</Table.Td>
-                  <Table.Td ta="right">{tenant.upcomingReservationCount}</Table.Td>
+                  <Table.Td ta="right">{tenant.reservationsLast7Days}</Table.Td>
+                  <Table.Td ta="right">{tenant.reservationsNext7Days}</Table.Td>
+                  <Table.Td>
+                    <ActivityTime moment={tenant.lastOnlineBookingAtUtc} />
+                  </Table.Td>
+                  <Table.Td>
+                    <ActivityTime moment={tenant.lastStaffSignInAtUtc} />
+                  </Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>

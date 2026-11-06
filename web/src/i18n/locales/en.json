@@ -374,7 +374,7 @@
     "search": "Search restaurants",
     "searchPlaceholder": "Search by name or slug",
     "empty": "There are no restaurants yet.",
-    "noMatch": "No restaurant matches your search.",
+    "noMatch": "No restaurant matches the search and filter.",
     "backToList": "All restaurants",
     "masterData": "Master data",
     "noLocation": "Not set yet",
@@ -390,7 +390,13 @@
       "tables": "Tables",
       "upcomingReservations": "Upcoming reservations",
       "location": "Country / region",
-      "createdAt": "Created on"
+      "createdAt": "Created on",
+      "setup": "Setup",
+      "last7Days": "Bookings last 7 days",
+      "next7Days": "Bookings next 7 days",
+      "lastOnlineBooking": "Last online booking",
+      "lastSignIn": "Last staff sign-in",
+      "staff": "Staff"
     },
     "status": {
       "active": "Active",
@@ -439,6 +445,34 @@
       "invalidName": "Please enter a name of at most 100 characters.",
       "invalidSlug": "The slug may only contain lowercase letters, digits and single hyphens (not at the start or end), at most 50 characters.",
       "slugTaken": "This slug is already used by another restaurant."
+    },
+    "never": "Never",
+    "filter": {
+      "label": "Show",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Deactivated",
+      "setupIncomplete": "Setup incomplete"
+    },
+    "sort": {
+      "label": "Sort by",
+      "name": "Name",
+      "activity": "Latest activity"
+    },
+    "stats": {
+      "active": "Active restaurants",
+      "setupIncomplete": "Setup incomplete",
+      "bookingsLast7Days": "Bookings in the last 7 days"
+    },
+    "activity": {
+      "title": "Activity",
+      "hint": "Bookings without cancelled and declined ones, in the restaurant’s time zone."
+    },
+    "setup": {
+      "title": "Setup",
+      "open": "Open",
+      "allDone": "Every step of the setup is done.",
+      "hint": "Read only: the restaurant’s admin completes the open steps in the admin area."
     }
   },
   "overview": {
