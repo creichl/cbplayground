@@ -1140,15 +1140,8 @@
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
   },
   "reservations": {
-    "title": "Reservierungen",
-    "previousDay": "Vorheriger Tag",
-    "nextDay": "Nächster Tag",
-    "date": "Datum",
-    "today": "Heute",
     "search": "Suche",
     "searchPlaceholder": "Nach Name, Telefon oder Referenz suchen",
-    "filter": "Nach Status filtern",
-    "filterAll": "Alle Status",
     "new": "Neue Reservierung",
     "stats": {
       "reservations": "Reservierungen",
@@ -1249,7 +1242,6 @@
       "closed": "Das Restaurant hat gerade nicht geöffnet."
     },
     "pending": {
-      "title": "Offene Anfragen ({{number}})",
       "text": "Diese Gäste warten auf Ihre Antwort. „Annehmen“ bestätigt die Reservierung, „Ablehnen“ lehnt sie ab."
     },
     "form": {
@@ -1322,7 +1314,6 @@
     }
   },
   "tableOverview": {
-    "title": "Tischübersicht",
     "views": {
       "timeline": "Zeitleiste",
       "floor": "Grundriss"

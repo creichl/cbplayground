@@ -1156,15 +1156,8 @@
     "saved": "Podešavanja rezervacija su sačuvana."
   },
   "reservations": {
-    "title": "Rezervacije",
-    "previousDay": "Prethodni dan",
-    "nextDay": "Sledeći dan",
-    "date": "Datum",
-    "today": "Danas",
     "search": "Pretraga",
     "searchPlaceholder": "Pretraga po imenu, telefonu ili šifri",
-    "filter": "Filtriraj po statusu",
-    "filterAll": "Svi statusi",
     "new": "Nova rezervacija",
     "stats": {
       "reservations": "Rezervacije",
@@ -1275,7 +1268,6 @@
       "closed": "Restoran trenutno nije otvoren."
     },
     "pending": {
-      "title": "Otvoreni zahtevi ({{number}})",
       "text": "Ovi gosti čekaju vaš odgovor. „Prihvati“ potvrđuje rezervaciju, „Odbij“ je odbija."
     },
     "form": {
@@ -1354,7 +1346,6 @@
     }
   },
   "tableOverview": {
-    "title": "Pregled stolova",
     "views": {
       "timeline": "Vremenska osa",
       "floor": "Tlocrt"
