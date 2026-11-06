@@ -399,7 +399,7 @@
     "search": "Pretraga restorana",
     "searchPlaceholder": "Pretraga po nazivu ili slugu",
     "empty": "Još nema restorana.",
-    "noMatch": "Nijedan restoran ne odgovara pretrazi.",
+    "noMatch": "Nijedan restoran ne odgovara pretrazi i filteru.",
     "backToList": "Svi restorani",
     "masterData": "Osnovni podaci",
     "noLocation": "Još nije postavljeno",
@@ -415,7 +415,13 @@
       "tables": "Stolovi",
       "upcomingReservations": "Predstojeće rezervacije",
       "location": "Država / region",
-      "createdAt": "Kreiran"
+      "createdAt": "Kreiran",
+      "setup": "Podešavanje",
+      "last7Days": "Rezervacije poslednjih 7 dana",
+      "next7Days": "Rezervacije narednih 7 dana",
+      "lastOnlineBooking": "Poslednja onlajn rezervacija",
+      "lastSignIn": "Poslednja prijava zaposlenih",
+      "staff": "Zaposleni"
     },
     "status": {
       "active": "Aktivan",
@@ -464,6 +470,34 @@
       "invalidName": "Unesite naziv od najviše 100 znakova.",
       "invalidSlug": "Slug sme da sadrži samo mala slova, cifre i pojedinačne crtice (ne na početku ni na kraju), najviše 50 znakova.",
       "slugTaken": "Ovaj slug već koristi drugi restoran."
+    },
+    "never": "Nikad",
+    "filter": {
+      "label": "Prikaži",
+      "all": "Svi",
+      "active": "Aktivni",
+      "inactive": "Deaktivirani",
+      "setupIncomplete": "Nepotpuno podešavanje"
+    },
+    "sort": {
+      "label": "Sortiraj po",
+      "name": "Naziv",
+      "activity": "Poslednja aktivnost"
+    },
+    "stats": {
+      "active": "Aktivni restorani",
+      "setupIncomplete": "Nepotpuno podešavanje",
+      "bookingsLast7Days": "Rezervacije u poslednjih 7 dana"
+    },
+    "activity": {
+      "title": "Aktivnost",
+      "hint": "Rezervacije bez otkazanih i odbijenih, u vremenskoj zoni restorana."
+    },
+    "setup": {
+      "title": "Podešavanje",
+      "open": "Otvoreno",
+      "allDone": "Svi koraci podešavanja su završeni.",
+      "hint": "Samo za pregled: otvorene korake završava administrator restorana u administraciji."
     }
   },
   "overview": {
