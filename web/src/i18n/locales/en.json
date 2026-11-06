@@ -1270,6 +1270,36 @@
         "name": "Please enter the guest's name."
       }
     },
+    "history": {
+      "title": "History",
+      "empty": "No changes recorded yet.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Booked online by the guest",
+      "createdByStaff": "Entered by {{name}}",
+      "createdBySystem": "Created by the system",
+      "cancelledByGuest": "Cancelled by the guest through the link",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "A staff member",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} guest",
+      "guests_other": "{{count}} guests",
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "fields": {
+        "date": "Date",
+        "time": "Time",
+        "partySize": "Guests",
+        "table": "Table",
+        "duration": "Duration",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "notes": "Note",
+        "status": "Status"
+      }
+    },
     "errors": {
       "invalidDate": "Please choose a valid date.",
       "invalidTime": "Please choose a valid time.",

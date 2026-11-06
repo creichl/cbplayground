@@ -1298,6 +1298,38 @@
         "name": "Унесите име госта."
       }
     },
+    "history": {
+      "title": "Историја",
+      "empty": "Још нема забележених измена.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Гост је резервисао онлајн",
+      "createdByStaff": "Унео/ла: {{name}}",
+      "createdBySystem": "Креирао систем",
+      "cancelledByGuest": "Гост је отказао преко линка",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "Члан особља",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} особа",
+      "guests_few": "{{count}} особе",
+      "guests_other": "{{count}} особа",
+      "minutes_one": "{{count}} мин",
+      "minutes_few": "{{count}} мин",
+      "minutes_other": "{{count}} мин",
+      "fields": {
+        "date": "Датум",
+        "time": "Време",
+        "partySize": "Број особа",
+        "table": "Сто",
+        "duration": "Трајање",
+        "name": "Име",
+        "phone": "Телефон",
+        "email": "Имејл",
+        "notes": "Напомена",
+        "status": "Статус"
+      }
+    },
     "errors": {
       "invalidDate": "Изаберите исправан датум.",
       "invalidTime": "Изаберите исправно време.",
