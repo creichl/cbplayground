@@ -25,4 +25,10 @@ export default defineConfig({
       '/api': 'http://localhost:5025',
     },
   },
+  // The same for "vite preview", which serves the build (web/dist) for the automated tests (e2e/run.sh).
+  preview: {
+    proxy: {
+      '/api': 'http://localhost:5025',
+    },
+  },
 })
