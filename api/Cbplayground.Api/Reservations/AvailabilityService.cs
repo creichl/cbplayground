@@ -7,8 +7,17 @@ namespace Cbplayground.Api.Reservations;
 /// <summary>A table that is free for a reservation.</summary>
 public record FreeTable(Guid Id, string Number, int Seats, Guid AreaId, string AreaName);
 
-/// <summary>A possible start time and the tables free from it for the whole duration, in the order the system assigns them.</summary>
-public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables);
+/// <summary>
+/// The pacing of a 15-minute start slot: at most <see cref="Max"/> guests may start in it (<see cref="PacingRule"/>), and
+/// <see cref="Booked"/> guests of reservations in a blocking status already do.
+/// </summary>
+public record SlotPacing(int Max, int Booked);
+
+/// <summary>
+/// A possible start time and the tables free from it for the whole duration, in the order the system assigns them;
+/// <see cref="Pacing"/> is null when no pacing rule applies to it.
+/// </summary>
+public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables, SlotPacing? Pacing);
 
 /// <summary>The possible start times within one opening window of a day.</summary>
 public record PeriodSlots(OpenPeriod Period, IReadOnlyList<TimeSlot> Slots);
@@ -23,7 +32,8 @@ public record WalkInCheck(string? Error, DateTime Start, IReadOnlyList<FreeTable
 /// When the current restaurant has a table free. Online bookings only get tables of areas open for online booking, within
 /// the area's online quota and whose smallest party (<see cref="Table.MinGuests"/>) the party reaches, and are bound to the
 /// restaurant's lead time, booking horizon and largest online party (<see cref="ReservationSettings"/>); staff bookings get
-/// every table that seats the party. The opening hours and the buffer after every reservation apply to both.
+/// every table that seats the party. The opening hours and the buffer after every reservation apply to both. Online, a start slot
+/// whose pacing limit (<see cref="PacingRule"/>) the party would exceed is not available; staff are not bound to it.
 /// </summary>
 public interface IAvailabilityService
 {
@@ -75,6 +85,23 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
 
     private record BusyTable(Guid TableId, Guid AreaId, int Seats, DateTime Start, DateTime End, ReservationSource Source);
 
+    /// <summary>The pacing rules of a day and the guests already starting per 15-minute slot.</summary>
+    private record DayPacing(List<PacingRule> Rules, Dictionary<DateTime, int> GuestsBySlot)
+    {
+        /// <summary>The pacing of the slot of <paramref name="start"/>; null when no rule applies to it.</summary>
+        public SlotPacing? For(DateTime start)
+        {
+            var slot = SlotOf(start);
+            var time = TimeOnly.FromDateTime(slot);
+            return Rules.FirstOrDefault(r => r.From <= time && time < r.To) is { } rule
+                ? new SlotPacing(rule.MaxCovers, GuestsBySlot.GetValueOrDefault(slot))
+                : null;
+        }
+
+        /// <summary>Whether <paramref name="guests"/> more would exceed the limit of the slot.</summary>
+        public bool IsExceeded(DateTime start, int guests) => For(start) is { } pacing && pacing.Booked + guests > pacing.Max;
+    }
+
     public async Task<DateTime?> GetLocalNowAsync(CancellationToken cancellationToken = default)
     {
         var timeZoneId = await db.Tenants
@@ -104,6 +131,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         // Online, the first possible start is now plus the lead time; staff can book any time after now.
         var earliestOnline = now.AddMinutes(online ? settings.MinLeadTimeMinutes : 0);
         var busy = await LoadBusyTablesAsync(DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
+        var pacing = await LoadPacingAsync(date, ignoreReservationId, cancellationToken);
 
         var result = new List<PeriodSlots>();
         foreach (var period in periods)
@@ -111,10 +139,10 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             var slots = new List<TimeSlot>();
             foreach (var start in StartTimes(date, period, durationMinutes))
             {
-                var free = start <= now || start < earliestOnline || notBookable
+                var free = start <= now || start < earliestOnline || notBookable || (online && pacing.IsExceeded(start, guests))
                     ? []
                     : FreeTables(tables, busy, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
-                slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free));
+                slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free, pacing.For(start)));
             }
             result.Add(new PeriodSlots(period, slots));
         }
@@ -155,6 +183,10 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         if (checkOpeningHours && !periods.Any(period => StartTimes(date, period, durationMinutes).Contains(start)))
         {
             return Error("outside_opening_hours");
+        }
+        if (channel == ReservationSource.Online && (await LoadPacingAsync(date, ignoreReservationId, cancellationToken)).IsExceeded(start, guests))
+        {
+            return Error("slot_unavailable");
         }
 
         var busy = await LoadBusyTablesAsync(DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
@@ -234,6 +266,34 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         {
             yield return start;
         }
+    }
+
+    /// <summary>The 15-minute start slot that <paramref name="start"/> lies in, e.g. 19:00 for a walk-in at 19:07.</summary>
+    private static DateTime SlotOf(DateTime start) =>
+        new(start.Ticks - start.Ticks % TimeSpan.FromMinutes(ReservationRules.SlotMinutes).Ticks);
+
+    /// <summary>
+    /// The pacing rules of the day of the week of <paramref name="date"/>, and per start slot the guests of the reservations
+    /// (all channels, walk-ins included) in a blocking status that start in it, apart from <paramref name="ignoreReservationId"/>.
+    /// </summary>
+    private async Task<DayPacing> LoadPacingAsync(DateOnly date, Guid? ignoreReservationId, CancellationToken cancellationToken)
+    {
+        var rules = (await db.PacingRules.AsNoTracking().ToListAsync(cancellationToken))
+            .Where(r => r.Days.Contains(date.DayOfWeek))
+            .ToList();
+        if (rules.Count == 0)
+        {
+            return new DayPacing(rules, []);
+        }
+
+        var dayStart = DayStart(date);
+        var dayEnd = dayStart.AddDays(1);
+        var starts = await db.Reservations
+            .Where(r => r.StartLocal >= dayStart && r.StartLocal < dayEnd && r.Id != ignoreReservationId
+                && ReservationRules.BlockingStatuses.Contains(r.Status))
+            .Select(r => new { r.StartLocal, r.PartySize })
+            .ToListAsync(cancellationToken);
+        return new DayPacing(rules, starts.GroupBy(r => SlotOf(r.StartLocal)).ToDictionary(g => g.Key, g => g.Sum(r => r.PartySize)));
     }
 
     /// <summary>All tables with their area, in the order the system assigns them among tables of the same size.</summary>

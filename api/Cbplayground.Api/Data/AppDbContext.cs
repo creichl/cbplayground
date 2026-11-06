@@ -30,6 +30,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<DurationRule> DurationRules => Set<DurationRule>();
 
+    public DbSet<PacingRule> PacingRules => Set<PacingRule>();
+
     public DbSet<Reservation> Reservations => Set<Reservation>();
 
     /// <summary>
@@ -162,6 +164,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         });
 
         modelBuilder.Entity<DurationRule>(rule =>
+        {
+            rule.HasIndex(r => r.TenantId);
+            rule.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PacingRule>(rule =>
         {
             rule.HasIndex(r => r.TenantId);
             rule.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Cascade);
