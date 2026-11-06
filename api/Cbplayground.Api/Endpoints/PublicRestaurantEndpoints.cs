@@ -278,7 +278,8 @@ public static class PublicRestaurantEndpoints
                 .ToList());
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
-        group.MapPost("/reservations", async (BookingRequest request, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
+        group.MapPost("/reservations", async (BookingRequest request, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
+            TimeProvider timeProvider, CancellationToken cancellationToken) =>
         {
             if (!DateOnly.TryParseExact(request.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
             {
@@ -319,7 +320,7 @@ public static class PublicRestaurantEndpoints
                 return CheckError(check.Error!);
             }
 
-            var now = DateTime.UtcNow;
+            var now = timeProvider.GetUtcNow().UtcDateTime;
             var manageToken = ManageToken.Create();
             var reservation = new Reservation
             {
@@ -361,7 +362,8 @@ public static class PublicRestaurantEndpoints
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
         }).RequireRateLimiting(ManageRateLimitPolicy);
 
-        group.MapPost("/reservations/{referenceCode}/cancel", async (string referenceCode, CancelRequest request, AppDbContext db, IAvailabilityService availability) =>
+        group.MapPost("/reservations/{referenceCode}/cancel", async (string referenceCode, CancelRequest request, AppDbContext db, IAvailabilityService availability,
+            TimeProvider timeProvider) =>
         {
             var reservation = await FindForGuestAsync(db, referenceCode, request.Token);
             if (reservation is null)
@@ -375,7 +377,7 @@ public static class PublicRestaurantEndpoints
 
             reservation.Status = ReservationStatus.Cancelled;
             reservation.CancelledByGuest = true;
-            reservation.UpdatedAtUtc = DateTime.UtcNow;
+            reservation.UpdatedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
             await db.SaveChangesAsync();
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
         }).RequireRateLimiting(ManageRateLimitPolicy);

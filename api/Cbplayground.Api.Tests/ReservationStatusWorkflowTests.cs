@@ -185,6 +185,49 @@ public class ReservationStatusWorkflowTests(ApiFactory factory) : IClassFixture<
         Assert.Equal("table_unavailable", await ErrorOf(await SetStatusAsync(frontDesk, second, "Confirmed"), HttpStatusCode.Conflict));
     }
 
+    [Theory]
+    [InlineData("Cancelled")]
+    [InlineData("NoShow")]
+    public async Task The_undo_of_a_cancellation_or_no_show_of_a_late_guest_restores_late(string change)
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var id = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", TestRestaurant.StartedToday);
+        await StatusSetAsync(frontDesk, id, "Late");
+        Assert.Equal(Enum.Parse<ReservationStatus>(change), (await StatusSetAsync(frontDesk, id, change)).Status);
+
+        Assert.Equal(ReservationStatus.Late, (await StatusSetAsync(frontDesk, id, "Late")).Status);
+    }
+
+    [Theory]
+    [InlineData("Cancelled")]
+    [InlineData("NoShow")]
+    public async Task The_undo_of_a_cancellation_or_no_show_of_a_confirmed_guest_still_restores_confirmed(string change)
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var id = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", TestRestaurant.StartedToday);
+        Assert.Equal(Enum.Parse<ReservationStatus>(change), (await StatusSetAsync(frontDesk, id, change)).Status);
+
+        Assert.Equal(ReservationStatus.Confirmed, (await StatusSetAsync(frontDesk, id, "Confirmed")).Status);
+    }
+
+    [Fact]
+    public async Task The_undo_to_late_needs_the_table_and_the_day_of_the_reservation()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var late = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", TestRestaurant.StartedToday);
+        await StatusSetAsync(frontDesk, late, "Late");
+        await StatusSetAsync(frontDesk, late, "Cancelled");
+        await TestRestaurants.AddReservationAsync(factory, restaurant, "1", TestRestaurant.StartedToday);
+        var future = await CreatedAsync(frontDesk, TestRestaurants.NextOpenDay(factory), "18:00", 2);
+        await StatusSetAsync(frontDesk, future.Id, "Cancelled");
+
+        Assert.Equal("table_unavailable", await ErrorOf(await SetStatusAsync(frontDesk, late, "Late"), HttpStatusCode.Conflict));
+        Assert.Equal("status_not_allowed_now", await ErrorOf(await SetStatusAsync(frontDesk, future.Id, "Late"), HttpStatusCode.Conflict));
+    }
+
     [Fact]
     public async Task A_walk_in_is_seated_now_as_arrived_at_a_free_table()
     {
