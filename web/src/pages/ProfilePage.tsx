@@ -1,4 +1,4 @@
-import { Alert, Button, Card, Grid, Group, Skeleton, Stack, Text, Textarea, TextInput, Title } from '@mantine/core'
+import { Card, Grid, Skeleton, Stack, Textarea, TextInput, Title } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import type { ParseKeys } from 'i18next'
@@ -14,23 +14,26 @@ import {
   useSaveProfile,
 } from '../api/profile.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
+import { SaveBar } from '../components/SaveBar.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
-const saveErrors: Record<ProfileError, ParseKeys> = {
-  invalid_street: 'profile.errors.tooLong',
-  invalid_postal_code: 'profile.errors.tooLong',
-  invalid_city: 'profile.errors.tooLong',
-  invalid_phone: 'profile.errors.tooLong',
-  invalid_description: 'profile.errors.tooLong',
-  invalid_email: 'profile.validation.email',
-  invalid_website: 'profile.validation.website',
+type FormValues = Record<keyof Profile, string>
+
+/** The API's error codes, each shown at its field. */
+const saveErrors: Record<ProfileError, { field: keyof FormValues; message: ParseKeys }> = {
+  invalid_street: { field: 'street', message: 'profile.errors.tooLong' },
+  invalid_postal_code: { field: 'postalCode', message: 'profile.errors.tooLong' },
+  invalid_city: { field: 'city', message: 'profile.errors.tooLong' },
+  invalid_phone: { field: 'phone', message: 'profile.errors.tooLong' },
+  invalid_description: { field: 'description', message: 'profile.errors.tooLong' },
+  invalid_email: { field: 'email', message: 'profile.validation.email' },
+  invalid_website: { field: 'website', message: 'profile.validation.website' },
 }
 
 function isSaveError(code: string | null): code is ProfileError {
   return code !== null && code in saveErrors
 }
-
-type FormValues = Record<keyof Profile, string>
 
 function toFormValues(profile: Profile): FormValues {
   return {
@@ -66,10 +69,7 @@ export function ProfilePage() {
 
   return (
     <Stack gap="lg">
-      <Stack gap={4}>
-        <Title order={2}>{t('profile.title')}</Title>
-        <Text c="dimmed">{t('profile.subtitle')}</Text>
-      </Stack>
+      <PageHeader title={t('profile.title')} description={t('profile.subtitle')} />
 
       {profile.isPending ? (
         <Stack gap="lg">
@@ -90,7 +90,7 @@ function ProfileForm({ profile }: { profile: Profile }) {
   const save = useSaveProfile()
 
   const form = useForm<FormValues>({
-    mode: 'uncontrolled',
+    mode: 'controlled',
     initialValues: toFormValues(profile),
     validate: {
       email: (value) => (value.trim() === '' || isValidEmail(value.trim()) ? null : t('profile.validation.email')),
@@ -106,14 +106,26 @@ function ProfileForm({ profile }: { profile: Profile }) {
         form.resetDirty(savedValues)
         notifications.show({ color: 'green', message: t('profile.saved') })
       },
+      onError: (error) => {
+        const code = error instanceof ApiError ? error.code : null
+        if (isSaveError(code)) {
+          form.setFieldError(saveErrors[code].field, t(saveErrors[code].message))
+        }
+      },
     }),
   )
 
   const error = save.error
   const errorCode = error instanceof ApiError ? error.code : null
 
+  const discard = () => {
+    save.reset()
+    form.reset()
+  }
+
   return (
-    <form onSubmit={submit}>
+    // The fields are checked by the form, which shows its errors at the fields, not by the browser.
+    <form onSubmit={submit} noValidate>
       <Stack gap="lg">
         <Card>
           <Stack gap="md">
@@ -122,7 +134,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
               label={t('profile.fields.street')}
               autoComplete="street-address"
               maxLength={profileMaxLengths.street}
-              key={form.key('street')}
               {...form.getInputProps('street')}
             />
             <Grid>
@@ -131,7 +142,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
                   label={t('profile.fields.postalCode')}
                   autoComplete="postal-code"
                   maxLength={profileMaxLengths.postalCode}
-                  key={form.key('postalCode')}
                   {...form.getInputProps('postalCode')}
                 />
               </Grid.Col>
@@ -140,7 +150,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
                   label={t('profile.fields.city')}
                   autoComplete="address-level2"
                   maxLength={profileMaxLengths.city}
-                  key={form.key('city')}
                   {...form.getInputProps('city')}
                 />
               </Grid.Col>
@@ -156,7 +165,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
               type="tel"
               autoComplete="tel"
               maxLength={profileMaxLengths.phone}
-              key={form.key('phone')}
               {...form.getInputProps('phone')}
             />
             <TextInput
@@ -164,7 +172,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
               type="email"
               autoComplete="email"
               maxLength={profileMaxLengths.email}
-              key={form.key('email')}
               {...form.getInputProps('email')}
             />
             <TextInput
@@ -174,7 +181,6 @@ function ProfileForm({ profile }: { profile: Profile }) {
               autoComplete="url"
               placeholder={t('profile.fields.websitePlaceholder')}
               maxLength={profileMaxLengths.website}
-              key={form.key('website')}
               {...form.getInputProps('website')}
             />
           </Stack>
@@ -189,27 +195,15 @@ function ProfileForm({ profile }: { profile: Profile }) {
               autosize
               minRows={3}
               maxLength={profileMaxLengths.description}
-              key={form.key('description')}
               {...form.getInputProps('description')}
             />
           </Stack>
         </Card>
 
-        {error !== null &&
-          (isSaveError(errorCode) ? (
-            <Alert color="red" variant="light" title={t('profile.errors.title')}>
-              {t(saveErrors[errorCode])}
-            </Alert>
-          ) : (
-            <ErrorAlert error={error} />
-          ))}
-
-        <Group>
-          <Button type="submit" loading={save.isPending}>
-            {t('profile.save')}
-          </Button>
-        </Group>
+        {error !== null && !isSaveError(errorCode) && <ErrorAlert error={error} />}
       </Stack>
+
+      <SaveBar dirty={form.isDirty()} saving={save.isPending} onDiscard={discard} />
     </form>
   )
 }

@@ -28,6 +28,14 @@
     "tableLabel": "{{number}} · {{seats}}",
     "midnight": "Mitternacht"
   },
+  "unsavedChanges": {
+    "bar": "Ungespeicherte Änderungen",
+    "discard": "Verwerfen",
+    "leaveTitle": "Ohne Speichern verlassen?",
+    "leaveText": "Ihre Änderungen auf dieser Seite sind noch nicht gespeichert. Wenn Sie die Seite jetzt verlassen, gehen sie verloren.",
+    "stay": "Bleiben",
+    "leave": "Verlassen"
+  },
   "auth": {
     "userMenu": "Kontomenü",
     "logout": "Abmelden",
@@ -353,18 +361,23 @@
   "admin": {
     "label": "Admin",
     "toggleNavigation": "Navigation ein- oder ausblenden",
+    "navigation": "Admin-Navigation",
+    "groups": {
+      "service": "Service",
+      "restaurant": "Restaurant",
+      "bookings": "Buchungen",
+      "team": "Team"
+    },
     "nav": {
       "overview": "Übersicht",
-      "reservations": "Reservierungen",
-      "profile": "Restaurantprofil",
+      "serviceScreen": "Service-Bildschirm",
+      "profile": "Profil",
       "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter",
-      "tables": "Tischübersicht",
-      "embed": "Website-Einbindung",
-      "openFrontdesk": "Empfang öffnen"
+      "embed": "Website-Einbindung"
     }
   },
   "superadmin": {
@@ -374,7 +387,7 @@
     "search": "Restaurants durchsuchen",
     "searchPlaceholder": "Nach Name oder Slug suchen",
     "empty": "Es gibt noch keine Restaurants.",
-    "noMatch": "Kein Restaurant passt zu Ihrer Suche.",
+    "noMatch": "Kein Restaurant passt zu Suche und Filter.",
     "backToList": "Alle Restaurants",
     "masterData": "Stammdaten",
     "noLocation": "Noch nicht festgelegt",
@@ -390,7 +403,13 @@
       "tables": "Tische",
       "upcomingReservations": "Künftige Reservierungen",
       "location": "Land / Region",
-      "createdAt": "Angelegt am"
+      "createdAt": "Angelegt am",
+      "setup": "Einrichtung",
+      "last7Days": "Buchungen letzte 7 Tage",
+      "next7Days": "Buchungen nächste 7 Tage",
+      "lastOnlineBooking": "Letzte Online-Buchung",
+      "lastSignIn": "Letzte Anmeldung des Personals",
+      "staff": "Mitarbeiter"
     },
     "status": {
       "active": "Aktiv",
@@ -439,6 +458,34 @@
       "invalidName": "Bitte geben Sie einen Namen mit höchstens 100 Zeichen ein.",
       "invalidSlug": "Der Slug darf nur Kleinbuchstaben, Ziffern und einzelne Bindestriche (nicht am Anfang oder Ende) enthalten, höchstens 50 Zeichen.",
       "slugTaken": "Dieser Slug wird bereits von einem anderen Restaurant verwendet."
+    },
+    "never": "Nie",
+    "filter": {
+      "label": "Anzeigen",
+      "all": "Alle",
+      "active": "Aktiv",
+      "inactive": "Deaktiviert",
+      "setupIncomplete": "Einrichtung unvollständig"
+    },
+    "sort": {
+      "label": "Sortieren nach",
+      "name": "Name",
+      "activity": "Letzte Aktivität"
+    },
+    "stats": {
+      "active": "Aktive Restaurants",
+      "setupIncomplete": "Einrichtung unvollständig",
+      "bookingsLast7Days": "Buchungen der letzten 7 Tage"
+    },
+    "activity": {
+      "title": "Aktivität",
+      "hint": "Buchungen ohne stornierte und abgelehnte, in der Zeitzone des Restaurants."
+    },
+    "setup": {
+      "title": "Einrichtung",
+      "open": "Offen",
+      "allDone": "Alle Schritte der Einrichtung sind erledigt.",
+      "hint": "Nur zur Ansicht: Die offenen Schritte erledigt der Admin des Restaurants im Admin-Bereich."
     }
   },
   "overview": {
@@ -446,7 +493,7 @@
     "viewBookingPage": "Buchungsseite ansehen",
     "today": {
       "title": "Heute",
-      "toReservations": "Zu den Reservierungen"
+      "openServiceScreen": "Service-Bildschirm öffnen"
     },
     "checklist": {
       "title": "Restaurant einrichten",
@@ -512,10 +559,8 @@
       "website": "Bitte geben Sie eine vollständige Webadresse ein, die mit https:// oder http:// beginnt."
     },
     "errors": {
-      "title": "Das Profil konnte nicht gespeichert werden",
       "tooLong": "Ein Feld ist länger als erlaubt."
     },
-    "save": "Speichern",
     "saved": "Das Profil wurde gespeichert."
   },
   "branding": {
@@ -619,7 +664,6 @@
       "title": "Vorschau",
       "hint": "Zeigt Ihre Änderungen schon vor dem Speichern."
     },
-    "save": "Speichern",
     "saved": "Das Erscheinungsbild wurde gespeichert.",
     "errors": {
       "title": "Das Erscheinungsbild konnte nicht gespeichert werden",
@@ -710,6 +754,7 @@
     }
   },
   "openingHours": {
+    "subtitle": "Wann Gäste buchen können: Wochenzeiten, Schließtage und Sonderöffnungszeiten, Standort und Feiertage.",
     "save": "Speichern",
     "saved": "Gespeichert.",
     "open": "Geöffnet",
@@ -868,6 +913,7 @@
     "text": "Die gesuchte Seite gibt es nicht oder sie wurde verschoben."
   },
   "areas": {
+    "subtitle": "Ihre Räume mit Grundriss und Tischen und wie viele Plätze davon online buchbar sind.",
     "addArea": "Bereich hinzufügen",
     "create": "Anlegen",
     "emptyTitle": "Noch keine Bereiche",
@@ -1118,7 +1164,6 @@
       "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
       "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
     },
-    "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
   },
   "reservations": {
@@ -1277,6 +1322,36 @@
         "time": "Bitte eine Uhrzeit wählen.",
         "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
         "name": "Bitte den Namen des Gastes angeben."
+      }
+    },
+    "history": {
+      "title": "Verlauf",
+      "empty": "Noch keine Änderungen erfasst.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Vom Gast online gebucht",
+      "createdByStaff": "Eingetragen von {{name}}",
+      "createdBySystem": "Vom System angelegt",
+      "cancelledByGuest": "Vom Gast über den Link storniert",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "Ein Teammitglied",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} Person",
+      "guests_other": "{{count}} Personen",
+      "minutes_one": "{{count}} Min.",
+      "minutes_other": "{{count}} Min.",
+      "fields": {
+        "date": "Datum",
+        "time": "Uhrzeit",
+        "partySize": "Personen",
+        "table": "Tisch",
+        "duration": "Dauer",
+        "name": "Name",
+        "phone": "Telefon",
+        "email": "E-Mail",
+        "notes": "Notiz",
+        "status": "Status"
       }
     },
     "errors": {

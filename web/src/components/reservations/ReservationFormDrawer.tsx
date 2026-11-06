@@ -16,6 +16,7 @@ import {
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
 import { datePickerFormatter, formatDate, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
+import { ReservationHistory } from './ReservationHistory.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 import { closedStatuses, sourceLabels, statusLabels } from './status.ts'
 
@@ -68,13 +69,16 @@ function EditForm({ reservation, today, onClose }: { reservation: Reservation; t
     return <ErrorAlert error={defaults.error} onRetry={() => void defaults.refetch()} />
   }
   return (
-    <ReservationForm
-      reservation={reservation}
-      initialDate={reservation.date}
-      initialDuration={defaults.data.durationMinutes !== reservation.durationMinutes ? reservation.durationMinutes : null}
-      today={today}
-      onClose={onClose}
-    />
+    <Stack gap="xl">
+      <ReservationForm
+        reservation={reservation}
+        initialDate={reservation.date}
+        initialDuration={defaults.data.durationMinutes !== reservation.durationMinutes ? reservation.durationMinutes : null}
+        today={today}
+        onClose={onClose}
+      />
+      <ReservationHistory reservationId={reservation.id} />
+    </Stack>
   )
 }
 

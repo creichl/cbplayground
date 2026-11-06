@@ -122,10 +122,10 @@ public static class TestRestaurants
         return date;
     }
 
-    /// <summary>Adds a reservation directly, e.g. one in the past, which the API does not accept.</summary>
+    /// <summary>Adds a reservation directly, e.g. one in the past, which the API does not accept; made now unless <paramref name="createdAtUtc"/> says otherwise.</summary>
     public static async Task<Guid> AddReservationAsync(ApiFactory factory, TestRestaurant restaurant, string tableNumber, DateTime startLocal,
         int durationMinutes = 120, ReservationStatus status = ReservationStatus.Confirmed, ReservationSource source = ReservationSource.Staff,
-        DateTime? completedAtLocal = null)
+        DateTime? completedAtLocal = null, DateTime? createdAtUtc = null)
     {
         using var scope = factory.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = restaurant.Id;
@@ -146,7 +146,7 @@ public static class TestRestaurants
             CompletedAtLocal = completedAtLocal,
             ReferenceCode = $"{Guid.NewGuid():N}"[..6].ToUpperInvariant(),
             Language = "de",
-            CreatedAtUtc = DateTime.UtcNow,
+            CreatedAtUtc = createdAtUtc ?? DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow,
         };
         db.Reservations.Add(reservation);
