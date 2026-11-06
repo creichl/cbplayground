@@ -11,14 +11,17 @@ namespace Cbplayground.Api.Endpoints;
 /// The Superadmin manages the restaurants: lists, creates, renames, deactivates and activates them, and sets up their Tenant Admins.
 /// Restaurants are never deleted. The Superadmin belongs to no restaurant, so the tenant query filters return nothing for them:
 /// <see cref="Tenant"/> and <see cref="ApplicationUser"/> are not tenant-owned and are read without filter, the tenant-owned
-/// counts use <c>IgnoreQueryFilters()</c> (justified where used). Nothing tenant-owned is written here.
+/// key figures (tables, setup steps, reservations) use <c>IgnoreQueryFilters()</c> (justified where used). Nothing tenant-owned is written here.
 /// Failed requests are answered with <c>{ "error": "..." }</c>; the codes are listed at the request types.
 /// </summary>
 public static partial class SuperadminEndpoints
 {
     /// <summary>
-    /// A restaurant with its key figures: <see cref="AdminCount"/> active Tenant Admins, <see cref="TableCount"/> tables and
-    /// <see cref="UpcomingReservationCount"/> reservations that start from now on (in the restaurant's time zone) and are not cancelled or declined.
+    /// A restaurant with its key figures: <see cref="AdminCount"/> active Tenant Admins, <see cref="StaffCount"/> active staff users
+    /// (all roles), <see cref="TableCount"/> tables, <see cref="UpcomingReservationCount"/> reservations that start from now on,
+    /// <see cref="ReservationsLast7Days"/> in the 7 days before now and <see cref="ReservationsNext7Days"/> in the 7 days from now
+    /// (all in the restaurant's time zone, none of them cancelled or declined), the steps of its <see cref="Setup"/> (as
+    /// <c>GET /api/admin/setup-status</c>), when the last online booking was made and when one of its staff last signed in (UTC, null if never).
     /// </summary>
     public record SuperadminTenant(
         Guid Id,
@@ -29,8 +32,14 @@ public static partial class SuperadminEndpoints
         bool IsActive,
         DateTime CreatedAt,
         int AdminCount,
+        int StaffCount,
         int TableCount,
-        int UpcomingReservationCount);
+        int UpcomingReservationCount,
+        ProfileEndpoints.SetupStatusResponse Setup,
+        int ReservationsLast7Days,
+        int ReservationsNext7Days,
+        DateTime? LastOnlineBookingAtUtc,
+        DateTime? LastStaffSignInAtUtc);
 
     /// <summary>
     /// A new restaurant; country and region are optional. Errors (400): "invalid_name", "invalid_slug", "invalid_country",
@@ -60,12 +69,7 @@ public static partial class SuperadminEndpoints
         group.MapGet("/", async (AppDbContext db, TimeProvider timeProvider) =>
         {
             var tenants = await db.Tenants.OrderBy(t => t.Name).ToListAsync();
-            var result = new List<SuperadminTenant>();
-            foreach (var tenant in tenants)
-            {
-                result.Add(await ToResponseAsync(db, tenant, timeProvider));
-            }
-            return result;
+            return await ToResponsesAsync(db, tenants, timeProvider);
         });
 
         group.MapPost("/", async (CreateTenantRequest request, AppDbContext db, TimeProvider timeProvider) =>
@@ -266,39 +270,122 @@ public static partial class SuperadminEndpoints
         return null;
     }
 
-    /// <summary>The Tenant Admins of a restaurant, active or not.</summary>
-    private static IQueryable<ApplicationUser> TenantAdminsOf(AppDbContext db, Guid tenantId) =>
-        db.Users.Where(u => u.TenantId == tenantId
+    /// <summary>The Tenant Admins of all restaurants, active or not.</summary>
+    private static IQueryable<ApplicationUser> TenantAdmins(AppDbContext db) =>
+        db.Users.Where(u => u.TenantId != null
             && db.UserRoles.Any(ur => ur.UserId == u.Id && db.Roles.Any(r => r.Id == ur.RoleId && r.Name == Roles.TenantAdmin)));
 
-    private static async Task<SuperadminTenant> ToResponseAsync(AppDbContext db, Tenant tenant, TimeProvider timeProvider)
-    {
-        var adminCount = await TenantAdminsOf(db, tenant.Id).CountAsync(u => u.IsActive);
+    /// <summary>The Tenant Admins of a restaurant, active or not.</summary>
+    private static IQueryable<ApplicationUser> TenantAdminsOf(AppDbContext db, Guid tenantId) =>
+        TenantAdmins(db).Where(u => u.TenantId == tenantId);
 
-        // IgnoreQueryFilters: the Superadmin has no tenant, so the tenant filter would hide every table and reservation.
-        // Both counts are restricted to this restaurant explicitly and only read. Archived tables do not count.
-        var tableCount = await db.Tables.IgnoreQueryFilters().CountAsync(t => t.TenantId == tenant.Id && t.ArchivedAtUtc == null);
+    private static async Task<SuperadminTenant> ToResponseAsync(AppDbContext db, Tenant tenant, TimeProvider timeProvider) =>
+        (await ToResponsesAsync(db, [tenant], timeProvider)).Single();
+
+    /// <summary>
+    /// The restaurants with their key figures, in the order given. Reads them with the same fixed number of queries for any number
+    /// of restaurants, each restricted to the given restaurants and grouped by restaurant.
+    /// </summary>
+    private static async Task<List<SuperadminTenant>> ToResponsesAsync(AppDbContext db, IReadOnlyList<Tenant> tenants, TimeProvider timeProvider)
+    {
+        if (tenants.Count == 0)
+        {
+            return [];
+        }
+        var ids = tenants.Select(t => t.Id).ToList();
+
+        var adminCounts = await TenantAdmins(db)
+            .Where(u => u.IsActive && ids.Contains(u.TenantId!.Value))
+            .GroupBy(u => u.TenantId!.Value)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TenantId, x => x.Count);
+        var staff = await db.Users
+            .Where(u => u.TenantId != null && ids.Contains(u.TenantId.Value))
+            .GroupBy(u => u.TenantId!.Value)
+            .Select(g => new { TenantId = g.Key, ActiveCount = g.Count(u => u.IsActive), LastSignInAtUtc = g.Max(u => u.LastSignInAtUtc) })
+            .ToDictionaryAsync(x => x.TenantId);
+
+        // IgnoreQueryFilters (here and below): the Superadmin has no tenant, so the tenant filter would hide every row of the
+        // restaurants. Every query is restricted to the given restaurants explicitly, grouped by restaurant, and only reads.
+        // Archived tables do not count, neither here nor for the setup step.
+        var tableCounts = await db.Tables.IgnoreQueryFilters()
+            .Where(t => ids.Contains(t.TenantId) && t.ArchivedAtUtc == null)
+            .GroupBy(t => t.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TenantId, x => x.Count);
+        // IgnoreQueryFilters: which restaurants have opening hours, for their setup steps (read only, see above).
+        var withOpeningHours = (await db.OpeningPeriods.IgnoreQueryFilters()
+            .Where(p => ids.Contains(p.TenantId)).Select(p => p.TenantId).Distinct().ToListAsync()).ToHashSet();
+        // IgnoreQueryFilters: which restaurants have an area with a floor plan, for their setup steps (read only, see above).
+        var withFloorPlan = (await db.Areas.IgnoreQueryFilters()
+            .Where(a => ids.Contains(a.TenantId) && a.FloorPlanFileName != null && a.ArchivedAtUtc == null).Select(a => a.TenantId).Distinct().ToListAsync()).ToHashSet();
+        // IgnoreQueryFilters: which restaurants have saved their reservation settings, for their setup steps (read only, see above).
+        var withReservationSettings = (await db.ReservationSettings.IgnoreQueryFilters()
+            .Where(r => ids.Contains(r.TenantId)).Select(r => r.TenantId).Distinct().ToListAsync()).ToHashSet();
+        // IgnoreQueryFilters: the newest online booking of each restaurant, whatever became of it (read only, see above).
+        var lastOnlineBookings = await db.Reservations.IgnoreQueryFilters()
+            .Where(r => ids.Contains(r.TenantId) && r.Source == ReservationSource.Online)
+            .GroupBy(r => r.TenantId)
+            .Select(g => new { TenantId = g.Key, CreatedAtUtc = g.Max(r => r.CreatedAtUtc) })
+            .ToDictionaryAsync(x => x.TenantId, x => x.CreatedAtUtc);
+
+        // The reservations are counted from each restaurant's local now. The starts between the earliest of these nows minus 7 days
+        // and the latest plus 7 days are read and counted per restaurant here; those after it are upcoming for every restaurant
+        // and only counted by the database.
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
-        var localNow = tenant.TimeZoneId is null ? utcNow : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utcNow, tenant.TimeZoneId);
-        var upcomingReservationCount = await db.Reservations.IgnoreQueryFilters().CountAsync(r =>
-            r.TenantId == tenant.Id
-            && r.StartLocal >= localNow
+        var localNows = tenants.ToDictionary(t => t.Id, t => t.TimeZoneId is null ? utcNow : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utcNow, t.TimeZoneId));
+        var windowStart = localNows.Values.Min().AddDays(-7);
+        var windowEnd = localNows.Values.Max().AddDays(7);
+        // IgnoreQueryFilters: the reservations of the restaurants, for their counts (read only, see above).
+        var counted = db.Reservations.IgnoreQueryFilters().Where(r =>
+            ids.Contains(r.TenantId)
             && r.Status != ReservationStatus.Cancelled
             && r.Status != ReservationStatus.Declined);
+        var startsInWindow = (await counted
+            .Where(r => r.StartLocal >= windowStart && r.StartLocal < windowEnd)
+            .Select(r => new { r.TenantId, r.StartLocal })
+            .ToListAsync()).ToLookup(r => r.TenantId, r => r.StartLocal);
+        var countsAfterWindow = await counted
+            .Where(r => r.StartLocal >= windowEnd)
+            .GroupBy(r => r.TenantId)
+            .Select(g => new { TenantId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.TenantId, x => x.Count);
 
-        return new SuperadminTenant(
-            tenant.Id,
-            tenant.Name,
-            tenant.Slug,
-            tenant.CountryCode,
-            tenant.RegionCode,
-            tenant.IsActive,
-            // SQLite returns the stored UTC time without its kind; mark it, so the JSON carries the "Z".
-            DateTime.SpecifyKind(tenant.CreatedAt, DateTimeKind.Utc),
-            adminCount,
-            tableCount,
-            upcomingReservationCount);
+        return tenants.Select(tenant =>
+        {
+            var localNow = localNows[tenant.Id];
+            var starts = startsInWindow[tenant.Id];
+            var tenantStaff = staff.GetValueOrDefault(tenant.Id);
+            DateTime? lastOnlineBooking = lastOnlineBookings.TryGetValue(tenant.Id, out var createdAtUtc) ? AsUtc(createdAtUtc) : null;
+            return new SuperadminTenant(
+                tenant.Id,
+                tenant.Name,
+                tenant.Slug,
+                tenant.CountryCode,
+                tenant.RegionCode,
+                tenant.IsActive,
+                AsUtc(tenant.CreatedAt),
+                adminCounts.GetValueOrDefault(tenant.Id),
+                tenantStaff?.ActiveCount ?? 0,
+                tableCounts.GetValueOrDefault(tenant.Id),
+                starts.Count(start => start >= localNow) + countsAfterWindow.GetValueOrDefault(tenant.Id),
+                // The same steps as GET /api/admin/setup-status (ProfileEndpoints).
+                new ProfileEndpoints.SetupStatusResponse(
+                    Profile: tenant is { Street: not null, PostalCode: not null, City: not null, Phone: not null },
+                    Location: tenant.CountryCode is not null,
+                    OpeningHours: withOpeningHours.Contains(tenant.Id),
+                    FloorPlan: withFloorPlan.Contains(tenant.Id),
+                    Tables: tableCounts.ContainsKey(tenant.Id),
+                    ReservationSettings: withReservationSettings.Contains(tenant.Id)),
+                starts.Count(start => start >= localNow.AddDays(-7) && start < localNow),
+                starts.Count(start => start >= localNow && start < localNow.AddDays(7)),
+                lastOnlineBooking,
+                tenantStaff?.LastSignInAtUtc is { } lastSignIn ? AsUtc(lastSignIn) : null);
+        }).ToList();
     }
+
+    /// <summary>SQLite returns a stored UTC time without its kind; marks it, so the JSON carries the "Z".</summary>
+    private static DateTime AsUtc(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Utc);
 
     private static IResult BadRequest(string error) => ErrorResponse.Result(error, StatusCodes.Status400BadRequest);
 

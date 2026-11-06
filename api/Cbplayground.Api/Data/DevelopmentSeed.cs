@@ -12,7 +12,7 @@ namespace Cbplayground.Api.Data;
 /// <summary>
 /// Demo data for local development: the three demo restaurants with their setup (<see cref="SeedRestaurantsAsync"/>),
 /// the demo staff users from the "Seed:Users" section of appsettings.Development.json (<see cref="SeedUsersAsync"/>)
-/// and demo reservations for today and the next 7 days (<see cref="SeedReservationsAsync(IServiceProvider)"/>).
+/// and demo reservations for the past 7 days, today and the next 7 days (<see cref="SeedReservationsAsync(IServiceProvider)"/>).
 /// </summary>
 public static class DevelopmentSeed
 {
@@ -500,7 +500,8 @@ public static class DevelopmentSeed
 
     /// <summary>
     /// Adds demo reservations from today to today + 7 days for every restaurant that has tables, a location and opening hours,
-    /// but no reservations from today on. Wherever the tables come from (demo data or entered by hand) does not matter.
+    /// but no reservations from today on; and, if it has none in the past 7 days either, for those days too (so the Superadmin's
+    /// bookings of the last 7 days show a figure). Wherever the tables come from (demo data or entered by hand) does not matter.
     /// </summary>
     public static async Task SeedReservationsAsync(IServiceProvider services)
     {
@@ -535,6 +536,8 @@ public static class DevelopmentSeed
         {
             return;
         }
+        var weekAgo = todayStart.AddDays(-7);
+        var firstDay = await db.Reservations.AnyAsync(r => r.StartLocal >= weekAgo) ? 0 : -7;
         var tables = await db.Tables.Where(t => t.ArchivedAtUtc == null)
             .Join(db.Areas.Where(a => a.ArchivedAtUtc == null), t => t.AreaId, a => a.Id, (t, a) => new { Table = t, Area = a })
             .ToListAsync();
@@ -550,7 +553,7 @@ public static class DevelopmentSeed
         var random = new Random(tenant.Id.GetHashCode());
         var reservations = new List<Reservation>();
         var referenceCodes = new HashSet<string>();
-        for (var day = 0; day <= 7; day++)
+        for (var day = firstDay; day <= 7; day++)
         {
             var date = today.AddDays(day);
             foreach (var period in await openingCalendar.GetOpenPeriodsAsync(date))
@@ -605,19 +608,28 @@ public static class DevelopmentSeed
                         GuestPhone = guest.Phone,
                         GuestEmail = guest.Email,
                         Notes = guest.Notes,
-                        Status = DemoStatus(random, start <= now, source, settings.ConfirmationMode),
+                        Status = day < 0 ? PastDemoStatus(random) : DemoStatus(random, start <= now, source, settings.ConfirmationMode),
                         Source = source,
                         ReferenceCode = await UniqueReferenceCodeAsync(db, referenceCodes),
                         Language = guest.Language,
-                        CreatedAtUtc = DateTime.UtcNow,
+                        // A reservation of a past day was made two days before it.
+                        CreatedAtUtc = DateTime.UtcNow.AddDays(day < 0 ? day - 2 : 0),
                         UpdatedAtUtc = DateTime.UtcNow,
                     };
+                    if (reservation.Status == ReservationStatus.Completed)
+                    {
+                        reservation.CompletedAtLocal = end;
+                    }
                     reservations.Add(reservation);
                 }
             }
         }
 
         db.Reservations.AddRange(reservations);
+        foreach (var reservation in reservations)
+        {
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, ReservationEditor.System, reservation.CreatedAtUtc);
+        }
         await db.SaveChangesAsync();
     }
 
@@ -652,6 +664,13 @@ public static class DevelopmentSeed
             return ReservationStatus.Requested;
         }
         return value > 0.93 ? ReservationStatus.Cancelled : ReservationStatus.Confirmed;
+    }
+
+    /// <summary>Reservations of a past day: mostly the guests came and left, some did not come, some cancelled.</summary>
+    private static ReservationStatus PastDemoStatus(Random random)
+    {
+        var value = random.NextDouble();
+        return value < 0.08 ? ReservationStatus.NoShow : value < 0.15 ? ReservationStatus.Cancelled : ReservationStatus.Completed;
     }
 
     private static async Task<string> UniqueReferenceCodeAsync(AppDbContext db, HashSet<string> taken)
