@@ -47,7 +47,7 @@ function closedRanges(openPeriods: OpenPeriod[], start: number, end: number) {
 
 /**
  * Tables (grouped by area) × time of day: one row per table with its reservations as blocks in their status colour,
- * an hour grid and a line at the current time. Scrolls horizontally; the table column stays in place.
+ * an hour grid and a line at the current time. Archived tables with reservations on the day follow in a group of their own. Scrolls horizontally; the table column stays in place.
  */
 export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes }: TimelineProps) {
   const { t, i18n } = useTranslation()
@@ -80,6 +80,75 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
     flexShrink: 0,
     borderRight: '1px solid var(--mantine-color-gray-3)',
   } as const
+
+  // Reservations on archived tables keep their table and area; their tables get a row each in a group of their own, only on
+  // the days they have reservations.
+  const archivedTables = [...new Map(reservations.filter((reservation) => reservation.tableArchived).map((reservation) => [reservation.tableId, reservation])).values()]
+    .sort((a, b) => a.tableNumber.length - b.tableNumber.length || (a.tableNumber < b.tableNumber ? -1 : a.tableNumber > b.tableNumber ? 1 : 0))
+
+  /** The header row of a group of tables: an area, or the archived tables. */
+  const groupHeader = (title: string) => (
+    <Box display="flex" h={28} bg="gray.0" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+      <Box bg="gray.0" px="xs" style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
+        <Text size="sm" fw={600} truncate>
+          {title}
+        </Text>
+      </Box>
+    </Box>
+  )
+
+  /** The row of a table with its label and its reservations as blocks. */
+  const row = (key: string, label: string, ariaLabel: string, rowReservations: Reservation[]) => (
+    <Box key={key} display="flex" h={rowHeight} style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
+      <Box bg="white" px="xs" aria-label={ariaLabel} title={label} style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
+        <Text size="sm" fw={600} truncate>
+          {label}
+        </Text>
+      </Box>
+      <Box pos="relative" style={{ width, flexShrink: 0, backgroundImage: gridLines }}>
+        {rowReservations.map((reservation) => {
+          const active = isActive(reservation)
+          const color = statusColors[reservation.status]
+          const left = x(toMinutes(reservation.time))
+          // A guest who left ends at the time they left.
+          const until = occupiedUntil(reservation)
+          const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
+          const times = t('common.timeRange', {
+            start: formatTime(reservation.time, language),
+            end: formatTime(until, language),
+          })
+          return (
+            <ReservationPopover key={reservation.id} reservation={reservation}>
+              <UnstyledButton
+                aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
+                px={6}
+                style={{
+                  position: 'absolute',
+                  top: 4,
+                  bottom: 4,
+                  left: left + 1,
+                  width: Math.max(x(toMinutes(until)) - left - 2, 8),
+                  zIndex: 1,
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  borderRadius: 'var(--mantine-radius-sm)',
+                  backgroundColor: `var(--mantine-color-${color}-1)`,
+                  border: `1px ${active ? 'solid' : 'dashed'} var(--mantine-color-${color}-6)`,
+                  borderLeftWidth: 4,
+                  opacity: active ? 1 : 0.5,
+                }}
+              >
+                <Text size="sm" truncate td={active ? undefined : 'line-through'}>
+                  {party}
+                </Text>
+              </UnstyledButton>
+            </ReservationPopover>
+          )
+        })}
+      </Box>
+    </Box>
+  )
 
   return (
     <Box
@@ -122,73 +191,31 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
           .filter((area) => area.tables.length > 0)
           .map((area) => (
             <Box key={area.id}>
-              <Box display="flex" h={28} bg="gray.0" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-                <Box bg="gray.0" px="xs" style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
-                  <Text size="sm" fw={600} truncate>
-                    {area.name}
-                  </Text>
-                </Box>
-              </Box>
-              {area.tables.map((table) => (
-                <Box key={table.id} display="flex" h={rowHeight} style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
-                  <Box
-                    bg="white"
-                    px="xs"
-                    aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
-                    style={{ ...labelCell, display: 'flex', alignItems: 'center' }}
-                  >
-                    <Text size="sm" fw={600} truncate>
-                      {t('common.tableLabel', { number: table.number, seats: table.seats })}
-                    </Text>
-                  </Box>
-                  <Box pos="relative" style={{ width, flexShrink: 0, backgroundImage: gridLines }}>
-                    {sorted
-                      .filter((reservation) => reservation.tableId === table.id)
-                      .map((reservation) => {
-                        const active = isActive(reservation)
-                        const color = statusColors[reservation.status]
-                        const left = x(toMinutes(reservation.time))
-                        // A guest who left ends at the time they left.
-                        const until = occupiedUntil(reservation)
-                        const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
-                        const times = t('common.timeRange', {
-                          start: formatTime(reservation.time, language),
-                          end: formatTime(until, language),
-                        })
-                        return (
-                          <ReservationPopover key={reservation.id} reservation={reservation}>
-                            <UnstyledButton
-                              aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
-                              px={6}
-                              style={{
-                                position: 'absolute',
-                                top: 4,
-                                bottom: 4,
-                                left: left + 1,
-                                width: Math.max(x(toMinutes(until)) - left - 2, 8),
-                                zIndex: 1,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                borderRadius: 'var(--mantine-radius-sm)',
-                                backgroundColor: `var(--mantine-color-${color}-1)`,
-                                border: `1px ${active ? 'solid' : 'dashed'} var(--mantine-color-${color}-6)`,
-                                borderLeftWidth: 4,
-                                opacity: active ? 1 : 0.5,
-                              }}
-                            >
-                              <Text size="sm" truncate td={active ? undefined : 'line-through'}>
-                                {party}
-                              </Text>
-                            </UnstyledButton>
-                          </ReservationPopover>
-                        )
-                      })}
-                  </Box>
-                </Box>
-              ))}
+              {groupHeader(area.name)}
+              {area.tables.map((table) =>
+                row(
+                  table.id,
+                  t('common.tableLabel', { number: table.number, seats: table.seats }),
+                  t('areas.tableMarker', { number: table.number, seats: table.seats }),
+                  sorted.filter((reservation) => reservation.tableId === table.id),
+                ),
+              )}
             </Box>
           ))}
+
+        {archivedTables.length > 0 && (
+          <Box>
+            {groupHeader(t('tableOverview.timeline.archivedTables'))}
+            {archivedTables.map((table) =>
+              row(
+                table.tableId,
+                t('tableOverview.details.tableValue', { number: table.tableNumber, area: table.areaName }),
+                t('tableOverview.timeline.archivedTable', { number: table.tableNumber, area: table.areaName }),
+                sorted.filter((reservation) => reservation.tableId === table.tableId),
+              ),
+            )}
+          </Box>
+        )}
 
         {nowMinutes !== null && nowMinutes >= start && nowMinutes <= end && (
           <Box

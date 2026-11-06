@@ -911,7 +911,7 @@
       "moveRight": "Nach rechts",
       "delete": "Bereich löschen",
       "deleteTitle": "„{{name}}“ löschen?",
-      "deleteText": "Die Tische des Bereichs ({{tables}}) und sein Grundriss werden ebenfalls gelöscht. Das lässt sich nicht rückgängig machen.",
+      "deleteText": "Der Bereich und seine Tische ({{tables}}) werden entfernt und können nicht mehr gebucht werden. Vergangene und stornierte Reservierungen bleiben erhalten. Das lässt sich nicht rückgängig machen.",
       "deleteConfirm": "Löschen",
       "description": "Beschreibung",
       "descriptionHint": "Ein kurzer Text, den Gäste bei der Wahl des Bereichs sehen.",
@@ -940,7 +940,7 @@
       "saved": "Der Tisch wurde gespeichert.",
       "delete": "Tisch löschen",
       "deleteTitle": "Tisch {{number}} löschen?",
-      "deleteText": "Der Tisch wird gelöscht, mit ihm seine vergangenen, stornierten und abgelehnten Reservierungen. Das lässt sich nicht rückgängig machen.",
+      "deleteText": "Der Tisch wird aus dem Grundriss entfernt und kann nicht mehr gebucht werden. Seine vergangenen und stornierten Reservierungen bleiben erhalten. Das lässt sich nicht rückgängig machen.",
       "deleteConfirm": "Löschen",
       "notDeleted": "Der Tisch wurde nicht gelöscht",
       "hasReservations": "Für diesen Tisch gibt es noch anstehende Reservierungen. Verlegen Sie sie zuerst an einen anderen Tisch oder stornieren Sie sie."
@@ -1313,7 +1313,9 @@
     "legendInactive": "Storniert, abgelehnt oder nicht erschienen",
     "party": "{{name}} ({{guests}})",
     "timeline": {
-      "tableColumn": "Tisch · Plätze"
+      "tableColumn": "Tisch · Plätze",
+      "archivedTables": "Archivierte Tische",
+      "archivedTable": "Archivierter Tisch {{number}} · {{area}}"
     },
     "floor": {
       "time": "Uhrzeit",

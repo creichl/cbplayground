@@ -23,6 +23,8 @@ export type Reservation = {
   source: ReservationSource
   tableId: string
   tableNumber: string
+  /** The table was deleted after this reservation and is archived: it is on no floor plan any more, the reservation keeps it. */
+  tableArchived: boolean
   areaId: string
   areaName: string
   name: string
