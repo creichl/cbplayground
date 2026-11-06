@@ -1297,7 +1297,7 @@
       "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
       "notFound": "This reservation no longer exists. Please reload the page.",
       "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time, undoing a cancellation only until the reservation's end.",
-      "reservationClosed": "This reservation is closed: only the guest's details and the note can be changed. The list has been reloaded.",
+      "reservationClosed": "This reservation is closed: only the guest's details and the note can be changed.",
       "cannotDeleteReservation": "Only a seated walk-in can be removed. Someone else may have changed it; the list has been reloaded.",
       "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
       "statusTitle": "The status could not be changed"

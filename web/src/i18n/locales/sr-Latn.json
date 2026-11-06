@@ -1326,7 +1326,7 @@
       "invalidStatusTransition": "Status ne može da se promeni na ovaj način. Možda je neko drugi izmenio rezervaciju; lista je ponovo učitana.",
       "notFound": "Ova rezervacija više ne postoji. Ponovo učitajte stranicu.",
       "statusNotAllowedNow": "To sada nije moguće za ovu rezervaciju: „Stigli“ i „Kasne“ samo na dan rezervacije, „Nisu došli“ tek od vremena početka, poništavanje otkazivanja samo do kraja rezervacije.",
-      "reservationClosed": "Ova rezervacija je zatvorena: mogu da se promene samo podaci o gostu i napomena. Lista je ponovo učitana.",
+      "reservationClosed": "Ova rezervacija je zatvorena: mogu da se promene samo podaci o gostu i napomena.",
       "cannotDeleteReservation": "Samo smešten gost bez rezervacije može da se ukloni. Možda ga je neko drugi izmenio; lista je ponovo učitana.",
       "tableTaken": "Sto je u međuvremenu zauzet, pa ovo ne može da se poništi.",
       "statusTitle": "Status nije mogao da se promeni"

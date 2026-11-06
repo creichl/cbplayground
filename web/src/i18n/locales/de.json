@@ -1297,7 +1297,7 @@
       "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
       "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu.",
       "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit, das Rückgängigmachen einer Stornierung nur bis zum Ende der Reservierung.",
-      "reservationClosed": "Diese Reservierung ist abgeschlossen: Nur die Angaben zum Gast und die Notiz lassen sich ändern. Die Liste wurde neu geladen.",
+      "reservationClosed": "Diese Reservierung ist abgeschlossen: Nur die Angaben zum Gast und die Notiz lassen sich ändern.",
       "cannotDeleteReservation": "Nur ein platzierter Walk-in lässt sich entfernen. Vielleicht hat jemand anderes ihn geändert; die Liste wurde neu geladen.",
       "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
       "statusTitle": "Der Status konnte nicht geändert werden"
