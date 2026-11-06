@@ -5,6 +5,7 @@ import i18n from './index.ts'
 
 // The one place where dates and times are formatted for the UI, so every page shows them alike in the user's language.
 // Dates are local calendar dates "YYYY-MM-DD", times "HH:mm"; both are built in local time so the day does not shift.
+// Moments of the API (UTC with "Z") are shown in the device's time zone.
 
 function toDate(date: string) {
   const [year, month, day] = date.split('-').map(Number)
@@ -24,6 +25,14 @@ export function formatDate(date: string, language: string) {
 /** A date written out, e.g. "Samstag, 31. Oktober 2026" or "Saturday, October 31, 2026". */
 export function formatLongDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { dateStyle: 'full' }).format(toDate(date))
+}
+
+/**
+ * A moment with time zone (ISO 8601, e.g. a UTC time of the API) as date and time in the device's time zone,
+ * e.g. "31. Okt. 2026, 19:05" or "Oct 31, 2026, 7:05 PM".
+ */
+export function formatDateTime(moment: string, language: string) {
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(moment))
 }
 
 /**

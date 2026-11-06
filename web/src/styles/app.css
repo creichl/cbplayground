@@ -623,3 +623,13 @@
     animation: table-glow 1.8s ease-in-out infinite alternate;
   }
 }
+
+/*
+ * While the save bar of an admin form is shown (src/components/SaveBar.tsx, 64 px high), Mantine's notifications at the
+ * bottom of the window move above it, so a notification never covers its buttons.
+ */
+@layer mantine {
+  body:has([data-save-bar]) .mantine-Notifications-root:where([data-position^='bottom']) {
+    bottom: calc(64px + var(--mantine-spacing-md));
+  }
+}

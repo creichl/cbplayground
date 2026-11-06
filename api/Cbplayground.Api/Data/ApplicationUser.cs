@@ -14,4 +14,7 @@ public class ApplicationUser : IdentityUser
 
     /// <summary>Deactivated users cannot sign in.</summary>
     public bool IsActive { get; set; } = true;
+
+    /// <summary>When the user last signed in (UTC); null until the first sign-in. Shown to the Superadmin per restaurant.</summary>
+    public DateTime? LastSignInAtUtc { get; set; }
 }

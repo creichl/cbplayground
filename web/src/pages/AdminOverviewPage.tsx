@@ -6,6 +6,7 @@ import { useCurrentUser } from '../api/auth.ts'
 import { type SetupStatus, useSetupStatus } from '../api/profile.ts'
 import { useOpenRequests, useReservations, useRestaurantToday } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
 import { DayStats } from '../components/reservations/DayStats.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
@@ -24,7 +25,7 @@ const steps: { key: keyof SetupStatus; title: ParseKeys; description: ParseKeys;
   },
 ]
 
-/** Admin start page: greeting, today's key figures and the checklist of the restaurant's setup. */
+/** Admin start page: greeting, today's key figures and open requests with the way to the service screen, then the checklist of the restaurant's setup. */
 export function AdminOverviewPage() {
   const { t } = useTranslation()
   useDocumentTitle(t('admin.nav.overview'))
@@ -35,17 +36,17 @@ export function AdminOverviewPage() {
 
   return (
     <Stack gap="lg">
-      <Group justify="space-between" align="flex-end" gap="sm">
-        <Stack gap={4}>
-          <Title order={2}>{tenant?.name}</Title>
-          <Text c="dimmed">{t('overview.welcome', { name: currentUser.data?.displayName ?? '' })}</Text>
-        </Stack>
-        {tenant !== null && (
-          <Button component="a" href={`/r/${tenant.slug}`} target="_blank" rel="noopener" variant="light">
-            {t('overview.viewBookingPage')}
-          </Button>
-        )}
-      </Group>
+      <PageHeader
+        title={tenant?.name}
+        description={t('overview.welcome', { name: currentUser.data?.displayName ?? '' })}
+        action={
+          tenant !== null && (
+            <Button component="a" href={`/r/${tenant.slug}`} target="_blank" rel="noopener" variant="light">
+              {t('overview.viewBookingPage')}
+            </Button>
+          )
+        }
+      />
 
       <TodayStats />
 
@@ -60,7 +61,7 @@ export function AdminOverviewPage() {
   )
 }
 
-/** Today's reservations, guests and open requests, with the way to the reservations. */
+/** Today's reservations, guests and open requests, with the way to the service screen. */
 function TodayStats() {
   const { t } = useTranslation()
   const today = useRestaurantToday()
@@ -72,7 +73,7 @@ function TodayStats() {
       <Group justify="space-between" gap="xs">
         <Title order={3}>{t('overview.today.title')}</Title>
         <Anchor component={Link} to="/frontdesk" size="sm">
-          {t('overview.today.toReservations')}
+          {t('overview.today.openServiceScreen')}
         </Anchor>
       </Group>
       {reservations.data !== undefined ? (
