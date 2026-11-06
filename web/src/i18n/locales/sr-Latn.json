@@ -266,7 +266,9 @@
       "tableInArea": "Sto {{number}} · {{area}}",
       "address": "Adresa",
       "copyLink": "Kopiraj link",
-      "copy": "Kopiraj"
+      "copy": "Kopiraj",
+      "tables": "Stolovi",
+      "tablesInArea": "Stolovi {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Rezervacija stola – {{restaurant}}",
@@ -984,7 +986,11 @@
       "roomElementLabelInvalid": "Unesite natpis od najviše 40 znakova.",
       "tooManyRoomElements": "Prostorija može imati najviše 60 elemenata.",
       "roomNotSaved": "Prostorija nije mogla da se sačuva",
-      "widthInvalid": "Unesite širinu od 5 do 80 m ili ostavite polje prazno."
+      "widthInvalid": "Unesite širinu od 5 do 80 m ili ostavite polje prazno.",
+      "combinationTablesInvalid": "Izaberite dva ili više stolova ovog prostora.",
+      "combinationExists": "Ovi stolovi su već spojeni.",
+      "combinationSeatsInvalid": "Kombinacija mora imati bar jedno mesto više od svog najvećeg stola.",
+      "combinationMinGuestsInvalid": "Unesite ceo broj od 1 do broja mesta kombinacije."
     },
     "roomDragHint": "Prevucite stolove i elemente prostorije da biste ih pomerili; strelice pomeraju izabrani element. Kliknite na njega da biste ga izmenili.",
     "photo": {
@@ -1045,6 +1051,36 @@
       "labelHint": "Opciono, prikazuje se u planu, npr. „Kuhinja“.",
       "delete": "Obriši element",
       "defaultLabel": "Tekst"
+    },
+    "combinations": {
+      "title": "Kombinacije",
+      "text": "Stolovi koji se mogu spojiti za veću grupu. Sistem dodeljuje kombinaciju samo kada nijedan pojedinačni sto ne odgovara grupi.",
+      "select": "Izaberite stolove za spajanje",
+      "pickHint": "Kliknite na planu stolove koji se spajaju.",
+      "pickedNone": "Još nije izabran nijedan sto.",
+      "picked": "Izabrani stolovi: {{tables}}",
+      "combine": "Spoji",
+      "created": "Stolovi {{label}} su spojeni.",
+      "empty": "Još nema kombinacija.",
+      "label": "Stolovi {{label}}",
+      "summary_one": "{{count}} mesto · onlajn od {{minGuests}} osoba",
+      "summary_few": "{{count}} mesta · onlajn od {{minGuests}} osoba",
+      "summary_other": "{{count}} mesta · onlajn od {{minGuests}} osoba",
+      "summaryOffline_one": "{{count}} mesto · nije dostupno onlajn",
+      "summaryOffline_few": "{{count}} mesta · nije dostupno onlajn",
+      "summaryOffline_other": "{{count}} mesta · nije dostupno onlajn",
+      "seats": "Broj mesta",
+      "seatsHint": "Najmanje jedno više od najvećeg stola: {{min}}.",
+      "minGuests": "Onlajn od (osoba)",
+      "minGuestsHint": "Onlajn se kombinacija nudi samo grupama od ovog broja osoba.",
+      "onlineBookable": "Dostupno onlajn",
+      "onlineBookableHint": "Kada je isključeno, dodeljuje je samo osoblje, npr. za rezervaciju telefonom.",
+      "saved": "Kombinacija je sačuvana.",
+      "edit": "Izmeni",
+      "editLabel": "Izmeni stolove {{label}}",
+      "delete": "Obriši",
+      "deleteLabel": "Obriši stolove {{label}}",
+      "deleted": "Kombinacija je obrisana."
     }
   },
   "floorPlan": {
@@ -1296,7 +1332,16 @@
         "time": "Izaberite vreme.",
         "duration": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
         "name": "Unesite ime gosta."
-      }
+      },
+      "combinationOption_one": "Stolovi {{number}} · {{area}} · {{count}} mesto",
+      "combinationOption_few": "Stolovi {{number}} · {{area}} · {{count}} mesta",
+      "combinationOption_other": "Stolovi {{number}} · {{area}} · {{count}} mesta",
+      "combinationOptionSuggested_one": "Stolovi {{number}} · {{area}} · {{count}} mesto (predlog)",
+      "combinationOptionSuggested_few": "Stolovi {{number}} · {{area}} · {{count}} mesta (predlog)",
+      "combinationOptionSuggested_other": "Stolovi {{number}} · {{area}} · {{count}} mesta (predlog)",
+      "combinationOptionCurrent_one": "Stolovi {{number}} · {{area}} · {{count}} mesto (trenutni)",
+      "combinationOptionCurrent_few": "Stolovi {{number}} · {{area}} · {{count}} mesta (trenutni)",
+      "combinationOptionCurrent_other": "Stolovi {{number}} · {{area}} · {{count}} mesta (trenutni)"
     },
     "errors": {
       "invalidDate": "Izaberite ispravan datum.",
@@ -1317,7 +1362,8 @@
       "notFound": "Ova rezervacija više ne postoji. Ponovo učitajte stranicu.",
       "statusNotAllowedNow": "To sada nije moguće za ovu rezervaciju: „Stigli“ i „Kasne“ samo na dan rezervacije, „Nisu došli“ tek od vremena početka.",
       "tableTaken": "Sto je u međuvremenu zauzet, pa ovo ne može da se poništi.",
-      "statusTitle": "Status nije mogao da se promeni"
+      "statusTitle": "Status nije mogao da se promeni",
+      "invalidTables": "Izaberite jedan sto ili kombinaciju stolova."
     }
   },
   "tableOverview": {

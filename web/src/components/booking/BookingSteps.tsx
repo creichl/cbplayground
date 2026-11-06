@@ -81,7 +81,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     return null
   }
 
-  const steps: DialogStep[] = flow.guestChooses ? ['table', 'details', 'done'] : ['details', 'done']
+  // Without a table step when only a combination of tables is (or was, for the confirmation) free.
+  const tableStep = flow.guestChooses && !flow.combined && (shown.result === null || shown.result.tableNumbers.length === 1)
+  const steps: DialogStep[] = tableStep ? ['table', 'details', 'done'] : ['details', 'done']
   const index = steps.indexOf(step)
 
   const headingClassName = 'scroll-mt-4 font-display text-2xl outline-none'

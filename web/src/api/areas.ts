@@ -71,6 +71,22 @@ export type Table = {
 
 export type TablePosition = Pick<Table, 'id' | 'posX' | 'posY'>
 
+/**
+ * Tables of an area pushed together for a larger group, as returned by /api/admin/areas/{id}/combinations. `tableIds` are in
+ * number order, `label` their numbers ("4 + 5"). The system only gives it when no single table fits the party.
+ */
+export type TableCombination = {
+  id: string
+  areaId: string
+  tableIds: string[]
+  label: string
+  /** At least the seats of the largest table + 1. */
+  seats: number
+  /** The smallest party it is given to online, 1 to `seats`. */
+  minGuests: number
+  onlineBookable: boolean
+}
+
 /** The floor plan accepts these image types up to this size (checked again by the API). */
 export const floorPlanTypes = ['image/png', 'image/jpeg', 'image/webp']
 export const maxFloorPlanBytes = 10 * 1024 * 1024
@@ -78,6 +94,7 @@ export const maxFloorPlanBytes = 10 * 1024 * 1024
 const areasKey = ['admin', 'areas'] as const
 const tablesKey = ['admin', 'tables'] as const
 const roomKey = (areaId: string) => ['admin', 'room', areaId] as const
+const combinationsKey = ['admin', 'combinations'] as const
 
 /** The restaurant's areas in their order. */
 export function useAreas() {
@@ -122,6 +139,7 @@ export function useDeleteArea() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: areasKey }),
         queryClient.invalidateQueries({ queryKey: tablesKey }),
+        queryClient.invalidateQueries({ queryKey: combinationsKey }),
       ])
     },
   })
@@ -217,11 +235,17 @@ export function useUpdateTable() {
   })
 }
 
+/** Deletes the table together with the combinations it is part of. */
 export function useDeleteTable() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: (id: string) => apiDelete(`/admin/tables/${id}`),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: tablesKey }),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: tablesKey }),
+        queryClient.invalidateQueries({ queryKey: combinationsKey }),
+      ])
+    },
   })
 }
 
@@ -246,5 +270,41 @@ export function useArrangeTables() {
       queryClient.setQueryData<Table[]>(tablesKey, (tables) =>
         tables?.map((table) => arranged.find((a) => a.id === table.id) ?? table),
       ),
+  })
+}
+
+/** The combinations of the area, by their first table's number. */
+export function useCombinations(areaId: string | null) {
+  return useQuery({
+    queryKey: [...combinationsKey, areaId],
+    queryFn: () => apiGet<TableCombination[]>(`/admin/areas/${areaId}/combinations`),
+    enabled: areaId !== null,
+  })
+}
+
+/** Combines two or more tables of the area; seats, smallest online party and online booking get their defaults. */
+export function useCreateCombination() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ areaId, tableIds }: { areaId: string; tableIds: string[] }) =>
+      apiPost<TableCombination>(`/admin/areas/${areaId}/combinations`, { tableIds }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: combinationsKey }),
+  })
+}
+
+export function useUpdateCombination() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ areaId, id, ...combination }: Pick<TableCombination, 'areaId' | 'id' | 'seats' | 'minGuests' | 'onlineBookable'>) =>
+      apiPut<TableCombination>(`/admin/areas/${areaId}/combinations/${id}`, combination),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: combinationsKey }),
+  })
+}
+
+export function useDeleteCombination() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ areaId, id }: Pick<TableCombination, 'areaId' | 'id'>) => apiDelete(`/admin/areas/${areaId}/combinations/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: combinationsKey }),
   })
 }
