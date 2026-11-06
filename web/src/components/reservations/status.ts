@@ -79,13 +79,13 @@ export type StatusAction = {
   /** Decorative, next to the label. */
   icon: ComponentType<IconProps>
   color: MantineColor
-  /** Asks first, because the guest is no longer expected: cancelling and no-show. */
+  /** Asks first, because the guest is no longer expected: cancelling, no-show and declining a request (which is final). */
   confirm: boolean
 }
 
 const actions = {
   accept: { status: 'Confirmed', label: 'reservations.actions.accept', shortLabel: 'reservations.actionsShort.accept', icon: CheckIcon, color: 'green', confirm: false },
-  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: XIcon, color: 'gray', confirm: false },
+  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: XIcon, color: 'gray', confirm: true },
   arrived: { status: 'Arrived', label: 'reservations.actions.arrived', shortLabel: 'reservations.actionsShort.arrived', icon: CheckIcon, color: 'green', confirm: false },
   late: { status: 'Late', label: 'reservations.actions.late', shortLabel: 'reservations.actionsShort.late', icon: ClockIcon, color: 'orange', confirm: false },
   noShow: { status: 'NoShow', label: 'reservations.actions.noShow', shortLabel: 'reservations.actionsShort.noShow', icon: BanIcon, color: 'grape', confirm: true },
@@ -107,15 +107,15 @@ const statusActions: Record<ReservationStatus, readonly StatusAction[]> = {
   Declined: [],
 }
 
-/** The status changes the server allows (Reservations/ReservationRules.cs). */
+/** The status changes the server allows (Reservations/ReservationRules.cs); "late" from no-show and cancelled undoes them for a late guest. */
 const transitions: Record<ReservationStatus, readonly ReservationStatus[]> = {
   Requested: ['Confirmed', 'Declined'],
   Confirmed: ['Arrived', 'Late', 'NoShow', 'Cancelled'],
   Late: ['Arrived', 'NoShow', 'Cancelled', 'Confirmed'],
   Arrived: ['Completed', 'Confirmed'],
   Completed: ['Arrived'],
-  NoShow: ['Confirmed'],
-  Cancelled: ['Confirmed'],
+  NoShow: ['Confirmed', 'Late'],
+  Cancelled: ['Confirmed', 'Late'],
   Declined: [],
 }
 
@@ -139,8 +139,9 @@ export function availableActions(reservation: Pick<Reservation, 'status' | 'date
 }
 
 /**
- * The status that undoes a change from `previous` to `current`: back to `previous` if the server allows it, otherwise back to
- * "confirmed" (e.g. after "arrived" of a late guest). Null when the change cannot be undone (accepting or declining a request).
+ * The status that undoes a change from `previous` to `current`: back to `previous` if the server allows it (e.g. "late" again
+ * after the cancellation or no-show of a late guest), otherwise back to "confirmed" (e.g. after "arrived" of a late guest).
+ * Null when the change cannot be undone (accepting or declining a request).
  */
 export function undoStatus(previous: ReservationStatus, current: ReservationStatus): ReservationStatus | null {
   if (transitions[current].includes(previous)) {

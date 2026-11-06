@@ -1201,6 +1201,12 @@
       "text_other": "{{name}} ({{time}}, {{count}} Pers.) ist nicht erschienen. Der Tisch wird frei.",
       "confirm": "Nicht erschienen"
     },
+    "declineConfirm": {
+      "title": "Anfrage ablehnen?",
+      "text_one": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
+      "text_other": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Anfrage ablehnen"
+    },
     "toast": {
       "changed": "{{name}}: {{status}}"
     },
@@ -1212,8 +1218,9 @@
       "tableDescription_other": "Frei ab jetzt für {{count}} Minuten. Der Vorschlag ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
       "noTable_one": "Gerade ist kein Tisch für {{count}} Person frei.",
       "noTable_other": "Gerade ist kein Tisch für {{count}} Personen frei.",
-      "wantedTableTaken_one": "Der gewählte Tisch ist gerade nicht für {{count}} Person frei; ein anderer freier Tisch ist vorausgewählt.",
-      "wantedTableTaken_other": "Der gewählte Tisch ist gerade nicht für {{count}} Personen frei; ein anderer freier Tisch ist vorausgewählt.",
+      "wantedTableTaken_one": "Der gewählte Tisch ist gerade nicht für {{count}} Person frei. Bitte wählen Sie einen anderen freien Tisch.",
+      "wantedTableTaken_other": "Der gewählte Tisch ist gerade nicht für {{count}} Personen frei. Bitte wählen Sie einen anderen freien Tisch.",
+      "chooseTable": "Tisch wählen",
       "nameDescription": "Optional. Ohne Namen erscheint der Gast als „Walk-in“.",
       "seat": "Walk-in setzen",
       "seated": "{{name}} sitzt seit {{time}} an Tisch {{table}}.",

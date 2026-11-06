@@ -56,10 +56,11 @@ public static class ReservationRules
         [ReservationStatus.Late] = [ReservationStatus.Arrived, ReservationStatus.NoShow, ReservationStatus.Cancelled, ReservationStatus.Confirmed],
         // Confirmed: undo of an "arrived" set by mistake.
         [ReservationStatus.Arrived] = [ReservationStatus.Completed, ReservationStatus.Confirmed],
-        // The undos of "guest left", "no-show" and "cancelled".
+        // The undos of "guest left", "no-show" and "cancelled". Late: the undo of a no-show or cancellation of a late guest, which
+        // the front desk sends when the reservation was late before; "late" is only possible on the reservation's day (IsAllowedNow).
         [ReservationStatus.Completed] = [ReservationStatus.Arrived],
-        [ReservationStatus.NoShow] = [ReservationStatus.Confirmed],
-        [ReservationStatus.Cancelled] = [ReservationStatus.Confirmed],
+        [ReservationStatus.NoShow] = [ReservationStatus.Confirmed, ReservationStatus.Late],
+        [ReservationStatus.Cancelled] = [ReservationStatus.Confirmed, ReservationStatus.Late],
     };
     /// <summary>The languages of the user interface; a reservation stores the guest's one.</summary>
     public static readonly string[] Languages = ["en", "de", "sr-Latn", "sr-Cyrl"];

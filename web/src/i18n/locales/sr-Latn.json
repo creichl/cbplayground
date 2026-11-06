@@ -1221,6 +1221,13 @@
       "text_other": "{{name}} ({{time}}, {{count}} osoba) nisu došli. Sto će biti oslobođen.",
       "confirm": "Nisu došli"
     },
+    "declineConfirm": {
+      "title": "Odbiti zahtev?",
+      "text_one": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
+      "text_few": "Zahtev gosta {{name}} u {{time}} ({{count}} osobe) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
+      "text_other": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
+      "confirm": "Odbij zahtev"
+    },
     "toast": {
       "changed": "{{name}}: {{status}}"
     },
@@ -1234,9 +1241,10 @@
       "noTable_one": "Trenutno nema slobodnog stola za {{count}} osobu.",
       "noTable_few": "Trenutno nema slobodnog stola za {{count}} osobe.",
       "noTable_other": "Trenutno nema slobodnog stola za {{count}} osoba.",
-      "wantedTableTaken_one": "Izabrani sto trenutno nije slobodan za {{count}} osobu; unapred je izabran drugi slobodan sto.",
-      "wantedTableTaken_few": "Izabrani sto trenutno nije slobodan za {{count}} osobe; unapred je izabran drugi slobodan sto.",
-      "wantedTableTaken_other": "Izabrani sto trenutno nije slobodan za {{count}} osoba; unapred je izabran drugi slobodan sto.",
+      "wantedTableTaken_one": "Izabrani sto trenutno nije slobodan za {{count}} osobu. Izaberite drugi slobodan sto.",
+      "wantedTableTaken_few": "Izabrani sto trenutno nije slobodan za {{count}} osobe. Izaberite drugi slobodan sto.",
+      "wantedTableTaken_other": "Izabrani sto trenutno nije slobodan za {{count}} osoba. Izaberite drugi slobodan sto.",
+      "chooseTable": "Izaberite sto",
       "nameDescription": "Nije obavezno. Bez imena gost se prikazuje kao „Gost bez rezervacije“.",
       "seat": "Smesti gosta",
       "seated": "{{name}} za stolom {{table}} od {{time}}.",

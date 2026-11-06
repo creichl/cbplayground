@@ -23,7 +23,7 @@ type StatusActionsProps = {
   compact?: boolean
   /** Called after a successful change, e.g. to close the popover. */
   onDone?: () => void
-  /** Called when the question before cancelling or a no-show opens or closes. */
+  /** Called when the question before cancelling, a no-show or declining opens or closes. */
   onConfirmingChange?: (confirming: boolean) => void
 }
 
@@ -32,9 +32,16 @@ function statusErrorMessage(error: unknown, t: TFunction) {
   return error instanceof ApiError && error.code === 'table_unavailable' ? t('reservations.errors.tableTaken') : reservationErrorMessage(error, t)
 }
 
+/** The texts of the question before a change that asks first (see status.ts), by the status it sets. */
+const questions = {
+  Cancelled: { title: 'reservations.cancelConfirm.title', text: 'reservations.cancelConfirm.text', confirm: 'reservations.cancelConfirm.confirm' },
+  NoShow: { title: 'reservations.noShowConfirm.title', text: 'reservations.noShowConfirm.text', confirm: 'reservations.noShowConfirm.confirm' },
+  Declined: { title: 'reservations.declineConfirm.title', text: 'reservations.declineConfirm.text', confirm: 'reservations.declineConfirm.confirm' },
+} as const
+
 /**
  * The quick status changes of a reservation as large buttons for the tablet, the same in the lists and in the table overview
- * (see status.ts). Cancelling and no-show ask first. After every change a notification offers to undo it.
+ * (see status.ts). Cancelling, no-show and declining ask first. After every change a notification offers to undo it.
  */
 export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange }: StatusActionsProps) {
   const { t, i18n } = useTranslation()
@@ -43,6 +50,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
   const setStatus = useSetReservationStatus()
   const [confirming, setConfirming] = useState<StatusAction | null>(null)
   const actions = availableActions(reservation, now)
+  const question = questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
 
   const confirm = (action: StatusAction | null) => {
     setConfirming(action)
@@ -131,11 +139,11 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
       <Modal
         opened={confirming !== null}
         onClose={() => confirm(null)}
-        title={t(confirming?.status === 'NoShow' ? 'reservations.noShowConfirm.title' : 'reservations.cancelConfirm.title')}
+        title={t(question.title)}
       >
         <Stack gap="md">
           <Text size="sm">
-            {t(confirming?.status === 'NoShow' ? 'reservations.noShowConfirm.text' : 'reservations.cancelConfirm.text', {
+            {t(question.text, {
               name: guestName(reservation, t),
               time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
               count: reservation.guests,
@@ -150,7 +158,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
               loading={setStatus.isPending}
               onClick={() => confirming !== null && change(confirming.status)}
             >
-              {t(confirming?.status === 'NoShow' ? 'reservations.noShowConfirm.confirm' : 'reservations.cancelConfirm.confirm')}
+              {t(question.confirm)}
             </Button>
           </Group>
         </Stack>

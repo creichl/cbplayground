@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import {
+  defaultWalkInGuests,
   type OpenPeriod,
   type Reservation,
   toMinutes,
@@ -12,6 +13,7 @@ import {
   useOpenPeriods,
   useReservations,
   useRestaurantNow,
+  useWalkInTables,
 } from '../api/reservations.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { ChevronLeftIcon, ChevronRightIcon } from '../components/icons.tsx'
@@ -58,6 +60,9 @@ export function TableOverviewPage() {
   const floor = useFloor()
   const reservations = useReservations(date)
   const openPeriods = useOpenPeriods(date)
+  // The floor plans offer "Seat walk-in here" only on the tables the server accepts for a walk-in now (with the buffer and the
+  // walk-in's duration), for the party size the walk-in drawer starts with. Closed now: an error, so no table is offered.
+  const walkInTables = useWalkInTables(today !== null && date === today && view === 'floor' ? defaultWalkInGuests : null)
 
   const show = (day: string | null, shownView: View) => {
     const params: Record<string, string> = {}
@@ -148,6 +153,8 @@ export function TableOverviewPage() {
   const range = dayRange(openPeriods.data, reservations.data)
   const closed = openPeriods.data.length === 0
   const nowMinutes = date === today ? now.minutes : null
+  // Only today, and not from an earlier answer once the server refuses walk-ins (e.g. after closing time).
+  const walkInTableIds = new Set(date === today && !walkInTables.isError ? walkInTables.data?.tables.map((table) => table.id) : [])
   // The floor plan starts at the current time if it lies within the day's range, otherwise at the first opening time.
   const firstOpening = openPeriods.data.length > 0 ? toMinutes(openPeriods.data[0].start) : range?.start ?? 0
   const initialTime =
@@ -189,6 +196,7 @@ export function TableOverviewPage() {
                   end={range.end}
                   initialTime={initialTime}
                   nowMinutes={nowMinutes}
+                  walkInTableIds={walkInTableIds}
                   onWalkIn={setWalkInTable}
                 />
               )}

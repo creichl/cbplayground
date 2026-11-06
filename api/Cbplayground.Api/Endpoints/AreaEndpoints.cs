@@ -331,9 +331,9 @@ public static class AreaEndpoints
         app.MapGet("/api/areas/{id:guid}/floorplan", async (Guid id, HttpContext httpContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
             // Public on purpose: guests have no tenant, so the tenant filter would hide every area.
-            // Only the file name of the requested area is read.
+            // Only the file name of the requested area is read, and only while its restaurant is active (deactivated: 404).
             var fileName = await db.Areas.IgnoreQueryFilters()
-                .Where(a => a.Id == id)
+                .Where(a => a.Id == id && db.Tenants.Any(t => t.Id == a.TenantId && t.IsActive))
                 .Select(a => a.FloorPlanFileName)
                 .SingleOrDefaultAsync();
             // The browser may cache the image but has to revalidate it, because a replaced floor plan keeps the URL.
@@ -342,9 +342,9 @@ public static class AreaEndpoints
 
         app.MapGet("/api/areas/{id:guid}/photo", async (Guid id, string? v, HttpContext httpContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
-            // Public like the floor plan, for the same reason.
+            // Public like the floor plan, for the same reason and with the same check of the restaurant.
             var fileName = await db.Areas.IgnoreQueryFilters()
-                .Where(a => a.Id == id)
+                .Where(a => a.Id == id && db.Tenants.Any(t => t.Id == a.TenantId && t.IsActive))
                 .Select(a => a.PhotoFileName)
                 .SingleOrDefaultAsync();
             return ImageUploads.Read(httpContext, configuration, environment, fileName, ImageUploads.CacheControl(fileName, v));

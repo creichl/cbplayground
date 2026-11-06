@@ -228,8 +228,10 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData(ReservationStatus.Completed, "Arrived", true)]
     [InlineData(ReservationStatus.Completed, "Confirmed", false)]
     [InlineData(ReservationStatus.NoShow, "Confirmed", true)]
+    [InlineData(ReservationStatus.NoShow, "Late", true)]
     [InlineData(ReservationStatus.NoShow, "Arrived", false)]
     [InlineData(ReservationStatus.Cancelled, "Confirmed", true)]
+    [InlineData(ReservationStatus.Cancelled, "Late", true)]
     [InlineData(ReservationStatus.Cancelled, "Arrived", false)]
     [InlineData(ReservationStatus.Declined, "Requested", false)]
     [InlineData(ReservationStatus.Declined, "Confirmed", false)]
@@ -262,6 +264,56 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
 
         Assert.Equal("invalid_status", await ErrorOf(await SetStatusAsync(frontDesk, reservation.Id, "Seated"), HttpStatusCode.BadRequest));
         Assert.Equal("invalid_status", await ErrorOf(await SetStatusAsync(frontDesk, reservation.Id, "1"), HttpStatusCode.BadRequest));
+    }
+
+    [Fact]
+    public async Task The_status_filter_lists_only_the_requests_of_the_own_restaurant_also_200_days_ahead()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        var other = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var today = TestRestaurant.Today;
+        var soon = await TestRestaurants.AddReservationAsync(factory, restaurant, "1", today.AddDays(3).ToDateTime(new TimeOnly(18, 0)), status: ReservationStatus.Requested);
+        var farAhead = await TestRestaurants.AddReservationAsync(factory, restaurant, "2", today.AddDays(200).ToDateTime(new TimeOnly(19, 0)), status: ReservationStatus.Requested);
+        await TestRestaurants.AddReservationAsync(factory, restaurant, "3", today.AddDays(3).ToDateTime(new TimeOnly(18, 0)));
+        await TestRestaurants.AddReservationAsync(factory, restaurant, "3", today.AddDays(5).ToDateTime(new TimeOnly(18, 0)), status: ReservationStatus.Declined);
+        await TestRestaurants.AddReservationAsync(factory, other, "1", today.AddDays(3).ToDateTime(new TimeOnly(18, 0)), status: ReservationStatus.Requested);
+        var to = today.AddDays(MaxListDays - 1);
+
+        var requests = await frontDesk.GetFromJsonAsync<List<ReservationResponse>>(
+            $"/api/staff/reservations?from={today:yyyy-MM-dd}&to={to:yyyy-MM-dd}&status=Requested", Token);
+        var all = await frontDesk.GetFromJsonAsync<List<ReservationResponse>>(
+            $"/api/staff/reservations?from={today:yyyy-MM-dd}&to={to:yyyy-MM-dd}", Token);
+
+        Assert.Equal([soon, farAhead], requests!.Select(r => r.Id));
+        Assert.All(requests!, r => Assert.Equal(ReservationStatus.Requested, r.Status));
+        Assert.Equal(4, all!.Count);
+    }
+
+    [Theory]
+    [InlineData("Open")]
+    [InlineData("requested")]
+    [InlineData("1")]
+    public async Task An_unknown_status_filter_is_400(string status)
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+
+        var response = await frontDesk.GetAsync($"/api/staff/reservations?status={status}", Token);
+
+        Assert.Equal("invalid_status", await ErrorOf(response, HttpStatusCode.BadRequest));
+    }
+
+    [Fact]
+    public async Task The_range_stays_limited_to_366_days_with_the_status_filter()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var today = TestRestaurant.Today;
+
+        var response = await frontDesk.GetAsync($"/api/staff/reservations?from={today:yyyy-MM-dd}&to={today.AddDays(MaxListDays):yyyy-MM-dd}&status=Requested", Token);
+
+        Assert.Equal("invalid_range", await ErrorOf(response, HttpStatusCode.BadRequest));
     }
 
     [Fact]

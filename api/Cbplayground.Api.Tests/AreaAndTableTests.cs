@@ -815,6 +815,30 @@ public class AreaAndTableTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task Floor_plan_and_photo_of_a_deactivated_restaurant_are_not_found_until_it_is_activated_again()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
+        var areaId = restaurant.Areas["Gaststube"];
+        using var admin = await LoginAsync(restaurant.AdminEmail);
+        Assert.Equal(HttpStatusCode.OK, (await UploadAsync(admin, areaId, Png)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await UploadPhotoAsync(admin, areaId, Jpeg, "image/jpeg")).StatusCode);
+        using var superadmin = await LoginAsync("superadmin@test.local");
+        using var guest = factory.CreateHttpsClient();
+        Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync($"/api/areas/{areaId}/floorplan", Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await guest.GetAsync($"/api/areas/{areaId}/photo", Ct)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await superadmin.PostAsync($"/api/superadmin/tenants/{restaurant.Id}/deactivate", null, Ct)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/areas/{areaId}/floorplan", Ct)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await guest.GetAsync($"/api/areas/{areaId}/photo", Ct)).StatusCode);
+
+        Assert.Equal(HttpStatusCode.OK, (await superadmin.PostAsync($"/api/superadmin/tenants/{restaurant.Id}/activate", null, Ct)).StatusCode);
+
+        Assert.Equal(Png, await guest.GetByteArrayAsync($"/api/areas/{areaId}/floorplan", Ct));
+        Assert.Equal(Jpeg, await guest.GetByteArrayAsync($"/api/areas/{areaId}/photo", Ct));
+    }
+
+    [Fact]
     public async Task Deleting_an_area_deletes_its_tables_and_floor_plan()
     {
         using var client = await LoginAsync(AdminA);

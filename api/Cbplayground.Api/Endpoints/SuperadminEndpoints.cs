@@ -57,18 +57,18 @@ public static partial class SuperadminEndpoints
     {
         var group = app.MapGroup("/api/superadmin/tenants").RequireAuthorization(Policies.RequireSuperadmin);
 
-        group.MapGet("/", async (AppDbContext db) =>
+        group.MapGet("/", async (AppDbContext db, TimeProvider timeProvider) =>
         {
             var tenants = await db.Tenants.OrderBy(t => t.Name).ToListAsync();
             var result = new List<SuperadminTenant>();
             foreach (var tenant in tenants)
             {
-                result.Add(await ToResponseAsync(db, tenant));
+                result.Add(await ToResponseAsync(db, tenant, timeProvider));
             }
             return result;
         });
 
-        group.MapPost("/", async (CreateTenantRequest request, AppDbContext db) =>
+        group.MapPost("/", async (CreateTenantRequest request, AppDbContext db, TimeProvider timeProvider) =>
         {
             var name = request.Name?.Trim() ?? "";
             var slug = NormalizeSlug(request.Slug);
@@ -102,10 +102,10 @@ public static partial class SuperadminEndpoints
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return Results.Created($"/api/superadmin/tenants/{tenant.Id}", await ToResponseAsync(db, tenant));
+            return Results.Created($"/api/superadmin/tenants/{tenant.Id}", await ToResponseAsync(db, tenant, timeProvider));
         });
 
-        group.MapPut("/{id:guid}", async (Guid id, UpdateTenantRequest request, AppDbContext db) =>
+        group.MapPut("/{id:guid}", async (Guid id, UpdateTenantRequest request, AppDbContext db, TimeProvider timeProvider) =>
         {
             var name = request.Name?.Trim() ?? "";
             var slug = NormalizeSlug(request.Slug);
@@ -129,10 +129,10 @@ public static partial class SuperadminEndpoints
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            return Results.Ok(await ToResponseAsync(db, tenant));
+            return Results.Ok(await ToResponseAsync(db, tenant, timeProvider));
         });
 
-        group.MapPost("/{id:guid}/deactivate", async (Guid id, AppDbContext db, UserManager<ApplicationUser> userManager) =>
+        group.MapPost("/{id:guid}/deactivate", async (Guid id, AppDbContext db, UserManager<ApplicationUser> userManager, TimeProvider timeProvider) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync();
             var tenant = await db.Tenants.SingleOrDefaultAsync(t => t.Id == id);
@@ -159,10 +159,10 @@ public static partial class SuperadminEndpoints
             }
             await transaction.CommitAsync();
 
-            return Results.Ok(await ToResponseAsync(db, tenant));
+            return Results.Ok(await ToResponseAsync(db, tenant, timeProvider));
         });
 
-        group.MapPost("/{id:guid}/activate", async (Guid id, AppDbContext db) =>
+        group.MapPost("/{id:guid}/activate", async (Guid id, AppDbContext db, TimeProvider timeProvider) =>
         {
             var tenant = await db.Tenants.SingleOrDefaultAsync(t => t.Id == id);
             if (tenant is null)
@@ -176,7 +176,7 @@ public static partial class SuperadminEndpoints
                 await db.SaveChangesAsync();
             }
 
-            return Results.Ok(await ToResponseAsync(db, tenant));
+            return Results.Ok(await ToResponseAsync(db, tenant, timeProvider));
         });
 
         group.MapGet("/{id:guid}/admins", async (Guid id, AppDbContext db) =>
@@ -271,16 +271,15 @@ public static partial class SuperadminEndpoints
         db.Users.Where(u => u.TenantId == tenantId
             && db.UserRoles.Any(ur => ur.UserId == u.Id && db.Roles.Any(r => r.Id == ur.RoleId && r.Name == Roles.TenantAdmin)));
 
-    private static async Task<SuperadminTenant> ToResponseAsync(AppDbContext db, Tenant tenant)
+    private static async Task<SuperadminTenant> ToResponseAsync(AppDbContext db, Tenant tenant, TimeProvider timeProvider)
     {
         var adminCount = await TenantAdminsOf(db, tenant.Id).CountAsync(u => u.IsActive);
 
         // IgnoreQueryFilters: the Superadmin has no tenant, so the tenant filter would hide every table and reservation.
         // Both counts are restricted to this restaurant explicitly and only read.
         var tableCount = await db.Tables.IgnoreQueryFilters().CountAsync(t => t.TenantId == tenant.Id);
-        var localNow = tenant.TimeZoneId is null
-            ? DateTime.UtcNow
-            : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(DateTime.UtcNow, tenant.TimeZoneId);
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var localNow = tenant.TimeZoneId is null ? utcNow : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utcNow, tenant.TimeZoneId);
         var upcomingReservationCount = await db.Reservations.IgnoreQueryFilters().CountAsync(r =>
             r.TenantId == tenant.Id
             && r.StartLocal >= localNow
