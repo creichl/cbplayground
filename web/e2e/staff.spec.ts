@@ -1,13 +1,6 @@
 import { expect, type Page, test } from '@playwright/test'
+import { signIn } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
-
-/** Signs in with a demo user of the development seed (appsettings.Development.json). */
-async function signIn(page: Page, email: string) {
-  await page.goto('/login')
-  await page.getByLabel('Email').fill(email)
-  await page.getByLabel('Password', { exact: true }).fill('Demo1234!')
-  await page.getByRole('button', { name: 'Sign in' }).click()
-}
 
 test.describe('Sign-in', () => {
   test('shows the sign-in page', async ({ page }) => {
