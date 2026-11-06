@@ -28,6 +28,14 @@
     "tableLabel": "{{number}} · {{seats}}",
     "midnight": "Mitternacht"
   },
+  "unsavedChanges": {
+    "bar": "Ungespeicherte Änderungen",
+    "discard": "Verwerfen",
+    "leaveTitle": "Ohne Speichern verlassen?",
+    "leaveText": "Ihre Änderungen auf dieser Seite sind noch nicht gespeichert. Wenn Sie die Seite jetzt verlassen, gehen sie verloren.",
+    "stay": "Bleiben",
+    "leave": "Verlassen"
+  },
   "auth": {
     "userMenu": "Kontomenü",
     "logout": "Abmelden",
@@ -353,18 +361,23 @@
   "admin": {
     "label": "Admin",
     "toggleNavigation": "Navigation ein- oder ausblenden",
+    "navigation": "Admin-Navigation",
+    "groups": {
+      "service": "Service",
+      "restaurant": "Restaurant",
+      "bookings": "Buchungen",
+      "team": "Team"
+    },
     "nav": {
       "overview": "Übersicht",
-      "reservations": "Reservierungen",
-      "profile": "Restaurantprofil",
+      "serviceScreen": "Service-Bildschirm",
+      "profile": "Profil",
       "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
       "reservationSettings": "Reservierungseinstellungen",
       "staff": "Mitarbeiter",
-      "tables": "Tischübersicht",
-      "embed": "Website-Einbindung",
-      "openFrontdesk": "Empfang öffnen"
+      "embed": "Website-Einbindung"
     }
   },
   "superadmin": {
@@ -446,7 +459,7 @@
     "viewBookingPage": "Buchungsseite ansehen",
     "today": {
       "title": "Heute",
-      "toReservations": "Zu den Reservierungen"
+      "openServiceScreen": "Service-Bildschirm öffnen"
     },
     "checklist": {
       "title": "Restaurant einrichten",
@@ -512,10 +525,8 @@
       "website": "Bitte geben Sie eine vollständige Webadresse ein, die mit https:// oder http:// beginnt."
     },
     "errors": {
-      "title": "Das Profil konnte nicht gespeichert werden",
       "tooLong": "Ein Feld ist länger als erlaubt."
     },
-    "save": "Speichern",
     "saved": "Das Profil wurde gespeichert."
   },
   "branding": {
@@ -619,7 +630,6 @@
       "title": "Vorschau",
       "hint": "Zeigt Ihre Änderungen schon vor dem Speichern."
     },
-    "save": "Speichern",
     "saved": "Das Erscheinungsbild wurde gespeichert.",
     "errors": {
       "title": "Das Erscheinungsbild konnte nicht gespeichert werden",
@@ -710,6 +720,7 @@
     }
   },
   "openingHours": {
+    "subtitle": "Wann Gäste buchen können: Wochenzeiten, Schließtage und Sonderöffnungszeiten, Standort und Feiertage.",
     "save": "Speichern",
     "saved": "Gespeichert.",
     "open": "Geöffnet",
@@ -868,6 +879,7 @@
     "text": "Die gesuchte Seite gibt es nicht oder sie wurde verschoben."
   },
   "areas": {
+    "subtitle": "Ihre Räume mit Grundriss und Tischen und wie viele Plätze davon online buchbar sind.",
     "addArea": "Bereich hinzufügen",
     "create": "Anlegen",
     "emptyTitle": "Noch keine Bereiche",
@@ -1118,7 +1130,6 @@
       "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
       "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
     },
-    "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
   },
   "reservations": {

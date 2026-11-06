@@ -21,6 +21,8 @@ import {
   useSaveReservationSettings,
 } from '../api/reservationSettings.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
+import { SaveBar } from '../components/SaveBar.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
 const confirmationOptions: { value: ConfirmationMode; label: ParseKeys; description: ParseKeys }[] = [
@@ -86,10 +88,7 @@ export function ReservationSettingsPage() {
 
   return (
     <Stack gap="lg">
-      <Stack gap={4}>
-        <Title order={2}>{t('reservationSettings.title')}</Title>
-        <Text c="dimmed">{t('reservationSettings.subtitle')}</Text>
-      </Stack>
+      <PageHeader title={t('reservationSettings.title')} description={t('reservationSettings.subtitle')} />
 
       {settings.isPending ? (
         <Stack gap="lg">
@@ -215,6 +214,11 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
 
   const error = save.error
   const errorCode = error instanceof ApiError ? error.code : null
+
+  const discard = () => {
+    save.reset()
+    form.reset()
+  }
 
   return (
     <form onSubmit={submit}>
@@ -414,13 +418,9 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
           ) : (
             <ErrorAlert error={error} />
           ))}
-
-        <Group>
-          <Button type="submit" loading={save.isPending}>
-            {t('reservationSettings.save')}
-          </Button>
-        </Group>
       </Stack>
+
+      <SaveBar dirty={form.isDirty()} saving={save.isPending} onDiscard={discard} />
     </form>
   )
 }
