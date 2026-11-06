@@ -35,9 +35,9 @@ fetch them anew.
 
 The results are in `test-results/` in the repository root (ignored by git):
 
-- `report.md`: every test with its result and the container's memory after it (current and peak, from
-  `/sys/fs/cgroup/memory.current` and `memory.peak`, where they exist), the peak with the test it occurred in, and the
-  errors of the failed ones;
+- `report.md`: every test with its result and the container's memory (from `/sys/fs/cgroup/memory.current`, where it
+  exists): right after the test and the peak during it (sampled every 100 ms, and `memory.peak` where it rose during
+  the test), the peak of the run with the test it occurred in, and the errors of the failed ones;
 - `screenshots/<feature>/<name>.png`: the screenshots;
 - `playwright/`: of a failing test its trace, with every step and its screenshot (`npx playwright show-trace <trace.zip>`);
   no videos, their recording costs memory.
