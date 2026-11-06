@@ -261,6 +261,22 @@ public class TableCombinationTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
+    public async Task The_history_shows_a_change_to_a_combination_with_all_its_tables()
+    {
+        var (restaurant, combination) = await CreateWithCombinationAsync();
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var date = TestRestaurants.NextOpenDay(factory);
+        var reservation = await StaffBookedAsync(frontDesk, date, "18:00", 6);
+
+        var changed = await frontDesk.PutAsJsonAsync($"/api/staff/reservations/{reservation.Id}",
+            new { date = date.ToString("yyyy-MM-dd"), time = "18:00", guests = 6, name = "Telefon Gast", tableIds = combination.TableIds }, Token);
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+
+        var history = (await frontDesk.GetFromJsonAsync<List<ReservationEventResponse>>($"/api/staff/reservations/{reservation.Id}/history", Token))!;
+        Assert.Equal([new ReservationChangeResponse(ReservationField.Table, "6", "4 + 5")], history[0].Changes);
+    }
+
+    [Fact]
     public async Task The_undo_of_a_cancelled_combined_reservation_needs_all_its_tables_free()
     {
         var (restaurant, _) = await CreateWithCombinationAsync();

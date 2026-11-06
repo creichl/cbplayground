@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPost, apiPut } from './client.ts'
 import type { CountryCode, RegionCode } from './openingHours.ts'
+import type { SetupStatus } from './profile.ts'
 
 /** A restaurant with its key figures, as returned by GET /api/superadmin/tenants. */
 export type SuperadminTenant = {
@@ -13,9 +14,35 @@ export type SuperadminTenant = {
   createdAt: string
   /** Active Tenant Admins. */
   adminCount: number
+  /** Active staff users of all roles. */
+  staffCount: number
   tableCount: number
   /** Reservations from now on that are not cancelled or declined. */
   upcomingReservationCount: number
+  /** The steps of the restaurant's setup, as its admin sees them (GET /api/admin/setup-status). */
+  setup: SetupStatus
+  /** Reservations in the 7 days before now, not cancelled or declined (in the restaurant's time zone). */
+  reservationsLast7Days: number
+  /** Reservations in the 7 days from now, not cancelled or declined (in the restaurant's time zone). */
+  reservationsNext7Days: number
+  /** When the newest online booking was made (UTC), null if there is none. */
+  lastOnlineBookingAtUtc: string | null
+  /** When one of the restaurant's staff last signed in (UTC), null if nobody has yet. */
+  lastStaffSignInAtUtc: string | null
+}
+
+/** The steps of the setup in the order of the admin's checklist. */
+export const setupSteps = ['profile', 'location', 'openingHours', 'floorPlan', 'tables', 'reservationSettings'] as const satisfies readonly (keyof SetupStatus)[]
+
+/** How many steps of the restaurant's setup are done. */
+export function setupDoneCount(tenant: SuperadminTenant) {
+  return setupSteps.filter((step) => tenant.setup[step]).length
+}
+
+/** The newest of the last online booking and the last staff sign-in (UTC), null if there was neither. */
+export function lastActivityAtUtc(tenant: SuperadminTenant) {
+  const times = [tenant.lastOnlineBookingAtUtc, tenant.lastStaffSignInAtUtc].filter((time) => time !== null)
+  return times.length === 0 ? null : times.reduce((latest, time) => (Date.parse(time) > Date.parse(latest) ? time : latest))
 }
 
 /** A Tenant Admin of a restaurant, as returned by GET /api/superadmin/tenants/{id}/admins. */

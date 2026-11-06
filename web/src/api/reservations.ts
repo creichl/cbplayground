@@ -43,6 +43,32 @@ export type Reservation = {
   updatedAtUtc: string
 }
 
+/** Who changed a reservation: the guest (booking page or link), a staff user, or the system (e.g. the demo data). */
+export type ReservationActor = 'Guest' | 'Staff' | 'System'
+
+export type ReservationEventKind = 'Created' | 'Updated' | 'StatusChanged' | 'CancelledByGuest'
+
+export type ReservationField = 'Date' | 'Time' | 'PartySize' | 'Table' | 'Duration' | 'Name' | 'Phone' | 'Email' | 'Notes' | 'Status'
+
+/**
+ * A changed field. The values are text: date "YYYY-MM-DD", time "HH:mm", party size and duration (minutes) as numbers, the table's
+ * number, the status; null when empty.
+ */
+export type ReservationChange = { field: ReservationField; from: string | null; to: string | null }
+
+/**
+ * An entry of a reservation's history, as returned by GET /api/staff/reservations/{id}/history (newest first). Date and time are in the
+ * restaurant's time zone; `userName` is the staff user's name at the time, null for the guest and the system.
+ */
+export type ReservationEvent = {
+  date: string
+  time: string
+  actor: ReservationActor
+  userName: string | null
+  kind: ReservationEventKind
+  changes: ReservationChange[]
+}
+
 /**
  * A table, or a combination of tables, that is free for the whole duration, in the order the system would assign them: the
  * tables first, then the combinations. `id` is the table's or the combination's, `tableIds` its tables in number order,
@@ -142,6 +168,7 @@ const refreshIntervalMs = 60_000
 const reservationsKey = ['staff', 'reservations'] as const
 const availabilityKey = ['staff', 'availability'] as const
 const walkInTablesKey = ['staff', 'walk-in-tables'] as const
+const historyKey = ['staff', 'reservation-history'] as const
 
 function reservationsQuery(from: string | null, to: string | null, status: ReservationStatus | null = null) {
   return queryOptions({
@@ -176,6 +203,14 @@ export function useStaffAvailability(date: string | null, guests: number | null,
         `/staff/availability?date=${date}&guests=${guests}${durationMinutes === null ? '' : `&durationMinutes=${durationMinutes}`}`,
       ),
     enabled: date !== null && guests !== null && guests >= 1,
+  })
+}
+
+/** Who changed what and when, newest first. */
+export function useReservationHistory(id: string) {
+  return useQuery({
+    queryKey: [...historyKey, id],
+    queryFn: () => apiGet<ReservationEvent[]>(`/staff/reservations/${encodeURIComponent(id)}/history`),
   })
 }
 
@@ -272,7 +307,7 @@ export function useRestaurantToday() {
   return useRestaurantNow()?.date ?? null
 }
 
-/** Shows the changed reservation right away and reloads the lists and free times, which the change may affect. */
+/** Shows the changed reservation right away and reloads the lists, free times and its history, which the change may affect. */
 async function applyChange(queryClient: QueryClient, changed: Reservation) {
   queryClient.setQueriesData<Reservation[]>({ queryKey: reservationsKey }, (reservations) =>
     reservations?.map((reservation) => (reservation.id === changed.id ? changed : reservation)),
@@ -281,6 +316,7 @@ async function applyChange(queryClient: QueryClient, changed: Reservation) {
     queryClient.invalidateQueries({ queryKey: reservationsKey }),
     queryClient.invalidateQueries({ queryKey: availabilityKey }),
     queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
+    queryClient.invalidateQueries({ queryKey: [...historyKey, changed.id] }),
   ])
 }
 

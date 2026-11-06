@@ -30,6 +30,7 @@ import { errorMessage } from '../api/areaErrors.ts'
 import { AreaPanel } from '../components/AreaPanel.tsx'
 import { CombinationPanel } from '../components/CombinationPanel.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
 import { roomElementDimensions, roomElementSize } from '../components/floor-plan/layout.ts'
 import { FloorPlanCanvas } from '../components/FloorPlanCanvas.tsx'
 import { FloorPlanDropzone } from '../components/FloorPlanDropzone.tsx'
@@ -382,10 +383,11 @@ export function AreasPage() {
 
   return (
     <Stack gap="lg">
-      <Group justify="space-between">
-        <Title order={2}>{t('admin.nav.areas')}</Title>
-        <Button onClick={openCreate}>{t('areas.addArea')}</Button>
-      </Group>
+      <PageHeader
+        title={t('admin.nav.areas')}
+        description={t('areas.subtitle')}
+        action={<Button onClick={openCreate}>{t('areas.addArea')}</Button>}
+      />
 
       {area === undefined ? (
         <Card>

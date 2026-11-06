@@ -28,6 +28,14 @@
     "tableLabel": "{{number}} · {{seats}}",
     "midnight": "ponoć"
   },
+  "unsavedChanges": {
+    "bar": "Nesačuvane izmene",
+    "discard": "Odbaci",
+    "leaveTitle": "Napustiti bez čuvanja?",
+    "leaveText": "Vaše izmene na ovoj stranici još nisu sačuvane. Ako sada napustite stranicu, biće izgubljene.",
+    "stay": "Ostani",
+    "leave": "Napusti"
+  },
   "auth": {
     "userMenu": "Meni naloga",
     "logout": "Odjavi se",
@@ -367,18 +375,23 @@
   "admin": {
     "label": "Administracija",
     "toggleNavigation": "Prikaži ili sakrij navigaciju",
+    "navigation": "Navigacija administracije",
+    "groups": {
+      "service": "Servis",
+      "restaurant": "Restoran",
+      "bookings": "Rezervacije",
+      "team": "Tim"
+    },
     "nav": {
       "overview": "Pregled",
-      "reservations": "Rezervacije",
-      "profile": "Profil restorana",
+      "serviceScreen": "Ekran za servis",
+      "profile": "Profil",
       "design": "Izgled",
       "areas": "Prostori i stolovi",
       "openingHours": "Radno vreme",
       "reservationSettings": "Podešavanja rezervacija",
       "staff": "Zaposleni",
-      "tables": "Pregled stolova",
-      "embed": "Ugradnja na sajt",
-      "openFrontdesk": "Otvori recepciju"
+      "embed": "Ugradnja na sajt"
     }
   },
   "superadmin": {
@@ -388,7 +401,7 @@
     "search": "Pretraga restorana",
     "searchPlaceholder": "Pretraga po nazivu ili slugu",
     "empty": "Još nema restorana.",
-    "noMatch": "Nijedan restoran ne odgovara pretrazi.",
+    "noMatch": "Nijedan restoran ne odgovara pretrazi i filteru.",
     "backToList": "Svi restorani",
     "masterData": "Osnovni podaci",
     "noLocation": "Još nije postavljeno",
@@ -404,7 +417,13 @@
       "tables": "Stolovi",
       "upcomingReservations": "Predstojeće rezervacije",
       "location": "Država / region",
-      "createdAt": "Kreiran"
+      "createdAt": "Kreiran",
+      "setup": "Podešavanje",
+      "last7Days": "Rezervacije poslednjih 7 dana",
+      "next7Days": "Rezervacije narednih 7 dana",
+      "lastOnlineBooking": "Poslednja onlajn rezervacija",
+      "lastSignIn": "Poslednja prijava zaposlenih",
+      "staff": "Zaposleni"
     },
     "status": {
       "active": "Aktivan",
@@ -453,6 +472,34 @@
       "invalidName": "Unesite naziv od najviše 100 znakova.",
       "invalidSlug": "Slug sme da sadrži samo mala slova, cifre i pojedinačne crtice (ne na početku ni na kraju), najviše 50 znakova.",
       "slugTaken": "Ovaj slug već koristi drugi restoran."
+    },
+    "never": "Nikad",
+    "filter": {
+      "label": "Prikaži",
+      "all": "Svi",
+      "active": "Aktivni",
+      "inactive": "Deaktivirani",
+      "setupIncomplete": "Nepotpuno podešavanje"
+    },
+    "sort": {
+      "label": "Sortiraj po",
+      "name": "Naziv",
+      "activity": "Poslednja aktivnost"
+    },
+    "stats": {
+      "active": "Aktivni restorani",
+      "setupIncomplete": "Nepotpuno podešavanje",
+      "bookingsLast7Days": "Rezervacije u poslednjih 7 dana"
+    },
+    "activity": {
+      "title": "Aktivnost",
+      "hint": "Rezervacije bez otkazanih i odbijenih, u vremenskoj zoni restorana."
+    },
+    "setup": {
+      "title": "Podešavanje",
+      "open": "Otvoreno",
+      "allDone": "Svi koraci podešavanja su završeni.",
+      "hint": "Samo za pregled: otvorene korake završava administrator restorana u administraciji."
     }
   },
   "overview": {
@@ -460,7 +507,7 @@
     "viewBookingPage": "Pogledaj stranicu za rezervacije",
     "today": {
       "title": "Danas",
-      "toReservations": "Na rezervacije"
+      "openServiceScreen": "Otvori ekran za servis"
     },
     "checklist": {
       "title": "Podešavanje restorana",
@@ -527,10 +574,8 @@
       "website": "Unesite punu veb-adresu koja počinje sa https:// ili http://."
     },
     "errors": {
-      "title": "Profil nije sačuvan",
       "tooLong": "Jedno polje je duže nego što je dozvoljeno."
     },
-    "save": "Sačuvaj",
     "saved": "Profil je sačuvan."
   },
   "branding": {
@@ -634,7 +679,6 @@
       "title": "Pregled",
       "hint": "Prikazuje vaše izmene i pre čuvanja."
     },
-    "save": "Sačuvaj",
     "saved": "Izgled je sačuvan.",
     "errors": {
       "title": "Izgled nije sačuvan",
@@ -725,6 +769,7 @@
     }
   },
   "openingHours": {
+    "subtitle": "Kada gosti mogu da rezervišu: nedeljno radno vreme, neradni dani i posebno radno vreme, lokacija i državni praznici.",
     "save": "Sačuvaj",
     "saved": "Sačuvano.",
     "open": "Otvoreno",
@@ -885,6 +930,7 @@
     "text": "Stranica koju tražite ne postoji ili je premeštena."
   },
   "areas": {
+    "subtitle": "Vaši prostori sa planom i stolovima i koliko mesta svaki od njih nudi onlajn.",
     "addArea": "Dodaj prostor",
     "create": "Kreiraj",
     "emptyTitle": "Još nema prostora",
@@ -1170,7 +1216,6 @@
       "invalidBuffer": "Pauza mora biti između 0 i 60 minuta u koracima od 5.",
       "invalidMaxPartySize": "Najveća grupa onlajn mora imati najmanje 1 gosta."
     },
-    "save": "Sačuvaj",
     "saved": "Podešavanja rezervacija su sačuvana."
   },
   "reservations": {
@@ -1342,6 +1387,38 @@
       "combinationOptionCurrent_one": "Stolovi {{number}} · {{area}} · {{count}} mesto (trenutni)",
       "combinationOptionCurrent_few": "Stolovi {{number}} · {{area}} · {{count}} mesta (trenutni)",
       "combinationOptionCurrent_other": "Stolovi {{number}} · {{area}} · {{count}} mesta (trenutni)"
+    },
+    "history": {
+      "title": "Istorija",
+      "empty": "Još nema zabeleženih izmena.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Gost je rezervisao onlajn",
+      "createdByStaff": "Uneo/la: {{name}}",
+      "createdBySystem": "Kreirao sistem",
+      "cancelledByGuest": "Gost je otkazao preko linka",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "Član osoblja",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} osoba",
+      "guests_few": "{{count}} osobe",
+      "guests_other": "{{count}} osoba",
+      "minutes_one": "{{count}} min",
+      "minutes_few": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "fields": {
+        "date": "Datum",
+        "time": "Vreme",
+        "partySize": "Broj osoba",
+        "table": "Sto",
+        "duration": "Trajanje",
+        "name": "Ime",
+        "phone": "Telefon",
+        "email": "Imejl",
+        "notes": "Napomena",
+        "status": "Status"
+      }
     },
     "errors": {
       "invalidDate": "Izaberite ispravan datum.",
