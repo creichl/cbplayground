@@ -7,6 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
 import { FloorPlan, type ZoomButtonProps } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
 import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
+import { TimeAxis } from '../reservations/TimeAxis.tsx'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
 type FloorStatusViewProps = {
@@ -75,16 +76,10 @@ export function FloorStatusView({
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   }, [selectedTableId])
 
-  // Every two hours, every three on a long day, so the labels do not run into each other on a tablet.
-  const markStep = end - start > 8 * 60 ? 180 : 120
-  const marks: number[] = []
-  for (let minutes = Math.ceil(start / markStep) * markStep; minutes <= end; minutes += markStep) {
-    marks.push(minutes)
-  }
-
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 shadow-card">
+      {/* On phones the slider takes a row of its own below the time and "Now", so it keeps the width of the pane. */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-xl border border-border bg-card px-4 py-3 shadow-card">
         <div className="flex shrink-0 flex-col">
           <label htmlFor="floor-time" className="text-xs text-muted-foreground">
             {t('tableOverview.floor.time')}
@@ -93,7 +88,7 @@ export function FloorStatusView({
             {label(time)}
           </output>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="order-last flex min-w-0 basis-full flex-col gap-1 sm:order-none sm:basis-0 sm:flex-1">
           <input
             id="floor-time"
             type="range"
@@ -105,16 +100,10 @@ export function FloorStatusView({
             aria-valuetext={label(time)}
             className="h-11 w-full cursor-pointer accent-primary focus-ring"
           />
-          <div aria-hidden="true" className="relative h-4 text-xs text-muted-foreground tabular-nums">
-            {marks.map((minutes) => (
-              <span key={minutes} className="absolute -translate-x-1/2" style={{ left: `${((minutes - start) / (end - start)) * 100}%` }}>
-                {label(minutes)}
-              </span>
-            ))}
-          </div>
+          <TimeAxis start={start} end={end} />
         </div>
         {nowMinutes !== null && (
-          <Button variant="outline" className="shrink-0" onClick={() => setTime(Math.min(end, Math.max(start, Math.floor(nowMinutes / step) * step)))}>
+          <Button variant="outline" className="ml-auto shrink-0 sm:ml-0" onClick={() => setTime(Math.min(end, Math.max(start, Math.floor(nowMinutes / step) * step)))}>
             {t('tableOverview.floor.now')}
           </Button>
         )}

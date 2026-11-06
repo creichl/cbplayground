@@ -71,12 +71,12 @@ function TodayStats() {
     <Stack gap="xs">
       <Group justify="space-between" gap="xs">
         <Title order={3}>{t('overview.today.title')}</Title>
-        <Anchor component={Link} to="/admin/reservations" size="sm">
+        <Anchor component={Link} to="/frontdesk" size="sm">
           {t('overview.today.toReservations')}
         </Anchor>
       </Group>
       {reservations.data !== undefined ? (
-        <DayStats reservations={reservations.data} openRequests={openRequests.data?.length ?? 0} withArrived={false} requestsTo="/admin/reservations" />
+        <DayStats reservations={reservations.data} openRequests={openRequests.data?.length ?? 0} withArrived={false} requestsTo="/frontdesk?tab=requests" />
       ) : reservations.isError ? (
         <ErrorAlert error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : (

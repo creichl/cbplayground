@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
 import { cn } from '../../lib/utils.ts'
@@ -28,8 +28,6 @@ type ReservationListPanelProps = {
   selectedId: string | null
   /** Opens a reservation: selects it and opens the edit drawer. */
   onOpen: (reservation: Reservation) => void
-  /** Shown at the end of the tab row, e.g. the button that collapses the panel on tablets. */
-  trailing?: ReactNode
   className?: string
 }
 
@@ -50,7 +48,6 @@ export function ReservationListPanel({
   searching,
   selectedId,
   onOpen,
-  trailing,
   className,
 }: ReservationListPanelProps) {
   const { t } = useTranslation()
@@ -79,17 +76,18 @@ export function ReservationListPanel({
 
   return (
     <Tabs value={tab} onValueChange={(value) => onTabChange(value as ListTab)} className={cn('min-h-0 gap-0', className)}>
-      <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-        <TabsList className="grid min-w-0 flex-1 grid-cols-4">
+      <div className="border-b border-border px-3 py-2">
+        {/* Four equal columns, the number below the label, so the longer labels (de, sr) fit the 400 px panel too. */}
+        <TabsList className="grid h-auto w-full grid-cols-4">
           {tabs.map(({ value, label }) => {
             const number = count(value)
             return (
-              <TabsTrigger key={value} value={value} className="min-w-0 gap-1 px-1 text-[0.8125rem]">
-                {label}
+              <TabsTrigger key={value} value={value} className="h-auto min-h-11 min-w-0 flex-col gap-0.5 px-1 py-1 text-[0.8125rem] leading-tight touch:h-auto">
+                <span className="max-w-full truncate">{label}</span>
                 {number !== undefined && (
                   <span
                     className={cn(
-                      'rounded-full px-1.5 text-xs tabular-nums',
+                      'rounded-full px-1.5 text-xs leading-4 tabular-nums',
                       value === 'requests' && number > 0 ? 'bg-status-requested-surface text-status-requested-text' : 'bg-background/70',
                     )}
                   >
@@ -100,7 +98,6 @@ export function ReservationListPanel({
             )
           })}
         </TabsList>
-        {trailing}
       </div>
       <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6">
         {(['upcoming', 'seated', 'finished'] as const).map((shown) => (

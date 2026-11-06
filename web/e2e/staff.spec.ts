@@ -39,6 +39,11 @@ test.describe('Admin', () => {
     await expect(page.getByText('Welcome, Anna Admin!', { exact: false })).toBeVisible()
     await screenshot(page, 'admin', 'overview')
 
+    // The key figure of the open requests opens them on the front desk.
+    await page.getByRole('link', { name: /^Open requests: / }).click()
+    await expect(page).toHaveURL(/\/frontdesk\?tab=requests$/)
+    await expect(page.getByRole('tab', { name: /^Requests/ })).toHaveAttribute('aria-selected', 'true')
+
     // The reservations and the table overview of the admin are the front desk's service screen now.
     await page.goto('/admin/reservations')
     await expect(page).toHaveURL(/\/frontdesk$/)
@@ -277,6 +282,22 @@ async function findDay(from: number, wanted: (date: string) => Promise<boolean>)
   throw new Error(`No such day in the 60 days from ${from} days ahead.`)
 }
 
+/** The tabs of the list panel lie side by side within their row, none running into the next or out of the row. */
+async function expectTabsInside(page: Page) {
+  const list = (await page.getByRole('tablist').first().boundingBox())!
+  const tabs = page.getByRole('tablist').first().getByRole('tab')
+  let previousRight = list.x
+  for (let i = 0; i < (await tabs.count()); i++) {
+    const tab = tabs.nth(i)
+    const box = (await tab.boundingBox())!
+    expect(box.x, `tab ${i}`).toBeGreaterThanOrEqual(previousRight)
+    expect(box.x + box.width, `tab ${i}`).toBeLessThanOrEqual(list.x + list.width + 0.5)
+    // Its texts fit into it.
+    expect(await tab.evaluate((element) => element.scrollWidth <= element.clientWidth), `tab ${i}`).toBe(true)
+    previousRight = box.x + box.width - 0.5
+  }
+}
+
 test.describe('Front desk: service screen', () => {
   test('shows list, key figures and floor plan on one screen at 1440 × 900', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 })
@@ -391,6 +412,7 @@ test.describe('Front desk: service screen', () => {
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
     await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
+    await expectTabsInside(page)
     await screenshot(page, 'front-desk', 'service-1024')
 
     await page.getByRole('button', { name: 'Hide the list' }).click()
@@ -398,6 +420,13 @@ test.describe('Front desk: service screen', () => {
     await screenshot(page, 'front-desk', 'service-1024-list-collapsed')
     await page.getByRole('button', { name: 'Show list' }).click()
     await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
+
+    // The longer Serbian labels fit as well.
+    await page.getByRole('button', { name: 'Account menu' }).click()
+    await page.getByRole('menuitemradio', { name: 'Srpski (latinica)' }).click()
+    await expect(page.getByRole('tab', { name: /^Očekuju se/ })).toBeVisible()
+    await expectTabsInside(page)
+    await screenshot(page, 'front-desk', 'service-1024-sr-latn')
   })
 
   test('shows one pane at a time on a phone at 390 × 844', async ({ page }) => {
@@ -413,6 +442,24 @@ test.describe('Front desk: service screen', () => {
     await panes.getByRole('button', { name: 'Floor plan' }).click()
     await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeHidden()
     await expect(page.getByLabel('Time', { exact: true })).toBeVisible()
+    // The hour labels below the slider do not run into each other.
+    const axes = await page.locator('[data-time-axis]').evaluateAll((elements) =>
+      elements.map((axis) =>
+        [...axis.querySelectorAll('span')].map((span) => {
+          const box = span.getBoundingClientRect()
+          return { left: box.left, right: box.right, fits: span.scrollWidth <= span.clientWidth }
+        }),
+      ),
+    )
+    // The axis of the covers chart and the one of the slider.
+    expect(axes).toHaveLength(2)
+    for (const labels of axes) {
+      expect(labels.length).toBeGreaterThan(0)
+      for (const [i, label] of labels.entries()) {
+        expect(label.fits, `label ${i} fits its box`).toBe(true)
+        if (i > 0) expect(label.left, `label ${i}`).toBeGreaterThanOrEqual(labels[i - 1].right)
+      }
+    }
     await screenshot(page, 'front-desk', 'service-390-floor')
 
     await panes.getByRole('button', { name: 'Timeline' }).click()

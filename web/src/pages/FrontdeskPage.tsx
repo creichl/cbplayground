@@ -80,7 +80,8 @@ export function FrontdeskPage() {
   const serviceParam = searchParams.get('service') ?? wholeDay
 
   const [search, setSearch] = useState('')
-  const [tab, setTab] = useState<ListTab>('upcoming')
+  // `?tab=requests` opens the open requests, e.g. from the admin overview's key figure; afterwards the tab is the screen's own.
+  const [tab, setTab] = useState<ListTab>(() => (searchParams.get('tab') === 'requests' ? 'requests' : 'upcoming'))
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // undefined: drawer closed, null: new reservation.
   const [editing, setEditing] = useState<Reservation | null | undefined>(undefined)
@@ -306,11 +307,6 @@ export function FrontdeskPage() {
             searching={search.trim().length > 0}
             selectedId={selectedId}
             onOpen={open}
-            trailing={
-              <Button variant="ghost" size="icon" className="hidden md:max-xl:inline-flex" onClick={() => setListCollapsed(true)} aria-label={t('frontdesk.hideList')}>
-                <PanelLeftCloseIcon aria-hidden="true" />
-              </Button>
-            }
           />
         </aside>
 
@@ -329,11 +325,16 @@ export function FrontdeskPage() {
               onWalkIn={setWalkInTable}
               selectedId={selectedId}
               onSelect={select}
+              // Tablets: the list panel is hidden and shown again from the plan pane, so its tab row keeps the full width.
               leading={
-                listCollapsed && (
+                listCollapsed ? (
                   <Button variant="outline" className="hidden md:max-xl:inline-flex" onClick={() => setListCollapsed(false)}>
                     <PanelLeftOpenIcon aria-hidden="true" />
                     {t('frontdesk.showList')}
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="icon" className="hidden md:max-xl:inline-flex" onClick={() => setListCollapsed(true)} aria-label={t('frontdesk.hideList')}>
+                    <PanelLeftCloseIcon aria-hidden="true" />
                   </Button>
                 )
               }

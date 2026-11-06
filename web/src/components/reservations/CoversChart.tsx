@@ -3,6 +3,7 @@ import { formatMinutes, type Reservation, toMinutes } from '../../api/reservatio
 import { formatTime } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { isActive } from './status.ts'
+import { TimeAxis } from './TimeAxis.tsx'
 
 type CoversChartProps = {
   /** The reservations of the day or of the chosen service, all statuses; only the expected ones count. */
@@ -61,16 +62,7 @@ export function CoversChart({ reservations, start, end, nowMinutes, className }:
           />
         ))}
       </div>
-      <div aria-hidden="true" className="relative h-4 text-[0.6875rem] text-muted-foreground tabular-nums">
-        {slots
-          // Every hour, or every other hour on a long day, so the labels do not run into each other.
-          .filter((slot) => slot.minutes % (end - start > 6 * 60 ? 120 : 60) === 0)
-          .map((slot) => (
-            <span key={slot.minutes} className="absolute -translate-x-1/2" style={{ left: `${((slot.minutes - start) / (end - start)) * 100}%` }}>
-              {label(slot.minutes)}
-            </span>
-          ))}
-      </div>
+      <TimeAxis start={start} end={end} />
     </figure>
   )
 }
