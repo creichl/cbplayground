@@ -77,6 +77,12 @@ public class Reservation : ITenantOwned
 
     public ReservationSource Source { get; set; }
 
+    /// <summary>
+    /// True when the reservation was created as <see cref="ReservationStatus.Requested"/>, so accepting it can be undone
+    /// (<see cref="ReservationStatus.Confirmed"/> back to <see cref="ReservationStatus.Requested"/>).
+    /// </summary>
+    public bool WasRequested { get; set; }
+
     /// <summary>When the guest left (status <see cref="ReservationStatus.Completed"/>), in the restaurant's local time; null otherwise.</summary>
     public DateTime? CompletedAtLocal { get; set; }
 

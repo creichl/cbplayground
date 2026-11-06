@@ -592,6 +592,7 @@ public static class DevelopmentSeed
                         : ReservationSource.Staff;
 
                     var guest = guests.Next(random);
+                    var status = DemoStatus(random, start <= now, source, settings.ConfirmationMode);
                     var reservation = new Reservation
                     {
                         TableId = entry.Table.Id,
@@ -603,7 +604,8 @@ public static class DevelopmentSeed
                         GuestPhone = guest.Phone,
                         GuestEmail = guest.Email,
                         Notes = guest.Notes,
-                        Status = DemoStatus(random, start <= now, source, settings.ConfirmationMode),
+                        Status = status,
+                        WasRequested = status == ReservationStatus.Requested,
                         Source = source,
                         ReferenceCode = await UniqueReferenceCodeAsync(db, referenceCodes),
                         Language = guest.Language,

@@ -48,6 +48,7 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData("POST", "/api/staff/reservations")]
     [InlineData("PUT", "/api/staff/reservations/00000000-0000-0000-0000-000000000001")]
     [InlineData("POST", "/api/staff/reservations/00000000-0000-0000-0000-000000000001/status")]
+    [InlineData("DELETE", "/api/staff/reservations/00000000-0000-0000-0000-000000000001")]
     [InlineData("GET", "/api/staff/walk-in-tables?guests=2")]
     [InlineData("POST", "/api/staff/walk-ins")]
     public async Task Staff_endpoints_need_a_sign_in_of_restaurant_staff(string method, string path)
@@ -233,7 +234,7 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     [InlineData(ReservationStatus.Cancelled, "Confirmed", true)]
     [InlineData(ReservationStatus.Cancelled, "Late", true)]
     [InlineData(ReservationStatus.Cancelled, "Arrived", false)]
-    [InlineData(ReservationStatus.Declined, "Requested", false)]
+    [InlineData(ReservationStatus.Declined, "Requested", true)]
     [InlineData(ReservationStatus.Declined, "Confirmed", false)]
     public async Task Status_changes_follow_the_allowed_transitions(ReservationStatus from, string to, bool allowed)
     {

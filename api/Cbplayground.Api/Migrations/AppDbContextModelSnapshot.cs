@@ -326,6 +326,9 @@ namespace Cbplayground.Api.Migrations
                     b.Property<DateTime>("UpdatedAtUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("WasRequested")
+                        .HasColumnType("INTEGER");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ReferenceCode")
