@@ -316,6 +316,8 @@ test.describe('Archived tables', () => {
     await page.getByRole('button', { name: 'Delete table' }).click()
     const dialog = page.getByRole('dialog', { name: `Delete table ${number}?` })
     await expect(dialog.getByText('Its past and cancelled reservations are kept.', { exact: false })).toBeVisible()
+    // After the dialog's entrance animation.
+    await expect(dialog).toHaveCSS('opacity', '1')
     await screenshot(page, 'archived-tables', 'delete-table-confirmation', { fullPage: false })
     await dialog.getByRole('button', { name: 'Delete', exact: true }).click()
     await expect(dialog).toBeHidden()
@@ -329,9 +331,13 @@ test.describe('Archived tables', () => {
     const row = page.getByLabel(`Archived table ${number} · ${area.name}`).locator('..')
     await expect(row.getByRole('button', { name: new RegExp(`^${name} \\(2\\)`) })).toBeVisible()
     await screenshot(page, 'archived-tables', 'timeline-archived-table')
-    // A day without reservations on archived tables has no such row.
-    await page.goto(`/admin/tables?date=${dateFromToday(3)}`)
-    await expect(page.getByLabel(/^Table \S+, seats: \d+$/).first()).toBeVisible()
+    // A day with demo reservations, but none on archived tables, has no such row.
+    const upcoming = (await (await page.request.get(`/api/staff/reservations?from=${dateFromToday(1)}&to=${dateFromToday(7)}`)).json()) as {
+      date: string
+    }[]
+    expect(upcoming.length, 'demo reservations in the next days').toBeGreaterThan(0)
+    await page.goto(`/admin/tables?date=${upcoming[0].date}`)
+    await expect(page.getByRole('button', { name: /^.+ \(\d+\), / }).first()).toBeVisible()
     await expect(page.getByText('Archived tables', { exact: true })).toHaveCount(0)
   })
 })

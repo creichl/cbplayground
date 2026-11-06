@@ -1,5 +1,5 @@
 import { Box, Text, UnstyledButton } from '@mantine/core'
-import { useEffect, useRef, useState } from 'react'
+import { type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
@@ -86,11 +86,14 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
   const archivedTables = [...new Map(reservations.filter((reservation) => reservation.tableArchived).map((reservation) => [reservation.tableId, reservation])).values()]
     .sort((a, b) => a.tableNumber.length - b.tableNumber.length || (a.tableNumber < b.tableNumber ? -1 : a.tableNumber > b.tableNumber ? 1 : 0))
 
-  /** The header row of a group of tables: an area, or the archived tables. */
+  /**
+   * The header row of a group of tables: an area, or the archived tables. The row has no reservations, so its title may run
+   * past the table column instead of being cut off.
+   */
   const groupHeader = (title: string) => (
     <Box display="flex" h={28} bg="gray.0" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-      <Box bg="gray.0" px="xs" style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
-        <Text size="sm" fw={600} truncate>
+      <Box bg="gray.0" px="xs" style={{ position: 'sticky', left: 0, zIndex: 3, display: 'flex', alignItems: 'center' }}>
+        <Text size="sm" fw={600} style={{ whiteSpace: 'nowrap' }}>
           {title}
         </Text>
       </Box>
@@ -98,12 +101,10 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
   )
 
   /** The row of a table with its label and its reservations as blocks. */
-  const row = (key: string, label: string, ariaLabel: string, rowReservations: Reservation[]) => (
+  const row = (key: string, label: ReactNode, ariaLabel: string, rowReservations: Reservation[]) => (
     <Box key={key} display="flex" h={rowHeight} style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
-      <Box bg="white" px="xs" aria-label={ariaLabel} title={label} style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
-        <Text size="sm" fw={600} truncate>
-          {label}
-        </Text>
+      <Box bg="white" px="xs" aria-label={ariaLabel} style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
+        {label}
       </Box>
       <Box pos="relative" style={{ width, flexShrink: 0, backgroundImage: gridLines }}>
         {rowReservations.map((reservation) => {
@@ -195,7 +196,9 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
               {area.tables.map((table) =>
                 row(
                   table.id,
-                  t('common.tableLabel', { number: table.number, seats: table.seats }),
+                  <Text size="sm" fw={600} truncate>
+                    {t('common.tableLabel', { number: table.number, seats: table.seats })}
+                  </Text>,
                   t('areas.tableMarker', { number: table.number, seats: table.seats }),
                   sorted.filter((reservation) => reservation.tableId === table.id),
                 ),
@@ -209,7 +212,15 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
             {archivedTables.map((table) =>
               row(
                 table.tableId,
-                t('tableOverview.details.tableValue', { number: table.tableNumber, area: table.areaName }),
+                // The number, and below it the area the table belonged to.
+                <Box miw={0} title={`${table.tableNumber} · ${table.areaName}`}>
+                  <Text size="sm" fw={600} truncate>
+                    {table.tableNumber}
+                  </Text>
+                  <Text size="xs" c="dimmed" truncate>
+                    {table.areaName}
+                  </Text>
+                </Box>,
                 t('tableOverview.timeline.archivedTable', { number: table.tableNumber, area: table.areaName }),
                 sorted.filter((reservation) => reservation.tableId === table.tableId),
               ),
