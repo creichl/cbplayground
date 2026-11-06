@@ -1096,6 +1096,20 @@
       "maxOnlinePartySizeDescription": "Größere Gruppen werden gebeten anzurufen. Leer: der größte online buchbare Tisch.",
       "maxOnlinePartySizePlaceholder": "Größter Tisch"
     },
+    "pacing": {
+      "title": "Pacing",
+      "description": "Begrenzt, wie viele Gäste in einem Zeitraum pro 15 Minuten beginnen dürfen, damit Küche und Service nicht auf einmal überrannt werden. Es zählen alle Reservierungen, die in der Viertelstunde beginnen, auch Walk-ins; stornierte nicht. Online wird eine Uhrzeit nur angeboten, solange ihre Viertelstunde noch Platz für die Gruppe hat; das Personal sieht eine Warnung, kann aber trotzdem buchen. Ohne Regel gibt es keine Grenze.",
+      "example": "Beispiel: Freitag und Samstag 18:00–20:00, höchstens 20 Gäste pro 15 Minuten. Mit 16 Gästen um 19:00 kann eine Gruppe von 4 online noch 19:00 buchen, eine Gruppe von 5 nicht; 19:15 wird für sich gezählt.",
+      "rule": "Pacing-Regel {{number}}",
+      "days": "Tage",
+      "from": "Von",
+      "to": "Bis",
+      "toDescription": "00:00 = Mitternacht",
+      "maxCovers": "Max. Gäste pro 15 Minuten",
+      "addRule": "+ Regel",
+      "deleteRule": "Regel löschen",
+      "noRules": "Noch keine Regeln: Es gibt keine Grenze."
+    },
     "validation": {
       "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
       "minGuests": "Geben Sie mindestens 1 Gast ein.",
@@ -1104,7 +1118,12 @@
       "leadTime": "Geben Sie {{min}} bis {{max}} Minuten ein.",
       "bookingHorizon": "Geben Sie {{min}} bis {{max}} Tage ein.",
       "buffer": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
-      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer."
+      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer.",
+      "pacingDays": "Wählen Sie mindestens einen Tag.",
+      "pacingTime": "Geben Sie eine Uhrzeit ein.",
+      "pacingStartBeforeEnd": "„Bis“ muss nach „Von“ liegen.",
+      "pacingOverlap": "Dieser Zeitraum überschneidet sich am selben Tag mit einer anderen Pacing-Regel.",
+      "pacingMaxCovers": "Geben Sie {{min}} bis {{max}} Gäste ein."
     },
     "errors": {
       "title": "Die Einstellungen wurden nicht gespeichert",
@@ -1116,7 +1135,9 @@
       "invalidLeadTime": "Die Vorlaufzeit muss zwischen 0 und 1440 Minuten liegen.",
       "invalidBookingHorizon": "Der Buchungshorizont muss zwischen 1 und 365 Tagen liegen.",
       "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
-      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
+      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein.",
+      "invalidPacingRule": "Jede Pacing-Regel braucht mindestens einen Tag, einen Beginn vor dem Ende und 1 bis 500 Gäste.",
+      "overlappingPacingRules": "Zwei Pacing-Regeln überschneiden sich am selben Tag."
     },
     "save": "Speichern",
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
@@ -1253,6 +1274,8 @@
       "defaultDuration_one": "Dauer des Restaurants für diese Personenzahl: {{count}} Minute",
       "defaultDuration_other": "Dauer des Restaurants für diese Personenzahl: {{count}} Minuten",
       "duration": "Dauer in Minuten",
+      "pacingWarningTitle": "Über der Pacing-Grenze",
+      "pacingWarning": "Um {{time}} beginnen bereits {{booked}} Gäste; mit dieser Gruppe sind es {{total}}, die Grenze liegt bei {{max}} pro 15 Minuten. Sie können die Reservierung trotzdem speichern.",
       "name": "Name",
       "phone": "Telefon",
       "email": "E-Mail",

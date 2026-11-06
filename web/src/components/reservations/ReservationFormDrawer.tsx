@@ -17,7 +17,7 @@ import { durationLimits, isValidDuration } from '../../api/reservationSettings.t
 import { datePickerFormatter, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
-import { sourceLabels } from './status.ts'
+import { blockingStatuses, sourceLabels } from './status.ts'
 
 /** The longest note the server accepts. */
 const maxNotesLength = 500
@@ -103,6 +103,12 @@ type FormValues = {
   notes: string
 }
 
+/** The 15-minute start slot of a time, e.g. "19:00" for a walk-in at "19:07". */
+function slotOf(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return `${String(hours).padStart(2, '0')}:${String(minutes - (minutes % 15)).padStart(2, '0')}`
+}
+
 function wholeNumber(value: NumberValue) {
   return typeof value === 'number' && Number.isInteger(value) ? value : null
 }
@@ -179,6 +185,20 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
       }),
     })),
   ]
+  // Pacing: staff can always book, but see when the party takes the start slot above the restaurant's limit. A change
+  // does not count its own guests twice: the server counts the reservation as it is stored, if it starts in that slot.
+  const pacing = times.find((slot) => slot.time === time)?.pacing ?? null
+  const ownGuests =
+    reservation !== null &&
+    time !== null &&
+    reservation.date === values.date &&
+    slotOf(reservation.time) === time &&
+    blockingStatuses.includes(reservation.status)
+      ? reservation.guests
+      : 0
+  const pacingTotal = pacing !== null && guests !== null ? pacing.booked - ownGuests + guests : null
+  const aboveLimit = pacing !== null && pacingTotal !== null && pacingTotal > pacing.max
+
   const fallbackTableId = isNew ? (suggestion?.id ?? null) : reservation.tableId
   const tableId = tableOptions.some((option) => option.value === values.tableId) ? values.tableId : fallbackTableId
 
@@ -291,6 +311,16 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
                 ))}
               </Stack>
             </Chip.Group>
+          )}
+          {aboveLimit && time !== null && (
+            <Alert color="yellow" variant="light" title={t('reservations.form.pacingWarningTitle')}>
+              {t('reservations.form.pacingWarning', {
+                time: formatTime(time, language),
+                booked: pacing.booked - ownGuests,
+                total: pacingTotal,
+                max: pacing.max,
+              })}
+            </Alert>
           )}
           {form.errors.time !== undefined && (
             <Text size="sm" c="red">

@@ -1112,6 +1112,20 @@
       "maxOnlinePartySizeDescription": "Veće grupe se mole da pozovu telefonom. Prazno: najveći sto koji se može rezervisati onlajn.",
       "maxOnlinePartySizePlaceholder": "Najveći sto"
     },
+    "pacing": {
+      "title": "Raspored dolazaka",
+      "description": "Ograničava koliko gostiju sme da počne na svakih 15 minuta u jednom vremenskom opsegu, da kuhinja i usluga ne budu preopterećeni odjednom. Broje se sve rezervacije koje počinju u tih 15 minuta, i walk-in gosti; otkazane ne. Onlajn se termin nudi samo dok u njegovih 15 minuta ima mesta za grupu; osoblje vidi upozorenje, ali i dalje može da rezerviše. Bez pravila nema ograničenja.",
+      "example": "Primer: petak i subota 18:00–20:00, najviše 20 gostiju na 15 minuta. Sa 16 gostiju u 19:00 grupa od 4 još može onlajn da rezerviše 19:00, grupa od 5 ne može; 19:15 se broji posebno.",
+      "rule": "Pravilo rasporeda {{number}}",
+      "days": "Dani",
+      "from": "Od",
+      "to": "Do",
+      "toDescription": "00:00 = ponoć",
+      "maxCovers": "Najviše gostiju na 15 minuta",
+      "addRule": "+ Pravilo",
+      "deleteRule": "Obriši pravilo",
+      "noRules": "Još nema pravila: nema ograničenja."
+    },
     "validation": {
       "duration": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
       "minGuests": "Unesite najmanje 1 gosta.",
@@ -1120,7 +1134,12 @@
       "leadTime": "Unesite od {{min}} do {{max}} minuta.",
       "bookingHorizon": "Unesite od {{min}} do {{max}} dana.",
       "buffer": "Unesite od {{min}} do {{max}} minuta u koracima od {{step}}.",
-      "maxOnlinePartySize": "Unesite najmanje 1 gosta ili ostavite polje prazno."
+      "maxOnlinePartySize": "Unesite najmanje 1 gosta ili ostavite polje prazno.",
+      "pacingDays": "Izaberite bar jedan dan.",
+      "pacingTime": "Unesite vreme.",
+      "pacingStartBeforeEnd": "„Do“ mora biti posle „Od“.",
+      "pacingOverlap": "Ovaj vremenski opseg se istog dana preklapa sa drugim pravilom rasporeda.",
+      "pacingMaxCovers": "Unesite od {{min}} do {{max}} gostiju."
     },
     "errors": {
       "title": "Podešavanja nisu sačuvana",
@@ -1132,7 +1151,9 @@
       "invalidLeadTime": "Minimalno vreme unapred mora biti između 0 i 1440 minuta.",
       "invalidBookingHorizon": "Period rezervisanja mora biti između 1 i 365 dana.",
       "invalidBuffer": "Pauza mora biti između 0 i 60 minuta u koracima od 5.",
-      "invalidMaxPartySize": "Najveća grupa onlajn mora imati najmanje 1 gosta."
+      "invalidMaxPartySize": "Najveća grupa onlajn mora imati najmanje 1 gosta.",
+      "invalidPacingRule": "Svako pravilo rasporeda mora imati bar jedan dan, početak pre kraja i od 1 do 500 gostiju.",
+      "overlappingPacingRules": "Dva pravila rasporeda se preklapaju istog dana."
     },
     "save": "Sačuvaj",
     "saved": "Podešavanja rezervacija su sačuvana."
@@ -1281,6 +1302,8 @@
       "defaultDuration_few": "Trajanje restorana za ovaj broj osoba: {{count}} minuta",
       "defaultDuration_other": "Trajanje restorana za ovaj broj osoba: {{count}} minuta",
       "duration": "Trajanje u minutima",
+      "pacingWarningTitle": "Iznad ograničenja dolazaka",
+      "pacingWarning": "U {{time}} već počinje gostiju: {{booked}}; sa ovom grupom biće ih {{total}}, a ograničenje je {{max}} na 15 minuta. Rezervaciju i dalje možete da sačuvate.",
       "name": "Ime",
       "phone": "Telefon",
       "email": "Imejl",
