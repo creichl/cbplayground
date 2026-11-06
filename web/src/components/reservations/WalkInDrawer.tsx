@@ -6,7 +6,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client.ts'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
-import { useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
+import { defaultWalkInGuests, useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
 import { guestName } from './status.ts'
 
@@ -26,13 +26,14 @@ function walkInErrorMessage(error: unknown, t: TFunction) {
 
 /**
  * Seats a guest without a reservation now: party size, then a table free now (the suggestion is preselected and can be
- * changed), then optionally name, phone and a note. The reservation starts as arrived.
+ * changed), then optionally name, phone and a note. The reservation starts as arrived. A chosen table that is not free (any
+ * more) is never swapped for another one: the drawer says so and the user picks a table.
  */
 export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerProps) {
   const { t, i18n } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
   const createWalkIn = useCreateWalkIn()
-  const [guestsValue, setGuestsValue] = useState<number | string>(2)
+  const [guestsValue, setGuestsValue] = useState<number | string>(defaultWalkInGuests)
   const [chosenTableId, setChosenTableId] = useState<string | null>(wantedTableId ?? null)
   const [name, setName] = useState('')
   const [phone, setPhone] = useState('')
@@ -41,8 +42,9 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
   const guests = typeof guestsValue === 'number' && Number.isInteger(guestsValue) && guestsValue >= 1 ? guestsValue : null
   const freeTables = useWalkInTables(guests)
   const tables = freeTables.data?.tables ?? []
-  const tableId = tables.some((table) => table.id === chosenTableId) ? chosenTableId : (tables.at(0)?.id ?? null)
-  const wantedTableTaken = wantedTableId !== undefined && freeTables.data !== undefined && !tables.some((table) => table.id === wantedTableId)
+  // The table from the floor plan or picked here, e.g. taken meanwhile or too small for the party size entered since.
+  const chosenTableTaken = chosenTableId !== null && freeTables.data !== undefined && !tables.some((table) => table.id === chosenTableId)
+  const tableId = chosenTableId === null ? (tables.at(0)?.id ?? null) : chosenTableTaken ? null : chosenTableId
 
   const submit = () => {
     if (guests === null || tableId === null) {
@@ -117,14 +119,19 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
                   }),
                 }))}
                 value={tableId}
-                onChange={setChosenTableId}
+                onChange={(id) => {
+                  setChosenTableId(id)
+                  createWalkIn.reset()
+                }}
+                placeholder={t('reservations.walkIn.chooseTable')}
+                error={chosenTableTaken}
                 allowDeselect={false}
                 size="md"
               />
-              {wantedTableTaken && (
-                <Text size="sm" c="orange.8">
+              {chosenTableTaken && (
+                <Alert color="orange" variant="light">
                   {t('reservations.walkIn.wantedTableTaken', { count: guests })}
-                </Text>
+                </Alert>
               )}
             </Stack>
           )}

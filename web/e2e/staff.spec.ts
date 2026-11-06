@@ -154,3 +154,127 @@ test.describe('Superadmin', () => {
     await screenshot(page, 'superadmin', 'restaurants')
   })
 })
+
+/** The date `days` from today, "YYYY-MM-DD" (the device's today; the restaurants are in its time zone or close to it). */
+function dateFromToday(days: number) {
+  const date = new Date()
+  date.setDate(date.getDate() + days)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+}
+
+/**
+ * Books an online request at Kafana Dunav (request mode, the guest chooses the table) on the first day from ten days ahead
+ * with a free time and table, after the demo reservations, so the test does not depend on them.
+ */
+async function bookRequest(page: Page, name: string) {
+  const restaurant = '/api/public/restaurants/kafana-dunav'
+  for (let days = 10; days < 40; days++) {
+    const date = dateFromToday(days)
+    const availability = (await (await page.request.get(`${restaurant}/availability?date=${date}&guests=2`)).json()) as {
+      periods: { times: { time: string; available: boolean }[] }[]
+    }
+    const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.available)?.time
+    if (time === undefined) continue
+    const areas = (await (await page.request.get(`${restaurant}/tables?date=${date}&time=${time}&guests=2`)).json()) as {
+      tables: { id: string; available: boolean }[]
+    }[]
+    const table = areas.flatMap((area) => area.tables).find((candidate) => candidate.available)
+    if (table === undefined) continue
+    const booking = await page.request.post(`${restaurant}/reservations`, {
+      data: { date, time, guests: 2, tableId: table.id, name, phone: '+381 64 1234567', language: 'en' },
+    })
+    expect(booking.status()).toBe(201)
+    expect(await booking.json()).toMatchObject({ status: 'Requested' })
+    return
+  }
+  throw new Error('No free time at Kafana Dunav in the next 40 days.')
+}
+
+test.describe('Front desk: declining a request', () => {
+  test('asks first, and "Back" leaves the request open', async ({ page }) => {
+    const name = 'Mila Petrović'
+    await bookRequest(page, name)
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+
+    // The open requests list the request; its row holds the button that opens it and the status actions.
+    const row = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).locator('..')
+    await row.getByRole('button', { name: 'Decline', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: 'Decline the request?' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText(`The request of ${name} at`, { exact: false })).toBeVisible()
+    await screenshot(page, 'front-desk', 'decline-asks-first', { fullPage: false })
+
+    await dialog.getByRole('button', { name: 'Back' }).click()
+    await expect(dialog).toBeHidden()
+    await expect(row.getByText('Requested', { exact: true })).toBeVisible()
+    await expect(row.getByRole('button', { name: 'Decline', exact: true })).toBeVisible()
+    await screenshot(page, 'front-desk', 'decline-back-request-open')
+
+    // Declining for real removes it from the open requests, so the demo data stays as it was.
+    await row.getByRole('button', { name: 'Decline', exact: true }).click()
+    await dialog.getByRole('button', { name: 'Decline request' }).click()
+    await expect(page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })).toHaveCount(0)
+  })
+})
+
+test.describe('Front desk: tabs', () => {
+  test('keep the chosen day from Reservations to Table overview', async ({ page }) => {
+    const date = dateFromToday(3)
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await page.goto(`/frontdesk/reservations?date=${date}`)
+
+    await page.getByRole('tab', { name: 'Table overview' }).click()
+    await expect(page).toHaveURL(new RegExp(`/frontdesk/tables\\?date=${date}$`))
+    await expect(page.getByRole('heading', { name: 'Table overview' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Today', exact: true })).toBeEnabled()
+    await screenshot(page, 'front-desk', 'tabs-keep-date')
+
+    await page.getByRole('tab', { name: 'Reservations' }).click()
+    await expect(page).toHaveURL(new RegExp(`/frontdesk/reservations\\?date=${date}$`))
+    // "Today" has no chosen day.
+    await page.getByRole('tab', { name: 'Today' }).click()
+    await expect(page).toHaveURL(/\/frontdesk$/)
+  })
+})
+
+test.describe('Front desk: walk-in on the floor plans', () => {
+  test('offers "Seat walk-in here" only on the tables the server lists as free now', async ({ page }) => {
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    const walkInTables = await page.request.get('/api/staff/walk-in-tables?guests=2')
+    test.skip(walkInTables.status() === 400, 'Kafana Dunav is closed at the time of the run, so the server offers no table for a walk-in now.')
+    expect(walkInTables.status()).toBe(200)
+    const free = new Set(((await walkInTables.json()) as { tables: { id: string }[] }).tables.map((table) => table.id))
+    const floor = (await (await page.request.get('/api/staff/floor')).json()) as { tables: { id: string; number: string; seats: number }[] }[]
+    const tables = floor.flatMap((area) => area.tables)
+    const marker = (table: { number: string; seats: number }) => page.getByLabel(`Table ${table.number}, seats: ${table.seats},`).first()
+    const walkInHere = page.getByRole('button', { name: 'Seat walk-in here' })
+
+    await page.goto('/frontdesk/tables?view=floor')
+    // "Now" is only there on today, once the plans are shown.
+    await expect(page.getByRole('button', { name: 'Now' })).toBeVisible()
+
+    // Every table of the plans: the offer appears exactly on the tables of the server's answer.
+    for (const table of tables) {
+      await marker(table).click()
+      await expect(walkInHere, `table ${table.number}`).toHaveCount(free.has(table.id) ? 1 : 0)
+      // A second tap closes the popover again.
+      await marker(table).click()
+      await expect(walkInHere).toHaveCount(0)
+    }
+
+    const freeTable = tables.find((table) => free.has(table.id))
+    test.skip(freeTable === undefined, 'No table of Kafana Dunav is free for a walk-in now.')
+    await marker(freeTable!).click()
+    await expect(walkInHere).toBeVisible()
+    await screenshot(page, 'front-desk', 'floor-walk-in-free-table', { fullPage: false })
+    await walkInHere.click()
+    // The drawer starts with the table from the floor plan, which the server accepts.
+    const drawer = page.getByRole('dialog', { name: 'Seat a walk-in' })
+    await expect(drawer.getByRole('button', { name: 'Seat walk-in', exact: true })).toBeEnabled()
+    await expect(drawer.getByText('The chosen table is not free', { exact: false })).toHaveCount(0)
+    await drawer.getByRole('button', { name: 'Cancel' }).click()
+  })
+})

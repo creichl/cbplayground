@@ -1201,6 +1201,12 @@
       "text_other": "{{name}} ({{time}}, party of {{count}}) did not come. The table will be freed.",
       "confirm": "No-show"
     },
+    "declineConfirm": {
+      "title": "Decline the request?",
+      "text_one": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
+      "text_other": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
+      "confirm": "Decline request"
+    },
     "toast": {
       "changed": "{{name}}: {{status}}"
     },
@@ -1212,8 +1218,9 @@
       "tableDescription_other": "Free from now for {{count}} minutes. The suggestion is preselected; you can choose another free table.",
       "noTable_one": "No table for a party of {{count}} is free right now.",
       "noTable_other": "No table for a party of {{count}} is free right now.",
-      "wantedTableTaken_one": "The chosen table is not free for a party of {{count}} right now; another free table is preselected.",
-      "wantedTableTaken_other": "The chosen table is not free for a party of {{count}} right now; another free table is preselected.",
+      "wantedTableTaken_one": "The chosen table is not free for a party of {{count}} right now. Please choose another free table.",
+      "wantedTableTaken_other": "The chosen table is not free for a party of {{count}} right now. Please choose another free table.",
+      "chooseTable": "Choose a table",
       "nameDescription": "Optional. Without a name, the guest is shown as “Walk-in”.",
       "seat": "Seat walk-in",
       "seated": "{{name}} seated at table {{table}} since {{time}}.",

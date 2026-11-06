@@ -20,6 +20,8 @@ type FloorStatusViewProps = {
   initialTime: number
   /** The current time in minutes since midnight when the day is today, otherwise null. */
   nowMinutes: number | null
+  /** The tables the server lists as free now for a walk-in (GET /api/staff/walk-in-tables); empty on other days and while closed. */
+  walkInTableIds: ReadonlySet<string>
   /** Seats a walk-in at a table that is free now (only today). */
   onWalkIn: (tableId: string) => void
 }
@@ -31,7 +33,7 @@ const step = 15
  * The plan of every area (floor plan image or drawn room) with its tables drawn in the colour of their status at the
  * chosen time, and the end of the current or the start of the next reservation at each table.
  */
-export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes, onWalkIn }: FloorStatusViewProps) {
+export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes, walkInTableIds, onWalkIn }: FloorStatusViewProps) {
   const { t, i18n } = useTranslation()
   const [time, setTime] = useState(initialTime)
   const active = reservations.filter(occupiesTable)
@@ -103,7 +105,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
                     tableScale={area.tableScale}
                     reservations={active}
                     time={time}
-                    nowMinutes={nowMinutes}
+                    freeNow={walkInTableIds.has(table.id)}
                     onWalkIn={onWalkIn}
                   />
                 ))}
@@ -122,7 +124,8 @@ type TableStatusProps = {
   /** The reservations of the day that occupy a table. */
   reservations: Reservation[]
   time: number
-  nowMinutes: number | null
+  /** Whether the server lists the table as free now for a walk-in, with the buffer and the walk-in's duration. */
+  freeNow: boolean
   onWalkIn: (tableId: string) => void
 }
 
@@ -133,9 +136,9 @@ function occupiesAt(reservation: Reservation, minutes: number) {
 
 /**
  * A table in the colour of its status at `time`, with the end of the current or the start of the next reservation.
- * A table that is free now offers to seat a walk-in.
+ * A table that is free now for a walk-in offers to seat one.
  */
-function TableStatus({ table, tableScale, reservations, time, nowMinutes, onWalkIn }: TableStatusProps) {
+function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn }: TableStatusProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const atTable = reservations.filter((reservation) => reservation.tableId === table.id)
@@ -144,7 +147,6 @@ function TableStatus({ table, tableScale, reservations, time, nowMinutes, onWalk
   const shown = current ?? next
   const color = current === undefined ? null : statusColors[current.status]
   const status = current === undefined ? t('tableOverview.free') : t(statusLabels[current.status])
-  const freeNow = nowMinutes !== null && !atTable.some((reservation) => occupiesAt(reservation, nowMinutes))
   const clickable = shown !== undefined || freeNow
 
   const marker = (
