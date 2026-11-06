@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Security.Claims;
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Reservations;
@@ -77,6 +78,16 @@ public static class StaffReservationEndpoints
     /// "invalid_notes", "outside_opening_hours"; (409): "slot_unavailable", "table_unavailable".
     /// </summary>
     public record WalkInRequest(int Guests, Guid? TableId, int? DurationMinutes, string? Name, string? Phone, string? Notes);
+
+    /// <summary>
+    /// An entry of a reservation's history. <see cref="Date"/> and <see cref="Time"/> ("HH:mm") are in the restaurant's time zone;
+    /// <see cref="UserName"/> is the staff user's display name at the time of the change, null for the guest and the system.
+    /// </summary>
+    public record ReservationEventResponse(DateOnly Date, string Time, ReservationActor Actor, string? UserName, ReservationEventKind Kind,
+        IReadOnlyList<ReservationChangeResponse> Changes);
+
+    /// <summary>A changed field with its old and new value (see <see cref="ReservationChange"/>).</summary>
+    public record ReservationChangeResponse(ReservationField Field, string? From, string? To);
 
     /// <summary>The tables free for a walk-in from <see cref="Time"/> (now) for <see cref="DurationMinutes"/>, the suggested one first.</summary>
     public record WalkInTablesResponse(string Time, int DurationMinutes, IReadOnlyList<FreeTable> Tables);
@@ -160,8 +171,8 @@ public static class StaffReservationEndpoints
         });
 
         // A reservation on the guest's behalf, e.g. by phone: always confirmed.
-        group.MapPost("/reservations", async (ReservationRequest request, ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability,
-            IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
+        group.MapPost("/reservations", async (ReservationRequest request, ClaimsPrincipal user, ITenantContext tenantContext, AppDbContext db,
+            IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
             var input = await ValidateAsync(request, tenantContext, db, durationPolicy, cancellationToken);
             if (input.Error is not null)
@@ -189,6 +200,7 @@ public static class StaffReservationEndpoints
             };
             Apply(reservation, input, request.Guests, table.Id, now);
             db.Reservations.Add(reservation);
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -201,8 +213,8 @@ public static class StaffReservationEndpoints
         // The opening hours, the availability and the table are only checked when the booking itself changes (date, time,
         // duration, party size or table; no table means the system assigns one), so the guest's details and notes can
         // still be changed after the opening hours or the tables have changed.
-        group.MapPut("/reservations/{id:guid}", async (Guid id, ReservationRequest request, ITenantContext tenantContext, AppDbContext db,
-            IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
+        group.MapPut("/reservations/{id:guid}", async (Guid id, ReservationRequest request, ClaimsPrincipal user, ITenantContext tenantContext,
+            AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
             var input = await ValidateAsync(request, tenantContext, db, durationPolicy, cancellationToken);
             if (input.Error is not null)
@@ -235,17 +247,25 @@ public static class StaffReservationEndpoints
                 tableId = table.Id;
             }
 
+            var before = ReservationHistory.Snapshot(reservation, await TableNumberAsync(db, reservation.TableId, cancellationToken));
+            var now = DateTime.UtcNow;
             reservation.GuestName = input.Guest!.Name;
             reservation.Language = request.Language is null ? reservation.Language : input.Language!;
-            Apply(reservation, input, request.Guests, tableId, DateTime.UtcNow);
+            Apply(reservation, input, request.Guests, tableId, now);
+            // Only the changed fields; a PUT that changes none of them leaves no entry.
+            var changes = ReservationHistory.Changes(before, ReservationHistory.Snapshot(reservation, await TableNumberAsync(db, tableId, cancellationToken)));
+            if (changes.Count > 0)
+            {
+                ReservationHistory.Record(db, reservation, ReservationEventKind.Updated, await ReservationEditor.StaffAsync(user, db, cancellationToken), now, changes);
+            }
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
             return Results.Ok(await LoadResponseAsync(db, reservation.Id));
         });
 
-        group.MapPost("/reservations/{id:guid}/status", async (Guid id, StatusRequest request, AppDbContext db, IAvailabilityService availability,
-            CancellationToken cancellationToken) =>
+        group.MapPost("/reservations/{id:guid}/status", async (Guid id, StatusRequest request, ClaimsPrincipal user, AppDbContext db,
+            IAvailabilityService availability, CancellationToken cancellationToken) =>
         {
             if (request.Status is null || !Enum.GetNames<ReservationStatus>().Contains(request.Status))
             {
@@ -277,11 +297,40 @@ public static class StaffReservationEndpoints
             reservation.CompletedAtLocal = status == ReservationStatus.Completed ? TruncateToMinute(now) : null;
             // A status set by the staff, e.g. the undo of a guest's cancellation, is no longer the guest's cancellation.
             reservation.CancelledByGuest = false;
+            var nowUtc = DateTime.UtcNow;
+            ReservationHistory.Record(db, reservation, ReservationEventKind.StatusChanged, await ReservationEditor.StaffAsync(user, db, cancellationToken),
+                nowUtc, ReservationHistory.StatusChange(reservation.Status, status));
             reservation.Status = status;
-            reservation.UpdatedAtUtc = DateTime.UtcNow;
+            reservation.UpdatedAtUtc = nowUtc;
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return Results.Ok(await LoadResponseAsync(db, reservation.Id));
+        });
+
+        // Who changed what and when, newest first.
+        group.MapGet("/reservations/{id:guid}/history", async (Guid id, ITenantContext tenantContext, AppDbContext db, CancellationToken cancellationToken) =>
+        {
+            if (!await db.Reservations.AnyAsync(r => r.Id == id, cancellationToken))
+            {
+                return Results.NotFound();
+            }
+            var timeZoneId = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.TimeZoneId).SingleAsync(cancellationToken);
+            var timeZone = timeZoneId is null ? TimeZoneInfo.Utc : TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            var events = await db.ReservationEvents
+                .Where(e => e.ReservationId == id)
+                .OrderByDescending(e => e.AtUtc)
+                .ToListAsync(cancellationToken);
+            return Results.Ok(events.Select(e =>
+            {
+                var local = TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(e.AtUtc, DateTimeKind.Utc), timeZone);
+                return new ReservationEventResponse(
+                    DateOnly.FromDateTime(local),
+                    FormatTime(TimeOnly.FromDateTime(local)),
+                    e.Actor,
+                    e.UserDisplayName,
+                    e.Kind,
+                    e.Changes.Select(c => new ReservationChangeResponse(c.Field, c.From, c.To)).ToList());
+            }).ToList());
         });
 
         group.MapGet("/walk-in-tables", async (int guests, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
@@ -301,8 +350,8 @@ public static class StaffReservationEndpoints
         });
 
         // A guest without a reservation: seated now, so the reservation starts as arrived.
-        group.MapPost("/walk-ins", async (WalkInRequest request, ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability,
-            IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
+        group.MapPost("/walk-ins", async (WalkInRequest request, ClaimsPrincipal user, ITenantContext tenantContext, AppDbContext db,
+            IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
             if (request.Guests < 1)
             {
@@ -352,6 +401,7 @@ public static class StaffReservationEndpoints
                 UpdatedAtUtc = now,
             };
             db.Reservations.Add(reservation);
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -422,6 +472,9 @@ public static class StaffReservationEndpoints
         reservation.Notes = input.Guest.Notes;
         reservation.UpdatedAtUtc = nowUtc;
     }
+
+    private static Task<string> TableNumberAsync(AppDbContext db, Guid tableId, CancellationToken cancellationToken) =>
+        db.Tables.Where(t => t.Id == tableId).Select(t => t.Number).SingleAsync(cancellationToken);
 
     /// <summary>The reservations with their table and area, sorted by start and table number.</summary>
     private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)

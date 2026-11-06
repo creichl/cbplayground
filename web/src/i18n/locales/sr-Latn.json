@@ -1298,6 +1298,38 @@
         "name": "Unesite ime gosta."
       }
     },
+    "history": {
+      "title": "Istorija",
+      "empty": "Još nema zabeleženih izmena.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Gost je rezervisao onlajn",
+      "createdByStaff": "Uneo/la: {{name}}",
+      "createdBySystem": "Kreirao sistem",
+      "cancelledByGuest": "Gost je otkazao preko linka",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "Član osoblja",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} osoba",
+      "guests_few": "{{count}} osobe",
+      "guests_other": "{{count}} osoba",
+      "minutes_one": "{{count}} min",
+      "minutes_few": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "fields": {
+        "date": "Datum",
+        "time": "Vreme",
+        "partySize": "Broj osoba",
+        "table": "Sto",
+        "duration": "Trajanje",
+        "name": "Ime",
+        "phone": "Telefon",
+        "email": "Imejl",
+        "notes": "Napomena",
+        "status": "Status"
+      }
+    },
     "errors": {
       "invalidDate": "Izaberite ispravan datum.",
       "invalidTime": "Izaberite ispravno vreme.",

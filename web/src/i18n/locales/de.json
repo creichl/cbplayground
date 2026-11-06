@@ -1270,6 +1270,36 @@
         "name": "Bitte den Namen des Gastes angeben."
       }
     },
+    "history": {
+      "title": "Verlauf",
+      "empty": "Noch keine Änderungen erfasst.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Vom Gast online gebucht",
+      "createdByStaff": "Eingetragen von {{name}}",
+      "createdBySystem": "Vom System angelegt",
+      "cancelledByGuest": "Vom Gast über den Link storniert",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "Ein Teammitglied",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} Person",
+      "guests_other": "{{count}} Personen",
+      "minutes_one": "{{count}} Min.",
+      "minutes_other": "{{count}} Min.",
+      "fields": {
+        "date": "Datum",
+        "time": "Uhrzeit",
+        "partySize": "Personen",
+        "table": "Tisch",
+        "duration": "Dauer",
+        "name": "Name",
+        "phone": "Telefon",
+        "email": "E-Mail",
+        "notes": "Notiz",
+        "status": "Status"
+      }
+    },
     "errors": {
       "invalidDate": "Bitte ein gültiges Datum wählen.",
       "invalidTime": "Bitte eine gültige Uhrzeit wählen.",
