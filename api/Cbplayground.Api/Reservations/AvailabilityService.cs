@@ -64,7 +64,7 @@ public interface IAvailabilityService
 
     /// <summary>
     /// Whether the table is free from <paramref name="startLocal"/> to <paramref name="endLocal"/> (plus the buffer around the other
-    /// reservations), apart from the reservation <paramref name="ignoreReservationId"/>.
+    /// reservations), apart from the reservation <paramref name="ignoreReservationId"/>. An archived table is never free.
     /// </summary>
     Task<bool> IsTableFreeAsync(Guid tableId, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId, CancellationToken cancellationToken = default);
 }
@@ -200,6 +200,11 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     public async Task<bool> IsTableFreeAsync(Guid tableId, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId,
         CancellationToken cancellationToken = default)
     {
+        // An archived table is never free, e.g. for the undo of a cancellation on it.
+        if (!await db.Tables.AnyAsync(t => t.Id == tableId && t.ArchivedAtUtc == null, cancellationToken))
+        {
+            return false;
+        }
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
         var busy = await LoadBusyTablesAsync(startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
         return busy.All(r => r.TableId != tableId);
@@ -236,11 +241,15 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
     }
 
-    /// <summary>All tables with their area, in the order the system assigns them among tables of the same size.</summary>
+    /// <summary>
+    /// All tables in use with their area, in the order the system assigns them among tables of the same size; archived tables and
+    /// areas are never offered.
+    /// </summary>
     private async Task<List<TableInfo>> LoadTablesAsync(CancellationToken cancellationToken)
     {
         var tables = await db.Tables
-            .Join(db.Areas, t => t.AreaId, a => a.Id, (t, a) => new TableInfo(t, a))
+            .Where(t => t.ArchivedAtUtc == null)
+            .Join(db.Areas.Where(a => a.ArchivedAtUtc == null), t => t.AreaId, a => a.Id, (t, a) => new TableInfo(t, a))
             .ToListAsync(cancellationToken);
         return tables
             .OrderBy(t => t.Area.SortOrder).ThenBy(t => t.Area.Name, StringComparer.Ordinal)

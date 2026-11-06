@@ -373,7 +373,7 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 
     [Fact]
-    public async Task Past_reservations_do_not_prevent_deleting_a_table_or_an_area()
+    public async Task Past_reservations_do_not_prevent_deleting_a_table_or_an_area_and_are_kept()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory,
             [new TestArea("Gaststube", true, 100, ("1", 4)), new TestArea("Terrasse", true, 100, ("2", 4), ("3", 4))]);
@@ -386,8 +386,10 @@ public class StaffReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/admin/tables/{restaurant.Tables["1"]}", Token)).StatusCode);
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/admin/areas/{restaurant.Areas["Terrasse"]}", Token)).StatusCode);
 
+        // The table and the area are archived, so their reservations keep them.
         var list = await admin.GetFromJsonAsync<List<ReservationResponse>>($"/api/staff/reservations?from={lastWeek:yyyy-MM-dd}&to={lastWeek:yyyy-MM-dd}", Token);
-        Assert.Empty(list!);
+        Assert.Equal([("1", "Gaststube"), ("2", "Terrasse"), ("3", "Terrasse")], list!.Select(r => (r.TableNumber, r.AreaName)));
+        Assert.All(list!, r => Assert.True(r.TableArchived));
         Assert.Empty((await admin.GetFromJsonAsync<List<FloorArea>>("/api/staff/floor", Token))!.SelectMany(a => a.Tables));
     }
 }

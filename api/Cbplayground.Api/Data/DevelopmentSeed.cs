@@ -535,7 +535,9 @@ public static class DevelopmentSeed
         {
             return;
         }
-        var tables = await db.Tables.Join(db.Areas, t => t.AreaId, a => a.Id, (t, a) => new { Table = t, Area = a }).ToListAsync();
+        var tables = await db.Tables.Where(t => t.ArchivedAtUtc == null)
+            .Join(db.Areas.Where(a => a.ArchivedAtUtc == null), t => t.AreaId, a => a.Id, (t, a) => new { Table = t, Area = a })
+            .ToListAsync();
         if (tables.Count == 0)
         {
             return;

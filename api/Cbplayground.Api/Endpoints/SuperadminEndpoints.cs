@@ -276,8 +276,8 @@ public static partial class SuperadminEndpoints
         var adminCount = await TenantAdminsOf(db, tenant.Id).CountAsync(u => u.IsActive);
 
         // IgnoreQueryFilters: the Superadmin has no tenant, so the tenant filter would hide every table and reservation.
-        // Both counts are restricted to this restaurant explicitly and only read.
-        var tableCount = await db.Tables.IgnoreQueryFilters().CountAsync(t => t.TenantId == tenant.Id);
+        // Both counts are restricted to this restaurant explicitly and only read. Archived tables do not count.
+        var tableCount = await db.Tables.IgnoreQueryFilters().CountAsync(t => t.TenantId == tenant.Id && t.ArchivedAtUtc == null);
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
         var localNow = tenant.TimeZoneId is null ? utcNow : TimeZoneInfo.ConvertTimeBySystemTimeZoneId(utcNow, tenant.TimeZoneId);
         var upcomingReservationCount = await db.Reservations.IgnoreQueryFilters().CountAsync(r =>

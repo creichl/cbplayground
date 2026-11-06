@@ -114,7 +114,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
         {
             table.Property(t => t.Number).HasMaxLength(20);
             table.Property(t => t.Shape).HasConversion<string>().HasMaxLength(20);
-            table.HasIndex(t => new { t.TenantId, t.Number }).IsUnique();
+            // Unique only among the tables in use, so a new table can take the number of an archived one.
+            table.HasIndex(t => new { t.TenantId, t.Number }).IsUnique().HasFilter("\"ArchivedAtUtc\" IS NULL");
             table.HasOne<Tenant>()
                 .WithMany()
                 .HasForeignKey(t => t.TenantId)
@@ -172,8 +173,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             reservation.HasIndex(r => new { r.TenantId, r.StartLocal });
             reservation.HasIndex(r => r.ReferenceCode).IsUnique();
             reservation.HasOne<Tenant>().WithMany().HasForeignKey(r => r.TenantId).OnDelete(DeleteBehavior.Restrict);
-            // A table with reservations cannot be deleted by the database; the endpoints remove the reservations
-            // that no longer matter first and refuse the deletion while future ones exist.
+            // A table with reservations cannot be deleted by the database; the endpoints archive it instead (TableDeletion)
+            // and refuse it while one of its reservations occupies it and has not ended yet.
             reservation.HasOne<Table>().WithMany().HasForeignKey(r => r.TableId).OnDelete(DeleteBehavior.Restrict);
             reservation.Property(r => r.GuestName).HasMaxLength(Reservation.MaxNameLength);
             reservation.Property(r => r.GuestPhone).HasMaxLength(Reservation.MaxPhoneLength);

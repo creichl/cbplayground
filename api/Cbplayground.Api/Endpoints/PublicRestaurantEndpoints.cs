@@ -141,7 +141,7 @@ public static class PublicRestaurantEndpoints
                 .Select(p => new PeriodDto(p.DayOfWeek, FormatTime(p.Start), FormatTime(p.End)))
                 .ToList();
             var maxOnlinePartySize = await availability.GetMaxOnlinePartySizeAsync();
-            var areas = (await db.Areas.Where(a => a.OnlineBookingEnabled).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync())
+            var areas = (await db.Areas.Where(a => a.OnlineBookingEnabled && a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync())
                 .Select(a => new RestaurantArea(a.Name, a.Description, AreaEndpoints.PhotoUrl(a)))
                 .ToList();
             return new RestaurantResponse(
@@ -256,8 +256,8 @@ public static class PublicRestaurantEndpoints
                 .FirstOrDefault(s => s.Time == startTime);
             var freeTableIds = slot?.FreeTables.Select(t => t.Id).ToHashSet() ?? [];
 
-            var areas = await db.Areas.Where(a => a.OnlineBookingEnabled).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
-            var tables = (await db.Tables.ToListAsync())
+            var areas = await db.Areas.Where(a => a.OnlineBookingEnabled && a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
+            var tables = (await db.Tables.Where(t => t.ArchivedAtUtc == null).ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .ToList();
             var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync();
@@ -395,6 +395,7 @@ public static class PublicRestaurantEndpoints
         return reservation is not null && ManageToken.Matches(reservation.ManageTokenHash, hash) ? reservation : null;
     }
 
+    /// <summary>The guest's view of the reservation, with its table and area also when they are archived.</summary>
     private static async Task<GuestReservationResponse> ToGuestResponseAsync(AppDbContext db, IAvailabilityService availability, Reservation reservation)
     {
         var table = await db.Tables.SingleAsync(t => t.Id == reservation.TableId);

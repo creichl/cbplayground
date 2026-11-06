@@ -64,4 +64,10 @@ public class Area : ITenantOwned
 
     /// <summary>The kind of room. Stored also for an area with floor plan image, but only drawn without one.</summary>
     public RoomStyle RoomStyle { get; set; } = RoomStyle.Indoor;
+
+    /// <summary>
+    /// When the area was deleted while one of its tables was archived (UTC); null while it is in use. An archived area keeps its
+    /// archived tables, its floor plan and its photo, so their reservations keep their area, but it is left out like those tables.
+    /// </summary>
+    public DateTime? ArchivedAtUtc { get; set; }
 }
