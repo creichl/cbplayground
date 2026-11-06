@@ -616,6 +616,10 @@ public static class DevelopmentSeed
         }
 
         db.Reservations.AddRange(reservations);
+        foreach (var reservation in reservations)
+        {
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, ReservationEditor.System, reservation.CreatedAtUtc);
+        }
         await db.SaveChangesAsync();
     }
 

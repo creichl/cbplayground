@@ -15,6 +15,13 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
         return scope.ServiceProvider.GetRequiredService<AppDbContext>().Reservations.AsNoTracking().ToList();
     }
 
+    private List<ReservationEvent> EventsOf(Guid tenantId)
+    {
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = tenantId;
+        return scope.ServiceProvider.GetRequiredService<AppDbContext>().ReservationEvents.AsNoTracking().ToList();
+    }
+
     [Fact]
     public async Task Restaurants_with_tables_get_demo_reservations_for_today_and_the_next_7_days_once()
     {
@@ -42,9 +49,14 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
         Assert.DoesNotContain(reservations, r => r.Status == ReservationStatus.Requested);
         Assert.Contains(ReservationsOf(request.Id), r => r.Status == ReservationStatus.Requested);
         Assert.Empty(ReservationsOf(withoutTables.Id));
+        // Every demo reservation starts its history with one entry of the system.
+        var events = EventsOf(instant.Id);
+        Assert.Equal(reservations.Select(r => r.Id).Order(), events.Select(e => e.ReservationId).Order());
+        Assert.All(events, e => Assert.Equal((ReservationEventKind.Created, ReservationActor.System, null), (e.Kind, e.Actor, e.UserId)));
 
         // A second start adds nothing.
         await DevelopmentSeed.SeedReservationsAsync(factory.Services);
         Assert.Equal(reservations.Count, ReservationsOf(instant.Id).Count);
+        Assert.Equal(events.Count, EventsOf(instant.Id).Count);
     }
 }
