@@ -342,6 +342,7 @@ public static class PublicRestaurantEndpoints
                 UpdatedAtUtc = now,
             };
             db.Reservations.Add(reservation);
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, ReservationEditor.Guest, now);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -375,9 +376,13 @@ public static class PublicRestaurantEndpoints
                 return ErrorResponse.Result("cancellation_not_possible", StatusCodes.Status409Conflict);
             }
 
+            var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+            // Saved together with the cancellation.
+            ReservationHistory.Record(db, reservation, ReservationEventKind.CancelledByGuest, ReservationEditor.Guest, nowUtc,
+                ReservationHistory.StatusChange(reservation.Status, ReservationStatus.Cancelled));
             reservation.Status = ReservationStatus.Cancelled;
             reservation.CancelledByGuest = true;
-            reservation.UpdatedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            reservation.UpdatedAtUtc = nowUtc;
             await db.SaveChangesAsync();
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
         }).RequireRateLimiting(ManageRateLimitPolicy);

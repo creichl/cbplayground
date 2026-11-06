@@ -54,6 +54,8 @@ import {
   useSpecialDays,
 } from '../api/specialDays.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
+import { SaveBar } from '../components/SaveBar.tsx'
 import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
 import { datePickerFormatter, formatDate, formatShortDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
@@ -224,10 +226,20 @@ function WeeklyHoursForm({ periods }: { periods: OpeningPeriod[] }) {
 
   const saveError = save.error !== null ? errorKey(save.error, openingHoursErrors) : null
 
+  const discard = () => {
+    save.reset()
+    form.reset()
+  }
+
   return (
     <form
       onSubmit={form.onSubmit((values) =>
-        save.mutate(toPeriods(values), { onSuccess: () => notifications.show({ color: 'green', message: t('openingHours.saved') }) }),
+        save.mutate(toPeriods(values), {
+          onSuccess: () => {
+            form.resetDirty(values)
+            notifications.show({ color: 'green', message: t('openingHours.saved') })
+          },
+        }),
       )}
     >
       <Stack gap="md">
@@ -290,13 +302,9 @@ function WeeklyHoursForm({ periods }: { periods: OpeningPeriod[] }) {
           ) : (
             <ErrorAlert error={save.error} />
           ))}
-
-        <Group>
-          <Button type="submit" loading={save.isPending}>
-            {t('openingHours.save')}
-          </Button>
-        </Group>
       </Stack>
+
+      <SaveBar dirty={form.isDirty()} saving={save.isPending} onDiscard={discard} />
     </form>
   )
 }
@@ -789,7 +797,7 @@ export function OpeningHoursPage() {
 
   return (
     <Stack gap="lg">
-      <Title order={2}>{t('admin.nav.openingHours')}</Title>
+      <PageHeader title={t('admin.nav.openingHours')} description={t('openingHours.subtitle')} />
 
       <Card>
         <Stack gap="md">

@@ -1,4 +1,25 @@
-import { ActionIcon, Alert, Anchor, Badge, Button, Card, Group, Menu, Modal, PasswordInput, SimpleGrid, Skeleton, Stack, Table, Text, TextInput, Title, VisuallyHidden } from '@mantine/core'
+import {
+  ActionIcon,
+  Alert,
+  Anchor,
+  Badge,
+  Button,
+  Card,
+  CheckIcon,
+  Group,
+  Menu,
+  Modal,
+  PasswordInput,
+  SimpleGrid,
+  Skeleton,
+  Stack,
+  Table,
+  Text,
+  TextInput,
+  ThemeIcon,
+  Title,
+  VisuallyHidden,
+} from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import dayjs from 'dayjs'
@@ -6,6 +27,8 @@ import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
 import {
+  setupDoneCount,
+  setupSteps,
   type SuperadminTenant,
   type TenantAdminUser,
   useCreateTenantAdmin,
@@ -18,6 +41,7 @@ import {
 import { superadminErrorMessage } from '../api/superadminErrors.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { ChevronLeftIcon, DotsVerticalIcon } from '../components/icons.tsx'
+import { ActivityTime, KeyFigure, SetupProgress } from '../components/superadmin/TenantFigures.tsx'
 import { formatDate } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { NotFoundPage } from './NotFoundPage.tsx'
@@ -249,6 +273,93 @@ function Fact({ label, children }: { label: string; children: ReactNode }) {
   )
 }
 
+/** The restaurant's bookings of the last and the next 7 days, its last online booking, last staff sign-in and its staff. */
+function ActivityCard({ tenant }: { tenant: SuperadminTenant }) {
+  const { t } = useTranslation()
+
+  return (
+    <Card withBorder padding="lg">
+      <Stack gap="md">
+        <Stack gap={2}>
+          <Title order={3}>{t('superadmin.activity.title')}</Title>
+          <Text size="sm" c="dimmed">
+            {t('superadmin.activity.hint')}
+          </Text>
+        </Stack>
+        <SimpleGrid cols={{ base: 1, xs: 2, md: 5 }} spacing="sm">
+          <KeyFigure label={t('superadmin.fields.last7Days')} value={tenant.reservationsLast7Days} />
+          <KeyFigure label={t('superadmin.fields.next7Days')} value={tenant.reservationsNext7Days} />
+          <KeyFigure label={t('superadmin.fields.lastOnlineBooking')} value={<ActivityTime moment={tenant.lastOnlineBookingAtUtc} size="lg" />} />
+          <KeyFigure label={t('superadmin.fields.lastSignIn')} value={<ActivityTime moment={tenant.lastStaffSignInAtUtc} size="lg" />} />
+          <KeyFigure label={t('superadmin.fields.staff')} value={tenant.staffCount} />
+        </SimpleGrid>
+      </Stack>
+    </Card>
+  )
+}
+
+/** The restaurant's setup checklist, read only: which steps are done and which are still open. */
+function SetupCard({ tenant }: { tenant: SuperadminTenant }) {
+  const { t } = useTranslation()
+  const allDone = setupDoneCount(tenant) === setupSteps.length
+
+  return (
+    <Card withBorder padding="lg">
+      <Stack gap="md">
+        <Stack gap={2}>
+          <Group justify="space-between" gap="xs">
+            <Title order={3}>{t('superadmin.setup.title')}</Title>
+            <SetupProgress tenant={tenant} />
+          </Group>
+          <Text size="sm" c="dimmed">
+            {t(allDone ? 'superadmin.setup.allDone' : 'superadmin.setup.hint')}
+          </Text>
+        </Stack>
+
+        <Stack gap={0} component="ol" p={0} m={0} style={{ listStyle: 'none' }}>
+          {setupSteps.map((step, index) => {
+            const isDone = tenant.setup[step]
+            return (
+              <Group
+                key={step}
+                component="li"
+                wrap="nowrap"
+                align="flex-start"
+                gap="md"
+                py="sm"
+                style={{ borderTop: index > 0 ? '1px solid var(--mantine-color-gray-2)' : undefined }}
+              >
+                {isDone ? (
+                  <ThemeIcon radius="xl" size={28} color="green">
+                    <CheckIcon size={12} />
+                  </ThemeIcon>
+                ) : (
+                  <ThemeIcon radius="xl" size={28} variant="outline" color="gray">
+                    <Text size="sm" fw={600}>
+                      {index + 1}
+                    </Text>
+                  </ThemeIcon>
+                )}
+                <Stack gap={2} style={{ flex: 1 }}>
+                  <Text fw={600} c={isDone ? 'dimmed' : undefined}>
+                    {t(`overview.steps.${step}.title`)}
+                  </Text>
+                  <Text size="sm" c="dimmed">
+                    {t(`overview.steps.${step}.description`)}
+                  </Text>
+                </Stack>
+                <Badge color={isDone ? 'green' : 'yellow'} variant="light" style={{ flexShrink: 0 }}>
+                  {t(isDone ? 'overview.checklist.done' : 'superadmin.setup.open')}
+                </Badge>
+              </Group>
+            )
+          })}
+        </Stack>
+      </Stack>
+    </Card>
+  )
+}
+
 function AdminsCard({ tenant }: { tenant: SuperadminTenant }) {
   const { t } = useTranslation()
   const admins = useTenantAdmins(tenant.id)
@@ -330,7 +441,10 @@ function AdminsCard({ tenant }: { tenant: SuperadminTenant }) {
   )
 }
 
-/** One restaurant for the Superadmin: master data, status with (de)activation, booking page and its Tenant Admins. */
+/**
+ * One restaurant for the Superadmin: status with (de)activation, booking page, its activity and staff, its setup checklist,
+ * master data and its Tenant Admins.
+ */
 export function SuperadminTenantPage() {
   const { t, i18n } = useTranslation()
   const { id } = useParams()
@@ -394,6 +508,10 @@ export function SuperadminTenantPage() {
           {t('superadmin.inactiveHint')}
         </Alert>
       )}
+
+      <ActivityCard tenant={tenant} />
+
+      <SetupCard tenant={tenant} />
 
       <Card withBorder padding="lg">
         <Stack gap="md">

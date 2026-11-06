@@ -34,6 +34,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<Reservation> Reservations => Set<Reservation>();
 
+    public DbSet<ReservationEvent> ReservationEvents => Set<ReservationEvent>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -191,6 +193,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             reservation.Property(r => r.Language).HasMaxLength(10);
             reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             reservation.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<ReservationEvent>(reservationEvent =>
+        {
+            reservationEvent.HasIndex(e => new { e.ReservationId, e.AtUtc });
+            reservationEvent.HasOne<Tenant>().WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // The history goes with its reservation, also when the reservations of a deleted table are removed.
+            reservationEvent.HasOne<Reservation>().WithMany().HasForeignKey(e => e.ReservationId).OnDelete(DeleteBehavior.Cascade);
+            reservationEvent.Property(e => e.Actor).HasConversion<string>().HasMaxLength(20);
+            reservationEvent.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
+            reservationEvent.Property(e => e.UserId).HasMaxLength(450);
+            reservationEvent.OwnsMany(e => e.Changes, change =>
+            {
+                change.ToJson();
+                change.Property(c => c.Field).HasConversion<string>();
+            });
         });
 
         // The roles are fixed, so the migrations create them in every environment.

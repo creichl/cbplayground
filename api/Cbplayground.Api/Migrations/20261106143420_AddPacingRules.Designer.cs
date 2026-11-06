@@ -11,7 +11,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cbplayground.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261106072127_AddPacingRules")]
+    [Migration("20261106143420_AddPacingRules")]
     partial class AddPacingRules
     {
         /// <inheritdoc />
@@ -45,6 +45,9 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("INTEGER");
+
+                    b.Property<DateTime?>("LastSignInAtUtc")
+                        .HasColumnType("TEXT");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
@@ -368,6 +371,47 @@ namespace Cbplayground.Api.Migrations
                     b.HasIndex("TenantId", "StartLocal");
 
                     b.ToTable("Reservations");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationEvent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Actor")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ReservationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserDisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ReservationId", "AtUtc");
+
+                    b.ToTable("ReservationEvents");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>
@@ -883,6 +927,49 @@ namespace Cbplayground.Api.Migrations
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationEvent", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.OwnsMany("Cbplayground.Api.Data.ReservationChange", "Changes", b1 =>
+                        {
+                            b1.Property<Guid>("ReservationEventId");
+
+                            b1.Property<int>("__synthesizedOrdinal")
+                                .ValueGeneratedOnAddOrUpdate();
+
+                            b1.Property<string>("Field")
+                                .IsRequired();
+
+                            b1.Property<string>("From");
+
+                            b1.Property<string>("To");
+
+                            b1.HasKey("ReservationEventId", "__synthesizedOrdinal");
+
+                            b1.ToTable("ReservationEvents");
+
+                            b1
+                                .ToJson("Changes")
+                                .HasColumnType("TEXT");
+
+                            b1.WithOwner()
+                                .HasForeignKey("ReservationEventId");
+                        });
+
+                    b.Navigation("Changes");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>

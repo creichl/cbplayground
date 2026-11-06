@@ -1,4 +1,4 @@
-import { ActionIcon, Alert, Badge, Button, Group, Menu, Modal, PasswordInput, Select, Skeleton, Stack, Table, Text, TextInput, Title, VisuallyHidden } from '@mantine/core'
+import { ActionIcon, Alert, Badge, Button, Group, Menu, Modal, PasswordInput, Select, Skeleton, Stack, Table, Text, TextInput, VisuallyHidden } from '@mantine/core'
 import { useForm } from '@mantine/form'
 import { notifications } from '@mantine/notifications'
 import type { TFunction } from 'i18next'
@@ -8,6 +8,7 @@ import { useCurrentUser } from '../api/auth.ts'
 import { ApiError } from '../api/client.ts'
 import { type StaffRole, type StaffUser, useCreateStaff, useSetStaffActive, useSetStaffPassword, useStaff, useUpdateStaff } from '../api/staff.ts'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
+import { PageHeader } from '../components/PageHeader.tsx'
 import { DotsVerticalIcon } from '../components/icons.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 
@@ -236,13 +237,11 @@ export function StaffPage() {
 
   return (
     <Stack gap="lg">
-      <Group justify="space-between" align="flex-end">
-        <Stack gap={4}>
-          <Title order={2}>{t('staff.title')}</Title>
-          <Text c="dimmed">{t('staff.subtitle')}</Text>
-        </Stack>
-        <Button onClick={() => setCreating(true)}>{t('staff.create.button')}</Button>
-      </Group>
+      <PageHeader
+        title={t('staff.title')}
+        description={t('staff.subtitle')}
+        action={<Button onClick={() => setCreating(true)}>{t('staff.create.button')}</Button>}
+      />
 
       {staff.isPending ? (
         <Stack gap="sm">

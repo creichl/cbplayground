@@ -26,7 +26,7 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth");
 
-        group.MapPost("/login", async (LoginRequest request, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AppDbContext db) =>
+        group.MapPost("/login", async (LoginRequest request, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AppDbContext db, TimeProvider timeProvider) =>
         {
             var invalidCredentials = Results.Json(new LoginError("invalid_credentials"), statusCode: StatusCodes.Status401Unauthorized);
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -59,6 +59,11 @@ public static class AuthEndpoints
             {
                 return Results.Json(new LoginError("restaurant_deactivated"), statusCode: StatusCodes.Status401Unauthorized);
             }
+
+            // The Superadmin sees the last sign-in of each restaurant's staff. Written directly, without Identity's concurrency
+            // stamp, so two sign-ins of the same account at once (e.g. a shared front desk account) cannot fail each other.
+            var signedInAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            await db.Users.Where(u => u.Id == user.Id).ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastSignInAtUtc, signedInAtUtc));
 
             await signInManager.SignInAsync(user, isPersistent: false);
             return Results.Ok(await ToMeResponse(user, userManager, db));
