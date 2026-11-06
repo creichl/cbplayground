@@ -145,6 +145,11 @@ test.describe('Front desk', () => {
   })
 })
 
+/** The number of a key figure, by its label (the value is the element after it). */
+async function figure(page: Page, label: string) {
+  return Number(await page.getByText(label, { exact: true }).locator('xpath=following-sibling::*[1]').textContent())
+}
+
 /**
  * Creates a restaurant without any setup and deactivates it, so the Superadmin's filters have one of each and the start
  * page, which lists only active restaurants, stays as it is. Does nothing when an earlier test of the run created it.
@@ -174,10 +179,14 @@ test.describe('Superadmin', () => {
     await expect(page.getByText('Active restaurants')).toBeVisible()
     await expect(page.getByText('3 / 4')).toBeVisible()
     await expect(page.getByText('Bookings in the last 7 days')).toBeVisible()
+    // The demo data has bookings in the past 7 days.
+    expect(await figure(page, 'Bookings in the last 7 days')).toBeGreaterThan(0)
     await expect(page.getByRole('columnheader', { name: 'Setup' })).toBeVisible()
     await expect(page.getByRole('columnheader', { name: 'Last staff sign-in' })).toBeVisible()
     const linde = rows.filter({ hasText: 'Gasthaus zur Linde' })
     await expect(linde).toContainText('6 / 6')
+    // Its bookings of the last 7 days (the sixth column).
+    expect(Number(await linde.getByRole('cell').nth(5).textContent())).toBeGreaterThan(0)
     await expect(linde.getByRole('cell').last()).not.toHaveText('Never')
     await expect(rows.filter({ hasText: 'Bistro Morgenrot' })).toContainText('0 / 6')
     await screenshot(page, 'superadmin', 'restaurants')
@@ -212,6 +221,8 @@ test.describe('Superadmin', () => {
     await expect(page.getByRole('heading', { name: 'Gasthaus zur Linde', level: 2 })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Activity' })).toBeVisible()
     await expect(page.getByText('Bookings next 7 days')).toBeVisible()
+    expect(await figure(page, 'Bookings last 7 days')).toBeGreaterThan(0)
+    expect(await figure(page, 'Bookings next 7 days')).toBeGreaterThan(0)
     await expect(page.getByText('Staff', { exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { name: 'Setup', exact: true })).toBeVisible()
     await expect(page.getByText('Every step of the setup is done.')).toBeVisible()

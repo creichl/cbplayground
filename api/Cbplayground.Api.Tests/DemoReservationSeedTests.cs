@@ -16,7 +16,7 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
     }
 
     [Fact]
-    public async Task Restaurants_with_tables_get_demo_reservations_for_today_and_the_next_7_days_once()
+    public async Task Restaurants_with_tables_get_demo_reservations_for_the_past_7_days_today_and_the_next_7_days_once()
     {
         var instant = await TestRestaurants.CreateAsync(factory,
             [new TestArea("Gaststube", true, 50, ("1", 2), ("2", 2), ("3", 4), ("4", 4), ("5", 6)), new TestArea("Terrasse", true, 100, ("6", 4), ("7", 4))]);
@@ -32,7 +32,7 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
         Assert.All(reservations, r =>
         {
             var date = DateOnly.FromDateTime(r.StartLocal);
-            Assert.InRange(date, today, today.AddDays(7));
+            Assert.InRange(date, today.AddDays(-7), today.AddDays(7));
             Assert.NotEqual(DayOfWeek.Monday, date.DayOfWeek);
             Assert.True(r.GuestPhone is not null || r.GuestEmail is not null);
             Assert.Equal(r.StartLocal.AddMinutes(r.DurationMinutes), r.EndLocal);
@@ -40,6 +40,12 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
         // No table is booked twice at the same time.
         Assert.All(reservations, r => Assert.DoesNotContain(reservations, o => o.Id != r.Id && o.TableId == r.TableId && o.StartLocal < r.EndLocal && o.EndLocal > r.StartLocal));
         Assert.DoesNotContain(reservations, r => r.Status == ReservationStatus.Requested);
+        // The past days are over: the guests left (at the reservation's end), did not come or cancelled.
+        var past = reservations.Where(r => DateOnly.FromDateTime(r.StartLocal) < today).ToList();
+        Assert.NotEmpty(past);
+        Assert.All(past, r => Assert.Contains(r.Status, new[] { ReservationStatus.Completed, ReservationStatus.NoShow, ReservationStatus.Cancelled }));
+        Assert.All(past.Where(r => r.Status == ReservationStatus.Completed), r => Assert.Equal(r.EndLocal, r.CompletedAtLocal));
+        Assert.Contains(reservations, r => DateOnly.FromDateTime(r.StartLocal) >= today);
         Assert.Contains(ReservationsOf(request.Id), r => r.Status == ReservationStatus.Requested);
         Assert.Empty(ReservationsOf(withoutTables.Id));
 

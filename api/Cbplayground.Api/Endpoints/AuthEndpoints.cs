@@ -60,13 +60,10 @@ public static class AuthEndpoints
                 return Results.Json(new LoginError("restaurant_deactivated"), statusCode: StatusCodes.Status401Unauthorized);
             }
 
-            // The Superadmin sees the last sign-in of each restaurant's staff.
-            user.LastSignInAtUtc = timeProvider.GetUtcNow().UtcDateTime;
-            var updated = await userManager.UpdateAsync(user);
-            if (!updated.Succeeded)
-            {
-                throw new InvalidOperationException($"Could not store the sign-in of user {user.Id}: {string.Join(" ", updated.Errors.Select(e => e.Code))}");
-            }
+            // The Superadmin sees the last sign-in of each restaurant's staff. Written directly, without Identity's concurrency
+            // stamp, so two sign-ins of the same account at once (e.g. a shared front desk account) cannot fail each other.
+            var signedInAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            await db.Users.Where(u => u.Id == user.Id).ExecuteUpdateAsync(setters => setters.SetProperty(u => u.LastSignInAtUtc, signedInAtUtc));
 
             await signInManager.SignInAsync(user, isPersistent: false);
             return Results.Ok(await ToMeResponse(user, userManager, db));
