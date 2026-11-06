@@ -18,10 +18,12 @@ bash web/e2e/run.sh
 ```
 
 The script installs the web dependencies (`npm ci`) and Playwright's Chromium (`npx playwright install chromium`),
-builds the API, and runs `npx playwright test` in `web/`. Playwright starts the API on http://localhost:5025 with fresh
-demo data (Development environment, `--reset-demo-data`, its database and uploads in `<tmp>/cbplayground-e2e`, not in
-`api/Cbplayground.Api/data/`) and the Vite dev server on http://localhost:5173, runs the tests headless and stops both
-again. Both ports must be free: stop a running `dotnet run` or `npm run dev` first. It needs no Docker and no root.
+builds the API and the web frontend (`npm run build` in development mode, so the demo accounts on `/login`, `/dev/ui` and
+`checkTailwind.ts` stay in it), and runs `npx playwright test` in `web/`. Playwright starts the API on
+http://localhost:5025 with fresh demo data (Development environment, `--reset-demo-data`, its database and uploads in
+`<tmp>/cbplayground-e2e`, not in `api/Cbplayground.Api/data/`) and serves the build with `vite preview` on
+http://localhost:5173 (not the dev server, which needs more memory), runs the tests headless and stops both again. Both
+ports must be free: stop a running `dotnet run` or `npm run dev` first. It needs no Docker and no root.
 Exit code 0 means all tests passed.
 
 Chromium needs system libraries (glib, nss, atk, X11, gbm, …) and a font, which the toolkit "Browser for Playwright"
@@ -33,13 +35,35 @@ fetch them anew.
 
 The results are in `test-results/` in the repository root (ignored by git):
 
-- `report.md`: every test with its result, and the errors of the failed ones;
+- `report.md`: every test with its result and the container's memory (from `/sys/fs/cgroup/memory.current`, where it
+  exists): right after the test and the peak during it (sampled every 100 ms, and `memory.peak` where it rose during
+  the test), the peak of the run with the test it occurred in, and the errors of the failed ones;
 - `screenshots/<feature>/<name>.png`: the screenshots;
-- `playwright/`: of a failing test its video and trace (`npx playwright show-trace <trace.zip>`).
+- `playwright/`: of a failing test its trace, with every step and its screenshot (`npx playwright show-trace <trace.zip>`);
+  no videos, their recording costs memory.
 
-After the first run, while working on the tests, faster in `web/` (the API has to be built, e.g. by the script or by
-`dotnet build api/Cbplayground.Api`): `npx playwright test`, or one test with `npx playwright test -g "<title>"`.
+After the first run, while working on the tests, faster in `web/` (the API and the web frontend have to be built, e.g. by
+the script, or by `dotnet build api/Cbplayground.Api` and `NODE_ENV=development npm run build -- --mode development`; build
+the web frontend again after every change to it): `npx playwright test`, or one test with
+`npx playwright test -g "<title>"`.
 
 The tests run in English (`locale: 'en-US'`) against the demo data of the development seed, with one browser at a time,
 so the run fits in the agent container's memory (2 GB). `.connbridge/autotest.json` runs the same script for the review
 packages.
+
+## Working in parallel and merging
+
+Several tickets are worked on at the same time and merged together into review packages. Keep the merges small:
+
+- **Browser tests:** put new tests in their own file per feature, `web/e2e/<feature>.spec.ts` (e.g. `waitlist.spec.ts`).
+  Do not append them to `staff.spec.ts` or `guest.spec.ts`. Shared helpers such as `signIn` belong in
+  `web/e2e/helpers.ts`; import them from there instead of copying them.
+- **Migrations:** on a conflict in `AppDbContextModelSnapshot.cs` or a migration, never merge the snapshot by hand. Take
+  the target branch's snapshot, delete the branch's own migration (`.cs` and `.Designer.cs`) and add it again with
+  `dotnet ef migrations add <SameName>`, so it comes after the target's migrations. Then run `dotnet test`.
+- **Locale files:** add new keys inside their own section object, not at the end of the file. Run `npm run lint` after
+  every merge.
+- **README:** describe a new page or feature in its own paragraph or subsection; do not extend an existing long
+  paragraph.
+- **Tests must not depend on each other:** every test that changes data creates what it needs (its own reservation, its
+  own table). Never rely on what another test left behind or on the order of the tests.
