@@ -18,4 +18,5 @@ npm ci --no-audit --no-fund
 npx playwright install chromium
 # Chromium's system libraries, when the toolkit "Browser for Playwright" did not bring them.
 source e2e/browser-libs.sh
-npx playwright test "$@"
+# Playwright itself, not through "npx", whose own process would stay in memory for the whole run.
+node_modules/.bin/playwright test "$@"

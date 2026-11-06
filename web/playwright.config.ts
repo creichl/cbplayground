@@ -40,6 +40,8 @@ export default defineConfig({
       stdout: 'ignore',
       stderr: 'pipe',
       env: {
+        // The workstation garbage collector: the server one keeps a heap per core, memory the container does not have.
+        DOTNET_gcServer: '0',
         ASPNETCORE_ENVIRONMENT: 'Development',
         ASPNETCORE_URLS: 'http://localhost:5025',
         ConnectionStrings__Default: `Data Source=${join(apiData, 'cbplayground.db')}`,
@@ -48,7 +50,8 @@ export default defineConfig({
       },
     },
     {
-      command: 'npm run dev -- --port 5173 --strictPort',
+      // Vite itself, not through "npm run dev", whose own process would stay in memory for nothing.
+      command: 'node node_modules/vite/bin/vite.js --port 5173 --strictPort',
       url: 'http://localhost:5173',
       reuseExistingServer: false,
       timeout: 60_000,
