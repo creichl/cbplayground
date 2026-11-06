@@ -856,11 +856,29 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Heute",
-    "nav": {
-      "today": "Heute",
-      "reservations": "Reservierungen",
-      "tables": "Tischübersicht"
+    "keyFigures": "Kennzahlen des Service",
+    "listPanel": "Reservierungen",
+    "panes": "Anzeigen",
+    "panesList": "Liste",
+    "hideList": "Liste ausblenden",
+    "showList": "Liste zeigen",
+    "tabs": {
+      "upcoming": "Erwartet",
+      "seated": "Am Tisch",
+      "finished": "Erledigt",
+      "requests": "Anfragen"
+    },
+    "empty": {
+      "upcoming": "Es werden keine Gäste mehr erwartet.",
+      "seated": "Gerade sitzt niemand am Tisch.",
+      "finished": "Noch ist keine Reservierung erledigt.",
+      "requests": "Es gibt keine offenen Anfragen.",
+      "service": "In diesem Service gibt es keine Reservierungen."
+    },
+    "service": {
+      "label": "Service",
+      "wholeDay": "Ganzer Tag",
+      "option": "{{name}} {{time}}"
     }
   },
   "notFound": {
@@ -1134,15 +1152,18 @@
     "new": "Neue Reservierung",
     "stats": {
       "reservations": "Reservierungen",
-      "guests": "Gäste",
-      "arrived": "Angekommen",
-      "seated": "Sitzende Gäste",
+      "seated": "Jetzt am Tisch",
       "noShows": "Nicht erschienen",
-      "openRequests": "Offene Anfragen"
+      "openRequests": "Offene Anfragen",
+      "finished": "Erledigt",
+      "covers_one": "{{count}} Gast",
+      "covers_other": "{{count}} Gäste",
+      "tables_one": "an {{count}} Tisch",
+      "tables_other": "an {{count}} Tischen"
     },
     "list": {
       "empty": "An diesem Tag gibt es keine Reservierungen.",
-      "noMatches": "Keine Reservierung passt zur Suche oder zum Filter.",
+      "noMatches": "Keine Reservierung passt zur Suche.",
       "groupGuests_one": "{{count}} Gast",
       "groupGuests_other": "{{count}} Gäste"
     },
@@ -1290,6 +1311,14 @@
       "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit.",
       "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
       "statusTitle": "Der Status konnte nicht geändert werden"
+    },
+    "chart": {
+      "title": "Gäste je Viertelstunde",
+      "summary_one": "am meisten um {{time}} mit {{count}} Gast",
+      "summary_other": "am meisten um {{time}} mit {{count}} Gästen",
+      "empty": "keine Gäste",
+      "bar_one": "{{time}}: {{count}} Gast",
+      "bar_other": "{{time}}: {{count}} Gäste"
     }
   },
   "tableOverview": {
@@ -1311,6 +1340,7 @@
     "freeTable_other": "Tisch {{number}} · {{count}} Plätze · frei",
     "walkInHere": "Walk-in hier setzen",
     "legendInactive": "Storniert, abgelehnt oder nicht erschienen",
+    "legend": "Farben der Status",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Tisch · Plätze"

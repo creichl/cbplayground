@@ -856,11 +856,29 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Today",
-    "nav": {
-      "today": "Today",
-      "reservations": "Reservations",
-      "tables": "Table overview"
+    "keyFigures": "Key figures of the service",
+    "listPanel": "Reservations",
+    "panes": "Show",
+    "panesList": "List",
+    "hideList": "Hide the list",
+    "showList": "Show list",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "seated": "Seated",
+      "finished": "Finished",
+      "requests": "Requests"
+    },
+    "empty": {
+      "upcoming": "No more guests are expected.",
+      "seated": "Nobody is seated right now.",
+      "finished": "No reservation is finished yet.",
+      "requests": "There are no open requests.",
+      "service": "There are no reservations in this service."
+    },
+    "service": {
+      "label": "Service",
+      "wholeDay": "Whole day",
+      "option": "{{name}} {{time}}"
     }
   },
   "notFound": {
@@ -1134,15 +1152,18 @@
     "new": "New reservation",
     "stats": {
       "reservations": "Reservations",
-      "guests": "Guests",
-      "arrived": "Arrived",
-      "seated": "Guests seated",
+      "seated": "Seated now",
       "noShows": "No-shows",
-      "openRequests": "Open requests"
+      "openRequests": "Open requests",
+      "finished": "Finished",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "tables_one": "at {{count}} table",
+      "tables_other": "at {{count}} tables"
     },
     "list": {
       "empty": "There are no reservations on this day.",
-      "noMatches": "No reservation matches the search or filter.",
+      "noMatches": "No reservation matches the search.",
       "groupGuests_one": "{{count}} guest",
       "groupGuests_other": "{{count}} guests"
     },
@@ -1290,6 +1311,14 @@
       "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time.",
       "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
       "statusTitle": "The status could not be changed"
+    },
+    "chart": {
+      "title": "Covers per quarter hour",
+      "summary_one": "busiest at {{time}} with {{count}} cover",
+      "summary_other": "busiest at {{time}} with {{count}} covers",
+      "empty": "no covers",
+      "bar_one": "{{time}}: {{count}} cover",
+      "bar_other": "{{time}}: {{count}} covers"
     }
   },
   "tableOverview": {
@@ -1311,6 +1340,7 @@
     "freeTable_other": "Table {{number}} · {{count}} seats · free",
     "walkInHere": "Seat walk-in here",
     "legendInactive": "Cancelled, declined or no-show",
+    "legend": "Status colours",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Table · seats"

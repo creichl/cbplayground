@@ -85,6 +85,36 @@
   --primary-900: #006b5e;
   --ring: var(--primary-text);
 
+  /*
+   * The statuses of a reservation (front desk, components/reservations/status.ts), light only: the staff screens are light.
+   * --status-<s> fills and outlines (timeline blocks, tables on the plan, the bars of the key figures), at least 3:1 on white;
+   * --status-<s>-surface the calm background of a badge or a block; --status-<s>-text the text on both, at least 4.5:1.
+   */
+  --status-requested: var(--color-amber-600);
+  --status-requested-surface: var(--color-amber-100);
+  --status-requested-text: var(--color-amber-800);
+  --status-confirmed: var(--color-blue-600);
+  --status-confirmed-surface: var(--color-blue-100);
+  --status-confirmed-text: var(--color-blue-800);
+  --status-late: var(--color-orange-600);
+  --status-late-surface: var(--color-orange-100);
+  --status-late-text: var(--color-orange-800);
+  --status-arrived: var(--color-green-600);
+  --status-arrived-surface: var(--color-green-100);
+  --status-arrived-text: var(--color-green-800);
+  --status-completed: var(--color-teal-600);
+  --status-completed-surface: var(--color-teal-100);
+  --status-completed-text: var(--color-teal-800);
+  --status-no-show: var(--color-purple-600);
+  --status-no-show-surface: var(--color-purple-100);
+  --status-no-show-text: var(--color-purple-800);
+  --status-cancelled: var(--color-red-600);
+  --status-cancelled-surface: var(--color-red-100);
+  --status-cancelled-text: var(--color-red-800);
+  --status-declined: var(--color-stone-500);
+  --status-declined-surface: var(--color-stone-100);
+  --status-declined-text: var(--color-stone-700);
+
   --font-display-weight: 700;
 
   /* Shadows: soft and in layers, tinted with the warm grey. */
@@ -211,6 +241,31 @@
   --color-primary-700: var(--primary-700);
   --color-primary-800: var(--primary-800);
   --color-primary-900: var(--primary-900);
+
+  --color-status-requested: var(--status-requested);
+  --color-status-requested-surface: var(--status-requested-surface);
+  --color-status-requested-text: var(--status-requested-text);
+  --color-status-confirmed: var(--status-confirmed);
+  --color-status-confirmed-surface: var(--status-confirmed-surface);
+  --color-status-confirmed-text: var(--status-confirmed-text);
+  --color-status-late: var(--status-late);
+  --color-status-late-surface: var(--status-late-surface);
+  --color-status-late-text: var(--status-late-text);
+  --color-status-arrived: var(--status-arrived);
+  --color-status-arrived-surface: var(--status-arrived-surface);
+  --color-status-arrived-text: var(--status-arrived-text);
+  --color-status-completed: var(--status-completed);
+  --color-status-completed-surface: var(--status-completed-surface);
+  --color-status-completed-text: var(--status-completed-text);
+  --color-status-no-show: var(--status-no-show);
+  --color-status-no-show-surface: var(--status-no-show-surface);
+  --color-status-no-show-text: var(--status-no-show-text);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-status-cancelled-surface: var(--status-cancelled-surface);
+  --color-status-cancelled-text: var(--status-cancelled-text);
+  --color-status-declined: var(--status-declined);
+  --color-status-declined-surface: var(--status-declined-surface);
+  --color-status-declined-text: var(--status-declined-text);
 
   --shadow-card: var(--elevation-card);
   --shadow-float: var(--elevation-float);

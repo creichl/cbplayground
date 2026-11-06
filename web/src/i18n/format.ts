@@ -1,4 +1,5 @@
 import type { DateFormatter } from '@mantine/dates'
+import type { ParseKeys } from 'i18next'
 import dayjs from 'dayjs'
 import i18n from './index.ts'
 
@@ -55,4 +56,13 @@ export function datePickerFormatter(language: string): DateFormatter {
     }
     return date === null ? '' : format(date)
   }
+}
+
+/**
+ * The name of an opening window after the time it starts ("HH:mm"): morning, lunch or evening. The guest's booking names its
+ * windows so, and the front desk its services, e.g. "Lunch 11:30–14:30".
+ */
+export function periodLabel(start: string): ParseKeys {
+  const hour = Number(start.slice(0, 2))
+  return hour < 11 ? 'booking.time.morning' : hour < 16 ? 'booking.time.midday' : 'booking.time.evening'
 }

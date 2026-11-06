@@ -1,12 +1,12 @@
-import { Button, Card, Group, Popover, Slider, Stack, Text, Title } from '@mantine/core'
-import { cloneElement, type KeyboardEvent, type ReactElement, useState } from 'react'
+import { type KeyboardEvent, type ReactElement, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, type FloorTable, formatMinutes, type Reservation, toMinutes } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
-import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
-import { FloorPlan } from '../floor-plan/FloorPlan.tsx'
-import { FloorPlanZoomButton } from '../FloorPlanZoomButton.tsx'
+import { Button } from '../../ui/button.tsx'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
+import { FloorPlan, type ZoomButtonProps } from '../floor-plan/FloorPlan.tsx'
 import { TableShape } from '../floor-plan/TableShape.tsx'
+import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
 type FloorStatusViewProps = {
@@ -24,70 +24,106 @@ type FloorStatusViewProps = {
   walkInTableIds: ReadonlySet<string>
   /** Seats a walk-in at a table that is free now (only today). */
   onWalkIn: (tableId: string) => void
+  /** The reservation selected on the screen: its table is highlighted and brought into view. */
+  selectedId: string | null
+  /** Called when a table with a reservation is clicked: the reservation shown at it becomes the selected one. */
+  onSelect: (reservation: Reservation) => void
 }
 
 /** The slider moves in quarter hours, like the reservation start times. */
 const step = 15
 
+/** The zoom buttons of the plans in the design system. */
+function ZoomButton({ label, icon, disabled, onClick, placement }: ZoomButtonProps) {
+  return (
+    <Button variant="outline" size="icon" aria-label={label} disabled={disabled} onClick={onClick} className={placement === 'inside' ? 'size-11 bg-card shadow-card' : 'size-9 touch:size-11'}>
+      {icon}
+    </Button>
+  )
+}
+
 /**
  * The plan of every area (floor plan image or drawn room) with its tables drawn in the colour of their status at the
  * chosen time, and the end of the current or the start of the next reservation at each table.
  */
-export function FloorStatusView({ areas, reservations, start, end, initialTime, nowMinutes, walkInTableIds, onWalkIn }: FloorStatusViewProps) {
+export function FloorStatusView({
+  areas,
+  reservations,
+  start,
+  end,
+  initialTime,
+  nowMinutes,
+  walkInTableIds,
+  onWalkIn,
+  selectedId,
+  onSelect,
+}: FloorStatusViewProps) {
   const { t, i18n } = useTranslation()
   const [time, setTime] = useState(initialTime)
+  const plansRef = useRef<HTMLDivElement>(null)
   const active = reservations.filter(occupiesTable)
   const label = (minutes: number) => formatTime(formatMinutes(minutes), i18n.resolvedLanguage ?? 'en')
+  const selectedTableId = reservations.find((reservation) => reservation.id === selectedId)?.tableId ?? null
 
-  const marks: { value: number; label: string }[] = []
+  // A reservation selected elsewhere (the list) brings its table into view.
+  useEffect(() => {
+    if (selectedTableId === null) {
+      return
+    }
+    plansRef.current
+      ?.querySelector(`[data-table-id="${CSS.escape(selectedTableId)}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
+  }, [selectedTableId])
+
+  const marks: number[] = []
   for (let minutes = Math.ceil(start / 120) * 120; minutes <= end; minutes += 120) {
-    marks.push({ value: minutes, label: label(minutes) })
+    marks.push(minutes)
   }
 
   return (
-    <Stack gap="lg">
-      <Card>
-        <Group gap="lg" wrap="nowrap" align="center">
-          <Stack gap={0} style={{ flexShrink: 0 }}>
-            <Text size="xs" c="dimmed">
-              {t('tableOverview.floor.time')}
-            </Text>
-            <Text size="xl" fw={650}>
-              {label(time)}
-            </Text>
-          </Stack>
-          <Slider
-            style={{ flex: 1 }}
-            mb="lg"
-            size="lg"
-            thumbSize={28}
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-4 rounded-xl border border-border bg-card px-4 py-3 shadow-card">
+        <div className="flex shrink-0 flex-col">
+          <label htmlFor="floor-time" className="text-xs text-muted-foreground">
+            {t('tableOverview.floor.time')}
+          </label>
+          <output htmlFor="floor-time" className="text-xl font-semibold tabular-nums">
+            {label(time)}
+          </output>
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <input
+            id="floor-time"
+            type="range"
             min={start}
             max={end}
             step={step}
             value={time}
-            onChange={setTime}
-            label={label}
-            marks={marks}
-            aria-label={t('tableOverview.floor.time')}
+            onChange={(event) => setTime(Number(event.currentTarget.value))}
+            aria-valuetext={label(time)}
+            className="h-11 w-full cursor-pointer accent-primary focus-ring"
           />
-          {nowMinutes !== null && (
-            <Button
-              variant="default"
-              style={{ flexShrink: 0 }}
-              onClick={() => setTime(Math.min(end, Math.max(start, Math.floor(nowMinutes / step) * step)))}
-            >
-              {t('tableOverview.floor.now')}
-            </Button>
-          )}
-        </Group>
-      </Card>
+          <div aria-hidden="true" className="relative h-4 text-xs text-muted-foreground tabular-nums">
+            {marks.map((minutes) => (
+              <span key={minutes} className="absolute -translate-x-1/2" style={{ left: `${((minutes - start) / (end - start)) * 100}%` }}>
+                {label(minutes)}
+              </span>
+            ))}
+          </div>
+        </div>
+        {nowMinutes !== null && (
+          <Button variant="outline" className="shrink-0" onClick={() => setTime(Math.min(end, Math.max(start, Math.floor(nowMinutes / step) * step)))}>
+            {t('tableOverview.floor.now')}
+          </Button>
+        )}
+      </div>
 
-      {areas.map((area) => (
-        <Card key={area.id}>
-          <Stack gap="md">
-            <Title order={4}>{area.name}</Title>
+      <div ref={plansRef} className="flex flex-col gap-4">
+        {areas.map((area) => (
+          <section key={area.id} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 shadow-card">
+            <h3 className="text-base font-semibold">{area.name}</h3>
             {area.tables.length === 0 ? (
-              <Text c="dimmed">{t('tableOverview.noTables')}</Text>
+              <p className="text-sm text-muted-foreground">{t('tableOverview.noTables')}</p>
             ) : (
               <FloorPlan
                 imageUrl={area.floorPlanUrl}
@@ -96,7 +132,7 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
                 roomElements={area.roomElements}
                 tables={area.tables}
                 tableScale={area.tableScale}
-                zoomButton={FloorPlanZoomButton}
+                zoomButton={ZoomButton}
               >
                 {area.tables.map((table) => (
                   <TableStatus
@@ -107,14 +143,16 @@ export function FloorStatusView({ areas, reservations, start, end, initialTime, 
                     time={time}
                     freeNow={walkInTableIds.has(table.id)}
                     onWalkIn={onWalkIn}
+                    selected={table.id === selectedTableId}
+                    onSelect={onSelect}
                   />
                 ))}
               </FloorPlan>
             )}
-          </Stack>
-        </Card>
-      ))}
-    </Stack>
+          </section>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -127,6 +165,9 @@ type TableStatusProps = {
   /** Whether the server lists the table as free now for a walk-in, with the buffer and the walk-in's duration. */
   freeNow: boolean
   onWalkIn: (tableId: string) => void
+  /** The table of the selected reservation. */
+  selected: boolean
+  onSelect: (reservation: Reservation) => void
 }
 
 /** Whether the reservation occupies its table at `minutes`; a guest who left only until they left. */
@@ -136,9 +177,9 @@ function occupiesAt(reservation: Reservation, minutes: number) {
 
 /**
  * A table in the colour of its status at `time`, with the end of the current or the start of the next reservation.
- * A table that is free now for a walk-in offers to seat one.
+ * A table that is free now for a walk-in offers to seat one. The table of the selected reservation carries a thick outline.
  */
-function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn }: TableStatusProps) {
+function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn, selected, onSelect }: TableStatusProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const atTable = reservations.filter((reservation) => reservation.tableId === table.id)
@@ -151,6 +192,8 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn 
 
   const marker = (
     <TableShape
+      data-table-id={table.id}
+      data-selected={selected ? '' : undefined}
       number={table.number}
       seats={table.seats}
       shape={table.shape}
@@ -158,10 +201,10 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn 
       posX={table.posX}
       posY={table.posY}
       tableScale={tableScale}
-      fill={color === null ? 'white' : `var(--mantine-color-${color}-2)`}
-      stroke={color === null ? 'var(--mantine-color-gray-5)' : `var(--mantine-color-${color}-7)`}
-      color="var(--mantine-color-dark-7)"
-      strokeWidth={2}
+      fill={color === null ? 'var(--card)' : color.surface}
+      stroke={selected ? 'var(--foreground)' : color === null ? 'var(--status-declined)' : color.color}
+      color="var(--foreground)"
+      strokeWidth={selected ? 4 : 2}
       note={
         shown === undefined
           ? undefined
@@ -172,6 +215,7 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn 
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       aria-label={`${t('areas.tableMarker', { number: table.number, seats: table.seats })}, ${status}`}
+      aria-current={selected ? 'true' : undefined}
       // The popover opens on click; Enter and Space do the same for keyboard users.
       onKeyDown={(event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -179,7 +223,9 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn 
           event.currentTarget.click()
         }
       }}
-      style={{ cursor: clickable ? 'pointer' : 'default', zIndex: 1 }}
+      // The popover replaces the click handler; selecting the reservation shown at the table happens before it.
+      onClickCapture={shown === undefined ? undefined : () => onSelect(shown)}
+      style={{ cursor: clickable ? 'pointer' : 'default', zIndex: selected ? 2 : 1 }}
     />
   )
 
@@ -191,39 +237,28 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn 
       </ReservationPopover>
     )
   }
-  return walkIn === undefined ? marker : <FreeTablePopover table={table} onWalkIn={walkIn}>{marker}</FreeTablePopover>
+  return walkIn === undefined ? marker : <FreeTablePopover table={table} onWalkIn={walkIn} marker={marker} />
 }
 
 /** A free table without further reservations: offers to seat a walk-in there. */
-function FreeTablePopover({
-  table,
-  onWalkIn,
-  children,
-}: {
-  table: FloorTable
-  onWalkIn: () => void
-  children: ReactElement<{ onClick?: () => void }>
-}) {
+function FreeTablePopover({ table, onWalkIn, marker }: { table: FloorTable; onWalkIn: () => void; marker: ReactElement }) {
   const { t } = useTranslation()
-  const [opened, setOpened] = useState(false)
+  const [open, setOpen] = useState(false)
   return (
-    <Popover opened={opened} onChange={setOpened} width={240} position="bottom" withArrow shadow="md">
-      {/* A controlled popover does not open on its own, so the click toggles it here. */}
-      <Popover.Target>{cloneElement(children, { onClick: () => setOpened((current) => !current) })}</Popover.Target>
-      <Popover.Dropdown>
-        <Stack gap="sm">
-          <Text fw={600}>{t('tableOverview.freeTable', { number: table.number, count: table.seats })}</Text>
-          <Button
-            variant="light"
-            onClick={() => {
-              setOpened(false)
-              onWalkIn()
-            }}
-          >
-            {t('tableOverview.walkInHere')}
-          </Button>
-        </Stack>
-      </Popover.Dropdown>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>{marker}</PopoverTrigger>
+      <PopoverContent side="bottom" className="flex w-60 flex-col gap-3 font-sans">
+        <p className="font-semibold">{t('tableOverview.freeTable', { number: table.number, count: table.seats })}</p>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            setOpen(false)
+            onWalkIn()
+          }}
+        >
+          {t('tableOverview.walkInHere')}
+        </Button>
+      </PopoverContent>
     </Popover>
   )
 }

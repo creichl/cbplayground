@@ -871,11 +871,29 @@
   },
   "frontdesk": {
     "label": "Рецепција",
-    "today": "Данас",
-    "nav": {
-      "today": "Данас",
-      "reservations": "Резервације",
-      "tables": "Преглед столова"
+    "keyFigures": "Кључни подаци смене",
+    "listPanel": "Резервације",
+    "panes": "Приказ",
+    "panesList": "Листа",
+    "hideList": "Сакриј листу",
+    "showList": "Прикажи листу",
+    "tabs": {
+      "upcoming": "Очекују се",
+      "seated": "За столом",
+      "finished": "Завршено",
+      "requests": "Захтеви"
+    },
+    "empty": {
+      "upcoming": "Више се не очекују гости.",
+      "seated": "Тренутно нико не седи за столом.",
+      "finished": "Још ниједна резервација није завршена.",
+      "requests": "Нема отворених захтева.",
+      "service": "У овој смени нема резервација."
+    },
+    "service": {
+      "label": "Смена",
+      "wholeDay": "Цео дан",
+      "option": "{{name}} {{time}}"
     }
   },
   "notFound": {
@@ -1150,15 +1168,20 @@
     "new": "Нова резервација",
     "stats": {
       "reservations": "Резервације",
-      "guests": "Гости",
-      "arrived": "Стигли",
-      "seated": "Гости за столом",
+      "seated": "Сада за столом",
       "noShows": "Нису дошли",
-      "openRequests": "Отворени захтеви"
+      "openRequests": "Отворени захтеви",
+      "finished": "Завршено",
+      "covers_one": "{{count}} гост",
+      "covers_few": "{{count}} госта",
+      "covers_other": "{{count}} гостију",
+      "tables_one": "за {{count}} столом",
+      "tables_few": "за {{count}} стола",
+      "tables_other": "за {{count}} столова"
     },
     "list": {
       "empty": "За овај дан нема резервација.",
-      "noMatches": "Ниједна резервација не одговара претрази или филтеру.",
+      "noMatches": "Ниједна резервација не одговара претрази.",
       "groupGuests_one": "{{count}} гост",
       "groupGuests_few": "{{count}} госта",
       "groupGuests_other": "{{count}} гостију"
@@ -1318,6 +1341,16 @@
       "statusNotAllowedNow": "То сада није могуће за ову резервацију: „Стигли“ и „Касне“ само на дан резервације, „Нису дошли“ тек од времена почетка.",
       "tableTaken": "Сто је у међувремену заузет, па ово не може да се поништи.",
       "statusTitle": "Статус није могао да се промени"
+    },
+    "chart": {
+      "title": "Гости по четврт сата",
+      "summary_one": "највише у {{time}}, {{count}} гост",
+      "summary_few": "највише у {{time}}, {{count}} госта",
+      "summary_other": "највише у {{time}}, {{count}} гостију",
+      "empty": "нема гостију",
+      "bar_one": "{{time}}: {{count}} гост",
+      "bar_few": "{{time}}: {{count}} госта",
+      "bar_other": "{{time}}: {{count}} гостију"
     }
   },
   "tableOverview": {
@@ -1340,6 +1373,7 @@
     "freeTable_other": "Сто {{number}} · {{count}} места · слободан",
     "walkInHere": "Смести госта без резервације овде",
     "legendInactive": "Отказане, одбијене или гости нису дошли",
+    "legend": "Боје статуса",
     "party": "{{name}} ({{guests}})",
     "timeline": {
       "tableColumn": "Сто · места"

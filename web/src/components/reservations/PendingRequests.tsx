@@ -1,41 +1,38 @@
-import { Card, Stack, Text, Title } from '@mantine/core'
 import { useTranslation } from 'react-i18next'
-import { type Reservation, useOpenRequests } from '../../api/reservations.ts'
-import { ErrorAlert } from '../ErrorAlert.tsx'
+import type { Reservation } from '../../api/reservations.ts'
+import { RequestError } from '../booking/RequestError.tsx'
 import { ReservationRow } from './ReservationRow.tsx'
 
 type PendingRequestsProps = {
-  /** Today in the restaurant's time zone; requests from today on are listed. */
-  today: string
+  /** The open requests from today on, sorted by start; undefined while they load. */
+  requests: Reservation[] | undefined
+  /** Why they could not be loaded; a failed reload in the background keeps the last list. */
+  error: Error | null
+  onRetry: () => void
   onOpen: (reservation: Reservation) => void
+  selectedId: string | null
+  /** Shown when there are none, e.g. "No open requests" or that none matches the search. */
+  emptyText: string
 }
 
-/** The online requests that wait for the restaurant's answer, of every day from today on. Hidden when there are none. */
-export function PendingRequests({ today, onOpen }: PendingRequestsProps) {
+/** The online requests that wait for the restaurant's answer, of every day from today on, with accept and decline. */
+export function PendingRequests({ requests, error, onRetry, onOpen, selectedId, emptyText }: PendingRequestsProps) {
   const { t } = useTranslation()
-  const requests = useOpenRequests(today)
 
-  // A failed reload in the background keeps the last list.
-  if (requests.isError && requests.data === undefined) {
-    return <ErrorAlert error={requests.error} onRetry={() => void requests.refetch()} />
-  }
-  if (requests.data === undefined || requests.data.length === 0) {
-    return null
+  if (requests === undefined) {
+    return error !== null ? <RequestError error={error} onRetry={onRetry} /> : null
   }
 
   return (
-    <Card bg="yellow.0" style={{ borderColor: 'var(--mantine-color-yellow-5)', borderWidth: 2 }} component="section">
-      <Stack gap="sm">
-        <Stack gap={2}>
-          <Title order={3}>{t('reservations.pending.title', { number: requests.data.length })}</Title>
-          <Text size="sm" c="dimmed">
-            {t('reservations.pending.text')}
-          </Text>
-        </Stack>
-        {requests.data.map((reservation) => (
-          <ReservationRow key={reservation.id} reservation={reservation} onOpen={onOpen} withDate />
-        ))}
-      </Stack>
-    </Card>
+    <section className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">{t('reservations.pending.text')}</p>
+      {requests.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        requests.map((reservation) => (
+          <ReservationRow key={reservation.id} reservation={reservation} onOpen={onOpen} selected={reservation.id === selectedId} withDate />
+        ))
+      )}
+    </section>
   )
 }
