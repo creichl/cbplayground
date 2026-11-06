@@ -117,8 +117,11 @@ export type ReservationInput = {
   notes: string | null
 }
 
-/** Online bookings are possible at most this many days ahead (MaxOnlineDaysAhead on the server), so no request lies further ahead. */
-const maxRequestDaysAhead = 90
+/**
+ * The longest range of GET /api/staff/reservations is 366 days (MaxListDays on the server): today and 365 days ahead, the longest
+ * booking horizon a restaurant can set (MaxBookingHorizonDays), so no request lies further ahead.
+ */
+const maxRequestDaysAhead = 365
 
 /** The front desk sees new online bookings without reloading the page. */
 const refreshIntervalMs = 60_000
@@ -127,10 +130,10 @@ const reservationsKey = ['staff', 'reservations'] as const
 const availabilityKey = ['staff', 'availability'] as const
 const walkInTablesKey = ['staff', 'walk-in-tables'] as const
 
-function reservationsQuery(from: string | null, to: string | null) {
+function reservationsQuery(from: string | null, to: string | null, status: ReservationStatus | null = null) {
   return queryOptions({
-    queryKey: [...reservationsKey, from, to],
-    queryFn: () => apiGet<Reservation[]>(`/staff/reservations?from=${from}&to=${to}`),
+    queryKey: [...reservationsKey, from, to, status],
+    queryFn: () => apiGet<Reservation[]>(`/staff/reservations?from=${from}&to=${to}${status === null ? '' : `&status=${status}`}`),
     enabled: from !== null && to !== null,
     refetchInterval: refreshIntervalMs,
   })
@@ -145,7 +148,8 @@ export function useReservations(from: string | null, to: string | null = from) {
 export function useOpenRequests(today: string | null) {
   const to = today === null ? null : dayjs(today).add(maxRequestDaysAhead, 'day').format('YYYY-MM-DD')
   return useQuery({
-    ...reservationsQuery(today, to),
+    ...reservationsQuery(today, to, 'Requested'),
+    // The server sends only requests; a request answered here is updated in the list right away and leaves it before the reload.
     select: (reservations) => reservations.filter((reservation) => reservation.status === 'Requested'),
   })
 }
@@ -173,7 +177,7 @@ export function useFloor() {
 
 /**
  * The opening windows of `date`, holidays included; empty when the restaurant is closed.
- * Taken from the staff availability, the only opening hours front desk users may read.
+ * Taken from the staff availability, the only opening hours front desk users may read. Reloaded every minute.
  */
 export function useOpenPeriods(date: string | null) {
   return useQuery({
@@ -183,15 +187,24 @@ export function useOpenPeriods(date: string | null) {
       return availability.periods.map(({ start, end }) => ({ start, end }))
     },
     enabled: date !== null,
+    // Like the reservations and the floor, so a closing day or special hours entered meanwhile show.
+    refetchInterval: refreshIntervalMs,
   })
 }
 
-/** The tables free for a walk-in of `guests` now, for the restaurant's duration. */
+/**
+ * The party size a walk-in starts with in the walk-in drawer; the floor plans offer "Seat walk-in here" on the tables free now for
+ * it, so the drawer opened there accepts the table.
+ */
+export const defaultWalkInGuests = 2
+
+/** The tables free for a walk-in of `guests` now, for the restaurant's duration. Reloaded every minute, like the floor. */
 export function useWalkInTables(guests: number | null) {
   return useQuery({
     queryKey: [...walkInTablesKey, guests],
     queryFn: () => apiGet<WalkInTables>(`/staff/walk-in-tables?guests=${guests}`),
     enabled: guests !== null && guests >= 1,
+    refetchInterval: refreshIntervalMs,
   })
 }
 
@@ -288,6 +301,8 @@ export function useCreateWalkIn() {
   return useMutation({
     mutationFn: (walkIn: WalkInInput) => apiPost<Reservation>('/staff/walk-ins', walkIn),
     onSuccess: (reservation) => applyChange(queryClient, reservation),
+    // Usually the table has been taken in the meantime: show the tables that are free now.
+    onError: () => queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
   })
 }
 

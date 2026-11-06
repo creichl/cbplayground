@@ -112,8 +112,9 @@ public static class StaffReservationEndpoints
                 elements.Where(e => e.AreaId == area.Id).Select(AreaEndpoints.ToResponse).ToList()));
         });
 
-        // Without from/to: today in the restaurant's time zone.
-        group.MapGet("/reservations", async (DateOnly? from, DateOnly? to, AppDbContext db, IAvailabilityService availability) =>
+        // Without from/to: today in the restaurant's time zone. With status: only the reservations in that status, e.g. the open
+        // requests ("Requested") of the whole booking horizon.
+        group.MapGet("/reservations", async (DateOnly? from, DateOnly? to, string? status, AppDbContext db, IAvailabilityService availability) =>
         {
             var start = from ?? DateOnly.FromDateTime(await availability.GetLocalNowAsync() ?? DateTime.UtcNow);
             var end = to ?? start;
@@ -121,10 +122,20 @@ public static class StaffReservationEndpoints
             {
                 return ErrorResponse.Result("invalid_range", StatusCodes.Status400BadRequest);
             }
+            if (status is not null && !Enum.GetNames<ReservationStatus>().Contains(status))
+            {
+                return ErrorResponse.Result("invalid_status", StatusCodes.Status400BadRequest);
+            }
 
             var startLocal = start.ToDateTime(TimeOnly.MinValue);
             var endLocal = end.AddDays(1).ToDateTime(TimeOnly.MinValue);
-            return Results.Ok(await LoadResponsesAsync(db, db.Reservations.Where(r => r.StartLocal >= startLocal && r.StartLocal < endLocal)));
+            var reservations = db.Reservations.Where(r => r.StartLocal >= startLocal && r.StartLocal < endLocal);
+            if (status is not null)
+            {
+                var wanted = Enum.Parse<ReservationStatus>(status);
+                reservations = reservations.Where(r => r.Status == wanted);
+            }
+            return Results.Ok(await LoadResponsesAsync(db, reservations));
         });
 
         group.MapGet("/availability", async (DateOnly date, int guests, int? durationMinutes, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>

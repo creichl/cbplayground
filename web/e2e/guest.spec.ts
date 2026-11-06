@@ -183,6 +183,8 @@ test.describe('Table choice', () => {
     await setRooftopTableStyle(page, 'Classic')
     await page.setViewportSize({ width: 1440, height: 900 })
     const dialog = await openRooftopTableStep(page)
+    // Measured once the dialog's entrance (it grows from 96 %) is over, not halfway through it.
+    await settle(page)
 
     // The dialog leaves 1 rem around it; the plan fills the height left beside the column of the areas.
     const box = (await dialog.boundingBox())!
