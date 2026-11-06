@@ -1,7 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using static Cbplayground.Api.Endpoints.SuperadminEndpoints;
 
 namespace Cbplayground.Api.Tests;
@@ -125,9 +128,44 @@ public class SuperadminTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(1, tenants.Single(t => t.Slug == "zur-linde").AdminCount);
         var created = tenants.Single(t => t.Id == restaurant.Id);
         Assert.Equal(1, created.AdminCount);
+        // The admin and the front desk user.
+        Assert.Equal(2, created.StaffCount);
         Assert.Equal(2, created.TableCount);
         Assert.Equal(2, created.UpcomingReservationCount);
         Assert.Equal(tenants.OrderBy(t => t.Name, StringComparer.Ordinal).Select(t => t.Id), tenants.Select(t => t.Id));
+    }
+
+    [Fact]
+    public async Task The_list_shows_the_setup_steps_of_each_restaurant_as_its_admin_sees_them()
+    {
+        // Location, opening hours, tables and reservation settings are set up; profile and floor plan are not.
+        var partly = await TestRestaurants.CreateAsync(factory, [new TestArea("Saal", true, 100, ("1", 4))]);
+        var complete = await TestRestaurants.CreateAsync(factory, [new TestArea("Saal", true, 100, ("1", 4))]);
+        using (var scope = factory.Services.CreateScope())
+        {
+            scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = complete.Id;
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var tenant = await db.Tenants.SingleAsync(t => t.Id == complete.Id, Token);
+            (tenant.Street, tenant.PostalCode, tenant.City, tenant.Phone) = ("Hauptplatz 1", "1010", "Wien", "+43 1 234567");
+            (await db.Areas.SingleAsync(Token)).FloorPlanFileName = "plan.png";
+            await db.SaveChangesAsync(Token);
+        }
+        using var superadmin = await SignedInClientAsync(Superadmin);
+        var empty = await CreateTenantAsync(superadmin);
+
+        var tenants = await ListAsync(superadmin);
+
+        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, true, true, false, true, true), tenants.Single(t => t.Id == partly.Id).Setup);
+        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(true, true, true, true, true, true), tenants.Single(t => t.Id == complete.Id).Setup);
+        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, false, false, false, false, false), tenants.Single(t => t.Id == empty.Id).Setup);
+        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, false, false, false, false, false), empty.Setup);
+        foreach (var restaurant in new[] { partly, complete })
+        {
+            using var admin = await SignedInClientAsync(restaurant.AdminEmail);
+            Assert.Equal(
+                await admin.GetFromJsonAsync<ProfileEndpoints.SetupStatusResponse>("/api/admin/setup-status", Token),
+                tenants.Single(t => t.Id == restaurant.Id).Setup);
+        }
     }
 
     [Fact]

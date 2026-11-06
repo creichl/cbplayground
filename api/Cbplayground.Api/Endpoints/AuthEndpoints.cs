@@ -26,7 +26,7 @@ public static class AuthEndpoints
     {
         var group = app.MapGroup("/api/auth");
 
-        group.MapPost("/login", async (LoginRequest request, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AppDbContext db) =>
+        group.MapPost("/login", async (LoginRequest request, UserManager<ApplicationUser> userManager, SignInManager<ApplicationUser> signInManager, AppDbContext db, TimeProvider timeProvider) =>
         {
             var invalidCredentials = Results.Json(new LoginError("invalid_credentials"), statusCode: StatusCodes.Status401Unauthorized);
             if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrEmpty(request.Password))
@@ -58,6 +58,14 @@ public static class AuthEndpoints
             if (user.TenantId is { } tenantId && !await db.Tenants.AnyAsync(t => t.Id == tenantId && t.IsActive))
             {
                 return Results.Json(new LoginError("restaurant_deactivated"), statusCode: StatusCodes.Status401Unauthorized);
+            }
+
+            // The Superadmin sees the last sign-in of each restaurant's staff.
+            user.LastSignInAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            var updated = await userManager.UpdateAsync(user);
+            if (!updated.Succeeded)
+            {
+                throw new InvalidOperationException($"Could not store the sign-in of user {user.Id}: {string.Join(" ", updated.Errors.Select(e => e.Code))}");
             }
 
             await signInManager.SignInAsync(user, isPersistent: false);
