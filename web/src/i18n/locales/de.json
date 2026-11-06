@@ -1380,6 +1380,8 @@
     "dark": "Dunkel",
     "colors": "Farben",
     "primaryScale": "Stufen der Akzentfarbe",
+    "statusColors": "Status der Reservierungen",
+    "statusColorsHint": "Die Statusfarben des Front desk, nur hell: die Farbe für Flächen und Umrisse (mindestens 3:1 auf Weiß), die Fläche für Badges und Blöcke und die Textfarbe auf beiden (mindestens 4,5:1).",
     "typography": "Schrift",
     "radii": "Radien",
     "radiusCard": "Karten",

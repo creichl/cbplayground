@@ -166,7 +166,7 @@ export function FrontdeskPage() {
         </Button>
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="min-w-0 justify-start tabular-nums sm:w-44" disabled={date === null} aria-label={t('tableOverview.date.label')}>
+            <Button variant="outline" className="min-w-0 justify-start tabular-nums sm:w-48" disabled={date === null} aria-label={t('tableOverview.date.label')}>
               <CalendarIcon aria-hidden="true" />
               <span className="truncate">{date === null ? '' : formatDate(date, language)}</span>
             </Button>
@@ -314,7 +314,7 @@ export function FrontdeskPage() {
           />
         </aside>
 
-        <main className={cn('min-h-0 min-w-0 flex-1 overflow-auto bg-secondary/50 p-3 sm:p-4', phonePane === 'list' && 'max-md:hidden')}>
+        <main className={cn('relative min-h-0 min-w-0 flex-1 overflow-auto bg-secondary/50 p-3 sm:p-4', phonePane === 'list' && 'max-md:hidden')}>
           {planReady ? (
             <PlanPane
               view={view}

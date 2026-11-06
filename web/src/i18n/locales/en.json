@@ -1380,6 +1380,8 @@
     "dark": "Dark",
     "colors": "Colours",
     "primaryScale": "Shades of the accent colour",
+    "statusColors": "Reservation statuses",
+    "statusColorsHint": "The status colours of the front desk, light only: the colour for fills and outlines (at least 3:1 on white), the surface for badges and blocks, and the text colour on both (at least 4.5:1).",
     "typography": "Typography",
     "radii": "Radii",
     "radiusCard": "cards",

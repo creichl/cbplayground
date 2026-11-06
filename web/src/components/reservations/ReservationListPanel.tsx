@@ -80,11 +80,11 @@ export function ReservationListPanel({
   return (
     <Tabs value={tab} onValueChange={(value) => onTabChange(value as ListTab)} className={cn('min-h-0 gap-0', className)}>
       <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-        <TabsList className="min-w-0 flex-1 justify-start overflow-x-auto">
+        <TabsList className="grid min-w-0 flex-1 grid-cols-4">
           {tabs.map(({ value, label }) => {
             const number = count(value)
             return (
-              <TabsTrigger key={value} value={value} className="px-2.5">
+              <TabsTrigger key={value} value={value} className="min-w-0 gap-1 px-1 text-[0.8125rem]">
                 {label}
                 {number !== undefined && (
                   <span
@@ -102,7 +102,7 @@ export function ReservationListPanel({
         </TabsList>
         {trailing}
       </div>
-      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6">
+      <div ref={scrollRef} className="relative min-h-0 flex-1 overflow-y-auto px-3 pt-1 pb-6">
         {(['upcoming', 'seated', 'finished'] as const).map((shown) => (
           <TabsContent key={shown} value={shown} className="pt-2">
             {reservations === undefined ? (

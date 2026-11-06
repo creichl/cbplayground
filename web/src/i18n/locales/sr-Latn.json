@@ -1413,6 +1413,8 @@
     "dark": "Tamni",
     "colors": "Boje",
     "primaryScale": "Nijanse akcentne boje",
+    "statusColors": "Statusi rezervacija",
+    "statusColorsHint": "Boje statusa na recepciji, samo svetle: boja za površine i obrise (najmanje 3:1 na beloj), podloga za oznake i blokove i boja teksta na obe (najmanje 4,5:1).",
     "typography": "Tipografija",
     "radii": "Zaobljenja",
     "radiusCard": "kartice",

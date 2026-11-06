@@ -75,8 +75,10 @@ export function FloorStatusView({
       ?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' })
   }, [selectedTableId])
 
+  // Every two hours, every three on a long day, so the labels do not run into each other on a tablet.
+  const markStep = end - start > 8 * 60 ? 180 : 120
   const marks: number[] = []
-  for (let minutes = Math.ceil(start / 120) * 120; minutes <= end; minutes += 120) {
+  for (let minutes = Math.ceil(start / markStep) * markStep; minutes <= end; minutes += markStep) {
     marks.push(minutes)
   }
 

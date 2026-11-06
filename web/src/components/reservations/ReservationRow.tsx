@@ -47,9 +47,9 @@ export function ReservationRow({ reservation, onOpen, withDate = false, selected
         aria-current={selected ? 'true' : undefined}
         className="flex min-w-0 cursor-pointer items-start gap-3 rounded-lg text-left focus-ring"
       >
-        <span className="flex w-14 shrink-0 flex-col">
+        <span className="flex w-[4.5rem] shrink-0 flex-col whitespace-nowrap">
           {withDate && <span className="text-xs text-muted-foreground">{formatShortDate(reservation.date, language)}</span>}
-          <span className="text-base font-semibold tabular-nums">{time}</span>
+          <span className="text-sm font-semibold tabular-nums">{time}</span>
         </span>
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className="flex min-w-0 items-center gap-1.5">
@@ -83,7 +83,7 @@ export function ReservationRow({ reservation, onOpen, withDate = false, selected
           {t(sourceLabels[reservation.source])}
         </Badge>
       </span>
-      <StatusActions reservation={reservation} compact className="col-span-2 pl-[4.25rem]" />
+      <StatusActions reservation={reservation} compact className="col-span-2 gap-1.5" />
     </div>
   )
 }

@@ -80,7 +80,7 @@ function Stat({ label, value, detail }: { label: string; value: ReactNode; detai
       <dt className="text-xs text-muted-foreground">{label}</dt>
       <dd className="flex items-baseline gap-1.5">
         <span className="text-2xl leading-tight font-semibold tabular-nums">{value}</span>
-        {detail !== undefined && <span className="text-xs text-muted-foreground">{detail}</span>}
+        {detail !== undefined && <span className="text-xs whitespace-nowrap text-muted-foreground">{detail}</span>}
       </dd>
     </div>
   )

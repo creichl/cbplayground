@@ -107,6 +107,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
               key={action.label}
               size="sm"
               variant={primary ? 'primary' : 'outline'}
+              className={compact ? 'px-2.5' : undefined}
               disabled={setStatus.isPending}
               onClick={() => (action.confirm ? confirm(action) : change(action.status))}
             >
