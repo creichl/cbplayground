@@ -33,6 +33,8 @@ public static class StaffReservationEndpoints
         ReservationSource Source,
         Guid TableId,
         string TableNumber,
+        IReadOnlyList<Guid> TableIds,
+        IReadOnlyList<string> TableNumbers,
         Guid AreaId,
         string AreaName,
         string Name,
@@ -46,11 +48,13 @@ public static class StaffReservationEndpoints
         DateTime UpdatedAtUtc);
 
     /// <summary>
-    /// A new or changed reservation. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". Without <see cref="TableId"/>
-    /// the system assigns a table, without <see cref="DurationMinutes"/> the restaurant's duration for the party size applies,
-    /// without <see cref="Language"/> the language of the restaurant's country. Errors (400): "invalid_date", "invalid_time",
-    /// "invalid_party_size", "invalid_duration", "invalid_name", "invalid_phone", "invalid_email", "invalid_notes",
-    /// "invalid_language", "outside_opening_hours", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
+    /// A new or changed reservation. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableIds"/> are one
+    /// table or exactly the tables of one combination; <see cref="TableId"/> (one table) is the older form of it and only used
+    /// without <see cref="TableIds"/>. Without both the system assigns a table or, when none fits, a combination. Without
+    /// <see cref="DurationMinutes"/> the restaurant's duration for the party size applies, without <see cref="Language"/> the language
+    /// of the restaurant's country. Errors (400): "invalid_date", "invalid_time", "invalid_party_size", "invalid_duration",
+    /// "invalid_name", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language", "invalid_tables", "outside_opening_hours",
+    /// "in_the_past"; (409): "slot_unavailable", "table_unavailable".
     /// </summary>
     public record ReservationRequest(
         string? Date,
@@ -62,7 +66,12 @@ public static class StaffReservationEndpoints
         string? Phone,
         string? Email,
         string? Notes,
-        string? Language);
+        string? Language,
+        List<Guid>? TableIds = null)
+    {
+        /// <summary>The requested tables; null: the system assigns them.</summary>
+        public IReadOnlyCollection<Guid>? RequestedTableIds => TableIds ?? (TableId is { } id ? [id] : null);
+    }
 
     /// <summary>
     /// Errors: "invalid_status" (400); (409): "invalid_status_transition", "status_not_allowed_now" ("arrived" and "late" only on
@@ -71,7 +80,7 @@ public static class StaffReservationEndpoints
     public record StatusRequest(string? Status);
 
     /// <summary>
-    /// A guest without a reservation, seated now. Without <see cref="TableId"/> the system assigns a table, without
+    /// A guest without a reservation, seated now, at a single table. Without <see cref="TableId"/> the system assigns a table, without
     /// <see cref="DurationMinutes"/> the restaurant's duration for the party size applies, without <see cref="Name"/> it is
     /// <see cref="Reservation.WalkInName"/>. Errors (400): "invalid_party_size", "invalid_duration", "invalid_name", "invalid_phone",
     /// "invalid_notes", "outside_opening_hours"; (409): "slot_unavailable", "table_unavailable".
@@ -81,6 +90,7 @@ public static class StaffReservationEndpoints
     /// <summary>The tables free for a walk-in from <see cref="Time"/> (now) for <see cref="DurationMinutes"/>, the suggested one first.</summary>
     public record WalkInTablesResponse(string Time, int DurationMinutes, IReadOnlyList<FreeTable> Tables);
 
+    /// <summary>The free tables and combinations (<see cref="FreeTable.Kind"/>) of a start time, the one the system would assign first.</summary>
     public record StaffAvailabilityTime(string Time, IReadOnlyList<FreeTable> Tables);
 
     public record StaffAvailabilityPeriod(string Start, string End, IReadOnlyList<StaffAvailabilityTime> Times);
@@ -171,7 +181,7 @@ public static class StaffReservationEndpoints
 
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             var check = await availability.CheckAsync(input.Date, input.Time, request.Guests, input.Duration, ReservationSource.Staff,
-                request.TableId, cancellationToken: cancellationToken);
+                request.RequestedTableIds, cancellationToken: cancellationToken);
             if (check.Table is not { } table)
             {
                 return CheckError(check.Error!);
@@ -187,7 +197,7 @@ public static class StaffReservationEndpoints
                 Language = input.Language!,
                 CreatedAtUtc = now,
             };
-            Apply(reservation, input, request.Guests, table.Id, now);
+            Apply(reservation, input, request.Guests, table.TableIds, now);
             db.Reservations.Add(reservation);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
@@ -211,33 +221,37 @@ public static class StaffReservationEndpoints
             }
 
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-            var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+            var reservation = await db.Reservations.Include(r => r.Tables).SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
             if (reservation is null)
             {
                 return Results.NotFound();
             }
 
+            // The first table stays the first one while the tables do not change.
+            var currentTableIds = reservation.Tables.Select(t => t.TableId).OrderBy(t => t != reservation.TableId).ToList();
+            var requestedTableIds = request.RequestedTableIds;
             var startChanged = input.Date.ToDateTime(input.Time) != reservation.StartLocal;
             var bookingChanged = startChanged
                 || input.Duration != reservation.DurationMinutes
                 || request.Guests != reservation.PartySize
-                || request.TableId != reservation.TableId;
-            var tableId = reservation.TableId;
+                || requestedTableIds is null
+                || requestedTableIds.Count != currentTableIds.Count || !requestedTableIds.All(currentTableIds.Contains);
+            IReadOnlyList<Guid> tableIds = currentTableIds;
             if (bookingChanged)
             {
                 var check = await availability.CheckAsync(input.Date, input.Time, request.Guests, input.Duration, ReservationSource.Staff,
-                    request.TableId, ignoreReservationId: reservation.Id, checkPast: startChanged,
+                    requestedTableIds, ignoreReservationId: reservation.Id, checkPast: startChanged,
                     checkOpeningHours: startChanged || reservation.Source != ReservationSource.WalkIn, cancellationToken: cancellationToken);
                 if (check.Table is not { } table)
                 {
                     return CheckError(check.Error!);
                 }
-                tableId = table.Id;
+                tableIds = table.TableIds;
             }
 
             reservation.GuestName = input.Guest!.Name;
             reservation.Language = request.Language is null ? reservation.Language : input.Language!;
-            Apply(reservation, input, request.Guests, tableId, DateTime.UtcNow);
+            Apply(reservation, input, request.Guests, tableIds, DateTime.UtcNow);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
@@ -254,7 +268,7 @@ public static class StaffReservationEndpoints
             var status = Enum.Parse<ReservationStatus>(request.Status);
 
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-            var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+            var reservation = await db.Reservations.Include(r => r.Tables).SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
             if (reservation is null)
             {
                 return Results.NotFound();
@@ -269,7 +283,8 @@ public static class StaffReservationEndpoints
                 return ErrorResponse.Result("status_not_allowed_now", StatusCodes.Status409Conflict);
             }
             if (ReservationRules.NeedsFreeTable(reservation.Status, status)
-                && !await availability.IsTableFreeAsync(reservation.TableId, reservation.StartLocal, reservation.EndLocal, reservation.Id, cancellationToken))
+                && !await availability.AreTablesFreeAsync(reservation.Tables.Select(t => t.TableId).ToList(), reservation.StartLocal,
+                    reservation.EndLocal, reservation.Id, cancellationToken))
             {
                 return ErrorResponse.Result("table_unavailable", StatusCodes.Status409Conflict);
             }
@@ -343,6 +358,7 @@ public static class StaffReservationEndpoints
                 Language = DefaultLanguage(countryCode),
                 CreatedAtUtc = now,
                 TableId = table.Id,
+                Tables = [new ReservationTable { TableId = table.Id }],
                 StartLocal = check.Start,
                 EndLocal = check.Start.AddMinutes(duration),
                 DurationMinutes = duration,
@@ -410,9 +426,15 @@ public static class StaffReservationEndpoints
         _ => "en",
     };
 
-    private static void Apply(Reservation reservation, ValidatedInput input, int guests, Guid tableId, DateTime nowUtc)
+    /// <summary>
+    /// Sets the input and the tables: <paramref name="tableIds"/> in number order (<see cref="FreeTable.TableIds"/>), the first
+    /// one also as <see cref="Reservation.TableId"/>. The table rows that stay are kept, so <see cref="Reservation.Tables"/> must be loaded.
+    /// </summary>
+    private static void Apply(Reservation reservation, ValidatedInput input, int guests, IReadOnlyList<Guid> tableIds, DateTime nowUtc)
     {
-        reservation.TableId = tableId;
+        reservation.TableId = tableIds[0];
+        reservation.Tables.RemoveAll(t => !tableIds.Contains(t.TableId));
+        reservation.Tables.AddRange(tableIds.Where(id => reservation.Tables.All(t => t.TableId != id)).Select(id => new ReservationTable { TableId = id }));
         reservation.StartLocal = input.Date.ToDateTime(input.Time);
         reservation.EndLocal = reservation.StartLocal.AddMinutes(input.Duration);
         reservation.DurationMinutes = input.Duration;
@@ -423,24 +445,32 @@ public static class StaffReservationEndpoints
         reservation.UpdatedAtUtc = nowUtc;
     }
 
-    /// <summary>The reservations with their table and area, sorted by start and table number.</summary>
+    /// <summary>The reservations with their tables and area, sorted by start and (first) table number.</summary>
     private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
     {
         var rows = await reservations
+            .Include(r => r.Tables)
             .Join(db.Tables, r => r.TableId, t => t.Id, (r, t) => new { Reservation = r, Table = t })
             .Join(db.Areas, x => x.Table.AreaId, a => a.Id, (x, a) => new { x.Reservation, x.Table, Area = a })
             .ToListAsync();
+        var tableIds = rows.SelectMany(r => r.Reservation.Tables.Select(t => t.TableId)).Distinct().ToList();
+        var tables = await db.Tables.Where(t => tableIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id);
         return rows
             .OrderBy(r => r.Reservation.StartLocal)
             .ThenBy(r => r.Table.Number.Length).ThenBy(r => r.Table.Number, StringComparer.Ordinal)
-            .Select(r => ToResponse(r.Reservation, r.Table, r.Area))
+            .Select(r => ToResponse(r.Reservation, InNumberOrder(r.Reservation.Tables.Select(t => tables[t.TableId])), r.Area))
             .ToList();
     }
+
+    /// <summary>Tables by number, as everywhere: "2" before "10".</summary>
+    internal static List<Table> InNumberOrder(IEnumerable<Table> tables) =>
+        tables.OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal).ToList();
 
     private static async Task<ReservationResponse> LoadResponseAsync(AppDbContext db, Guid id) =>
         (await LoadResponsesAsync(db, db.Reservations.Where(r => r.Id == id))).Single();
 
-    private static ReservationResponse ToResponse(Reservation reservation, Table table, Area area) => new(
+    /// <summary><paramref name="tables"/> are all tables of the reservation in number order; the table number is their joined label, e.g. "4 + 5".</summary>
+    private static ReservationResponse ToResponse(Reservation reservation, List<Table> tables, Area area) => new(
         reservation.Id,
         reservation.ReferenceCode,
         DateOnly.FromDateTime(reservation.StartLocal),
@@ -450,8 +480,10 @@ public static class StaffReservationEndpoints
         reservation.PartySize,
         reservation.Status,
         reservation.Source,
-        table.Id,
-        table.Number,
+        reservation.TableId,
+        AvailabilityService.CombinedLabel(tables),
+        tables.Select(t => t.Id).ToList(),
+        tables.Select(t => t.Number).ToList(),
         area.Id,
         area.Name,
         reservation.GuestName,

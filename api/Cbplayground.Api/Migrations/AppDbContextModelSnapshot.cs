@@ -378,6 +378,26 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("ReservationSettings");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationTable", b =>
+                {
+                    b.Property<Guid>("ReservationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ReservationId", "TableId");
+
+                    b.HasIndex("TableId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ReservationTables");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.RoomElement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -529,6 +549,56 @@ namespace Cbplayground.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("Tables");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableCombination", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("AreaId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MinGuests")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("OnlineBookable")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Seats")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AreaId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TableCombinations");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableCombinationTable", b =>
+                {
+                    b.Property<Guid>("CombinationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("CombinationId", "TableId");
+
+                    b.HasIndex("TableId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TableCombinationTables");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.Tenant", b =>
@@ -853,6 +923,27 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationTable", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Reservation", null)
+                        .WithMany("Tables")
+                        .HasForeignKey("ReservationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Table", null)
+                        .WithMany()
+                        .HasForeignKey("TableId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.RoomElement", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Area", null)
@@ -897,6 +988,42 @@ namespace Cbplayground.Api.Migrations
                     b.HasOne("Cbplayground.Api.Data.Area", null)
                         .WithMany()
                         .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableCombination", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Area", null)
+                        .WithMany()
+                        .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableCombinationTable", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.TableCombination", null)
+                        .WithMany("Tables")
+                        .HasForeignKey("CombinationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Table", null)
+                        .WithMany()
+                        .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -958,9 +1085,19 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.Reservation", b =>
+                {
+                    b.Navigation("Tables");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.SpecialDay", b =>
                 {
                     b.Navigation("Periods");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableCombination", b =>
+                {
+                    b.Navigation("Tables");
                 });
 #pragma warning restore 612, 618
         }

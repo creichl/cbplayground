@@ -96,7 +96,8 @@ public static class TableEndpoints
             return Results.Ok(ToResponse(table));
         });
 
-        // A table with reservations that have not ended yet cannot be deleted; its past, cancelled and declined ones are deleted with it.
+        // A table with reservations that have not ended yet cannot be deleted; its past, cancelled and declined ones are deleted with it,
+        // and so are the combinations it is part of.
         group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync();

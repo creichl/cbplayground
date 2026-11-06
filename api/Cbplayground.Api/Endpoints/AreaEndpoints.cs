@@ -226,7 +226,7 @@ public static class AreaEndpoints
             return Results.Ok(new SuggestedRoomResponse(area.RoomStyle, elements.Select(ToResponse).ToList(), InNumberOrder(tables)));
         });
 
-        // Deletes the area together with its tables (cascade), its floor plan image and its photo. Not while one of its tables
+        // Deletes the area together with its tables and combinations (cascade), its floor plan image and its photo. Not while one of its tables
         // has reservations that have not ended yet; the past, cancelled and declined ones are deleted with the tables.
         group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
