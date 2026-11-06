@@ -28,6 +28,14 @@
     "tableLabel": "{{number}} · {{seats}}",
     "midnight": "midnight"
   },
+  "unsavedChanges": {
+    "bar": "Unsaved changes",
+    "discard": "Discard",
+    "leaveTitle": "Leave without saving?",
+    "leaveText": "Your changes on this page are not saved yet. If you leave now, they are lost.",
+    "stay": "Stay",
+    "leave": "Leave"
+  },
   "auth": {
     "userMenu": "Account menu",
     "logout": "Sign out",
@@ -353,18 +361,23 @@
   "admin": {
     "label": "Admin",
     "toggleNavigation": "Show or hide navigation",
+    "navigation": "Admin navigation",
+    "groups": {
+      "service": "Service",
+      "restaurant": "Restaurant",
+      "bookings": "Bookings",
+      "team": "Team"
+    },
     "nav": {
       "overview": "Overview",
-      "reservations": "Reservations",
-      "profile": "Restaurant profile",
+      "serviceScreen": "Service screen",
+      "profile": "Profile",
       "design": "Appearance",
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
       "reservationSettings": "Reservation settings",
       "staff": "Staff",
-      "tables": "Table overview",
-      "embed": "Website embed",
-      "openFrontdesk": "Open front desk"
+      "embed": "Website embed"
     }
   },
   "superadmin": {
@@ -374,7 +387,7 @@
     "search": "Search restaurants",
     "searchPlaceholder": "Search by name or slug",
     "empty": "There are no restaurants yet.",
-    "noMatch": "No restaurant matches your search.",
+    "noMatch": "No restaurant matches the search and filter.",
     "backToList": "All restaurants",
     "masterData": "Master data",
     "noLocation": "Not set yet",
@@ -390,7 +403,13 @@
       "tables": "Tables",
       "upcomingReservations": "Upcoming reservations",
       "location": "Country / region",
-      "createdAt": "Created on"
+      "createdAt": "Created on",
+      "setup": "Setup",
+      "last7Days": "Bookings last 7 days",
+      "next7Days": "Bookings next 7 days",
+      "lastOnlineBooking": "Last online booking",
+      "lastSignIn": "Last staff sign-in",
+      "staff": "Staff"
     },
     "status": {
       "active": "Active",
@@ -439,6 +458,34 @@
       "invalidName": "Please enter a name of at most 100 characters.",
       "invalidSlug": "The slug may only contain lowercase letters, digits and single hyphens (not at the start or end), at most 50 characters.",
       "slugTaken": "This slug is already used by another restaurant."
+    },
+    "never": "Never",
+    "filter": {
+      "label": "Show",
+      "all": "All",
+      "active": "Active",
+      "inactive": "Deactivated",
+      "setupIncomplete": "Setup incomplete"
+    },
+    "sort": {
+      "label": "Sort by",
+      "name": "Name",
+      "activity": "Latest activity"
+    },
+    "stats": {
+      "active": "Active restaurants",
+      "setupIncomplete": "Setup incomplete",
+      "bookingsLast7Days": "Bookings in the last 7 days"
+    },
+    "activity": {
+      "title": "Activity",
+      "hint": "Bookings without cancelled and declined ones, in the restaurant’s time zone."
+    },
+    "setup": {
+      "title": "Setup",
+      "open": "Open",
+      "allDone": "Every step of the setup is done.",
+      "hint": "Read only: the restaurant’s admin completes the open steps in the admin area."
     }
   },
   "overview": {
@@ -446,7 +493,7 @@
     "viewBookingPage": "View booking page",
     "today": {
       "title": "Today",
-      "toReservations": "Go to reservations"
+      "openServiceScreen": "Open service screen"
     },
     "checklist": {
       "title": "Set up your restaurant",
@@ -512,10 +559,8 @@
       "website": "Please enter a full web address starting with https:// or http://."
     },
     "errors": {
-      "title": "The profile could not be saved",
       "tooLong": "A field is longer than allowed."
     },
-    "save": "Save",
     "saved": "The profile has been saved."
   },
   "branding": {
@@ -619,7 +664,6 @@
       "title": "Preview",
       "hint": "Shows your changes before you save them."
     },
-    "save": "Save",
     "saved": "The appearance has been saved.",
     "errors": {
       "title": "The appearance could not be saved",
@@ -710,6 +754,7 @@
     }
   },
   "openingHours": {
+    "subtitle": "When guests can book: the weekly hours, closing days and special hours, the location and the public holidays.",
     "save": "Save",
     "saved": "Saved.",
     "open": "Open",
@@ -868,6 +913,7 @@
     "text": "The page you are looking for does not exist or has been moved."
   },
   "areas": {
+    "subtitle": "Your rooms with their floor plans and tables, and how many seats each one offers online.",
     "addArea": "Add area",
     "create": "Create",
     "emptyTitle": "No areas yet",
@@ -1118,7 +1164,6 @@
       "invalidBuffer": "The buffer must be between 0 and 60 minutes in steps of 5.",
       "invalidMaxPartySize": "The largest online party must be at least 1 guest."
     },
-    "save": "Save",
     "saved": "The reservation settings have been saved."
   },
   "reservations": {
@@ -1268,6 +1313,36 @@
         "time": "Please choose a time.",
         "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
         "name": "Please enter the guest's name."
+      }
+    },
+    "history": {
+      "title": "History",
+      "empty": "No changes recorded yet.",
+      "at": "{{date}}, {{time}}",
+      "createdByGuest": "Booked online by the guest",
+      "createdByStaff": "Entered by {{name}}",
+      "createdBySystem": "Created by the system",
+      "cancelledByGuest": "Cancelled by the guest through the link",
+      "changedBy": "{{name}}: {{changes}}",
+      "unknownStaff": "A staff member",
+      "change": "{{field}} {{from}} → {{to}}",
+      "statusChange": "{{from}} → {{to}}",
+      "none": "—",
+      "guests_one": "{{count}} guest",
+      "guests_other": "{{count}} guests",
+      "minutes_one": "{{count}} min",
+      "minutes_other": "{{count}} min",
+      "fields": {
+        "date": "Date",
+        "time": "Time",
+        "partySize": "Guests",
+        "table": "Table",
+        "duration": "Duration",
+        "name": "Name",
+        "phone": "Phone",
+        "email": "Email",
+        "notes": "Note",
+        "status": "Status"
       }
     },
     "errors": {

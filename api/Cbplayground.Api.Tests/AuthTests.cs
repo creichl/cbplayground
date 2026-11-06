@@ -1,6 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cbplayground.Api.Data;
 using Cbplayground.Api.Endpoints;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Cbplayground.Api.Tests;
 
@@ -27,6 +30,30 @@ public class AuthTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal("TenantAdmin", me.Role);
         Assert.Equal("Gasthaus zur Linde", me.Tenant?.Name);
         Assert.Equal("zur-linde", me.Tenant?.Slug);
+    }
+
+    [Fact]
+    public async Task Simultaneous_sign_ins_of_one_account_all_succeed_and_store_the_last_sign_in()
+    {
+        const string email = "frontdesk@zur-linde.test";
+        ApplicationUser Load()
+        {
+            using var scope = factory.Services.CreateScope();
+            return scope.ServiceProvider.GetRequiredService<AppDbContext>().Users.AsNoTracking().Single(u => u.Email == email);
+        }
+        var before = Load();
+        var startedAtUtc = DateTime.UtcNow;
+        var clients = Enumerable.Range(0, 5).Select(_ => factory.CreateHttpsClient()).ToList();
+
+        var responses = await Task.WhenAll(clients.Select(client => LoginAsync(client, email)));
+
+        Assert.All(responses, response => Assert.Equal(HttpStatusCode.OK, response.StatusCode));
+        var after = Load();
+        Assert.NotNull(after.LastSignInAtUtc);
+        Assert.InRange(after.LastSignInAtUtc.Value, startedAtUtc.AddSeconds(-1), DateTime.UtcNow);
+        // The time is stored without touching the account's concurrency stamp, so other changes of the account are not refused.
+        Assert.Equal(before.ConcurrencyStamp, after.ConcurrencyStamp);
+        clients.ForEach(client => client.Dispose());
     }
 
     [Fact]

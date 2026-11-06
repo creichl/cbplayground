@@ -2,6 +2,7 @@ import { Anchor, Button, Card, Code, CopyButton, Group, Select, SimpleGrid, Stac
 import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useCurrentUser } from '../api/auth.ts'
+import { PageHeader } from '../components/PageHeader.tsx'
 import { type Language, languages } from '../i18n/index.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { heightMessageType } from '../layouts/EmbedLayout.tsx'
@@ -52,10 +53,7 @@ export function EmbedSnippetPage() {
 
   return (
     <Stack gap="lg">
-      <Stack gap={4}>
-        <Title order={2}>{t('embed.admin.title')}</Title>
-        <Text c="dimmed">{t('embed.admin.intro')}</Text>
-      </Stack>
+      <PageHeader title={t('embed.admin.title')} description={t('embed.admin.intro')} />
 
       <SimpleGrid cols={{ base: 1, lg: 2 }} spacing="lg">
         <Stack gap="lg">
