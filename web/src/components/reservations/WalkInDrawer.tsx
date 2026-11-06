@@ -1,14 +1,16 @@
-import { Alert, Button, Drawer, Group, NumberInput, Select, Skeleton, Stack, Text, Textarea, TextInput } from '@mantine/core'
-import { useMediaQuery } from '@mantine/hooks'
+import { Alert, Button, Drawer, Group, Modal, NumberInput, Select, Skeleton, Stack, Text, Textarea, TextInput } from '@mantine/core'
+import { randomId, useMediaQuery } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
+import { useQueryClient } from '@tanstack/react-query'
 import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client.ts'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
-import { defaultWalkInGuests, useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
+import { defaultWalkInGuests, type Reservation, useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
 import { guestName } from './status.ts'
+import { removeWalkIn, removeWalkInQuestion } from './walkInRemoval.ts'
 
 /** The longest note the server accepts. */
 const maxNotesLength = 500
@@ -24,13 +26,79 @@ function walkInErrorMessage(error: unknown, t: TFunction) {
   return error instanceof ApiError && error.code === 'outside_opening_hours' ? t('reservations.walkIn.closed') : reservationErrorMessage(error, t)
 }
 
+/** How long the notification after seating a walk-in, with its "Undo", stays; as after a status change. */
+const seatedNoticeMs = 8000
+
+/**
+ * The notification after seating a walk-in. Its "Undo" removes the walk-in after asking; the notification stays open while it
+ * asks, since the drawer that seated the walk-in is already closed.
+ */
+function SeatedNotice({ walkIn, notificationId }: { walkIn: Reservation; notificationId: string }) {
+  const { t, i18n } = useTranslation()
+  const queryClient = useQueryClient()
+  const [asking, setAsking] = useState(false)
+  const [removing, setRemoving] = useState(false)
+  const language = i18n.resolvedLanguage ?? 'en'
+
+  const ask = (open: boolean) => {
+    setAsking(open)
+    // The same message again, so this component and its question stay as they are.
+    notifications.update({
+      id: notificationId,
+      autoClose: open ? false : seatedNoticeMs,
+      message: <SeatedNotice walkIn={walkIn} notificationId={notificationId} />,
+    })
+  }
+
+  const remove = () => {
+    setRemoving(true)
+    removeWalkIn(queryClient, walkIn, t).then(
+      () => notifications.hide(notificationId),
+      () => notifications.hide(notificationId),
+    )
+  }
+
+  return (
+    <>
+      <Group justify="space-between" gap="sm" wrap="nowrap">
+        <Text size="sm">
+          {t('reservations.walkIn.seated', { name: guestName(walkIn, t), table: walkIn.tableNumber, time: formatTime(walkIn.time, language) })}
+        </Text>
+        <Button size="compact-sm" variant="light" color="gray" style={{ flexShrink: 0 }} onClick={() => ask(true)}>
+          {t('reservations.actions.undo')}
+        </Button>
+      </Group>
+      <Modal opened={asking} onClose={() => ask(false)} title={t(removeWalkInQuestion.title)}>
+        <Stack gap="md">
+          <Text size="sm">
+            {t(removeWalkInQuestion.text, {
+              name: guestName(walkIn, t),
+              time: formatTime(walkIn.time, language),
+              table: walkIn.tableNumber,
+              count: walkIn.guests,
+            })}
+          </Text>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={() => ask(false)}>
+              {t('reservations.cancelConfirm.back')}
+            </Button>
+            <Button color="gray" loading={removing} onClick={remove}>
+              {t(removeWalkInQuestion.confirm)}
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
+    </>
+  )
+}
+
 /**
  * Seats a guest without a reservation now: party size, then a table free now (the suggestion is preselected and can be
  * changed), then optionally name, phone and a note. The reservation starts as arrived. A chosen table that is not free (any
  * more) is never swapped for another one: the drawer says so and the user picks a table.
  */
 export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerProps) {
-  const { t, i18n } = useTranslation()
+  const { t } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
   const createWalkIn = useCreateWalkIn()
   const [guestsValue, setGuestsValue] = useState<number | string>(defaultWalkInGuests)
@@ -54,10 +122,8 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
       { guests, tableId, name: name.trim() || null, phone: phone.trim() || null, notes: notes.trim() || null },
       {
         onSuccess: (walkIn) => {
-          notifications.show({
-            color: 'green',
-            message: t('reservations.walkIn.seated', { name: guestName(walkIn, t), table: walkIn.tableNumber, time: formatTime(walkIn.time, i18n.resolvedLanguage ?? 'en') }),
-          })
+          const id = randomId('walk-in-')
+          notifications.show({ id, color: 'green', autoClose: seatedNoticeMs, message: <SeatedNotice walkIn={walkIn} notificationId={id} /> })
           onClose()
         },
       },

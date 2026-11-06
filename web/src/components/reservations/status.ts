@@ -45,6 +45,12 @@ export const sourceLabels: Record<ReservationSource, ParseKeys> = {
 export const blockingStatuses: readonly ReservationStatus[] = ['Requested', 'Confirmed', 'Arrived', 'Late']
 
 /**
+ * Statuses of a closed reservation, as on the server (ReservationRules.ClosedStatuses): only the guest's details and the note can
+ * still be changed, not its date, time, party size, table or duration.
+ */
+export const closedStatuses: readonly ReservationStatus[] = ['Cancelled', 'Declined', 'NoShow', 'Completed']
+
+/**
  * Whether the reservation still counts: cancelled, declined and no-show reservations do not occupy a table and are not
  * expected. They are shown faded.
  */
@@ -71,15 +77,15 @@ export function guestName(reservation: Pick<Reservation, 'name' | 'source'>, t: 
 
 /** A quick status change of the staff. */
 export type StatusAction = {
-  /** The status the action sets. */
-  status: ReservationStatus
+  /** The status the action sets; null: removes an arrived walk-in, the undo of its arrival (a walk-in was never expected). */
+  status: ReservationStatus | null
   label: ParseKeys
   /** Shown with the icon on narrow screens such as tablets. */
   shortLabel: ParseKeys
   /** Decorative, next to the label. */
   icon: ComponentType<IconProps>
   color: MantineColor
-  /** Asks first, because the guest is no longer expected: cancelling, no-show and declining a request (which is final). */
+  /** Asks first, because the guest is no longer expected: cancelling, no-show, declining a request and removing a walk-in. */
   confirm: boolean
 }
 
@@ -93,9 +99,13 @@ const actions = {
   cancel: { status: 'Cancelled', label: 'reservations.actions.cancel', shortLabel: 'reservations.actionsShort.cancel', icon: XIcon, color: 'red', confirm: true },
   undoToConfirmed: { status: 'Confirmed', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
   undoToArrived: { status: 'Arrived', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
+  removeWalkIn: { status: null, label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: true },
 } as const satisfies Record<string, StatusAction>
 
-/** The buttons of each status. The undo of "late" is offered in the notification after the change. */
+/**
+ * The buttons of each status. The undos of "late", of accepting and of declining a request are offered in the notification
+ * after the change.
+ */
 const statusActions: Record<ReservationStatus, readonly StatusAction[]> = {
   Requested: [actions.accept, actions.decline],
   Confirmed: [actions.arrived, actions.late, actions.noShow, actions.cancel],
@@ -107,23 +117,40 @@ const statusActions: Record<ReservationStatus, readonly StatusAction[]> = {
   Declined: [],
 }
 
-/** The status changes the server allows (Reservations/ReservationRules.cs); "late" from no-show and cancelled undoes them for a late guest. */
+/** The buttons of an arrived walk-in: its arrival is undone by removing it. */
+const arrivedWalkInActions: readonly StatusAction[] = [actions.completed, actions.removeWalkIn]
+
+/**
+ * The status changes the server allows (Reservations/ReservationRules.cs); "late" from no-show and cancelled undoes them for a late
+ * guest. "Requested" from "confirmed" is only allowed for a reservation that was a request, so only the undo after accepting sends it;
+ * "confirmed" from "arrived" is refused for a walk-in, whose arrival is undone by removing it.
+ */
 const transitions: Record<ReservationStatus, readonly ReservationStatus[]> = {
   Requested: ['Confirmed', 'Declined'],
-  Confirmed: ['Arrived', 'Late', 'NoShow', 'Cancelled'],
+  Confirmed: ['Arrived', 'Late', 'NoShow', 'Cancelled', 'Requested'],
   Late: ['Arrived', 'NoShow', 'Cancelled', 'Confirmed'],
   Arrived: ['Completed', 'Confirmed'],
   Completed: ['Arrived'],
   NoShow: ['Confirmed', 'Late'],
   Cancelled: ['Confirmed', 'Late'],
-  Declined: [],
+  Declined: ['Requested'],
 }
 
+/** The fields of a reservation the status rules need. */
+type StatusReservation = Pick<Reservation, 'status' | 'source' | 'date' | 'time' | 'endTime'>
+
 /**
- * Whether the server allows the change now, as on the server: "arrived" and "late" only on the day of the reservation,
- * "no-show" only from its start. Without the current time (still loading) neither is offered.
+ * Whether the server allows the change of the reservation to `status` now, as on the server: "arrived" and "late" only on the
+ * day of the reservation, "no-show" only from its start, the undo of a cancellation only until its end. Without the current
+ * time (still loading) none of these is offered.
  */
-function isAllowedNow(status: ReservationStatus, reservation: Pick<Reservation, 'date' | 'time'>, now: RestaurantNow | null) {
+function isAllowedNow(status: ReservationStatus | null, reservation: StatusReservation, now: RestaurantNow | null) {
+  if (
+    reservation.status === 'Cancelled' &&
+    (now === null || reservation.date < now.date || (reservation.date === now.date && toMinutes(reservation.endTime) <= now.minutes))
+  ) {
+    return false
+  }
   if (status === 'Arrived' || status === 'Late') {
     return now !== null && reservation.date === now.date
   }
@@ -134,18 +161,21 @@ function isAllowedNow(status: ReservationStatus, reservation: Pick<Reservation, 
 }
 
 /** The status actions offered for the reservation now. */
-export function availableActions(reservation: Pick<Reservation, 'status' | 'date' | 'time'>, now: RestaurantNow | null) {
-  return statusActions[reservation.status].filter((action) => isAllowedNow(action.status, reservation, now))
+export function availableActions(reservation: StatusReservation, now: RestaurantNow | null) {
+  const offered = reservation.source === 'WalkIn' && reservation.status === 'Arrived' ? arrivedWalkInActions : statusActions[reservation.status]
+  return offered.filter((action) => isAllowedNow(action.status, reservation, now))
 }
 
 /**
- * The status that undoes a change from `previous` to `current`: back to `previous` if the server allows it (e.g. "late" again
- * after the cancellation or no-show of a late guest), otherwise back to "confirmed" (e.g. after "arrived" of a late guest).
- * Null when the change cannot be undone (accepting or declining a request).
+ * The status that undoes a change from `previous` to the reservation's current status: back to `previous` if the server allows it
+ * (e.g. "late" again after the cancellation or no-show of a late guest, "requested" after accepting or declining a request),
+ * otherwise back to "confirmed" (e.g. after "arrived" of a late guest). Null when the change cannot be undone (now).
  */
-export function undoStatus(previous: ReservationStatus, current: ReservationStatus): ReservationStatus | null {
-  if (transitions[current].includes(previous)) {
-    return previous
+export function undoStatus(previous: ReservationStatus, reservation: StatusReservation, now: RestaurantNow | null): ReservationStatus | null {
+  const allowed = transitions[reservation.status]
+  const undo = allowed.includes(previous) ? previous : allowed.includes('Confirmed') ? 'Confirmed' : null
+  if (undo === null || (undo === 'Confirmed' && reservation.status === 'Arrived' && reservation.source === 'WalkIn')) {
+    return null
   }
-  return transitions[current].includes('Confirmed') ? 'Confirmed' : null
+  return isAllowedNow(undo, reservation, now) ? undo : null
 }

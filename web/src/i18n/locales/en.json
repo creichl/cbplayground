@@ -1203,12 +1203,19 @@
     },
     "declineConfirm": {
       "title": "Decline the request?",
-      "text_one": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
-      "text_other": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
+      "text_one": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed.",
+      "text_other": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed.",
       "confirm": "Decline request"
     },
+    "removeWalkInConfirm": {
+      "title": "Remove the walk-in?",
+      "text_one": "{{name}} (party of {{count}}) at table {{table}} since {{time}} will be removed, as if never seated, and the table freed.",
+      "text_other": "{{name}} (party of {{count}}) at table {{table}} since {{time}} will be removed, as if never seated, and the table freed.",
+      "confirm": "Remove walk-in"
+    },
     "toast": {
-      "changed": "{{name}}: {{status}}"
+      "changed": "{{name}}: {{status}}",
+      "walkInRemoved": "{{name}} has been removed."
     },
     "walkIn": {
       "button": "Walk-in",
@@ -1239,6 +1246,7 @@
       "time": "Time",
       "timeHint": "Enter the party size and the date to see the free times.",
       "closed": "The restaurant is closed on this day.",
+      "closedHint": "This reservation is closed ({{status}}): its date, time, party size, table and duration stay as they are. The guest's details and the note can still be changed.",
       "table": "Table",
       "tableDescriptionNew": "The suggested table is preselected; you can choose another free one.",
       "tableDescriptionEdit": "Only the tables that are free at the chosen time for the whole duration are offered, plus the current table.",
@@ -1249,6 +1257,7 @@
       "tableOptionSuggested_other": "Table {{number}} · {{area}} · {{count}} seats (suggested)",
       "tableOptionCurrent_one": "Table {{number}} · {{area}} · {{count}} seat (current)",
       "tableOptionCurrent_other": "Table {{number}} · {{area}} · {{count}} seats (current)",
+      "tableReadOnly": "Table {{number}} · {{area}}",
       "overrideDuration": "Override duration",
       "defaultDuration_one": "The restaurant's duration for this party size: {{count}} minute",
       "defaultDuration_other": "The restaurant's duration for this party size: {{count}} minutes",
@@ -1287,7 +1296,9 @@
       "invalidStatus": "This status is not known.",
       "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
       "notFound": "This reservation no longer exists. Please reload the page.",
-      "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time.",
+      "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time, undoing a cancellation only until the reservation's end.",
+      "reservationClosed": "This reservation is closed: only the guest's details and the note can be changed. The list has been reloaded.",
+      "cannotDeleteReservation": "Only a seated walk-in can be removed. Someone else may have changed it; the list has been reloaded.",
       "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
       "statusTitle": "The status could not be changed"
     }

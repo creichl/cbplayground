@@ -1223,13 +1223,21 @@
     },
     "declineConfirm": {
       "title": "Odbiti zahtev?",
-      "text_one": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
-      "text_few": "Zahtev gosta {{name}} u {{time}} ({{count}} osobe) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
-      "text_other": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen. Ovo se ne može poništiti.",
+      "text_one": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen.",
+      "text_few": "Zahtev gosta {{name}} u {{time}} ({{count}} osobe) biće odbijen i sto oslobođen.",
+      "text_other": "Zahtev gosta {{name}} u {{time}} ({{count}} osoba) biće odbijen i sto oslobođen.",
       "confirm": "Odbij zahtev"
     },
+    "removeWalkInConfirm": {
+      "title": "Ukloniti gosta bez rezervacije?",
+      "text_one": "{{name}} ({{count}} osoba) za stolom {{table}} od {{time}} biće uklonjen, kao da nikad nije smešten, i sto oslobođen.",
+      "text_few": "{{name}} ({{count}} osobe) za stolom {{table}} od {{time}} biće uklonjen, kao da nikad nije smešten, i sto oslobođen.",
+      "text_other": "{{name}} ({{count}} osoba) za stolom {{table}} od {{time}} biće uklonjen, kao da nikad nije smešten, i sto oslobođen.",
+      "confirm": "Ukloni gosta"
+    },
     "toast": {
-      "changed": "{{name}}: {{status}}"
+      "changed": "{{name}}: {{status}}",
+      "walkInRemoved": "{{name}} je uklonjen."
     },
     "walkIn": {
       "button": "Bez rezervacije",
@@ -1263,6 +1271,7 @@
       "time": "Vreme",
       "timeHint": "Unesite broj osoba i datum da biste videli slobodne termine.",
       "closed": "Restoran je ovog dana zatvoren.",
+      "closedHint": "Ova rezervacija je zatvorena ({{status}}): datum, vreme, broj osoba, sto i trajanje ostaju kakvi jesu. Podaci o gostu i napomena mogu još da se promene.",
       "table": "Sto",
       "tableDescriptionNew": "Predloženi sto je unapred izabran; možete izabrati drugi slobodan sto.",
       "tableDescriptionEdit": "Ponuđeni su stolovi koji su u izabrano vreme slobodni za celo trajanje, kao i trenutni sto.",
@@ -1276,6 +1285,7 @@
       "tableOptionCurrent_one": "Sto {{number}} · {{area}} · {{count}} mesto (trenutni)",
       "tableOptionCurrent_few": "Sto {{number}} · {{area}} · {{count}} mesta (trenutni)",
       "tableOptionCurrent_other": "Sto {{number}} · {{area}} · {{count}} mesta (trenutni)",
+      "tableReadOnly": "Sto {{number}} · {{area}}",
       "overrideDuration": "Promeni trajanje",
       "defaultDuration_one": "Trajanje restorana za ovaj broj osoba: {{count}} minut",
       "defaultDuration_few": "Trajanje restorana za ovaj broj osoba: {{count}} minuta",
@@ -1315,7 +1325,9 @@
       "invalidStatus": "Ovaj status nije poznat.",
       "invalidStatusTransition": "Status ne može da se promeni na ovaj način. Možda je neko drugi izmenio rezervaciju; lista je ponovo učitana.",
       "notFound": "Ova rezervacija više ne postoji. Ponovo učitajte stranicu.",
-      "statusNotAllowedNow": "To sada nije moguće za ovu rezervaciju: „Stigli“ i „Kasne“ samo na dan rezervacije, „Nisu došli“ tek od vremena početka.",
+      "statusNotAllowedNow": "To sada nije moguće za ovu rezervaciju: „Stigli“ i „Kasne“ samo na dan rezervacije, „Nisu došli“ tek od vremena početka, poništavanje otkazivanja samo do kraja rezervacije.",
+      "reservationClosed": "Ova rezervacija je zatvorena: mogu da se promene samo podaci o gostu i napomena. Lista je ponovo učitana.",
+      "cannotDeleteReservation": "Samo smešten gost bez rezervacije može da se ukloni. Možda ga je neko drugi izmenio; lista je ponovo učitana.",
       "tableTaken": "Sto je u međuvremenu zauzet, pa ovo ne može da se poništi.",
       "statusTitle": "Status nije mogao da se promeni"
     }

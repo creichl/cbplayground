@@ -278,3 +278,159 @@ test.describe('Front desk: walk-in on the floor plans', () => {
     await drawer.getByRole('button', { name: 'Cancel' }).click()
   })
 })
+
+test.describe('Front desk: undo of accepting a request', () => {
+  test('offers "Undo" after accepting, which makes it an open request again', async ({ page }) => {
+    const name = 'Nikola Jovanović'
+    await bookRequest(page, name)
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+
+    const open = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })
+    await open.locator('..').getByRole('button', { name: 'Accept', exact: true }).click()
+    // Accepted, it leaves the open requests (it lies days ahead, so it is not in today's list either).
+    await expect(open).toHaveCount(0)
+    const accepted = page.getByRole('alert').filter({ hasText: `${name}: Confirmed` })
+    await expect(accepted.getByRole('button', { name: 'Undo' })).toBeVisible()
+    await screenshot(page, 'front-desk', 'accept-undo', { fullPage: false })
+
+    await accepted.getByRole('button', { name: 'Undo' }).click()
+    await expect(page.getByRole('alert').filter({ hasText: `${name}: Requested` })).toBeVisible()
+    await expect(open.locator('..').getByText('Requested', { exact: true })).toBeVisible()
+    await screenshot(page, 'front-desk', 'accept-undone')
+
+    // Declined again, so the demo data stays as it was; the declining can be undone as well.
+    await open.locator('..').getByRole('button', { name: 'Decline', exact: true }).click()
+    await page.getByRole('dialog', { name: 'Decline the request?' }).getByRole('button', { name: 'Decline request' }).click()
+    await expect(open).toHaveCount(0)
+    await expect(page.getByRole('alert').filter({ hasText: `${name}: Declined` }).getByRole('button', { name: 'Undo' })).toBeVisible()
+  })
+})
+
+test.describe('Front desk: undo of a walk-in', () => {
+  test('"Undo" after seating a walk-in removes it, after asking', async ({ page }) => {
+    const name = 'Paul Spontan'
+    await signIn(page, 'frontdesk@rooftop-belvedere.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    const walkInTables = await page.request.get('/api/staff/walk-in-tables?guests=2')
+    test.skip(walkInTables.status() === 400, 'Rooftop Belvedere is closed at the time of the run, so no walk-in can be seated now.')
+    expect(walkInTables.status()).toBe(200)
+    const { tables } = (await walkInTables.json()) as { tables: unknown[] }
+    test.skip(tables.length === 0, 'No table of Rooftop Belvedere is free for a walk-in now.')
+
+    await page.getByRole('button', { name: 'Walk-in', exact: true }).click()
+    const drawer = page.getByRole('dialog', { name: 'Seat a walk-in' })
+    await drawer.getByLabel('Name').fill(name)
+    await drawer.getByRole('button', { name: 'Seat walk-in', exact: true }).click()
+    const seated = page.getByRole('alert').filter({ hasText: `${name} seated at table` })
+    await expect(seated).toBeVisible()
+    const row = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })
+    await expect(row).toHaveCount(1)
+
+    await seated.getByRole('button', { name: 'Undo' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Remove the walk-in?' })
+    await expect(dialog.getByText(`${name} (party of 2) at table`, { exact: false })).toBeVisible()
+    await screenshot(page, 'front-desk', 'walk-in-undo-asks', { fullPage: false })
+
+    await dialog.getByRole('button', { name: 'Remove walk-in' }).click()
+    await expect(page.getByText(`${name} has been removed.`)).toBeVisible()
+    await expect(row).toHaveCount(0)
+    await screenshot(page, 'front-desk', 'walk-in-removed')
+    let reservations = (await (await page.request.get('/api/staff/reservations')).json()) as { name: string }[]
+    expect(reservations.map((reservation) => reservation.name)).not.toContain(name)
+
+    // Seated again; the "Undo" of its row asks the same and removes it as well.
+    await page.getByRole('button', { name: 'Walk-in', exact: true }).click()
+    await drawer.getByLabel('Name').fill(name)
+    await drawer.getByRole('button', { name: 'Seat walk-in', exact: true }).click()
+    await expect(row).toHaveCount(1)
+    await row.locator('..').getByRole('button', { name: 'Undo', exact: true }).click()
+    await dialog.getByRole('button', { name: 'Remove walk-in' }).click()
+    await expect(row).toHaveCount(0)
+    reservations = (await (await page.request.get('/api/staff/reservations')).json()) as { name: string }[]
+    expect(reservations.map((reservation) => reservation.name)).not.toContain(name)
+  })
+})
+
+/** Checks the drawer of a closed reservation: date, time, party size, table and duration read-only, the contact editable. */
+async function expectClosedDrawer(page: Page) {
+  const drawer = page.getByRole('dialog', { name: 'Edit reservation' })
+  await expect(drawer.getByText('This reservation is closed', { exact: false })).toBeVisible()
+  for (const field of ['Guests', 'Date', 'Time', 'Table', 'Duration in minutes']) {
+    await expect(drawer.getByLabel(field, { exact: true }), field).toHaveAttribute('readonly')
+  }
+  await expect(drawer.getByLabel('Phone')).toBeEditable()
+  return drawer
+}
+
+test.describe('Front desk: closed reservations', () => {
+  test('shows the booking of a cancelled reservation read-only and still saves the contact', async ({ page }) => {
+    const name = 'Clara Storno'
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // A phone reservation on the first day from ten days ahead with a free time, cancelled right away.
+    let booked: { id: string; date: string } | undefined
+    for (let days = 10; days < 40 && booked === undefined; days++) {
+      const date = dateFromToday(days)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+        periods: { times: { time: string; tables: unknown[] }[] }[]
+      }
+      const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.tables.length > 0)?.time
+      if (time === undefined) continue
+      const created = await page.request.post('/api/staff/reservations', { data: { date, time, guests: 2, name } })
+      expect(created.status()).toBe(201)
+      booked = (await created.json()) as { id: string; date: string }
+    }
+    expect(booked).toBeDefined()
+    expect((await page.request.post(`/api/staff/reservations/${booked!.id}/status`, { data: { status: 'Cancelled' } })).status()).toBe(200)
+
+    await page.goto(`/frontdesk/reservations?date=${booked!.date}`)
+    await page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).click()
+    const drawer = await expectClosedDrawer(page)
+    await screenshot(page, 'reservations', 'cancelled-read-only', { fullPage: false })
+
+    await drawer.getByLabel('Phone').fill('+43 660 1112233')
+    await drawer.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText(`The changes to the reservation of ${name} have been saved.`)).toBeVisible()
+  })
+
+  test('shows the time and table of a no-show read-only', async ({ page }) => {
+    const name = 'Nora Nichterschienen'
+    await signIn(page, 'frontdesk@rooftop-belvedere.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    type TodaysReservation = {
+      id: string
+      date: string
+      time: string
+      guests: number
+      tableId: string
+      durationMinutes: number
+      phone: string | null
+      email: string | null
+      notes: string | null
+      status: string
+    }
+    const today = (await (await page.request.get('/api/staff/reservations')).json()) as TodaysReservation[]
+    // The first reservation of today that has started and is still expected; the server allows a no-show only from its start.
+    let noShow: TodaysReservation | undefined
+    for (const reservation of today.filter((candidate) => candidate.status === 'Confirmed' || candidate.status === 'Late')) {
+      const marked = await page.request.post(`/api/staff/reservations/${reservation.id}/status`, { data: { status: 'NoShow' } })
+      if (marked.status() === 200) {
+        noShow = reservation
+        break
+      }
+    }
+    test.skip(noShow === undefined, 'No reservation of Rooftop Belvedere has started yet today at the time of the run, so none can be a no-show.')
+    // Renamed, so the row can be found; a closed reservation still takes the guest's details.
+    const { date, time, guests, tableId, durationMinutes, phone, email, notes } = noShow!
+    const renamed = await page.request.put(`/api/staff/reservations/${noShow!.id}`, {
+      data: { date, time, guests, tableId, durationMinutes, name, phone, email, notes },
+    })
+    expect(renamed.status()).toBe(200)
+
+    await page.goto('/frontdesk')
+    await page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).click()
+    await expectClosedDrawer(page)
+    await screenshot(page, 'reservations', 'no-show-read-only', { fullPage: false })
+  })
+})

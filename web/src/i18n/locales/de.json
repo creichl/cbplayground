@@ -1203,12 +1203,19 @@
     },
     "declineConfirm": {
       "title": "Anfrage ablehnen?",
-      "text_one": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
-      "text_other": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
+      "text_one": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei.",
+      "text_other": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei.",
       "confirm": "Anfrage ablehnen"
     },
+    "removeWalkInConfirm": {
+      "title": "Walk-in entfernen?",
+      "text_one": "{{name}} ({{count}} Pers.) an Tisch {{table}} seit {{time}} wird entfernt, als wäre der Gast nie platziert worden, und der Tisch frei.",
+      "text_other": "{{name}} ({{count}} Pers.) an Tisch {{table}} seit {{time}} wird entfernt, als wäre der Gast nie platziert worden, und der Tisch frei.",
+      "confirm": "Walk-in entfernen"
+    },
     "toast": {
-      "changed": "{{name}}: {{status}}"
+      "changed": "{{name}}: {{status}}",
+      "walkInRemoved": "{{name}} wurde entfernt."
     },
     "walkIn": {
       "button": "Walk-in",
@@ -1239,6 +1246,7 @@
       "time": "Uhrzeit",
       "timeHint": "Geben Sie Personenzahl und Datum ein, um die freien Zeiten zu sehen.",
       "closed": "An diesem Tag ist das Restaurant geschlossen.",
+      "closedHint": "Diese Reservierung ist abgeschlossen ({{status}}): Datum, Uhrzeit, Personenzahl, Tisch und Dauer bleiben, wie sie sind. Die Angaben zum Gast und die Notiz lassen sich noch ändern.",
       "table": "Tisch",
       "tableDescriptionNew": "Der vorgeschlagene Tisch ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
       "tableDescriptionEdit": "Angeboten werden die Tische, die zur gewählten Zeit für die ganze Dauer frei sind, sowie der aktuelle Tisch.",
@@ -1249,6 +1257,7 @@
       "tableOptionSuggested_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (Vorschlag)",
       "tableOptionCurrent_one": "Tisch {{number}} · {{area}} · {{count}} Platz (aktuell)",
       "tableOptionCurrent_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (aktuell)",
+      "tableReadOnly": "Tisch {{number}} · {{area}}",
       "overrideDuration": "Dauer überschreiben",
       "defaultDuration_one": "Dauer des Restaurants für diese Personenzahl: {{count}} Minute",
       "defaultDuration_other": "Dauer des Restaurants für diese Personenzahl: {{count}} Minuten",
@@ -1287,7 +1296,9 @@
       "invalidStatus": "Dieser Status ist nicht bekannt.",
       "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
       "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu.",
-      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit.",
+      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit, das Rückgängigmachen einer Stornierung nur bis zum Ende der Reservierung.",
+      "reservationClosed": "Diese Reservierung ist abgeschlossen: Nur die Angaben zum Gast und die Notiz lassen sich ändern. Die Liste wurde neu geladen.",
+      "cannotDeleteReservation": "Nur ein platzierter Walk-in lässt sich entfernen. Vielleicht hat jemand anderes ihn geändert; die Liste wurde neu geladen.",
       "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
       "statusTitle": "Der Status konnte nicht geändert werden"
     }
