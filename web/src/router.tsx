@@ -65,6 +65,7 @@ export const router = createBrowserRouter([
           { path: 'reservations', element: <ToServiceScreen /> },
           { path: 'tables', element: <ToServiceScreen tableOverview /> },
           { path: 'profile', lazy: () => import('./pages/ProfilePage.tsx').then(({ ProfilePage }) => ({ Component: ProfilePage })) },
+          { path: 'menu', lazy: () => import('./pages/MenuPage.tsx').then(({ MenuPage }) => ({ Component: MenuPage })) },
           { path: 'design', lazy: () => import('./pages/BrandingPage.tsx').then(({ BrandingPage }) => ({ Component: BrandingPage })) },
           { path: 'areas', lazy: () => import('./pages/AreasPage.tsx').then(({ AreasPage }) => ({ Component: AreasPage })) },
           { path: 'opening-hours', lazy: () => import('./pages/OpeningHoursPage.tsx').then(({ OpeningHoursPage }) => ({ Component: OpeningHoursPage })) },

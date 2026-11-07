@@ -1,6 +1,6 @@
 # Image credits
 
-The cover images, area photos and gallery photos (`*-gallery-*.jpg`) of the demo restaurants are real photos under **CC0 1.0** (Creative Commons Public Domain Dedication,
+The cover images, area photos, gallery photos (`*-gallery-*.jpg`) and dish photos of the menus (`*-menu-*.jpg`) of the demo restaurants are real photos under **CC0 1.0** (Creative Commons Public Domain Dedication,
 https://creativecommons.org/publicdomain/zero/1.0/): free to use, also commercially, changed or unchanged, without attribution.
 They were taken from Wikimedia Commons, which was reachable from the development environment, while Unsplash, Pexels and Pixabay
 blocked automated access. The credits below are given anyway. Faces in the foreground and visible brands were avoided or
@@ -384,3 +384,246 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 - Licence: CC0 1.0
 - Retrieved: 2026-11-05
 - Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG; the panorama cut to its middle part
+
+## `zur-linde-menu-flaedlesuppe.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: clear beef broth with pancake strips and chives in a soup cup
+- Source: https://commons.wikimedia.org/wiki/File:Frittatensuppe_1.JPG
+- Photographer: Brücke-Osteuropa
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-leberkaes.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: a slice of Leberkäse with a fried egg, cucumber and carrot on a flowered plate
+- Source: https://commons.wikimedia.org/wiki/File:Leberk%C3%A4se,_R%C3%BCdesheim.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3 around the plate (the second plate and a glass cut off), scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-schnitzel.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: two breaded schnitzel with cranberries, lemon and herbs on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Wiener_Schnitzel,_Aachen.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3 (the cutlery with its maker's mark cut off), scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-kaesespaetzle.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: Käsespätzle with fried onions in a copper pan
+- Source: https://commons.wikimedia.org/wiki/File:Cheese-noodles-609776.jpg; originally published on Pixabay, https://pixabay.com/de/k%C3%A4sesp%C3%A4tzle-gericht-essen-lecker-609776/ (under CC0 at the time)
+- Photographer: Hans Braxmeier
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-rahmschwammerl.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: forest mushrooms in cream sauce with a bread dumpling and grated cheese
+- Source: https://commons.wikimedia.org/wiki/File:Semmelkn%C3%B6del_and_forest_mushrooms,_Oestrich.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3 around the plate (the table setting cut off), scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-kalbsbraten.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: roast leg of veal in sauce with two bread dumplings
+- Source: https://commons.wikimedia.org/wiki/File:Steckenroth,_leg_of_veal_with_dumplings.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3 around the plate (fork and napkin cut off), scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-menu-apfelstrudel.jpg`
+
+- Motif: Menu of Gasthaus zur Linde: Apfelstrudel with vanilla ice cream and whipped cream
+- Source: https://commons.wikimedia.org/wiki/File:Apfelstrudel_et_glace_vanille.jpg
+- Photographer: Arnaud 25
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-cevapi.jpg`
+
+- Motif: Menu of Kafana Dunav: ćevapi with French fries, chopped onion, lettuce and a cherry tomato on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Ćevapčići_in_Montenegro.jpg
+- Photographer: Spacekid
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-pljeskavica.jpg`
+
+- Motif: Menu of Kafana Dunav: grilled pljeskavica with grilled lepinja flatbread, French fries, coleslaw and a tomato dip
+- Source: https://commons.wikimedia.org/wiki/File:Budapest,_Grill_Mánia,_pljeskavica.jpg
+- Photographer: Christo
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-sopska.jpg`
+
+- Motif: Menu of Kafana Dunav: Šopska salad of tomato and cucumber under grated white cheese, with an olive and a green chilli pepper
+- Source: https://commons.wikimedia.org/wiki/File:Šopska_salata.jpg
+- Photographer: August Dominus
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-sarma.jpg`
+
+- Motif: Menu of Kafana Dunav: two sarma cabbage rolls sprinkled with chilli flakes in an earthenware dish
+- Source: https://commons.wikimedia.org/wiki/File:Sarma_in_Skopje,_2026.jpg
+- Photographer: Bdx
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-punjene-paprike.jpg`
+
+- Motif: Menu of Kafana Dunav: green peppers stuffed with minced meat and rice
+- Source: https://commons.wikimedia.org/wiki/File:Stuffed_Peppers_Florentine.jpg
+- Photographer: Roundhere44
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-ajvar.jpg`
+
+- Motif: Menu of Kafana Dunav: close-up of ajvar spread on a slice of toasted bread
+- Source: https://commons.wikimedia.org/wiki/File:Ajvar_toast.jpg
+- Photographer: Popo le Chien
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-meze.jpg`
+
+- Motif: Menu of Kafana Dunav: cold meze board with prosciutto, cheese, olives, ajvar, a creamy kajmak-style spread and layered pastry on lettuce
+- Source: https://commons.wikimedia.org/wiki/File:Македонско_предјадење_со_сувомеснато_и_ѓомлезе.jpg
+- Photographer: Делфина
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-prebranac.jpg`
+
+- Motif: Menu of Kafana Dunav: bowl of bean stew (pasulj) with smoked sausage and carrots
+- Source: https://commons.wikimedia.org/wiki/File:Bjelajski_Pasulj_(varivo)_1.jpg
+- Photographer: Zavičajac
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-karadjordjeva.jpg`
+
+- Motif: Menu of Kafana Dunav: breaded rolled Karađorđeva šnicla with French fries, rocket, lemon, kajmak and a white dip, Šopska salad in the background
+- Source: https://commons.wikimedia.org/wiki/File:Karađorđeva_šnicla,_Belgrade,_November_2024.jpg
+- Photographer: Bdx
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `kafana-dunav-menu-riba.jpg`
+
+- Motif: Menu of Kafana Dunav: whole grilled trout with lemon, steamed vegetables, potatoes and rice on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Grilled_trout,_Restaurant_Trofta,_Istog,_2025.jpg
+- Photographer: Bdx
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-burrata.jpg`
+
+- Motif: Menu of Rooftop Belvedere: burrata on sliced heirloom tomatoes with pea shoots and edible flowers on a stoneware plate
+- Source: https://commons.wikimedia.org/wiki/File:Tomato_salad_with_burrata,_Limburg.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-tatar.jpg`
+
+- Motif: Menu of Rooftop Belvedere: beef tartare with vegetable crisps, frisée and toasted sourdough on a blue-grey plate
+- Source: https://commons.wikimedia.org/wiki/File:Steak_tartare,_vegetable_crisps_and_toasted_bread_-_Petit_Pois_Restaurant_2024-07-11.jpg
+- Photographer: Andy Li
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-austern.jpg`
+
+- Motif: Menu of Rooftop Belvedere: freshly opened oysters on crushed ice
+- Source: https://commons.wikimedia.org/wiki/File:Le_Harenguier_(Beynost)_des_huîtres_en_janvier_2020.jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-tataki.jpg`
+
+- Motif: Menu of Rooftop Belvedere: seared tuna tataki with sesame, seaweed, micro herbs, mango purée and herb oil on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Restaurant_Almyvita_(Almyrida)_-_tataki_de_thon.jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-hummus.jpg`
+
+- Motif: Menu of Rooftop Belvedere: hummus with paprika and parsley in a white bowl, surrounded by pita bread wedges
+- Source: https://commons.wikimedia.org/wiki/File:Houmous.jpg
+- Photographer: Popo le Chien
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-risotto.jpg`
+
+- Motif: Menu of Rooftop Belvedere: creamy risotto with seared lobster in a white bowl
+- Source: https://commons.wikimedia.org/wiki/File:Risotto_with_lobster,_Sachsenhausen.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-lachs.jpg`
+
+- Motif: Menu of Rooftop Belvedere: pan-seared glazed salmon fillet with Brussels sprouts and roasted root vegetables on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Salmon,_pan-seared_and_glazed,_with_Brussels_sprouts_and_root_vegetables_-_Massachusetts.jpg
+- Photographer: Daderot
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-steak.jpg`
+
+- Motif: Menu of Rooftop Belvedere: seared beef tenderloin (filet mignon) with herbs and jus on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Wit_and_Wisdom_-_November_2025_-_Sarah_Stierch_04.jpg
+- Photographer: Missvain
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-schnitzel.jpg`
+
+- Motif: Menu of Rooftop Belvedere: Wiener Schnitzel with a lemon in a net, mixed salad and parsley potatoes
+- Source: https://commons.wikimedia.org/wiki/File:Wiener_Schnitzel_in_Wien.JPG
+- Photographer: Brücke-Osteuropa
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3 (restaurant name printed on the plate rim cut off), scaled to 1200 × 900, saved as JPEG
+
+## `rooftop-belvedere-menu-creme-brulee.jpg`
+
+- Motif: Menu of Rooftop Belvedere: crème brûlée with caramelised crust, powdered sugar and mint in a white ramekin
+- Source: https://commons.wikimedia.org/wiki/File:Alex_Munsell_2015_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/wiTWDYLURr8 (under CC0 at the time)
+- Photographer: Alex Munsell (alexmunsell on Unsplash)
+- Licence: CC0 1.0
+- Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG

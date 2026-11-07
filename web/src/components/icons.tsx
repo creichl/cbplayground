@@ -265,3 +265,32 @@ export function TrashIcon(props: IconProps) {
     </Icon>
   )
 }
+
+export function ChevronUpIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M6 15l6 -6l6 6" />
+    </Icon>
+  )
+}
+
+/** A pencil, to edit something. */
+export function PencilIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M4 20h4l10.5 -10.5a2.828 2.828 0 1 0 -4 -4l-10.5 10.5v4" />
+      <path d="M13.5 6.5l4 4" />
+    </Icon>
+  )
+}
+
+/** A photo, e.g. the place of a missing one. */
+export function PhotoIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <circle cx="9" cy="10" r="1.5" />
+      <path d="M21 16l-5 -5l-9 9" />
+    </Icon>
+  )
+}

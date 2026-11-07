@@ -67,9 +67,10 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
             Assert.Equal("image/webp", image.Content.Headers.ContentType?.MediaType);
         }
         // Five floor plans, logo and cover image of each of the three restaurants, a photo of each of the six areas and the
-        // gallery photos, copied once.
+        // gallery photos and the dish photos of the menus, copied once.
         var seedAssets = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
-        Assert.Equal(17 + Directory.GetFiles(seedAssets, "*-gallery-*").Length, Directory.GetFiles(factory.UploadsPath).Length);
+        Assert.Equal(17 + Directory.GetFiles(seedAssets, "*-gallery-*").Length + Directory.GetFiles(seedAssets, "*-menu-*").Length,
+            Directory.GetFiles(factory.UploadsPath).Length);
 
         var hours = (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Ct))!;
         Assert.Equal(12, hours.Periods!.Count);
