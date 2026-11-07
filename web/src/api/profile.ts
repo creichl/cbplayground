@@ -20,7 +20,7 @@ export const profileMaxLengths: Record<keyof Profile, number> = {
   phone: 30,
   email: 254,
   website: 200,
-  description: 500,
+  description: 2000,
 }
 
 /** Error codes of PUT /api/admin/profile. */

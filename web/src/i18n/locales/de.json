@@ -536,7 +536,7 @@
   },
   "profile": {
     "title": "Restaurantprofil",
-    "subtitle": "Adresse, Kontaktdaten und eine Kurzbeschreibung. Gäste sehen sie auf Ihrer Buchungsseite.",
+    "subtitle": "Adresse, Kontaktdaten, eine Beschreibung und was Gäste suchen. Gäste sehen sie auf Ihrer Buchungsseite.",
     "address": {
       "title": "Adresse"
     },
@@ -555,9 +555,7 @@
       "website": "Website",
       "websiteDescription": "Die vollständige Adresse mit https://",
       "websitePlaceholder": "https://",
-      "description": "Kurzbeschreibung",
-      "descriptionDescription_one": "Höchstens {{count}} Zeichen.",
-      "descriptionDescription_other": "Höchstens {{count}} Zeichen."
+      "description": "Über uns"
     },
     "validation": {
       "email": "Bitte geben Sie eine gültige E-Mail-Adresse ein.",
@@ -567,6 +565,101 @@
       "tooLong": "Ein Feld ist länger als erlaubt."
     },
     "saved": "Das Profil wurde gespeichert."
+  },
+  "restaurantDetails": {
+    "cuisines": {
+      "Bavarian": "Bayerisch",
+      "German": "Deutsch",
+      "Austrian": "Österreichisch",
+      "Serbian": "Serbisch",
+      "Balkan": "Balkan",
+      "Italian": "Italienisch",
+      "Mediterranean": "Mediterran",
+      "French": "Französisch",
+      "Japanese": "Japanisch",
+      "Asian": "Asiatisch",
+      "International": "International",
+      "Vegetarian": "Vegetarisch",
+      "CafeBrunch": "Café & Brunch",
+      "BarCocktails": "Bar & Cocktails",
+      "SteakGrill": "Steak & Grill",
+      "FishSeafood": "Fisch & Meeresfrüchte"
+    },
+    "features": {
+      "Terrace": "Terrasse",
+      "Garden": "Garten",
+      "Rooftop": "Dachterrasse",
+      "View": "Aussicht",
+      "WheelchairAccessible": "Rollstuhlgerecht",
+      "DogsWelcome": "Hunde willkommen",
+      "ChildFriendly": "Kinderfreundlich",
+      "VegetarianOptions": "Vegetarische Gerichte",
+      "VeganOptions": "Vegane Gerichte",
+      "GlutenFreeOptions": "Glutenfreie Gerichte",
+      "LiveMusic": "Livemusik",
+      "PrivateDining": "Separee",
+      "Parking": "Parkplätze",
+      "CardPayment": "Kartenzahlung",
+      "Wifi": "WLAN"
+    },
+    "priceLevel": "Preisniveau {{level}} von 4",
+    "admin": {
+      "cuisineTitle": "Küche & Preis",
+      "cuisines": "Küche",
+      "cuisinesDescription": "Bis zu 3, die wichtigste zuerst. Gäste sehen sie auf Ihrer Buchungsseite und der Startseite.",
+      "cuisinesPlaceholder": "Küche wählen",
+      "priceLevel": "Preisniveau",
+      "notSet": "Nicht gesetzt",
+      "priceLevelHints": {
+        "none": "Gäste sehen kein Preisniveau.",
+        "1": "€ – Günstig: einfache Gerichte, Brotzeit und Mittagstisch.",
+        "2": "€€ – Mittel: ein übliches Essen im Restaurant.",
+        "3": "€€€ – Gehoben: ein besonderer Abend.",
+        "4": "€€€€ – Fine Dining: Menüs und exklusive Weine."
+      },
+      "featuresTitle": "Ausstattung",
+      "featuresDescription": "Was Gäste bei Ihnen finden. Erscheint als Chips unter „Über uns“.",
+      "houseRulesTitle": "Hausregeln",
+      "houseRules": "Hausregeln",
+      "houseRulesDescription": "Z. B. Dresscode, wie lange ein Tisch frei gehalten wird oder wo geraucht werden darf. Erscheint unter „Gut zu wissen“.",
+      "counter": "{{length}} / {{max}} Zeichen",
+      "faq": {
+        "title": "Häufige Fragen",
+        "description": "Fragen, die Gäste oft stellen, mit Ihren Antworten, unter „Gut zu wissen“. Jede Änderung wird sofort gespeichert.",
+        "empty": "Noch keine Fragen.",
+        "count": "{{used}} von {{max}} Fragen",
+        "add": "Frage hinzufügen",
+        "full": "Die Liste ist voll: höchstens {{max}} Fragen.",
+        "addTitle": "Frage hinzufügen",
+        "editTitle": "Frage bearbeiten",
+        "question": "Frage",
+        "answer": "Antwort",
+        "moveUp": "Nach oben: {{question}}",
+        "moveDown": "Nach unten: {{question}}",
+        "edit": "Bearbeiten: {{question}}",
+        "delete": "Löschen: {{question}}",
+        "deleteTitle": "Frage löschen?",
+        "deleteText": "„{{question}}“ erscheint dann nicht mehr auf Ihrer Buchungsseite.",
+        "deleteConfirm": "Löschen",
+        "saved": "Die Frage wurde gespeichert."
+      },
+      "errors": {
+        "invalidChoice": "Bitte wählen Sie aus der Liste.",
+        "tooManyCuisines": "Wählen Sie höchstens 3 Küchen.",
+        "invalidPriceLevel": "Wählen Sie ein Preisniveau von € bis €€€€.",
+        "invalidQuestion": "Bitte geben Sie eine Frage mit höchstens 150 Zeichen ein.",
+        "invalidAnswer": "Bitte geben Sie eine Antwort mit höchstens 600 Zeichen ein.",
+        "faqFull": "Die Liste ist voll: Löschen Sie zuerst eine Frage."
+      }
+    },
+    "guest": {
+      "readMore": "Weiterlesen",
+      "showLess": "Weniger anzeigen",
+      "features": "Ausstattung",
+      "goodToKnow": "Gut zu wissen",
+      "houseRules": "Hausregeln",
+      "faq": "Häufige Fragen"
+    }
   },
   "branding": {
     "title": "Erscheinungsbild",
