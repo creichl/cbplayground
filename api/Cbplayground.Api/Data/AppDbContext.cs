@@ -22,6 +22,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<MenuItem> MenuItems => Set<MenuItem>();
 
+    public DbSet<RestaurantFaq> RestaurantFaqs => Set<RestaurantFaq>();
+
     public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
 
     public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
@@ -81,6 +83,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             tenant.Property(t => t.TableStyle).HasConversion<string>().HasMaxLength(20);
             tenant.Property(t => t.LogoFileName).HasMaxLength(100);
             tenant.Property(t => t.CoverFileName).HasMaxLength(100);
+            tenant.Property(t => t.HouseRules).HasMaxLength(Tenant.MaxHouseRulesLength);
+            // Stored as JSON arrays of the names, e.g. ["Serbian","Balkan"].
+            tenant.PrimitiveCollection(t => t.Cuisines).ElementType().HasConversion<string>();
+            tenant.PrimitiveCollection(t => t.Features).ElementType().HasConversion<string>();
         });
 
         modelBuilder.Entity<OpeningPeriod>(period =>
@@ -225,6 +231,14 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             item.HasOne<Tenant>().WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Restrict);
             // Stored as a JSON array of the names, e.g. ["Gluten","Milk"].
             item.PrimitiveCollection(i => i.Allergens).ElementType().HasConversion<string>();
+        });
+
+        modelBuilder.Entity<RestaurantFaq>(faq =>
+        {
+            faq.Property(f => f.Question).HasMaxLength(RestaurantFaq.MaxQuestionLength);
+            faq.Property(f => f.Answer).HasMaxLength(RestaurantFaq.MaxAnswerLength);
+            faq.HasIndex(f => new { f.TenantId, f.SortOrder });
+            faq.HasOne<Tenant>().WithMany().HasForeignKey(f => f.TenantId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<ReservationSettings>(settings =>

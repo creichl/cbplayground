@@ -569,7 +569,7 @@
   },
   "profile": {
     "title": "Restaurant profile",
-    "subtitle": "Address, contact details and a short description. Guests will see them on your booking page.",
+    "subtitle": "Address, contact details, a description and what guests look for. Guests will see them on your booking page.",
     "address": {
       "title": "Address"
     },
@@ -588,9 +588,7 @@
       "website": "Website",
       "websiteDescription": "The full address, including https://",
       "websitePlaceholder": "https://",
-      "description": "Short description",
-      "descriptionDescription_one": "At most {{count}} character.",
-      "descriptionDescription_other": "At most {{count}} characters."
+      "description": "About us"
     },
     "validation": {
       "email": "Please enter a valid email address.",
@@ -600,6 +598,101 @@
       "tooLong": "A field is longer than allowed."
     },
     "saved": "The profile has been saved."
+  },
+  "restaurantDetails": {
+    "cuisines": {
+      "Bavarian": "Bavarian",
+      "German": "German",
+      "Austrian": "Austrian",
+      "Serbian": "Serbian",
+      "Balkan": "Balkan",
+      "Italian": "Italian",
+      "Mediterranean": "Mediterranean",
+      "French": "French",
+      "Japanese": "Japanese",
+      "Asian": "Asian",
+      "International": "International",
+      "Vegetarian": "Vegetarian",
+      "CafeBrunch": "Café & brunch",
+      "BarCocktails": "Bar & cocktails",
+      "SteakGrill": "Steak & grill",
+      "FishSeafood": "Fish & seafood"
+    },
+    "features": {
+      "Terrace": "Terrace",
+      "Garden": "Garden",
+      "Rooftop": "Rooftop",
+      "View": "View",
+      "WheelchairAccessible": "Wheelchair accessible",
+      "DogsWelcome": "Dogs welcome",
+      "ChildFriendly": "Child friendly",
+      "VegetarianOptions": "Vegetarian options",
+      "VeganOptions": "Vegan options",
+      "GlutenFreeOptions": "Gluten-free options",
+      "LiveMusic": "Live music",
+      "PrivateDining": "Private dining",
+      "Parking": "Parking",
+      "CardPayment": "Card payment",
+      "Wifi": "Wi-Fi"
+    },
+    "priceLevel": "Price level {{level}} of 4",
+    "admin": {
+      "cuisineTitle": "Cuisine & price",
+      "cuisines": "Cuisines",
+      "cuisinesDescription": "Up to 3, the main one first. Guests see them on your booking page and the start page.",
+      "cuisinesPlaceholder": "Choose cuisines",
+      "priceLevel": "Price level",
+      "notSet": "Not set",
+      "priceLevelHints": {
+        "none": "Guests see no price level.",
+        "1": "€ – Inexpensive: simple dishes, snacks and lunch menus.",
+        "2": "€€ – Moderate: a typical restaurant meal.",
+        "3": "€€€ – Upscale: a special evening out.",
+        "4": "€€€€ – Fine dining: tasting menus and exclusive wines."
+      },
+      "featuresTitle": "Features",
+      "featuresDescription": "What guests find at your restaurant. They appear as chips under “About us”.",
+      "houseRulesTitle": "House rules",
+      "houseRules": "House rules",
+      "houseRulesDescription": "E.g. dress code, how long a table is held or where smoking is allowed. Shown under “Good to know”.",
+      "counter": "{{length}} / {{max}} characters",
+      "faq": {
+        "title": "Frequently asked questions",
+        "description": "Questions guests often ask, with your answers, shown under “Good to know”. Every change is saved right away.",
+        "empty": "No questions yet.",
+        "count": "{{used}} of {{max}} questions",
+        "add": "Add question",
+        "full": "The list is full: at most {{max}} questions.",
+        "addTitle": "Add question",
+        "editTitle": "Edit question",
+        "question": "Question",
+        "answer": "Answer",
+        "moveUp": "Move up: {{question}}",
+        "moveDown": "Move down: {{question}}",
+        "edit": "Edit: {{question}}",
+        "delete": "Delete: {{question}}",
+        "deleteTitle": "Delete question?",
+        "deleteText": "“{{question}}” will no longer appear on your booking page.",
+        "deleteConfirm": "Delete",
+        "saved": "The question has been saved."
+      },
+      "errors": {
+        "invalidChoice": "Please choose from the list.",
+        "tooManyCuisines": "Choose at most 3 cuisines.",
+        "invalidPriceLevel": "Choose a price level from € to €€€€.",
+        "invalidQuestion": "Please enter a question of at most 150 characters.",
+        "invalidAnswer": "Please enter an answer of at most 600 characters.",
+        "faqFull": "The list is full: delete a question first."
+      }
+    },
+    "guest": {
+      "readMore": "Read more",
+      "showLess": "Show less",
+      "features": "Features",
+      "goodToKnow": "Good to know",
+      "houseRules": "House rules",
+      "faq": "Frequently asked questions"
+    }
   },
   "branding": {
     "title": "Appearance",

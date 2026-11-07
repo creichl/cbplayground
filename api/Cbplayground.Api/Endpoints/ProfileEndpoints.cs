@@ -6,14 +6,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Cbplayground.Api.Endpoints;
 
 /// <summary>
-/// The profile of the signed-in Tenant Admin's restaurant (address, contact, short description)
+/// The profile of the signed-in Tenant Admin's restaurant (address, contact, description)
 /// and the state of the restaurant's setup, shown as a checklist on the admin start page.
 /// </summary>
 public static partial class ProfileEndpoints
 {
     /// <summary>
     /// The profile; every field is optional, empty fields are null. Errors (400): "invalid_street", "invalid_postal_code",
-    /// "invalid_city", "invalid_phone", "invalid_description" (too long), "invalid_email", "invalid_website" (not an absolute http or https URL, or too long).
+    /// "invalid_city", "invalid_phone", "invalid_description" (longer than <see cref="Tenant.MaxDescriptionLength"/> characters), "invalid_email", "invalid_website" (not an absolute http or https URL, or too long).
     /// </summary>
     public record ProfileDto(string? Street, string? PostalCode, string? City, string? Phone, string? Email, string? Website, string? Description);
 

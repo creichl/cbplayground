@@ -32,6 +32,8 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   drop on the timeline and the floor plans, tapping a free cell, arrival at another table, combined reservations),
   `day-sheet.spec.ts` (the printable day sheet).
 - Both sides: `combinations.spec.ts` (table combinations online, in the area editor and by phone).
+- Both sides: `restaurant-details.spec.ts` (cuisines, price level, features and questions on the profile; the details and
+  "Good to know" on the booking page; cuisine and price on the start page's cards).
 - API: `api.spec.ts`.
 
 A new feature's tests go into a new file `web/e2e/<feature>.spec.ts`; tests that extend a feature listed above go into

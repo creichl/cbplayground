@@ -232,6 +232,7 @@ app.MapProfileEndpoints();
 app.MapBrandingEndpoints();
 app.MapGalleryEndpoints();
 app.MapMenuEndpoints();
+app.MapRestaurantDetailsEndpoints();
 app.MapPublicRestaurantEndpoints();
 app.MapStaffReservationEndpoints();
 app.MapGuestEndpoints();

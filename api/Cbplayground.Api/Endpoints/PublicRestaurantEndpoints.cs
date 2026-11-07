@@ -25,8 +25,9 @@ public static class PublicRestaurantEndpoints
 
     /// <summary>
     /// The restaurant for the booking page: its profile (every field null when empty), how it is booked, its branding, its
-    /// areas open for online booking (to describe the place, also when the system assigns the tables) and its photo gallery in
-    /// its order (empty without photos).
+    /// areas open for online booking (to describe the place, also when the system assigns the tables), its photo gallery in
+    /// its order (empty without photos), its details (cuisines, price level, features and house rules, see
+    /// <see cref="RestaurantDetailsEndpoints.DetailsResponse"/>) and its frequently asked questions in their order (empty without).
     /// </summary>
     public record RestaurantResponse(
         string Name,
@@ -46,7 +47,12 @@ public static class PublicRestaurantEndpoints
         bool Bookable,
         BrandingEndpoints.BrandingResponse Branding,
         IReadOnlyList<RestaurantArea> Areas,
-        IReadOnlyList<GalleryEndpoints.GalleryPhotoResponse> Gallery);
+        IReadOnlyList<GalleryEndpoints.GalleryPhotoResponse> Gallery,
+        IReadOnlyList<Cuisine> Cuisines,
+        int? PriceLevel,
+        IReadOnlyList<RestaurantFeature> Features,
+        string? HouseRules,
+        IReadOnlyList<RestaurantDetailsEndpoints.PublicFaq> Faq);
 
     /// <summary>An area open for online booking, in the order of the areas; description and photo are null when not given.</summary>
     public record RestaurantArea(string Name, string? Description, string? PhotoUrl);
@@ -161,7 +167,12 @@ public static class PublicRestaurantEndpoints
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0,
                 Branding: BrandingEndpoints.ToResponse(tenant),
                 Areas: areas,
-                Gallery: await GalleryEndpoints.ListAsync(db, tenant.Slug));
+                Gallery: await GalleryEndpoints.ListAsync(db, tenant.Slug),
+                Cuisines: tenant.Cuisines,
+                PriceLevel: tenant.PriceLevel,
+                Features: tenant.Features,
+                HouseRules: tenant.HouseRules,
+                Faq: await RestaurantDetailsEndpoints.PublicListAsync(db));
         });
 
         group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>

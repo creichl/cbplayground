@@ -581,7 +581,7 @@
   },
   "profile": {
     "title": "Профил ресторана",
-    "subtitle": "Адреса, контакт и кратак опис. Гости ће их видети на вашој страници за резервације.",
+    "subtitle": "Адреса, контакт, опис и оно што гости траже. Гости ће их видети на вашој страници за резервације.",
     "address": {
       "title": "Адреса"
     },
@@ -600,10 +600,7 @@
       "website": "Веб-сајт",
       "websiteDescription": "Пуна адреса, са https://",
       "websitePlaceholder": "https://",
-      "description": "Кратак опис",
-      "descriptionDescription_one": "Највише {{count}} знак.",
-      "descriptionDescription_few": "Највише {{count}} знака.",
-      "descriptionDescription_other": "Највише {{count}} знакова."
+      "description": "О нама"
     },
     "validation": {
       "email": "Унесите исправну имејл адресу.",
@@ -613,6 +610,101 @@
       "tooLong": "Једно поље је дуже него што је дозвољено."
     },
     "saved": "Профил је сачуван."
+  },
+  "restaurantDetails": {
+    "cuisines": {
+      "Bavarian": "Баварска",
+      "German": "Немачка",
+      "Austrian": "Аустријска",
+      "Serbian": "Српска",
+      "Balkan": "Балканска",
+      "Italian": "Италијанска",
+      "Mediterranean": "Медитеранска",
+      "French": "Француска",
+      "Japanese": "Јапанска",
+      "Asian": "Азијска",
+      "International": "Интернационална",
+      "Vegetarian": "Вегетаријанска",
+      "CafeBrunch": "Кафе и бранч",
+      "BarCocktails": "Бар и коктели",
+      "SteakGrill": "Стек и роштиљ",
+      "FishSeafood": "Риба и плодови мора"
+    },
+    "features": {
+      "Terrace": "Тераса",
+      "Garden": "Башта",
+      "Rooftop": "Кровна тераса",
+      "View": "Поглед",
+      "WheelchairAccessible": "Приступачно за инвалидска колица",
+      "DogsWelcome": "Пси добродошли",
+      "ChildFriendly": "Прилагођено деци",
+      "VegetarianOptions": "Вегетаријанска јела",
+      "VeganOptions": "Веганска јела",
+      "GlutenFreeOptions": "Јела без глутена",
+      "LiveMusic": "Музика уживо",
+      "PrivateDining": "Сепаре",
+      "Parking": "Паркинг",
+      "CardPayment": "Плаћање картицом",
+      "Wifi": "Wi-Fi"
+    },
+    "priceLevel": "Ниво цена {{level}} од 4",
+    "admin": {
+      "cuisineTitle": "Кухиња и цене",
+      "cuisines": "Кухиња",
+      "cuisinesDescription": "До 3, најважнија прва. Гости их виде на вашој страници за резервацију и на почетној страници.",
+      "cuisinesPlaceholder": "Изаберите кухињу",
+      "priceLevel": "Ниво цена",
+      "notSet": "Није постављено",
+      "priceLevelHints": {
+        "none": "Гости не виде ниво цена.",
+        "1": "€ – Повољно: једноставна јела, закуска и дневни мени.",
+        "2": "€€ – Средње: уобичајен оброк у ресторану.",
+        "3": "€€€ – Више: посебно вече.",
+        "4": "€€€€ – Fine dining: дегустациони менији и ексклузивна вина."
+      },
+      "featuresTitle": "Погодности",
+      "featuresDescription": "Шта гости могу да нађу код вас. Приказује се као ознаке испод „О нама“.",
+      "houseRulesTitle": "Кућна правила",
+      "houseRules": "Кућна правила",
+      "houseRulesDescription": "Нпр. правила облачења, колико дуго чувате сто или где је дозвољено пушење. Приказује се под „Добро је знати“.",
+      "counter": "{{length}} / {{max}} знакова",
+      "faq": {
+        "title": "Честа питања",
+        "description": "Питања која гости често постављају, са вашим одговорима, под „Добро је знати“. Свака измена се одмах чува.",
+        "empty": "Још нема питања.",
+        "count": "{{used}} од {{max}} питања",
+        "add": "Додај питање",
+        "full": "Листа је пуна: највише {{max}} питања.",
+        "addTitle": "Додај питање",
+        "editTitle": "Измени питање",
+        "question": "Питање",
+        "answer": "Одговор",
+        "moveUp": "Помери горе: {{question}}",
+        "moveDown": "Помери доле: {{question}}",
+        "edit": "Измени: {{question}}",
+        "delete": "Обриши: {{question}}",
+        "deleteTitle": "Обрисати питање?",
+        "deleteText": "„{{question}}“ се више неће приказивати на вашој страници за резервацију.",
+        "deleteConfirm": "Обриши",
+        "saved": "Питање је сачувано."
+      },
+      "errors": {
+        "invalidChoice": "Изаберите са листе.",
+        "tooManyCuisines": "Изаберите највише 3 кухиње.",
+        "invalidPriceLevel": "Изаберите ниво цена од € до €€€€.",
+        "invalidQuestion": "Унесите питање од највише 150 знакова.",
+        "invalidAnswer": "Унесите одговор од највише 600 знакова.",
+        "faqFull": "Листа је пуна: прво обришите једно питање."
+      }
+    },
+    "guest": {
+      "readMore": "Прочитајте више",
+      "showLess": "Прикажи мање",
+      "features": "Погодности",
+      "goodToKnow": "Добро је знати",
+      "houseRules": "Кућна правила",
+      "faq": "Честа питања"
+    }
   },
   "branding": {
     "title": "Изглед",

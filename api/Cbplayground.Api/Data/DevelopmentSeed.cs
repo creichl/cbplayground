@@ -83,7 +83,10 @@ public static class DevelopmentSeed
                 Phone: "+49 89 2345678",
                 Email: "info@zur-linde.example",
                 Website: "https://www.zur-linde.example",
-                Description: "Bayerisches Wirtshaus mit Kachelofen-Stube und schattiger Terrasse unter der Kastanie. Regionale Küche, Mittagstisch und Bier vom Holzfass."),
+                Description: "Bayerisches Wirtshaus mit Kachelofen-Stube und schattiger Terrasse unter der Kastanie. Regionale Küche, Mittagstisch und Bier vom Holzfass.\n\n"
+                    + "Seit drei Generationen kochen wir, was die Höfe rund um München liefern: Schweinsbraten mit Kruste, Kalbsbackerl, Kasspatzn und im Herbst Wild aus dem Ebersberger Forst. Unsere Knödel drehen wir jeden Morgen von Hand.\n\n"
+                    + "In der Stube wärmt im Winter der grüne Kachelofen, im Sommer sitzen Sie unter der alten Kastanie auf der Terrasse oder im Biergarten. Das Helle und das Dunkle kommen frisch vom Holzfass.\n\n"
+                    + "Familien, Stammtische und Hunde sind bei uns gleichermaßen willkommen. Mittags gibt es unter der Woche einen wechselnden Mittagstisch."),
             // Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays.
             OpeningHours:
             [
@@ -148,7 +151,10 @@ public static class DevelopmentSeed
                 Phone: "+381 21 4567890",
                 Email: "info@kafana-dunav.example",
                 Website: "https://www.kafana-dunav.example",
-                Description: "Kafana na keju uz Dunav: domaća kuhinja, riblja čorba i roštilj, a petkom i subotom tamburaši uživo."),
+                Description: "Kafana na keju uz Dunav: domaća kuhinja, riblja čorba i roštilj, a petkom i subotom tamburaši uživo.\n\n"
+                    + "Riblju čorbu kuvamo u kotliću na otvorenoj vatri, od šarana i soma iz Dunava, a roštilj pečemo na ćumuru: ćevapi, pljeskavica, vešalica i domaća kobasica. Uz to ide domaći hleb, ajvar i kajmak.\n\n"
+                    + "U bašti pod lipama gledate kako se Dunav sporo kreće prema Petrovaradinu, a zimi se okupljamo u toploj sali. Vinska karta je iz fruškogorskih podruma.\n\n"
+                    + "Petkom i subotom uveče sviraju tamburaši, i tada je kafana puna pesme. Za veća društva i porodična slavlja rado pripremamo poseban meni."),
             // Every day 12:00–24:00.
             OpeningHours: [.. Enum.GetValues<DayOfWeek>().Select(day => new DemoPeriod(day, new TimeOnly(12, 0), OpeningPeriod.EndOfDay))],
             Areas:
@@ -208,7 +214,10 @@ public static class DevelopmentSeed
                 Phone: "+43 1 5054321",
                 Email: "info@rooftop-belvedere.example",
                 Website: "https://www.rooftop-belvedere.example",
-                Description: "Rooftop-Bar über den Dächern Wiens mit Blick über die ganze Stadt: Signature-Cocktails, Sharing-Plates zum Teilen und lange Sommerabende unter freiem Himmel."),
+                Description: "Rooftop-Bar über den Dächern Wiens mit Blick über die ganze Stadt: Signature-Cocktails, Sharing-Plates zum Teilen und lange Sommerabende unter freiem Himmel.\n\n"
+                    + "Unsere Bar mixt Klassiker und eigene Kreationen mit Wiener Note, etwa den Belvedere Spritz mit Holunder und Marille. Dazu kommen mediterrane Sharing-Plates aus der offenen Küche: Burrata, gegrillte Pulpo, Mezze und Flatbreads.\n\n"
+                    + "Von der Dachterrasse sehen Sie den Stephansdom, das Belvedere und bei klarem Wetter bis zum Kahlenberg. Wenn es regnet, rückt die Lounge hinter den Panoramafenstern zusammen.\n\n"
+                    + "Ab Sonnenuntergang legt mittwochs bis samstags ein DJ auf. Ein Lift bringt Sie stufenlos vom Eingang bis aufs Dach."),
             // Wednesday to Sunday 17:00–24:00.
             OpeningHours: [.. WednesdayToSunday.Select(day => new DemoPeriod(day, new TimeOnly(17, 0), OpeningPeriod.EndOfDay))],
             // Both areas with a floor plan image; the image shows the room, so they have no room elements.
@@ -470,6 +479,8 @@ public static class DevelopmentSeed
                         }));
                     }
                 }
+
+                await DemoDetails.SeedAsync(db, demo.Slug);
 
                 if (!await db.GalleryPhotos.AnyAsync())
                 {
