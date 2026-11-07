@@ -10,7 +10,7 @@ import {
   SearchIcon,
   UserRoundPlusIcon,
 } from 'lucide-react'
-import { useState } from 'react'
+import { type PointerEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router'
 import {
@@ -20,6 +20,7 @@ import {
   useFloor,
   useOpenPeriods,
   useOpenRequests,
+  useReservationFreeTables,
   useReservations,
   useRestaurantNow,
   useWalkInTables,
@@ -31,10 +32,13 @@ import { CoversChart } from '../components/reservations/CoversChart.tsx'
 import { DayStats } from '../components/reservations/DayStats.tsx'
 import { ReservationFormDrawer } from '../components/reservations/ReservationFormDrawer.tsx'
 import { ReservationListPanel } from '../components/reservations/ReservationListPanel.tsx'
-import { type ListTab, listTabOf } from '../components/reservations/status.ts'
+import { guestName, type ListTab, listTabOf } from '../components/reservations/status.ts'
+import { useReservationMoves } from '../components/reservations/useReservationMoves.ts'
 import { WaitlistDrawer } from '../components/reservations/WaitlistDrawer.tsx'
 import { WalkInDrawer } from '../components/reservations/WalkInDrawer.tsx'
 import { dayRange, type MinuteRange } from '../components/table-overview/dayRange.ts'
+import { dropTarget } from '../components/table-overview/dropTargets.ts'
+import type { FloorDrop } from '../components/table-overview/FloorStatusView.tsx'
 import { PlanPane, type PlanView } from '../components/table-overview/PlanPane.tsx'
 import { formatDate, formatTime, periodLabel } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
@@ -69,6 +73,20 @@ function matches(reservation: Pick<Reservation, 'name' | 'phone'> & { referenceC
   )
 }
 
+/** The table on the floor plans under the pointer, if any. */
+function tableAt(x: number, y: number) {
+  for (const element of document.elementsFromPoint(x, y)) {
+    const table = element.closest<HTMLElement>('[data-table-id]')
+    if (table !== null) {
+      return table.dataset.tableId ?? null
+    }
+  }
+  return null
+}
+
+/** A guest dragged from the list onto the floor plans: where the pointer is and the table under it. */
+type GuestDrag = { reservation: Reservation; pointerId: number; x: number; y: number; tableId: string | null }
+
 /** "YYYY-MM-DD" as a local date for the calendar. */
 function toDate(date: string) {
   const [year, month, day] = date.split('-').map(Number)
@@ -82,6 +100,8 @@ function toDate(date: string) {
  * Selecting a reservation in the list highlights its table and its block, and the other way round. Day, service and view are
  * kept in the address
  * (`?date=YYYY-MM-DD`, `?service=HH:mm`, `?view=timeline`), so a reload or a shared link shows the same.
+ * A guest of "Upcoming" is dragged by the grip of its row onto a table of the floor plans to seat them there (see
+ * useReservationMoves); a tap on a free cell of the timeline opens a new reservation at that table and time.
  */
 export function FrontdeskPage() {
   const { t, i18n } = useTranslation()
@@ -102,6 +122,11 @@ export function FrontdeskPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null)
   // undefined: drawer closed, null: new reservation.
   const [editing, setEditing] = useState<Reservation | null | undefined>(undefined)
+  // The time and table a new reservation starts with, from a tapped cell of the timeline.
+  const [newAt, setNewAt] = useState<{ time: string; tableIds: string[] } | undefined>(undefined)
+  const [draggedGuest, setDraggedGuest] = useState<GuestDrag | null>(null)
+  const draggedGuestFree = useReservationFreeTables(draggedGuest?.reservation.id ?? null)
+  const moves = useReservationMoves()
   // undefined: no walk-in drawer; null: walk-in at the suggested table; otherwise at this table.
   const [walkInTable, setWalkInTable] = useState<string | null | undefined>(undefined)
   // The waiting party being seated in the walk-in drawer.
@@ -168,6 +193,59 @@ export function FrontdeskPage() {
   const walkInTableIds = new Set(isToday && !walkInTables.isError ? walkInTables.data?.tables.map((table) => table.id) : [])
   const chartRange =
     service?.range ?? (openPeriods.data !== undefined && reservations.data !== undefined ? dayRange(openPeriods.data, reservations.data) : null)
+
+  const book = (tableId: string, time: string) => {
+    setNewAt({ time, tableIds: [tableId] })
+    setEditing(null)
+  }
+  // Only from today on; earlier days cannot be booked.
+  const canBook = date !== null && today !== null && date >= today
+
+  // The table a dragged guest would take at the table under the pointer: one it fits, or the table itself (the server says why not).
+  const guestDropTarget = (reservation: Reservation, tableId: string) => dropTarget(draggedGuestFree.data ?? [], tableId, reservation)?.tableIds ?? [tableId]
+  const floorDrop: FloorDrop | null =
+    draggedGuest === null
+      ? null
+      : {
+          fitting: draggedGuestFree.data === undefined ? null : new Set(draggedGuestFree.data.flatMap((free) => free.tableIds)),
+          target: draggedGuest.tableId === null ? [] : guestDropTarget(draggedGuest.reservation, draggedGuest.tableId),
+        }
+
+  const startGuestDrag = (reservation: Reservation, event: PointerEvent<HTMLElement>) =>
+    setDraggedGuest({ reservation, pointerId: event.pointerId, x: event.clientX, y: event.clientY, tableId: null })
+
+  // While a guest is dragged, the pointer is followed over the whole window; on release over a table they are seated there.
+  useEffect(() => {
+    if (draggedGuest === null) {
+      return
+    }
+    const handleMove = (event: globalThis.PointerEvent) => {
+      if (event.pointerId === draggedGuest.pointerId) {
+        setDraggedGuest({ ...draggedGuest, x: event.clientX, y: event.clientY, tableId: tableAt(event.clientX, event.clientY) })
+      }
+    }
+    const handleUp = (event: globalThis.PointerEvent) => {
+      if (event.pointerId !== draggedGuest.pointerId) {
+        return
+      }
+      setDraggedGuest(null)
+      const tableId = tableAt(event.clientX, event.clientY)
+      if (tableId !== null) {
+        setSelectedId(draggedGuest.reservation.id)
+        // A refusal is shown by the toast; the guest stays where they were.
+        moves.seat(draggedGuest.reservation, guestDropTarget(draggedGuest.reservation, tableId)).catch(() => undefined)
+      }
+    }
+    const handleCancel = (event: globalThis.PointerEvent) => event.pointerId === draggedGuest.pointerId && setDraggedGuest(null)
+    window.addEventListener('pointermove', handleMove)
+    window.addEventListener('pointerup', handleUp)
+    window.addEventListener('pointercancel', handleCancel)
+    return () => {
+      window.removeEventListener('pointermove', handleMove)
+      window.removeEventListener('pointerup', handleUp)
+      window.removeEventListener('pointercancel', handleCancel)
+    }
+  })
 
   const open = (reservation: Reservation) => {
     setSelectedId(reservation.id)
@@ -249,7 +327,14 @@ export function FrontdeskPage() {
           </Button>
         </>
       )}
-      <Button onClick={() => setEditing(null)} disabled={today === null} aria-label={t('reservations.new')}>
+      <Button
+        onClick={() => {
+          setNewAt(undefined)
+          setEditing(null)
+        }}
+        disabled={today === null}
+        aria-label={t('reservations.new')}
+      >
         <PlusIcon aria-hidden="true" />
         <span className="max-sm:sr-only">{t('reservations.new')}</span>
       </Button>
@@ -352,6 +437,7 @@ export function FrontdeskPage() {
             waitlistEmptyText={t(date !== null && today !== null && date > today ? 'waitlist.empty.future' : isToday ? 'waitlist.empty.today' : 'waitlist.empty.past')}
             onSeat={setSeating}
             onEditEntry={(entry) => setWaitlistForm({ entry })}
+            onDragToTable={planReady && view === 'floor' ? startGuestDrag : undefined}
           />
         </aside>
 
@@ -371,6 +457,8 @@ export function FrontdeskPage() {
               selectedId={selectedId}
               onSelect={select}
               blocks={blocks.data}
+              onBook={canBook ? book : undefined}
+              drop={floorDrop}
               // Tablets: the list panel is hidden and shown again from the plan pane, so its tab row keeps the full width.
               leading={
                 listCollapsed ? (
@@ -402,7 +490,23 @@ export function FrontdeskPage() {
       </div>
 
       {editing !== undefined && today !== null && date !== null && (
-        <ReservationFormDrawer reservation={editing} defaultDate={date < today ? today : date} today={today} onClose={() => setEditing(undefined)} />
+        <ReservationFormDrawer
+          reservation={editing}
+          defaultDate={date < today ? today : date}
+          today={today}
+          initial={editing === null ? newAt : undefined}
+          onClose={() => setEditing(undefined)}
+        />
+      )}
+      {draggedGuest !== null && (
+        // The guest under the pointer while they are dragged onto a table.
+        <div
+          aria-hidden="true"
+          className="pointer-events-none fixed z-50 rounded-lg border border-primary bg-card px-3 py-1.5 text-sm font-semibold shadow-float"
+          style={{ left: draggedGuest.x + 12, top: draggedGuest.y + 12 }}
+        >
+          {t('tableOverview.party', { name: guestName(draggedGuest.reservation, t), guests: draggedGuest.reservation.guests })}
+        </div>
       )}
       {walkInTable !== undefined && (
         <WalkInDrawer

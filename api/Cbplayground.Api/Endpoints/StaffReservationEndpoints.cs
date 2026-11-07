@@ -165,7 +165,9 @@ public static class StaffReservationEndpoints
             return Results.Ok(await LoadResponsesAsync(db, reservations));
         });
 
-        group.MapGet("/availability", async (DateOnly date, int guests, int? durationMinutes, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
+        // With reservationId the reservation being moved (e.g. dragged on the timeline) does not count, as when it is changed.
+        group.MapGet("/availability", async (DateOnly date, int guests, int? durationMinutes, Guid? reservationId, IAvailabilityService availability,
+            IReservationDurationPolicy durationPolicy) =>
         {
             if (guests < 1)
             {
@@ -177,7 +179,7 @@ public static class StaffReservationEndpoints
             }
 
             var duration = durationMinutes ?? await durationPolicy.GetDurationAsync(guests);
-            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Staff);
+            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Staff, reservationId);
             return Results.Ok(new StaffAvailabilityResponse(date, guests, duration, periods
                 .Select(p => new StaffAvailabilityPeriod(
                     FormatTime(p.Period.Start),
@@ -359,6 +361,17 @@ public static class StaffReservationEndpoints
             db.Reservations.Remove(reservation);
             await db.SaveChangesAsync(cancellationToken);
             return Results.NoContent();
+        });
+
+        // The tables and combinations the reservation can change to at its booked time, for its party and duration, as a change of
+        // only its tables checks them (without the opening hours and "in the past"): e.g. a guest who arrives and sits down elsewhere.
+        group.MapGet("/reservations/{id:guid}/free-tables", async (Guid id, AppDbContext db, IAvailabilityService availability, CancellationToken cancellationToken) =>
+        {
+            var reservation = await db.Reservations.AsNoTracking().SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+            return reservation is null
+                ? Results.NotFound()
+                : Results.Ok(await availability.GetFreeTablesAsync(reservation.StartLocal, reservation.EndLocal, reservation.PartySize, reservation.Id,
+                    cancellationToken));
         });
 
         // Who changed what and when, newest first.

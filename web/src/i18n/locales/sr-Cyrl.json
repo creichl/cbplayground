@@ -942,6 +942,24 @@
       "label": "Смена",
       "wholeDay": "Цео дан",
       "option": "{{name}} {{time}}"
+    },
+    "moves": {
+      "moved": "{{name}} – премештено за сто {{table}} у {{time}}",
+      "seated": "{{name}} – стигли за сто {{table}}",
+      "tableChanged": "{{name}} – премештено за сто {{table}}",
+      "undone": "{{name}} – поново за столом {{table}} у {{time}}",
+      "notMoved": "Резервација није могла да се премести",
+      "dragHandle": "Превуците на сто на тлоцрту да бисте тамо сместили госта",
+      "arrivedElsewhere": "Стигли за други сто…",
+      "arrivedElsewhereHint": "Слободно до краја резервације",
+      "noFreeTables": "Ниједан други сто није слободан до краја резервације.",
+      "combined": "столови {{tables}}",
+      "unfit": {
+        "taken": "Заузет",
+        "tooSmall": "Премали",
+        "closed": "Затворено",
+        "past": "Прошло"
+      }
     }
   },
   "waitlist": {

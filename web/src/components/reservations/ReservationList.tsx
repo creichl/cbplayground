@@ -1,3 +1,4 @@
+import type { PointerEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
@@ -12,10 +13,12 @@ type ReservationListProps = {
   selectedId: string | null
   /** Shown when the list is empty. */
   emptyText: string
+  /** Starts dragging a guest onto a table of the floor plan; without it the rows cannot be dragged. */
+  onDragToTable?: (reservation: Reservation, event: PointerEvent<HTMLElement>) => void
 }
 
 /** The reservations of a day, grouped by start time; the time of each group stays on top while its rows scroll. */
-export function ReservationList({ reservations, onOpen, selectedId, emptyText }: ReservationListProps) {
+export function ReservationList({ reservations, onOpen, selectedId, emptyText, onDragToTable }: ReservationListProps) {
   const { t, i18n } = useTranslation()
 
   if (reservations.length === 0) {
@@ -45,7 +48,13 @@ export function ReservationList({ reservations, onOpen, selectedId, emptyText }:
             </span>
           </h3>
           {group.reservations.map((reservation) => (
-            <ReservationRow key={reservation.id} reservation={reservation} onOpen={onOpen} selected={reservation.id === selectedId} />
+            <ReservationRow
+              key={reservation.id}
+              reservation={reservation}
+              onOpen={onOpen}
+              selected={reservation.id === selectedId}
+              onDragToTable={onDragToTable}
+            />
           ))}
         </section>
       ))}

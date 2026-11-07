@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from '../../ui/alert.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx'
 import { statusColors, statusLabels } from '../reservations/status.ts'
 import { dayRange, type MinuteRange } from './dayRange.ts'
-import { FloorStatusView } from './FloorStatusView.tsx'
+import { type FloorDrop, FloorStatusView } from './FloorStatusView.tsx'
 import { blockHatch } from './blocks.ts'
 import { BlockTableDialog } from './TableBlocks.tsx'
 import { Timeline } from './Timeline.tsx'
@@ -37,6 +37,10 @@ type PlanPaneProps = {
   onSelect: (reservation: Reservation) => void
   /** The blocked tables of the day. */
   blocks: TableBlock[]
+  /** Books a free cell of the timeline (its table and time); without it, e.g. on past days, a tap books nothing. */
+  onBook?: (tableId: string, time: string) => void
+  /** While a guest is dragged from the list onto the floor plans: the tables it fits and those it would take. */
+  drop: FloorDrop | null
   /** Shown before the switch, e.g. the button that shows the collapsed list panel again. */
   leading?: ReactNode
   className?: string
@@ -47,6 +51,8 @@ type PlanPaneProps = {
  * timeline of all tables, the colours of the statuses, and the day's state (closed, no tables). Both views start at the
  * current time when it lies in the chosen service (or the day), otherwise at the service's start or the first opening.
  * Both offer to block a table, in the dialog this pane opens.
+ * Reservations are moved on the timeline by drag and drop, a free cell of it books its table and time, and the floor plans
+ * show where a guest dragged from the list fits.
  */
 export function PlanPane({
   view,
@@ -62,6 +68,8 @@ export function PlanPane({
   selectedId,
   onSelect,
   blocks,
+  onBook,
+  drop,
   leading,
   className,
 }: PlanPaneProps) {
@@ -119,11 +127,13 @@ export function PlanPane({
               onSelect={onSelect}
               blocks={blocks}
               onBlock={block}
+              drop={drop}
             />
           </TabsContent>
           <TabsContent value="timeline">
             <Timeline
               key={key}
+              date={date}
               areas={areas}
               reservations={reservations}
               openPeriods={openPeriods}
@@ -135,6 +145,7 @@ export function PlanPane({
               onSelect={onSelect}
               blocks={blocks}
               onBlock={block}
+              onBook={onBook}
             />
           </TabsContent>
         </>

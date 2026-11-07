@@ -942,6 +942,24 @@
       "label": "Smena",
       "wholeDay": "Ceo dan",
       "option": "{{name}} {{time}}"
+    },
+    "moves": {
+      "moved": "{{name}} – premešteno za sto {{table}} u {{time}}",
+      "seated": "{{name}} – stigli za sto {{table}}",
+      "tableChanged": "{{name}} – premešteno za sto {{table}}",
+      "undone": "{{name}} – ponovo za stolom {{table}} u {{time}}",
+      "notMoved": "Rezervacija nije mogla da se premesti",
+      "dragHandle": "Prevucite na sto na tlocrtu da biste tamo smestili gosta",
+      "arrivedElsewhere": "Stigli za drugi sto…",
+      "arrivedElsewhereHint": "Slobodno do kraja rezervacije",
+      "noFreeTables": "Nijedan drugi sto nije slobodan do kraja rezervacije.",
+      "combined": "stolovi {{tables}}",
+      "unfit": {
+        "taken": "Zauzet",
+        "tooSmall": "Premali",
+        "closed": "Zatvoreno",
+        "past": "Prošlo"
+      }
     }
   },
   "waitlist": {
