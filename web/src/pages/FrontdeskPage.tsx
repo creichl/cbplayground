@@ -43,6 +43,7 @@ import { Input } from '../ui/input.tsx'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip.tsx'
 
 const dateFormat = 'YYYY-MM-DD'
 
@@ -205,7 +206,7 @@ export function FrontdeskPage() {
           ))}
         </SelectContent>
       </Select>
-      <div className="relative min-w-48 flex-1">
+      <div className="relative min-w-40 flex-1">
         <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
@@ -221,12 +222,18 @@ export function FrontdeskPage() {
 
   const actions = (
     <>
-      <Button asChild variant="ghost" aria-label={t('guests.title')}>
-        <Link to="/frontdesk/guests">
-          <BookUserIcon aria-hidden="true" />
-          <span className="max-lg:sr-only">{t('guests.title')}</span>
-        </Link>
-      </Button>
+      {/* An icon below 1536 px, so the top bar keeps one row at 1440 px. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button asChild variant="ghost" size="icon" className="2xl:w-auto 2xl:px-4" aria-label={t('guests.title')}>
+            <Link to="/frontdesk/guests">
+              <BookUserIcon aria-hidden="true" />
+              <span className="max-2xl:sr-only">{t('guests.title')}</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="2xl:hidden">{t('guests.title')}</TooltipContent>
+      </Tooltip>
       {/* A walk-in is seated now, so only on today. */}
       {isToday && (
         <Button variant="outline" onClick={() => setWalkInTable(null)} aria-label={t('reservations.walkIn.button')}>

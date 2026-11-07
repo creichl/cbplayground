@@ -85,7 +85,7 @@ public static class GuestEndpoints
             var lastVisits = await LastVisitsAsync(db, items.Select(g => g.Id).ToList(), cancellationToken);
             return Results.Ok(new GuestPage(
                 items.Select(g => new GuestListItem(g.Id, g.Name, g.Phone, g.Email, g.Tags, g.AllergyNotes is not null,
-                    Count(visits, g.Id, VisitStatuses), Count(visits, g.Id, [ReservationStatus.NoShow]), lastVisits.GetValueOrDefault(g.Id))).ToList(),
+                    Count(visits, g.Id, VisitStatuses), Count(visits, g.Id, [ReservationStatus.NoShow]), lastVisits.TryGetValue(g.Id, out var lastVisit) ? lastVisit : null)).ToList(),
                 total,
                 pageNumber,
                 PageSize));

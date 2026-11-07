@@ -280,12 +280,19 @@ public static class StaffReservationEndpoints
             }
 
             var before = ReservationHistory.Snapshot(reservation, await TableNumbersAsync(db, currentTableIds, cancellationToken));
+            // The guest is matched again only when the phone number or email address changes: the profile's own contact may have
+            // been changed in the directory since, so the reservation's old details would no longer find it.
+            var contactChanged = GuestProfiles.NormalizePhone(reservation.GuestPhone, input.CountryCode) != GuestProfiles.NormalizePhone(input.Guest!.Phone, input.CountryCode)
+                || GuestProfiles.NormalizeEmail(reservation.GuestEmail) != GuestProfiles.NormalizeEmail(input.Guest.Email);
             var now = DateTime.UtcNow;
-            reservation.GuestName = input.Guest!.Name;
+            reservation.GuestName = input.Guest.Name;
             reservation.Language = request.Language is null ? reservation.Language : input.Language!;
             reservation.Occasion = input.Occasion ?? reservation.Occasion;
             Apply(reservation, input, request.Guests, tableIds, now);
-            await GuestProfiles.LinkAsync(db, reservation, input.CountryCode, now, cancellationToken);
+            if (contactChanged)
+            {
+                await GuestProfiles.LinkAsync(db, reservation, input.CountryCode, now, cancellationToken);
+            }
             // Only the changed fields; a PUT that changes none of them leaves no entry.
             var changes = ReservationHistory.Changes(before, ReservationHistory.Snapshot(reservation, await TableNumbersAsync(db, tableIds, cancellationToken)));
             if (changes.Count > 0)

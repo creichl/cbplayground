@@ -259,6 +259,37 @@ public class GuestProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task A_change_of_a_reservation_keeps_its_guest_after_the_profile_s_contact_was_changed_and_rematches_on_a_new_contact()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
+        using var frontDesk = await TestRestaurants.SignInAsync(factory, restaurant.FrontDeskEmail);
+        var date = TestRestaurants.NextOpenDay(factory);
+        var reservation = await CreateAsync(frontDesk, date, "Eva Gast", phone: "+43 660 1717171", email: "eva@example.com");
+        var guestId = reservation.GuestId!.Value;
+        Assert.Equal(HttpStatusCode.OK, (await UpdateGuestAsync(frontDesk, guestId, "Eva Gast", phone: "+43 664 2828282", email: "eva.neu@example.com",
+            tags: ["Vip"])).StatusCode);
+
+        // A change of the note, with the reservation's old contact in another format: the reservation stays with the edited profile.
+        var body = new
+        {
+            date = date.ToString("yyyy-MM-dd"), time = "18:00", guests = 2, tableIds = reservation.TableIds, name = "Eva Gast", phone = "0660 1717171",
+            email = "EVA@example.com", notes = "Fensterplatz", occasion = "Birthday",
+        };
+        var changed = await frontDesk.PutAsJsonAsync($"/api/staff/reservations/{reservation.Id}", body, Token);
+        Assert.Equal(HttpStatusCode.OK, changed.StatusCode);
+        var kept = (await changed.Content.ReadFromJsonAsync<ReservationResponse>(Token))!;
+        Assert.Equal(guestId, kept.GuestId);
+        Assert.Equal([GuestTag.Vip], kept.Guest!.Tags);
+        Assert.Single(GuestsOf(restaurant));
+
+        // A new phone number is matched again: here a new guest.
+        var moved = await frontDesk.PutAsJsonAsync($"/api/staff/reservations/{reservation.Id}", body with { phone = "+43 676 3939393", email = (string?)null }, Token);
+        Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+        Assert.NotEqual(guestId, (await moved.Content.ReadFromJsonAsync<ReservationResponse>(Token))!.GuestId);
+        Assert.Equal(2, GuestsOf(restaurant).Count);
+    }
+
+    [Fact]
     public async Task The_directory_searches_name_email_and_phone_digits()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
@@ -277,6 +308,10 @@ public class GuestProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
         Assert.Equal(["Lena Lindner"], await SearchAsync("0660 777"));
         Assert.Equal(["Sabine Moser"], await SearchAsync("1231231"));
         Assert.Empty(await SearchAsync("100%"));
+        // Guests who have not come yet have no last visit.
+        var all = (await frontDesk.GetFromJsonAsync<GuestPage>("/api/staff/guests", Token))!;
+        Assert.All(all.Items, g => Assert.Equal((0, null), (g.Visits, g.LastVisit)));
+        Assert.Contains("\"lastVisit\":null", await frontDesk.GetStringAsync("/api/staff/guests", Token));
         var page = (await frontDesk.GetFromJsonAsync<GuestPage>("/api/staff/guests?page=2", Token))!;
         Assert.Equal((3, 2, GuestEndpoints.PageSize), (page.Total, page.Page, page.PageSize));
         Assert.Empty(page.Items);

@@ -215,10 +215,15 @@ test.describe('Guests: occasion', () => {
     await page.goto(`/frontdesk?date=${date}`)
     const row = rowOf(page, booked!.id)
     await expect(row.getByRole('img', { name: 'Birthday' })).toBeVisible()
+    // The list scrolls on its own; the screenshot shows the window, so the row is brought into it.
+    await row.scrollIntoViewIfNeeded()
     await screenshot(page, 'guests', 'list-birthday', { fullPage: false })
 
     const drawer = await openReservation(page, booked!.id)
-    await expect(drawer.getByRole('combobox', { name: 'Occasion', exact: true })).toHaveValue('Birthday')
+    const occasion = drawer.getByRole('combobox', { name: 'Occasion', exact: true })
+    await expect(occasion).toHaveValue('Birthday')
+    // The select is below the times and the table, further down in the drawer.
+    await occasion.scrollIntoViewIfNeeded()
     await settle(page)
     await screenshot(page, 'guests', 'drawer-birthday', { fullPage: false })
   })
