@@ -1,4 +1,5 @@
-import { Alert, Button, Card, CloseButton, Group, NumberInput, Radio, Skeleton, Stack, Table, Text, Title } from '@mantine/core'
+import { Alert, Button, Card, Chip, CloseButton, Group, NumberInput, Paper, Radio, Skeleton, Stack, Table, Text, Title } from '@mantine/core'
+import { TimeInput } from '@mantine/dates'
 import { type FormErrors, useForm } from '@mantine/form'
 import { randomId } from '@mantine/hooks'
 import { notifications } from '@mantine/notifications'
@@ -6,6 +7,7 @@ import type { ParseKeys } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../api/client.ts'
+import type { DayOfWeek } from '../api/openingHours.ts'
 import {
   bookingHorizonLimits,
   bufferLimits,
@@ -14,6 +16,7 @@ import {
   isValidDuration,
   leadTimeLimits,
   matchingRule,
+  pacingCoversLimits,
   type ReservationSettings,
   type ReservationSettingsError,
   type TableSelectionMode,
@@ -45,6 +48,28 @@ const saveErrors: Record<ReservationSettingsError, ParseKeys> = {
   invalid_booking_horizon: 'reservationSettings.errors.invalidBookingHorizon',
   invalid_buffer: 'reservationSettings.errors.invalidBuffer',
   invalid_max_party_size: 'reservationSettings.errors.invalidMaxPartySize',
+  invalid_pacing_rule: 'reservationSettings.errors.invalidPacingRule',
+  overlapping_pacing_rules: 'reservationSettings.errors.overlappingPacingRules',
+}
+
+/** The days of the week from Monday, as on the opening hours page. */
+const weekdays = [
+  { dayOfWeek: 1, key: 'monday' },
+  { dayOfWeek: 2, key: 'tuesday' },
+  { dayOfWeek: 3, key: 'wednesday' },
+  { dayOfWeek: 4, key: 'thursday' },
+  { dayOfWeek: 5, key: 'friday' },
+  { dayOfWeek: 6, key: 'saturday' },
+  { dayOfWeek: 0, key: 'sunday' },
+] as const satisfies readonly { dayOfWeek: DayOfWeek; key: string }[]
+
+// The time input cannot show 24:00, so midnight as the end is entered as 00:00.
+const toInputEnd = (end: string) => (end === '24:00' ? '00:00' : end)
+const toApiEnd = (end: string) => (end === '00:00' ? '24:00' : end)
+
+function minutes(time: string) {
+  const [hours, mins] = time.split(':').map(Number)
+  return hours * 60 + mins
 }
 
 function isSaveError(code: string | null): code is ReservationSettingsError {
@@ -56,6 +81,9 @@ type NumberValue = number | string
 
 type RuleValues = { key: string; minGuests: NumberValue; maxGuests: NumberValue; durationMinutes: NumberValue }
 
+/** A pacing rule as entered: the days as the chips' values, 00:00 as the end is midnight. */
+type PacingRuleValues = { key: string; days: string[]; from: string; to: string; maxCovers: NumberValue }
+
 type FormValues = {
   confirmationMode: ConfirmationMode
   tableSelectionMode: TableSelectionMode
@@ -66,6 +94,7 @@ type FormValues = {
   bufferMinutes: NumberValue
   /** Empty: the largest table that can be booked online. */
   maxOnlinePartySize: NumberValue
+  pacingRules: PacingRuleValues[]
 }
 
 function toFormValues(settings: ReservationSettings): FormValues {
@@ -73,6 +102,13 @@ function toFormValues(settings: ReservationSettings): FormValues {
     ...settings,
     durationRules: settings.durationRules.map((rule) => ({ ...rule, key: randomId() })),
     maxOnlinePartySize: settings.maxOnlinePartySize ?? '',
+    pacingRules: settings.pacingRules.map((rule) => ({
+      key: randomId(),
+      days: rule.days.map(String),
+      from: rule.from,
+      to: toInputEnd(rule.to),
+      maxCovers: rule.maxCovers,
+    })),
   }
 }
 
@@ -80,7 +116,7 @@ function isWholeNumber(value: NumberValue): value is number {
   return typeof value === 'number' && Number.isInteger(value)
 }
 
-/** Reservation settings of the restaurant: confirmation, table assignment, duration and the booking rules. */
+/** Reservation settings of the restaurant: confirmation, table assignment, duration, the booking rules and the pacing. */
 export function ReservationSettingsPage() {
   const { t } = useTranslation()
   useDocumentTitle(t('reservationSettings.title'))
@@ -96,6 +132,7 @@ export function ReservationSettingsPage() {
           <Skeleton h={180} radius="md" />
           <Skeleton h={260} radius="md" />
           <Skeleton h={260} radius="md" />
+          <Skeleton h={200} radius="md" />
         </Stack>
       ) : settings.isError ? (
         <ErrorAlert error={settings.error} onRetry={() => void settings.refetch()} />
@@ -159,6 +196,32 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
         values.maxOnlinePartySize === '' || (isWholeNumber(values.maxOnlinePartySize) && values.maxOnlinePartySize >= 1)
           ? null
           : t('reservationSettings.validation.maxOnlinePartySize')
+
+      // The same rules as the API: at least one day, a start before the end, 1–500 guests, no overlap on the same day.
+      const ranges: { index: number; day: string; from: number; to: number }[] = []
+      values.pacingRules.forEach((rule, index) => {
+        const path = `pacingRules.${index}`
+        if (rule.days.length === 0) errors[`${path}.days`] = t('reservationSettings.validation.pacingDays')
+        if (!isWholeNumber(rule.maxCovers) || rule.maxCovers < pacingCoversLimits.min || rule.maxCovers > pacingCoversLimits.max) {
+          errors[`${path}.maxCovers`] = t('reservationSettings.validation.pacingMaxCovers', { ...pacingCoversLimits })
+        }
+        if (rule.from === '') errors[`${path}.from`] = t('reservationSettings.validation.pacingTime')
+        if (rule.to === '') errors[`${path}.to`] = t('reservationSettings.validation.pacingTime')
+        if (rule.from === '' || rule.to === '') return
+        const from = minutes(rule.from)
+        const to = minutes(toApiEnd(rule.to))
+        if (from >= to) {
+          errors[`${path}.to`] = t('reservationSettings.validation.pacingStartBeforeEnd')
+          return
+        }
+        rule.days.forEach((day) => ranges.push({ index, day, from, to }))
+      })
+      ranges.forEach((range) => {
+        const overlaps = ranges.some(
+          (other) => other.index !== range.index && other.day === range.day && other.from < range.to && range.from < other.to,
+        )
+        if (overlaps) errors[`pacingRules.${range.index}.from`] = t('reservationSettings.validation.pacingOverlap')
+      })
       return errors
     },
   })
@@ -178,6 +241,12 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
         bookingHorizonDays: Number(values.bookingHorizonDays),
         bufferMinutes: Number(values.bufferMinutes),
         maxOnlinePartySize: values.maxOnlinePartySize === '' ? null : Number(values.maxOnlinePartySize),
+        pacingRules: values.pacingRules.map((rule) => ({
+          days: rule.days.map((day) => Number(day) as DayOfWeek),
+          from: rule.from,
+          to: toApiEnd(rule.to),
+          maxCovers: Number(rule.maxCovers),
+        })),
       },
       {
         onSuccess: (saved) => {
@@ -200,6 +269,9 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
       durationMinutes: form.values.defaultDurationMinutes,
     })
   }
+
+  const addPacingRule = () =>
+    form.insertListItem('pacingRules', { key: randomId(), days: [], from: '18:00', to: '20:00', maxCovers: 20 })
 
   const durationInputProps = { min: durationLimits.min, max: durationLimits.max, step: durationLimits.step, allowDecimal: false, allowNegative: false }
 
@@ -407,6 +479,83 @@ function SettingsForm({ settings }: { settings: ReservationSettings }) {
               maw={420}
               {...form.getInputProps('maxOnlinePartySize')}
             />
+          </Stack>
+        </Card>
+
+        <Card>
+          <Stack gap="md">
+            <Stack gap={4}>
+              <Title order={3}>{t('reservationSettings.pacing.title')}</Title>
+              <Text c="dimmed" size="sm">
+                {t('reservationSettings.pacing.description')}
+              </Text>
+              <Text c="dimmed" size="sm">
+                {t('reservationSettings.pacing.example')}
+              </Text>
+            </Stack>
+
+            {form.values.pacingRules.length === 0 ? (
+              <Text c="dimmed" size="sm">
+                {t('reservationSettings.pacing.noRules')}
+              </Text>
+            ) : (
+              form.values.pacingRules.map((rule, index) => {
+                const path = `pacingRules.${index}`
+                const daysError = form.errors[`${path}.days`]
+                return (
+                  <Paper key={rule.key} withBorder radius="md" p="md" aria-label={t('reservationSettings.pacing.rule', { number: index + 1 })} role="group">
+                    <Stack gap="sm">
+                      <Group justify="space-between" align="flex-start" wrap="nowrap">
+                        <Stack gap={6}>
+                          <Text fw={500} size="sm">
+                            {t('reservationSettings.pacing.days')}
+                          </Text>
+                          <Chip.Group multiple value={rule.days} onChange={(days) => form.setFieldValue(`${path}.days`, days)}>
+                            <Group gap={6}>
+                              {weekdays.map((weekday) => (
+                                <Chip key={weekday.key} value={String(weekday.dayOfWeek)} size="sm">
+                                  {t(`openingHours.weekdays.${weekday.key}`)}
+                                </Chip>
+                              ))}
+                            </Group>
+                          </Chip.Group>
+                          {daysError !== undefined && (
+                            <Text size="xs" c="red">
+                              {daysError}
+                            </Text>
+                          )}
+                        </Stack>
+                        <CloseButton aria-label={t('reservationSettings.pacing.deleteRule')} onClick={() => form.removeListItem('pacingRules', index)} />
+                      </Group>
+                      <Group gap="md" align="flex-start">
+                        <TimeInput label={t('reservationSettings.pacing.from')} w={130} {...form.getInputProps(`${path}.from`)} />
+                        <TimeInput
+                          label={t('reservationSettings.pacing.to')}
+                          description={t('reservationSettings.pacing.toDescription')}
+                          w={130}
+                          {...form.getInputProps(`${path}.to`)}
+                        />
+                        <NumberInput
+                          label={t('reservationSettings.pacing.maxCovers')}
+                          min={pacingCoversLimits.min}
+                          max={pacingCoversLimits.max}
+                          allowDecimal={false}
+                          allowNegative={false}
+                          w={220}
+                          {...form.getInputProps(`${path}.maxCovers`)}
+                        />
+                      </Group>
+                    </Stack>
+                  </Paper>
+                )
+              })
+            )}
+
+            <Group>
+              <Button variant="light" onClick={addPacingRule}>
+                {t('reservationSettings.pacing.addRule')}
+              </Button>
+            </Group>
           </Stack>
         </Card>
 

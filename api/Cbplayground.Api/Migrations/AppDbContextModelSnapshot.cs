@@ -256,6 +256,35 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("OpeningPeriods");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.PacingRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("Days")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("From")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MaxCovers")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<TimeOnly>("To")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("PacingRules");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.Reservation", b =>
                 {
                     b.Property<Guid>("Id")
@@ -945,6 +974,15 @@ namespace Cbplayground.Api.Migrations
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.OpeningPeriod", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.PacingRule", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
                         .WithMany()

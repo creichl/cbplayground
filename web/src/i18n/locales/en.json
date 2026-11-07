@@ -1194,6 +1194,20 @@
       "maxOnlinePartySizeDescription": "Larger parties are asked to call. Empty: the largest table that can be booked online.",
       "maxOnlinePartySizePlaceholder": "Largest table"
     },
+    "pacing": {
+      "title": "Pacing",
+      "description": "Limits how many guests may start per 15 minutes in a time range, so the kitchen and the service are not flooded at once. All reservations that start in the quarter hour count, walk-ins included; cancelled ones do not. Online, a time is only offered while its quarter hour has room for the party; staff see a warning but can still book. Without a rule there is no limit.",
+      "example": "Example: Friday and Saturday 18:00–20:00, at most 20 guests per 15 minutes. With 16 guests at 19:00, a party of 4 can still book 19:00 online, a party of 5 cannot; 19:15 is counted on its own.",
+      "rule": "Pacing rule {{number}}",
+      "days": "Days",
+      "from": "From",
+      "to": "To",
+      "toDescription": "12:00 AM (00:00) = midnight",
+      "maxCovers": "Max. guests per 15 minutes",
+      "addRule": "+ Rule",
+      "deleteRule": "Delete rule",
+      "noRules": "No rules yet: there is no limit."
+    },
     "validation": {
       "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
       "minGuests": "Enter at least 1 guest.",
@@ -1202,7 +1216,12 @@
       "leadTime": "Enter {{min}} to {{max}} minutes.",
       "bookingHorizon": "Enter {{min}} to {{max}} days.",
       "buffer": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
-      "maxOnlinePartySize": "Enter at least 1 guest or leave the field empty."
+      "maxOnlinePartySize": "Enter at least 1 guest or leave the field empty.",
+      "pacingDays": "Choose at least one day.",
+      "pacingTime": "Enter a time.",
+      "pacingStartBeforeEnd": "“To” must be after “from”.",
+      "pacingOverlap": "This time range overlaps another pacing rule on the same day.",
+      "pacingMaxCovers": "Enter {{min}} to {{max}} guests."
     },
     "errors": {
       "title": "The settings were not saved",
@@ -1214,7 +1233,9 @@
       "invalidLeadTime": "The lead time must be between 0 and 1440 minutes.",
       "invalidBookingHorizon": "The booking horizon must be between 1 and 365 days.",
       "invalidBuffer": "The buffer must be between 0 and 60 minutes in steps of 5.",
-      "invalidMaxPartySize": "The largest online party must be at least 1 guest."
+      "invalidMaxPartySize": "The largest online party must be at least 1 guest.",
+      "invalidPacingRule": "Every pacing rule needs at least one day, a start before its end and 1 to 500 guests.",
+      "overlappingPacingRules": "Two pacing rules overlap on the same day."
     },
     "saved": "The reservation settings have been saved."
   },
@@ -1354,6 +1375,8 @@
       "defaultDuration_one": "The restaurant's duration for this party size: {{count}} minute",
       "defaultDuration_other": "The restaurant's duration for this party size: {{count}} minutes",
       "duration": "Duration in minutes",
+      "pacingWarningTitle": "Above the pacing limit",
+      "pacingWarning": "{{booked}} guests already start at {{time}}; with this party it will be {{total}}, the limit is {{max}} per 15 minutes. You can still save the reservation.",
       "name": "Name",
       "phone": "Phone",
       "email": "Email",

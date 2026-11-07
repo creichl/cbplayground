@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cbplayground.Api.Endpoints;
 
-/// <summary>The reservation settings of the signed-in Tenant Admin's restaurant. Settings and duration rules are read and saved together.</summary>
+/// <summary>
+/// The reservation settings of the signed-in Tenant Admin's restaurant. Settings, duration rules and pacing rules are read and
+/// saved together.
+/// </summary>
 public static class ReservationSettingsEndpoints
 {
     public const int MinDurationMinutes = 15;
@@ -18,9 +21,14 @@ public static class ReservationSettingsEndpoints
 
     public record DurationRuleDto(int MinGuests, int MaxGuests, int DurationMinutes);
 
+    /// <summary>A pacing rule: at most <see cref="MaxCovers"/> guests per 15-minute start slot from <see cref="From"/> to
+    /// <see cref="To"/> ("HH:mm", the end may be "24:00") on the <see cref="Days"/>.</summary>
+    public record PacingRuleDto(IReadOnlyList<DayOfWeek>? Days, string? From, string? To, int MaxCovers);
+
     /// <summary>
     /// The settings. The booking rules (lead time, booking horizon, buffer, largest online party) get their defaults when
     /// a request leaves them out; <see cref="MaxOnlinePartySize"/> null means the largest table that can be booked online.
+    /// Without <see cref="PacingRules"/> there is no pacing limit.
     /// </summary>
     public record ReservationSettingsDto(
         ConfirmationMode ConfirmationMode,
@@ -30,13 +38,15 @@ public static class ReservationSettingsEndpoints
         int MinLeadTimeMinutes = ReservationSettings.DefaultMinLeadTimeMinutes,
         int BookingHorizonDays = ReservationSettings.DefaultBookingHorizonDays,
         int BufferMinutes = ReservationSettings.DefaultBufferMinutes,
-        int? MaxOnlinePartySize = null);
+        int? MaxOnlinePartySize = null,
+        IReadOnlyList<PacingRuleDto>? PacingRules = null);
 
     /// <summary>
     /// Why the settings were rejected: "invalid_mode" (unknown confirmation or table selection mode),
     /// "invalid_duration" (not 15–480 in steps of 15), "invalid_min_guests" (below 1), "min_greater_than_max", "overlapping_rules",
     /// "invalid_lead_time" (not 0–1440 minutes), "invalid_booking_horizon" (not 1–365 days), "invalid_buffer" (not 0–60 minutes
-    /// in steps of 5) or "invalid_max_party_size" (below 1).
+    /// in steps of 5), "invalid_max_party_size" (below 1), "invalid_pacing_rule" (no or an unknown or repeated day, a time that is
+    /// not "HH:mm", from not before to, or not 1–500 guests) or "overlapping_pacing_rules" (two rules overlap on the same day).
     /// </summary>
     public record SettingsError(string Error);
 
@@ -75,6 +85,8 @@ public static class ReservationSettingsEndpoints
                 MaxGuests = r.MaxGuests,
                 DurationMinutes = r.DurationMinutes,
             }));
+            db.PacingRules.RemoveRange(await db.PacingRules.ToListAsync());
+            db.PacingRules.AddRange((request.PacingRules ?? []).Select(ToPacingRule));
             await db.SaveChangesAsync();
 
             return Results.Ok(await LoadAsync(db));
@@ -89,8 +101,21 @@ public static class ReservationSettingsEndpoints
             .OrderBy(r => r.MinGuests)
             .Select(r => new DurationRuleDto(r.MinGuests, r.MaxGuests, r.DurationMinutes))
             .ToListAsync();
+        var pacingRules = (await db.PacingRules.ToListAsync())
+            .OrderBy(r => r.Days.Min()).ThenBy(r => r.From)
+            .Select(r => new PacingRuleDto(r.Days.Order().ToList(), OpeningHoursEndpoints.FormatTime(r.From),
+                OpeningHoursEndpoints.FormatTime(r.To), r.MaxCovers))
+            .ToList();
         return new ReservationSettingsDto(settings.ConfirmationMode, settings.TableSelectionMode, settings.DefaultDurationMinutes, rules,
-            settings.MinLeadTimeMinutes, settings.BookingHorizonDays, settings.BufferMinutes, settings.MaxOnlinePartySize);
+            settings.MinLeadTimeMinutes, settings.BookingHorizonDays, settings.BufferMinutes, settings.MaxOnlinePartySize, pacingRules);
+    }
+
+    /// <summary>A validated rule as stored.</summary>
+    private static PacingRule ToPacingRule(PacingRuleDto rule)
+    {
+        OpeningHoursEndpoints.TryParseTime(rule.From, allowEndOfDay: false, out var from);
+        OpeningHoursEndpoints.TryParseTime(rule.To, allowEndOfDay: true, out var to);
+        return new PacingRule { Days = rule.Days!.Order().ToList(), From = from, To = to, MaxCovers = rule.MaxCovers };
     }
 
     /// <summary>The error code of the first problem, or null if the settings are valid. Gaps between the rules are allowed.</summary>
@@ -146,6 +171,36 @@ public static class ReservationSettingsEndpoints
         if (settings.MaxOnlinePartySize is < 1)
         {
             return "invalid_max_party_size";
+        }
+        return ValidatePacingRules(settings.PacingRules ?? []);
+    }
+
+    private static string? ValidatePacingRules(IReadOnlyList<PacingRuleDto> rules)
+    {
+        var ranges = new List<(DayOfWeek Day, TimeOnly From, TimeOnly To)>();
+        foreach (var rule in rules)
+        {
+            if (rule.Days is not { Count: > 0 } days || !days.All(Enum.IsDefined) || days.Distinct().Count() != days.Count
+                || !OpeningHoursEndpoints.TryParseTime(rule.From, allowEndOfDay: false, out var from)
+                || !OpeningHoursEndpoints.TryParseTime(rule.To, allowEndOfDay: true, out var to)
+                || from >= to
+                || rule.MaxCovers is < PacingRule.MinCovers or > PacingRule.MaxCoversLimit)
+            {
+                return "invalid_pacing_rule";
+            }
+            ranges.AddRange(days.Select(day => (day, from, to)));
+        }
+
+        foreach (var day in ranges.GroupBy(r => r.Day))
+        {
+            var sorted = day.OrderBy(r => r.From).ToList();
+            for (var i = 1; i < sorted.Count; i++)
+            {
+                if (sorted[i].From < sorted[i - 1].To)
+                {
+                    return "overlapping_pacing_rules";
+                }
+            }
         }
         return null;
     }

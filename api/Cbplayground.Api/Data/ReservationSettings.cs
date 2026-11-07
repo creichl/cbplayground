@@ -73,3 +73,30 @@ public class DurationRule : ITenantOwned
 
     public int DurationMinutes { get; set; }
 }
+
+/// <summary>
+/// Pacing: at most <see cref="MaxCovers"/> guests may start per 15-minute start slot between <see cref="From"/> and
+/// <see cref="To"/> on the <see cref="Days"/>. Online, a slot beyond it is not offered; staff only see a warning. The rules of
+/// a restaurant do not overlap on the same day of the week; without a rule there is no limit.
+/// </summary>
+public class PacingRule : ITenantOwned
+{
+    public const int MinCovers = 1;
+    public const int MaxCoversLimit = 500;
+
+    public Guid Id { get; set; }
+
+    public Guid TenantId { get; set; }
+
+    /// <summary>One or more days of the week, each once.</summary>
+    public List<DayOfWeek> Days { get; set; } = [];
+
+    /// <summary>The first start slot the rule applies to.</summary>
+    public TimeOnly From { get; set; }
+
+    /// <summary>The rule applies to the start slots before it; <see cref="OpeningPeriod.EndOfDay"/> means 24:00.</summary>
+    public TimeOnly To { get; set; }
+
+    /// <summary>The most guests (party sizes) that may start in one 15-minute slot, <see cref="MinCovers"/>–<see cref="MaxCoversLimit"/>.</summary>
+    public int MaxCovers { get; set; }
+}

@@ -92,8 +92,11 @@ export type StaffAvailability = {
   date: string
   guests: number
   durationMinutes: number
-  periods: { start: string; end: string; times: { time: string; tables: FreeTable[] }[] }[]
+  periods: { start: string; end: string; times: { time: string; tables: FreeTable[]; pacing: SlotPacing | null }[] }[]
 }
+
+/** The pacing of a 15-minute start slot: at most `max` guests may start in it, `booked` already do. */
+export type SlotPacing = { max: number; booked: number }
 
 /** A table on the staff floor; the position is relative to the plan (image or schematic plan), 0–1. */
 export type FloorTable = {

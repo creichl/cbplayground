@@ -104,8 +104,11 @@ public static class StaffReservationEndpoints
     /// <summary>The tables free for a walk-in from <see cref="Time"/> (now) for <see cref="DurationMinutes"/>, the suggested one first.</summary>
     public record WalkInTablesResponse(string Time, int DurationMinutes, IReadOnlyList<FreeTable> Tables);
 
-    /// <summary>The free tables and combinations (<see cref="FreeTable.Kind"/>) of a start time, the one the system would assign first.</summary>
-    public record StaffAvailabilityTime(string Time, IReadOnlyList<FreeTable> Tables);
+    /// <summary>
+    /// The free tables and combinations (<see cref="FreeTable.Kind"/>) of a start time, the one the system would assign first;
+    /// <see cref="Pacing"/> is null when no pacing rule applies to it.
+    /// </summary>
+    public record StaffAvailabilityTime(string Time, IReadOnlyList<FreeTable> Tables, SlotPacing? Pacing);
 
     public record StaffAvailabilityPeriod(string Start, string End, IReadOnlyList<StaffAvailabilityTime> Times);
 
@@ -179,7 +182,7 @@ public static class StaffReservationEndpoints
                 .Select(p => new StaffAvailabilityPeriod(
                     FormatTime(p.Period.Start),
                     FormatTime(p.Period.End),
-                    p.Slots.Select(s => new StaffAvailabilityTime(FormatTime(s.Time), s.FreeTables)).ToList()))
+                    p.Slots.Select(s => new StaffAvailabilityTime(FormatTime(s.Time), s.FreeTables, s.Pacing)).ToList()))
                 .ToList()));
         });
 
