@@ -39,6 +39,7 @@ public static class ReservationHistory
         [ReservationField.Phone] = reservation.GuestPhone,
         [ReservationField.Email] = reservation.GuestEmail,
         [ReservationField.Notes] = reservation.Notes,
+        [ReservationField.Occasion] = reservation.Occasion == Occasion.None ? null : reservation.Occasion.ToString(),
         [ReservationField.Status] = reservation.Status.ToString(),
     };
 

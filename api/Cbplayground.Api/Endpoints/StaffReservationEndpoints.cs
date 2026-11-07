@@ -43,6 +43,9 @@ public static class StaffReservationEndpoints
         string? Phone,
         string? Email,
         string? Notes,
+        Occasion Occasion,
+        Guid? GuestId,
+        GuestEndpoints.GuestSummary? Guest,
         string Language,
         string? CompletedTime,
         bool CancelledByGuest,
@@ -54,9 +57,10 @@ public static class StaffReservationEndpoints
     /// table or exactly the tables of one combination; <see cref="TableId"/> (one table) is the older form of it and only used
     /// without <see cref="TableIds"/>. Without both the system assigns a table or, when none fits, a combination. Without
     /// <see cref="DurationMinutes"/> the restaurant's duration for the party size applies, without <see cref="Language"/> the language
-    /// of the restaurant's country. Errors (400): "invalid_date", "invalid_time", "invalid_party_size", "invalid_duration",
-    /// "invalid_name", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language", "invalid_tables", "outside_opening_hours",
-    /// "in_the_past"; (409): "slot_unavailable", "table_unavailable", "reservation_closed" (a change of date, time, party size,
+    /// of the restaurant's country (a change keeps its language). Without <see cref="Occasion"/> a new reservation has none
+    /// (<see cref="Data.Occasion.None"/>) and a change keeps its occasion. Errors (400): "invalid_date", "invalid_time",
+    /// "invalid_party_size", "invalid_duration", "invalid_name", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language",
+    /// "invalid_occasion", "invalid_tables", "outside_opening_hours", "in_the_past"; (409): "slot_unavailable", "table_unavailable", "reservation_closed" (a change of date, time, party size,
     /// tables or duration of a reservation in one of the <see cref="ReservationRules.ClosedStatuses"/>).
     /// </summary>
     public record ReservationRequest(
@@ -70,7 +74,8 @@ public static class StaffReservationEndpoints
         string? Email,
         string? Notes,
         string? Language,
-        List<Guid>? TableIds = null)
+        List<Guid>? TableIds = null,
+        string? Occasion = null)
     {
         /// <summary>The requested tables; null: the system assigns them.</summary>
         public IReadOnlyCollection<Guid>? RequestedTableIds => TableIds ?? (TableId is { } id ? [id] : null);
@@ -212,9 +217,11 @@ public static class StaffReservationEndpoints
                 Source = ReservationSource.Staff,
                 ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
                 Language = input.Language!,
+                Occasion = input.Occasion ?? Occasion.None,
                 CreatedAtUtc = now,
             };
             Apply(reservation, input, request.Guests, table.TableIds, now);
+            await GuestProfiles.LinkAsync(db, reservation, input.CountryCode, now, cancellationToken);
             db.Reservations.Add(reservation);
             ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
             await db.SaveChangesAsync(cancellationToken);
@@ -276,7 +283,9 @@ public static class StaffReservationEndpoints
             var now = DateTime.UtcNow;
             reservation.GuestName = input.Guest!.Name;
             reservation.Language = request.Language is null ? reservation.Language : input.Language!;
+            reservation.Occasion = input.Occasion ?? reservation.Occasion;
             Apply(reservation, input, request.Guests, tableIds, now);
+            await GuestProfiles.LinkAsync(db, reservation, input.CountryCode, now, cancellationToken);
             // Only the changed fields; a PUT that changes none of them leaves no entry.
             var changes = ReservationHistory.Changes(before, ReservationHistory.Snapshot(reservation, await TableNumbersAsync(db, tableIds, cancellationToken)));
             if (changes.Count > 0)
@@ -446,6 +455,7 @@ public static class StaffReservationEndpoints
                 Notes = guest.Notes,
                 UpdatedAtUtc = now,
             };
+            await GuestProfiles.LinkAsync(db, reservation, countryCode, now, cancellationToken);
             db.Reservations.Add(reservation);
             ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
             await db.SaveChangesAsync(cancellationToken);
@@ -455,8 +465,9 @@ public static class StaffReservationEndpoints
         });
     }
 
-    /// <summary>The checked input of a request; <see cref="Error"/> is set when it is invalid.</summary>
-    private record ValidatedInput(IResult? Error, DateOnly Date = default, TimeOnly Time = default, int Duration = 0, GuestDetails? Guest = null, string? Language = null);
+    /// <summary>The checked input of a request; <see cref="Error"/> is set when it is invalid. <see cref="CountryCode"/> is the restaurant's.</summary>
+    private record ValidatedInput(IResult? Error, DateOnly Date = default, TimeOnly Time = default, int Duration = 0, GuestDetails? Guest = null,
+        string? Language = null, Occasion? Occasion = null, string? CountryCode = null);
 
     private static async Task<ValidatedInput> ValidateAsync(ReservationRequest request, ITenantContext tenantContext, AppDbContext db,
         IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken)
@@ -483,19 +494,35 @@ public static class StaffReservationEndpoints
             return new ValidatedInput(BadRequest(guestError!));
         }
 
-        var language = request.Language;
-        if (language is null)
-        {
-            var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
-            language = DefaultLanguage(countryCode);
-        }
-        else if (!ReservationRules.Languages.Contains(language))
+        if (request.Language is not null && !ReservationRules.Languages.Contains(request.Language))
         {
             return new ValidatedInput(BadRequest("invalid_language"));
         }
+        if (!TryParseOccasion(request.Occasion, out var occasion))
+        {
+            return new ValidatedInput(BadRequest("invalid_occasion"));
+        }
 
+        var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
+        var language = request.Language ?? DefaultLanguage(countryCode);
         var duration = request.DurationMinutes ?? await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
-        return new ValidatedInput(null, date, time, duration, guest, language);
+        return new ValidatedInput(null, date, time, duration, guest, language, occasion, countryCode);
+    }
+
+    /// <summary>An occasion by its name, e.g. "Birthday"; null (none given) is valid and stays null.</summary>
+    internal static bool TryParseOccasion(string? value, out Occasion? occasion)
+    {
+        occasion = null;
+        if (value is null)
+        {
+            return true;
+        }
+        if (!Enum.GetNames<Occasion>().Contains(value))
+        {
+            return false;
+        }
+        occasion = Enum.Parse<Occasion>(value);
+        return true;
     }
 
     /// <summary>The guest's language when staff do not give one: the language of the restaurant's country.</summary>
@@ -529,8 +556,11 @@ public static class StaffReservationEndpoints
     private static async Task<string> TableNumbersAsync(AppDbContext db, IReadOnlyCollection<Guid> tableIds, CancellationToken cancellationToken) =>
         AvailabilityService.CombinedLabel(InNumberOrder(await db.Tables.Where(t => tableIds.Contains(t.Id)).ToListAsync(cancellationToken)));
 
-    /// <summary>The reservations with their tables and area, archived ones included, sorted by start and (first) table number.</summary>
-    private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
+    /// <summary>
+    /// The reservations with their tables and area, archived ones included, and their guest's summary, sorted by start and (first)
+    /// table number.
+    /// </summary>
+    internal static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
     {
         var rows = await reservations
             .Include(r => r.Tables)
@@ -539,10 +569,12 @@ public static class StaffReservationEndpoints
             .ToListAsync();
         var tableIds = rows.SelectMany(r => r.Reservation.Tables.Select(t => t.TableId)).Distinct().ToList();
         var tables = await db.Tables.Where(t => tableIds.Contains(t.Id)).ToDictionaryAsync(t => t.Id);
+        var guests = await GuestEndpoints.SummariesAsync(db, rows.Select(r => r.Reservation.GuestId).OfType<Guid>().Distinct().ToList());
         return rows
             .OrderBy(r => r.Reservation.StartLocal)
             .ThenBy(r => r.Table.Number.Length).ThenBy(r => r.Table.Number, StringComparer.Ordinal)
-            .Select(r => ToResponse(r.Reservation, InNumberOrder(r.Reservation.Tables.Select(t => tables[t.TableId])), r.Area))
+            .Select(r => ToResponse(r.Reservation, InNumberOrder(r.Reservation.Tables.Select(t => tables[t.TableId])), r.Area,
+                r.Reservation.GuestId is { } guestId ? guests.GetValueOrDefault(guestId) : null))
             .ToList();
     }
 
@@ -554,7 +586,7 @@ public static class StaffReservationEndpoints
         (await LoadResponsesAsync(db, db.Reservations.Where(r => r.Id == id))).Single();
 
     /// <summary><paramref name="tables"/> are all tables of the reservation in number order; the table number is their joined label, e.g. "4 + 5".</summary>
-    private static ReservationResponse ToResponse(Reservation reservation, List<Table> tables, Area area) => new(
+    private static ReservationResponse ToResponse(Reservation reservation, List<Table> tables, Area area, GuestEndpoints.GuestSummary? guest) => new(
         reservation.Id,
         reservation.ReferenceCode,
         DateOnly.FromDateTime(reservation.StartLocal),
@@ -575,6 +607,9 @@ public static class StaffReservationEndpoints
         reservation.GuestPhone,
         reservation.GuestEmail,
         reservation.Notes,
+        reservation.Occasion,
+        reservation.GuestId,
+        guest,
         reservation.Language,
         reservation.CompletedAtLocal is { } completed ? FormatLocalTime(completed, reservation.StartLocal) : null,
         reservation.CancelledByGuest,
