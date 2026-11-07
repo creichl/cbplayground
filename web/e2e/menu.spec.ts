@@ -81,7 +81,7 @@ test.describe('Menu', () => {
     const menu = await menuSection(page)
 
     await expect(menu.getByRole('heading', { name: 'Recommendations of the house' })).toBeVisible()
-    await expect(menu.getByRole('button', { name: /Schweinshaxe/ })).toBeVisible()
+    await expect(menu.getByRole('button', { name: /Kalbsbraten mit Semmelknödel/ })).toBeVisible()
     await expect(menu.getByRole('tab', { name: 'Brotzeit & Vorspeisen' })).toHaveAttribute('aria-selected', 'true')
     await expect(menu.getByRole('tabpanel').getByText('Obatzda mit Brezn und Radi')).toBeVisible()
     await expect(menu.getByText('Allergens: gluten, milk').first()).toBeVisible()
