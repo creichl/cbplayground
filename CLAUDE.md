@@ -11,6 +11,28 @@ Every ticket that changes behaviour adds or updates automated tests, with screen
   `screenshot(page, '<feature>', '<name>')` from `web/e2e/screenshot.ts`.
 - API smoke tests against the started API: `web/e2e/api.spec.ts`.
 
+### Spec files
+
+One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealAll`, `dateFromToday`, `bookRequest`) in
+`helpers.ts`.
+
+- Guest side: `start-page.spec.ts` (start page), `not-found.spec.ts` (not found pages), `booking.spec.ts` (booking page,
+  booking dialog, embedded booking, unknown restaurant), `booking-flow.spec.ts` (bookings from start to confirmation,
+  the guest's reservation link, the embed's booking and height), `table-choice.spec.ts` (the guest's table choice).
+- Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
+  with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
+  width, tables, archived tables), `pacing.spec.ts`, `superadmin.spec.ts`, `styleguide.spec.ts`.
+- Front desk: `service-screen.spec.ts` (layout, views, selection, services, sizes, old addresses),
+  `front-desk-flow.spec.ts` (accepting, status with undo, phone reservation, walk-in, table overview, access),
+  `front-desk-requests.spec.ts` (declining and undoing an accepted request), `walk-in.spec.ts` (walk-in on the floor
+  plans and its undo), `closed-reservations.spec.ts`, `reservation-history.spec.ts`, `table-blocks.spec.ts` (blocking a
+  table on the timeline and the floor plan, and removing the block).
+- Both sides: `combinations.spec.ts` (table combinations online, in the area editor and by phone).
+- API: `api.spec.ts`.
+
+A new feature's tests go into a new file `web/e2e/<feature>.spec.ts`; tests that extend a feature listed above go into
+its file.
+
 ### Run the suite
 
 ```sh
@@ -56,7 +78,7 @@ packages.
 Several tickets are worked on at the same time and merged together into review packages. Keep the merges small:
 
 - **Browser tests:** put new tests in their own file per feature, `web/e2e/<feature>.spec.ts` (e.g. `waitlist.spec.ts`).
-  Do not append them to `staff.spec.ts` or `guest.spec.ts`. Shared helpers such as `signIn` belong in
+  Do not append them to another feature's file (see "Spec files"). Shared helpers such as `signIn` belong in
   `web/e2e/helpers.ts`; import them from there instead of copying them.
 - **Migrations:** on a conflict in `AppDbContextModelSnapshot.cs` or a migration, never merge the snapshot by hand. Take
   the target branch's snapshot, delete the branch's own migration (`.cs` and `.Designer.cs`) and add it again with
