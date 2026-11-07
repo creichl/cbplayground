@@ -50,8 +50,8 @@ function scrollBehavior(): ScrollBehavior {
 }
 
 /**
- * The date on the reservation card: a strip of the next 14 days (weekday and day number) to choose with one tap, and "More
- * dates", which opens the calendar in a popover for the days after them. Available days have a dot; closed days (also those
+ * The date on the reservation card: a strip of the next 14 days (weekday and day number) in the card's full width to choose
+ * with one tap, and "More dates" beside its label, which opens the calendar in a popover for the days after them. Available days have a dot; closed days (also those
  * beyond the booking horizon) and fully booked ones are struck through and cannot be chosen, and their names say why. The
  * chosen day is filled and scrolled into view. The strip scrolls sideways, snapping to the days, with arrows on desktops;
  * the arrow keys move between the days (one tab stop for the whole strip). The current and the next month are loaded
@@ -148,109 +148,110 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
 
   return (
     <div role="group" aria-labelledby={labelId} className="flex min-w-0 flex-col gap-1.5">
-      <Label id={labelId} asChild>
-        <span>{t('booking.bar.date')}</span>
-      </Label>
-      <div className="flex min-w-0 items-center gap-1.5">
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('booking.calendar.earlierDays')}
-          disabled={edges.start}
-          onClick={() => page(-1)}
-          className="rounded-full max-sm:hidden touch:hidden"
-        >
-          <ChevronLeftIcon aria-hidden="true" />
-        </Button>
-        {/* The padding keeps the focus rings inside the strip, which clips what is outside it. */}
-        <div
-          ref={scrollerRef}
-          onKeyDown={onKeyDown}
-          aria-busy={calendar.days.length === 0}
-          className="relative -m-1 flex min-w-0 flex-1 snap-x snap-mandatory scroll-px-1 gap-1.5 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {days.map((day) => {
-            const state = status.get(day)
-            const chosen = day === value
-            // Until its month is loaded only the chosen day can be taken (it is known to be free or was chosen before).
-            const selectable = chosen || state === 'available'
-            // ISO weekdays: Monday is 1, Sunday 7.
-            const weekday = formatWeekday(toDate(day).getDay() || 7, language)
-            const number = toDate(day).getDate()
-            return (
-              <button
-                key={day}
-                type="button"
-                data-day={day}
-                tabIndex={day === tabDay ? 0 : -1}
-                aria-pressed={chosen}
-                aria-disabled={!selectable}
-                aria-label={dayName(day)}
-                onFocus={() => setFocusDay(day)}
-                onClick={() => selectable && onChange(day)}
-                className={cn(
-                  'relative flex h-16 w-12 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl border text-foreground press focus-ring',
-                  chosen
-                    ? 'cursor-pointer border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
-                    : selectable
-                      ? 'cursor-pointer border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent'
-                      : 'cursor-not-allowed border-transparent bg-transparent text-muted-foreground',
-                  state !== undefined && state !== 'available' && !chosen && 'line-through',
-                )}
-              >
-                <span className={cn('text-xs', !chosen && 'text-muted-foreground')}>{weekday}</span>
-                <span className="text-base leading-none font-semibold tabular-nums">{number}</span>
-                {/* The mark of an available day. */}
-                <span
-                  aria-hidden="true"
-                  className={cn('size-1 rounded-full', state === 'available' ? (chosen ? 'bg-primary-foreground' : 'bg-primary') : 'bg-transparent')}
-                />
-              </button>
-            )
-          })}
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          aria-label={t('booking.calendar.laterDays')}
-          disabled={edges.end}
-          onClick={() => page(1)}
-          className="rounded-full max-sm:hidden touch:hidden"
-        >
-          <ChevronRightIcon aria-hidden="true" />
-        </Button>
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger
-            disabled={value === null}
-            aria-label={value !== null && !valueInStrip ? `${t('booking.calendar.moreDates')}: ${formatLongDate(value, language)}` : t('booking.calendar.moreDates')}
-            className={cn(
-              'flex h-16 shrink-0 cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border px-2 text-xs font-medium press focus-ring disabled:cursor-not-allowed disabled:opacity-50',
-              value !== null && !valueInStrip
-                ? 'border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
-                : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
-            )}
+      {/* The label, and on the right the arrows (desktops) and "More dates", so the strip has the card's full width. */}
+      <div className="flex min-w-0 items-center justify-between gap-2">
+        <Label id={labelId} asChild>
+          <span>{t('booking.bar.date')}</span>
+        </Label>
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('booking.calendar.earlierDays')}
+            disabled={edges.start}
+            onClick={() => page(-1)}
+            className="size-8 rounded-full max-sm:hidden touch:hidden"
           >
-            <CalendarIcon aria-hidden="true" className="size-4" />
-            <span className={cn(valueInStrip || value === null ? 'max-sm:sr-only' : 'whitespace-nowrap')}>
+            <ChevronLeftIcon aria-hidden="true" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('booking.calendar.laterDays')}
+            disabled={edges.end}
+            onClick={() => page(1)}
+            className="size-8 rounded-full max-sm:hidden touch:hidden"
+          >
+            <ChevronRightIcon aria-hidden="true" />
+          </Button>
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger
+              disabled={value === null}
+              aria-label={value !== null && !valueInStrip ? `${t('booking.calendar.moreDates')}: ${formatLongDate(value, language)}` : t('booking.calendar.moreDates')}
+              className={cn(
+                'inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-sm font-medium whitespace-nowrap press focus-ring disabled:cursor-not-allowed disabled:opacity-50 touch:h-11',
+                value !== null && !valueInStrip
+                  ? 'border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
+                  : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent',
+              )}
+            >
+              <CalendarIcon aria-hidden="true" className="size-4" />
               {value !== null && !valueInStrip ? formatShortDate(value, language) : t('booking.calendar.moreDates')}
-            </span>
-          </PopoverTrigger>
-          <PopoverContent align="end" aria-label={t('booking.bar.date')} className="w-auto p-3">
-            {value !== null && (
-              <CalendarMonth
-                slug={slug}
-                guests={guests}
-                value={value}
-                minDate={minDate}
-                maxDate={maxDate}
-                onChange={(date) => {
-                  setOpen(false)
-                  onChange(date)
-                }}
+            </PopoverTrigger>
+            <PopoverContent align="end" aria-label={t('booking.bar.date')} className="w-auto p-3">
+              {value !== null && (
+                <CalendarMonth
+                  slug={slug}
+                  guests={guests}
+                  value={value}
+                  minDate={minDate}
+                  maxDate={maxDate}
+                  onChange={(date) => {
+                    setOpen(false)
+                    onChange(date)
+                  }}
+                />
+              )}
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+      {/* The padding keeps the focus rings inside the strip, which clips what is outside it. */}
+      <div
+        ref={scrollerRef}
+        onKeyDown={onKeyDown}
+        aria-busy={calendar.days.length === 0}
+        className="relative -m-1 flex min-w-0 snap-x snap-mandatory scroll-px-1 gap-1 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {days.map((day) => {
+          const state = status.get(day)
+          const chosen = day === value
+          // Until its month is loaded only the chosen day can be taken (it is known to be free or was chosen before).
+          const selectable = chosen || state === 'available'
+          // ISO weekdays: Monday is 1, Sunday 7.
+          const weekday = formatWeekday(toDate(day).getDay() || 7, language)
+          const number = toDate(day).getDate()
+          return (
+            <button
+              key={day}
+              type="button"
+              data-day={day}
+              tabIndex={day === tabDay ? 0 : -1}
+              aria-pressed={chosen}
+              aria-disabled={!selectable}
+              aria-label={dayName(day)}
+              onFocus={() => setFocusDay(day)}
+              onClick={() => selectable && onChange(day)}
+              className={cn(
+                'relative flex h-16 w-11 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl border text-foreground press focus-ring',
+                chosen
+                  ? 'cursor-pointer border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
+                  : selectable
+                    ? 'cursor-pointer border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent'
+                    : 'cursor-not-allowed border-transparent bg-transparent text-muted-foreground',
+                state !== undefined && state !== 'available' && !chosen && 'line-through',
+              )}
+            >
+              <span className={cn('text-xs', !chosen && 'text-muted-foreground')}>{weekday}</span>
+              <span className="text-base leading-none font-semibold tabular-nums">{number}</span>
+              {/* The mark of an available day. */}
+              <span
+                aria-hidden="true"
+                className={cn('size-1 rounded-full', state === 'available' ? (chosen ? 'bg-primary-foreground' : 'bg-primary') : 'bg-transparent')}
               />
-            )}
-          </PopoverContent>
-        </Popover>
+            </button>
+          )
+        })}
       </div>
       {calendar.error !== null && <RequestError error={calendar.error} onRetry={calendar.refetch} />}
     </div>

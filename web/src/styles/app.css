@@ -615,6 +615,40 @@
   z-index: 1;
 }
 
+/*
+ * Layout transitions (src/ui/motion/layout-transition.ts): while one runs, the reservation card, its times and its footer
+ * have names, so the card's snapshot is clipped to its height as it glides from the old to the new one, the times
+ * cross-fade within it and the footer moves along; only transform, opacity and the snapshots' size change, the page is not
+ * laid out per frame. The rest of the page is not animated: it shows its new state at once.
+ */
+:root[data-layout-transition] [data-layout-part='booking-card'] {
+  view-transition-name: booking-card;
+}
+:root[data-layout-transition] [data-layout-part='booking-times'] {
+  view-transition-name: booking-times;
+}
+:root[data-layout-transition] [data-layout-part='booking-card-footer'] {
+  view-transition-name: booking-card-footer;
+}
+:root[data-layout-transition]::view-transition-old(root) {
+  display: none;
+}
+:root[data-layout-transition]::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(booking-card),
+::view-transition-group(booking-times) {
+  overflow: clip;
+}
+::view-transition-group(booking-card),
+::view-transition-group(booking-times),
+::view-transition-group(booking-card-footer),
+::view-transition-old(booking-times),
+::view-transition-new(booking-times) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-out);
+}
+
 /* The light around the chosen table in the table style "Glow" breathes softly; with less motion it stays still. */
 @keyframes table-glow {
   from {

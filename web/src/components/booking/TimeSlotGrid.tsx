@@ -6,7 +6,7 @@ import { type Availability, type AvailabilityTime, useAvailabilities, useAvailab
 import { formatLongDate, formatShortDate, formatTime, periodLabel } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
-import { AnimatedHeight } from '../../ui/motion/animated-height.tsx'
+import { layoutTransition, layoutTransitions } from '../../ui/motion/layout-transition.ts'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { RequestError } from './RequestError.tsx'
 
@@ -97,8 +97,9 @@ function usePulseThenChoose() {
 /**
  * The start times of a day as chips, grouped by opening window ("Lunch 11:30–14:30"). Free times can be chosen; one with
  * only one or two tables left says so; taken ones are struck through and disabled. Times in the past or within the lead
- * time are left out. On another party size or day the previous chips stay, dimmed and inert, until the new ones arrive and
- * fade in, and the height glides to the new one (AnimatedHeight): the skeleton only shows on the very first load. A click on
+ * time are left out. On another party size or day the previous chips stay, dimmed and inert, until the new ones arrive;
+ * then the new ones cross-fade in and the card glides to its new height (layoutTransition, a view transition, so nothing
+ * is laid out per frame and the embed reports only the end height): the skeleton only shows on the very first load. A click on
  * a time pulses its chip and then opens the booking dialog. A fully booked day offers alternatives instead (FullDay).
  */
 export function TimeSlotGrid(props: TimeSlotGridProps) {
@@ -107,7 +108,21 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
   const language = i18n.resolvedLanguage ?? 'en'
   const availability = useAvailability(slug, date, guests, true, true)
   const { picked, pick } = usePulseThenChoose()
-  const stale = availability.isPlaceholderData || waiting
+  const timesRef = useRef<HTMLDivElement>(null)
+  // The times drawn: those of another day or party size take their place through a layout transition.
+  const data = availability.data
+  const [shown, setShown] = useState(data)
+  const another = data !== undefined && shown !== undefined && (data.date !== shown.date || data.guests !== shown.guests)
+  // The first times and fresher ones of the same day and party size are simply shown.
+  if (data !== undefined && data !== shown && !another) {
+    setShown(data)
+  }
+  useEffect(() => {
+    if (another) {
+      layoutTransition(timesRef.current, () => setShown(data))
+    }
+  }, [another, data])
+  const stale = availability.isPlaceholderData || waiting || shown !== data
 
   return (
     <div className="flex flex-col gap-5">
@@ -118,23 +133,24 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
         </Alert>
       )}
 
-      <AnimatedHeight>
-        {availability.isPending ? (
-          <TimeSlotsSkeleton />
-        ) : availability.isError ? (
+      {/* The part of the card that changes in a layout transition (app.css). */}
+      <div ref={timesRef} data-layout-part="booking-times">
+        {availability.isError ? (
           <RequestError error={availability.error} onRetry={() => void availability.refetch()} />
+        ) : shown === undefined ? (
+          <TimeSlotsSkeleton />
         ) : (
           <div
-            // A new day or party size fades in as a whole.
-            key={`${availability.data.date}/${availability.data.guests}`}
+            // Without layout transitions, a new day or party size fades in as a whole.
+            key={`${shown.date}/${shown.guests}`}
             inert={stale}
             aria-busy={stale}
-            className={cn('flex flex-col gap-5 transition-opacity motion-safe:animate-fade-in', stale && 'opacity-50')}
+            className={cn('flex flex-col gap-5 transition-opacity', !layoutTransitions && 'motion-safe:animate-fade-in', stale && 'opacity-50')}
           >
-            {freeTimes(availability.data, earliestStart).length === 0 ? (
-              <FullDay {...props} availability={availability.data} picked={picked} pick={pick} />
+            {freeTimes(shown, earliestStart).length === 0 ? (
+              <FullDay {...props} availability={shown} picked={picked} pick={pick} />
             ) : (
-              offeredPeriods(availability.data, earliestStart).map((period, _, periods) => (
+              offeredPeriods(shown, earliestStart).map((period, _, periods) => (
                 <section key={period.start} className="flex flex-col gap-2" aria-labelledby={`period-${period.start}`}>
                   <h3 id={`period-${period.start}`} className="flex flex-wrap items-baseline gap-x-2 text-sm">
                     <span className="font-semibold">{periods.length > 1 ? t(periodLabel(period.start)) : t('booking.time.freeTimes')}</span>
@@ -170,7 +186,7 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
             )}
           </div>
         )}
-      </AnimatedHeight>
+      </div>
     </div>
   )
 }

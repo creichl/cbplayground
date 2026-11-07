@@ -35,7 +35,7 @@ export function ReservationCard({ slug, restaurant, flow, ref, className }: Rese
   const times = flow.day !== null ? { day: flow.day, guests: flow.partySize } : shown
 
   return (
-    <Card ref={ref} className={cn('gap-0 py-0', className)}>
+    <Card ref={ref} data-layout-part="booking-card" className={cn('gap-0 py-0', className)}>
       <div className="flex flex-col gap-5 p-5 sm:p-6">
         <h2
           data-booking-heading=""
@@ -81,7 +81,7 @@ export function ReservationCard({ slug, restaurant, flow, ref, className }: Rese
         )}
       </div>
 
-      <ul className="flex flex-col gap-2 rounded-b-xl border-t border-border bg-muted/50 px-5 py-4 text-sm sm:px-6">
+      <ul data-layout-part="booking-card-footer" className="flex flex-col gap-2 rounded-b-xl border-t border-border bg-muted/50 px-5 py-4 text-sm sm:px-6">
         <li className="flex items-start gap-2">
           {flow.request ? (
             <MailQuestionIcon aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
@@ -127,10 +127,13 @@ export function ReservationCardSkeleton({ className }: { className?: string }) {
         </div>
       </div>
       <div className="flex flex-col gap-1.5">
-        <Skeleton className="h-4 w-12" />
-        <div className="flex gap-1.5 overflow-hidden">
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-8 w-32 rounded-full touch:h-11" />
+        </div>
+        <div className="flex gap-1 overflow-hidden">
           {Array.from({ length: 14 }, (_, i) => (
-            <Skeleton key={i} className="h-16 w-12 shrink-0 rounded-xl" />
+            <Skeleton key={i} className="h-16 w-11 shrink-0 rounded-xl" />
           ))}
         </div>
       </div>

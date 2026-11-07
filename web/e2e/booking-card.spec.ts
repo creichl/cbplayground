@@ -104,6 +104,15 @@ test.describe('Booking card', () => {
     await expect(chosen).not.toBeFocused()
     await page.keyboard.press('ArrowLeft')
     await expect(chosen).toBeFocused()
+    // On a desktop the strip has the card's full width: at least 8 of the 14 days are in view.
+    await page.setViewportSize({ width: 1440, height: 1000 })
+    const stripDays = strip.locator('[data-day]')
+    const scroller = (await stripDays.first().locator('..').boundingBox())!
+    let inView = 0
+    for (const box of await Promise.all((await stripDays.all()).map((day) => day.boundingBox()))) {
+      if (box !== null && box.x >= scroller.x - 1 && box.x + box.width <= scroller.x + scroller.width + 1) inView++
+    }
+    expect(inView).toBeGreaterThanOrEqual(8)
     await shoot(page, 'date-strip', strip)
   })
 
@@ -231,11 +240,15 @@ test.describe('Booking card', () => {
     `)
     const frame = page.frameLocator('iframe')
     await expect(frame.locator('[data-time-chip]').first()).toBeVisible()
+    await page.waitForTimeout(1000)
+    const before = Number(await page.evaluate('window.heights.length'))
     await frame.getByRole('button', { name: '6 people' }).click()
     await expect(frame.getByRole('button', { name: '6 people' })).toHaveAttribute('aria-pressed', 'true')
     await expect(frame.locator('[aria-busy="true"]')).toHaveCount(0)
     await page.waitForTimeout(1000)
     const count = Number(await page.evaluate('window.heights.length'))
+    // The new times take their place in one step (a view transition moves only snapshots): no message per frame.
+    expect(count - before).toBeLessThanOrEqual(3)
     await page.waitForTimeout(1500)
     expect(Number(await page.evaluate('window.heights.length'))).toBe(count)
     await page.waitForFunction("document.querySelector('iframe').style.height === window.heights[window.heights.length - 1] + 'px'")
