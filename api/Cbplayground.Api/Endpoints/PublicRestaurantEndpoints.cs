@@ -43,6 +43,7 @@ public static class PublicRestaurantEndpoints
         TableSelectionMode TableSelectionMode,
         int MaxOnlinePartySize,
         int BookingHorizonDays,
+        int MinLeadTimeMinutes,
         IReadOnlyList<PeriodDto> OpeningHours,
         bool Bookable,
         BrandingEndpoints.BrandingResponse Branding,
@@ -62,9 +63,11 @@ public static class PublicRestaurantEndpoints
 
     /// <summary>
     /// <see cref="Combined"/>: the time is available, but only for a combination of tables (no single table seats the party then),
-    /// which the system assigns; so where the guest chooses the table, the booking skips that step.
+    /// which the system assigns; so where the guest chooses the table, the booking skips that step. <see cref="Remaining"/>: how many
+    /// more parties of this size could still get a table then, 0 to <see cref="AvailabilityService.MaxRemaining"/> (from 3 on it
+    /// stays 3), so the booking can say that only one or two tables are left.
     /// </summary>
-    public record AvailabilityTime(string Time, bool Available, bool Combined);
+    public record AvailabilityTime(string Time, bool Available, bool Combined, int Remaining);
 
     public record AvailabilityPeriod(string Start, string End, IReadOnlyList<AvailabilityTime> Times);
 
@@ -178,6 +181,7 @@ public static class PublicRestaurantEndpoints
                 settings.TableSelectionMode,
                 maxOnlinePartySize,
                 settings.BookingHorizonDays,
+                settings.MinLeadTimeMinutes,
                 openingHours,
                 Bookable: tenant.TimeZoneId is not null && openingHours.Count > 0 && maxOnlinePartySize > 0,
                 Branding: BrandingEndpoints.ToResponse(tenant),
@@ -256,7 +260,7 @@ public static class PublicRestaurantEndpoints
                     FormatTime(p.Period.Start),
                     FormatTime(p.Period.End),
                     p.Slots.Select(s => new AvailabilityTime(FormatTime(s.Time), s.FreeTables.Count > 0,
-                        s.FreeTables.Count > 0 && s.FreeTables.All(t => t.Kind == FreeTable.CombinationKind))).ToList()))
+                        s.FreeTables.Count > 0 && s.FreeTables.All(t => t.Kind == FreeTable.CombinationKind), s.Remaining)).ToList()))
                 .ToList()));
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
