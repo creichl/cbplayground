@@ -199,15 +199,32 @@ export function useOpenRequests(today: string | null) {
   })
 }
 
-/** The free start times and tables of a day. Without `durationMinutes` the restaurant's duration for the party size applies. */
-export function useStaffAvailability(date: string | null, guests: number | null, durationMinutes: number | null) {
+/**
+ * The free start times and tables of a day. Without `durationMinutes` the restaurant's duration for the party size applies. With
+ * `reservationId` that reservation does not count, e.g. the one being moved on the timeline.
+ */
+export function useStaffAvailability(date: string | null, guests: number | null, durationMinutes: number | null, reservationId: string | null = null) {
   return useQuery({
-    queryKey: [...availabilityKey, date, guests, durationMinutes],
+    queryKey: [...availabilityKey, date, guests, durationMinutes, reservationId],
     queryFn: () =>
       apiGet<StaffAvailability>(
-        `/staff/availability?date=${date}&guests=${guests}${durationMinutes === null ? '' : `&durationMinutes=${durationMinutes}`}`,
+        `/staff/availability?date=${date}&guests=${guests}${durationMinutes === null ? '' : `&durationMinutes=${durationMinutes}`}${
+          reservationId === null ? '' : `&reservationId=${encodeURIComponent(reservationId)}`
+        }`,
       ),
     enabled: date !== null && guests !== null && guests >= 1,
+  })
+}
+
+/**
+ * The tables and combinations the reservation can change to at its booked time, its own included (GET
+ * /api/staff/reservations/{id}/free-tables): those a change of only its tables gets, also once it has started.
+ */
+export function useReservationFreeTables(id: string | null) {
+  return useQuery({
+    queryKey: [...availabilityKey, 'reservation', id],
+    queryFn: () => apiGet<FreeTable[]>(`/staff/reservations/${encodeURIComponent(id ?? '')}/free-tables`),
+    enabled: id !== null,
   })
 }
 
@@ -398,6 +415,35 @@ export function useUpdateReservation() {
       apiPut<Reservation>(`/staff/reservations/${encodeURIComponent(id)}`, reservation),
     onSuccess: (reservation) => applyChange(queryClient, reservation),
   })
+}
+
+/**
+ * Moves the reservation to `time` at `tableIds` on its day and updates the lists; party size, duration and the guest's details stay.
+ * Also usable outside a component, e.g. from the "Undo" button of a notification that outlives the component that showed it.
+ */
+export async function moveReservation(queryClient: QueryClient, reservation: Reservation, { time, tableIds }: { time: string; tableIds: string[] }) {
+  const input: ReservationInput = {
+    date: reservation.date,
+    time,
+    guests: reservation.guests,
+    tableIds,
+    durationMinutes: reservation.durationMinutes,
+    name: reservation.name,
+    phone: reservation.phone,
+    email: reservation.email,
+    notes: reservation.notes,
+  }
+  let changed: Reservation
+  try {
+    changed = await apiPut<Reservation>(`/staff/reservations/${encodeURIComponent(reservation.id)}`, input)
+  } catch (error) {
+    // Usually someone else changed the reservation or took the table in the meantime: show the current state.
+    void queryClient.invalidateQueries({ queryKey: reservationsKey })
+    void queryClient.invalidateQueries({ queryKey: availabilityKey })
+    throw error
+  }
+  await applyChange(queryClient, changed)
+  return changed
 }
 
 /** Minutes since midnight of "HH:mm"; "24:00" is 1440. */

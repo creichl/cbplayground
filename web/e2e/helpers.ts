@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test'
+import { expect, type Locator, type Page } from '@playwright/test'
 
 /** Signs in with a demo user of the development seed (appsettings.Development.json). */
 export async function signIn(page: Page, email: string) {
@@ -68,4 +68,25 @@ export async function bookRequest(page: Page, name: string) {
     return { date, time }
   }
   throw new Error('No free time at Kafana Dunav in the next 40 days.')
+}
+
+/** Today in Kafana Dunav's time zone (Europe/Belgrade), "YYYY-MM-DD": the day its front desk calls today. */
+export function todayInBelgrade() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Belgrade' }).format(new Date())
+}
+
+/** A time "HH:mm" as the front desk shows it in English, e.g. "7:00 PM". */
+export function timeOfDay(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, hours, minutes))
+}
+
+/** The row of a reservation in the lists of the front desk: the button that opens it, its status and its status actions. */
+export function reservationRow(page: Page, name: string): Locator {
+  return page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).locator('..')
+}
+
+/** The notification of a status change on the service screen (design system: a list item in the region "Notifications"). */
+export function statusToast(page: Page, text: string): Locator {
+  return page.getByRole('region', { name: /^Notifications/ }).getByRole('listitem').filter({ hasText: text })
 }

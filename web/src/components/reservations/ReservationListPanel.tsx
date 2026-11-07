@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { type PointerEvent, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
 import { cn } from '../../lib/utils.ts'
@@ -28,6 +28,8 @@ type ReservationListPanelProps = {
   selectedId: string | null
   /** Opens a reservation: selects it and opens the edit drawer. */
   onOpen: (reservation: Reservation) => void
+  /** Starts dragging a guest of "Upcoming" onto a table of the floor plan; without it (e.g. while the timeline is shown) the rows have no grip. */
+  onDragToTable?: (reservation: Reservation, event: PointerEvent<HTMLElement>) => void
   className?: string
 }
 
@@ -48,6 +50,7 @@ export function ReservationListPanel({
   searching,
   selectedId,
   onOpen,
+  onDragToTable,
   className,
 }: ReservationListPanelProps) {
   const { t } = useTranslation()
@@ -109,7 +112,13 @@ export function ReservationListPanel({
                 <ListSkeleton />
               )
             ) : (
-              <ReservationList reservations={lists[shown]} onOpen={onOpen} selectedId={selectedId} emptyText={emptyOf(shown)} />
+              <ReservationList
+                reservations={lists[shown]}
+                onOpen={onOpen}
+                selectedId={selectedId}
+                emptyText={emptyOf(shown)}
+                onDragToTable={shown === 'upcoming' ? onDragToTable : undefined}
+              />
             )}
           </TabsContent>
         ))}
