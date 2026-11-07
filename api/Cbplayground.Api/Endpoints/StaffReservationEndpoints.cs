@@ -354,7 +354,6 @@ public static class StaffReservationEndpoints
             return Results.NoContent();
         });
 
-        // Who changed what and when, newest first.
         // The tables and combinations the reservation can change to at its booked time, for its party and duration, as a change of
         // only its tables checks them (without the opening hours and "in the past"): e.g. a guest who arrives and sits down elsewhere.
         group.MapGet("/reservations/{id:guid}/free-tables", async (Guid id, AppDbContext db, IAvailabilityService availability, CancellationToken cancellationToken) =>
@@ -366,6 +365,7 @@ public static class StaffReservationEndpoints
                     cancellationToken));
         });
 
+        // Who changed what and when, newest first.
         group.MapGet("/reservations/{id:guid}/history", async (Guid id, ITenantContext tenantContext, AppDbContext db, CancellationToken cancellationToken) =>
         {
             if (!await db.Reservations.AnyAsync(r => r.Id == id, cancellationToken))
