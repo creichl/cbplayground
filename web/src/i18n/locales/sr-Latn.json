@@ -224,6 +224,10 @@
       "tooltipTooLarge_one": "Sto {{number}} · prevelik za {{count}} osobu",
       "tooltipTooLarge_few": "Sto {{number}} · prevelik za {{count}} osobe",
       "tooltipTooLarge_other": "Sto {{number}} · prevelik za {{count}} osoba",
+      "reasonTaken": "Zauzet u {{time}}",
+      "reasonTooLarge_one": "Za {{count}} osobu ili više",
+      "reasonTooLarge_few": "Za {{count}} osobe ili više",
+      "reasonTooLarge_other": "Za {{count}} osoba ili više",
       "largeTablesNote": "Veći stolovi ostaju slobodni za veće grupe.",
       "showList": "Prikaži stolove kao listu",
       "toScale": "Plan i stolovi u razmeri"
