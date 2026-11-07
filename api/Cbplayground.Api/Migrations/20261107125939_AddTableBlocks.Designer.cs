@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cbplayground.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261107130011_BackfillGuestProfiles")]
-    partial class BackfillGuestProfiles
+    [Migration("20261107125939_AddTableBlocks")]
+    partial class AddTableBlocks
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,61 +211,6 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("GalleryPhotos");
                 });
 
-            modelBuilder.Entity("Cbplayground.Api.Data.Guest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("AllergyNotes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT");
-
-                    b.PrimitiveCollection<string>("Tags")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Email")
-                        .IsUnique()
-                        .HasFilter("\"Email\" IS NOT NULL");
-
-                    b.HasIndex("TenantId", "Name");
-
-                    b.HasIndex("TenantId", "Phone")
-                        .IsUnique()
-                        .HasFilter("\"Phone\" IS NOT NULL");
-
-                    b.ToTable("Guests");
-                });
-
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.Property<Guid>("Id")
@@ -368,9 +313,6 @@ namespace Cbplayground.Api.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("GuestId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("GuestName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -390,11 +332,6 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Occasion")
-                        .IsRequired()
-                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PartySize")
@@ -431,8 +368,6 @@ namespace Cbplayground.Api.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GuestId");
 
                     b.HasIndex("ReferenceCode")
                         .IsUnique();
@@ -700,6 +635,47 @@ namespace Cbplayground.Api.Migrations
                         .HasFilter("\"ArchivedAtUtc\" IS NULL");
 
                     b.ToTable("Tables");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableBlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByDisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableId");
+
+                    b.HasIndex("TenantId", "StartLocal");
+
+                    b.ToTable("TableBlocks");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.TableCombination", b =>
@@ -1089,15 +1065,6 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Cbplayground.Api.Data.Guest", b =>
-                {
-                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
@@ -1127,11 +1094,6 @@ namespace Cbplayground.Api.Migrations
 
             modelBuilder.Entity("Cbplayground.Api.Data.Reservation", b =>
                 {
-                    b.HasOne("Cbplayground.Api.Data.Guest", null)
-                        .WithMany()
-                        .HasForeignKey("GuestId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Cbplayground.Api.Data.Table", null)
                         .WithMany()
                         .HasForeignKey("TableId")
@@ -1262,6 +1224,21 @@ namespace Cbplayground.Api.Migrations
                     b.HasOne("Cbplayground.Api.Data.Area", null)
                         .WithMany()
                         .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableBlock", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Table", null)
+                        .WithMany()
+                        .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

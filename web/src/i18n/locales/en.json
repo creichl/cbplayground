@@ -1676,6 +1676,39 @@
       "next": "Next at this table: {{time}}, {{name}} ({{guests}})"
     }
   },
+  "tableBlocks": {
+    "block": "Block table…",
+    "blocked": "Blocked",
+    "floorUntil": "Blocked until {{time}}",
+    "legend": "Blocked",
+    "created": "Table {{number}} is blocked from {{start}} to {{end}}.",
+    "removed": "Table {{number}} is no longer blocked.",
+    "remove": "Remove block",
+    "dialog": {
+      "title": "Block table {{number}}",
+      "description": "Nobody can book the table in this time: online, by phone or as a walk-in.",
+      "from": "From",
+      "to": "To",
+      "reason": "Reason (optional)",
+      "reasonPlaceholder": "e.g. wobbly, being repaired",
+      "submit": "Block table",
+      "conflicts": "Reservations at this table in this time:"
+    },
+    "details": {
+      "title": "Table {{number}} blocked",
+      "createdBy": "Blocked by {{name}}"
+    },
+    "errors": {
+      "createTitle": "The table could not be blocked",
+      "removeTitle": "The block could not be removed",
+      "invalidDate": "The date is not valid.",
+      "invalidTime": "Choose the times on the quarter hour.",
+      "startNotBeforeEnd": "The end has to lie after the start.",
+      "invalidReason": "The reason may have at most 100 characters.",
+      "tableHasReservations": "The table has reservations in this time. Move or cancel them first, or choose another time.",
+      "notFound": "The table or the block no longer exists."
+    }
+  },
   "styleguide": {
     "title": "Styleguide",
     "intro": "Tokens and components of the design system for the guest pages. Development only.",

@@ -1724,6 +1724,39 @@
       "next": "Sledeća za ovim stolom: {{time}}, {{name}} ({{guests}})"
     }
   },
+  "tableBlocks": {
+    "block": "Blokiraj sto…",
+    "blocked": "Blokiran",
+    "floorUntil": "Blokiran do {{time}}",
+    "legend": "Blokiran",
+    "created": "Sto {{number}} je blokiran od {{start}} do {{end}}.",
+    "removed": "Sto {{number}} više nije blokiran.",
+    "remove": "Ukloni blokadu",
+    "dialog": {
+      "title": "Blokiraj sto {{number}}",
+      "description": "U ovom periodu niko ne može da rezerviše sto: ni onlajn, ni telefonom, ni kao gost bez rezervacije.",
+      "from": "Od",
+      "to": "Do",
+      "reason": "Razlog (opciono)",
+      "reasonPlaceholder": "npr. klima se, popravlja se",
+      "submit": "Blokiraj sto",
+      "conflicts": "Rezervacije za ovaj sto u ovom periodu:"
+    },
+    "details": {
+      "title": "Sto {{number}} je blokiran",
+      "createdBy": "Blokirao/la {{name}}"
+    },
+    "errors": {
+      "createTitle": "Sto nije moguće blokirati",
+      "removeTitle": "Blokadu nije moguće ukloniti",
+      "invalidDate": "Datum nije ispravan.",
+      "invalidTime": "Izaberite vreme na pun četvrt sata.",
+      "startNotBeforeEnd": "Kraj mora biti posle početka.",
+      "invalidReason": "Razlog može imati najviše 100 znakova.",
+      "tableHasReservations": "Sto ima rezervacije u ovom periodu. Prvo ih premestite ili otkažite, ili izaberite drugo vreme.",
+      "notFound": "Sto ili blokada više ne postoji."
+    }
+  },
   "styleguide": {
     "title": "Stilski vodič",
     "intro": "Tokeni i komponente dizajn-sistema za stranice za goste. Samo u razvoju.",

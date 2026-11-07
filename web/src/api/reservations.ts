@@ -192,8 +192,8 @@ const maxRequestDaysAhead = 365
 const refreshIntervalMs = 60_000
 
 export const reservationsKey = ['staff', 'reservations'] as const
-const availabilityKey = ['staff', 'availability'] as const
-const walkInTablesKey = ['staff', 'walk-in-tables'] as const
+export const availabilityKey = ['staff', 'availability'] as const
+export const walkInTablesKey = ['staff', 'walk-in-tables'] as const
 const historyKey = ['staff', 'reservation-history'] as const
 
 function reservationsQuery(from: string | null, to: string | null, status: ReservationStatus | null = null) {
