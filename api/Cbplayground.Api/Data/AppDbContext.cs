@@ -32,6 +32,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<Reservation> Reservations => Set<Reservation>();
 
+    public DbSet<ReservationTable> ReservationTables => Set<ReservationTable>();
+
+    public DbSet<TableCombination> TableCombinations => Set<TableCombination>();
+
+    public DbSet<TableCombinationTable> TableCombinationTables => Set<TableCombinationTable>();
+
     public DbSet<ReservationEvent> ReservationEvents => Set<ReservationEvent>();
 
     /// <summary>
@@ -129,6 +135,29 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<TableCombination>(combination =>
+        {
+            combination.HasOne<Tenant>()
+                .WithMany()
+                .HasForeignKey(c => c.TenantId)
+                .OnDelete(DeleteBehavior.Restrict);
+            // Deleting an area deletes its combinations.
+            combination.HasOne<Area>()
+                .WithMany()
+                .HasForeignKey(c => c.AreaId)
+                .OnDelete(DeleteBehavior.Cascade);
+            combination.HasMany(c => c.Tables).WithOne().HasForeignKey(t => t.CombinationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TableCombinationTable>(combinationTable =>
+        {
+            combinationTable.HasKey(t => new { t.CombinationId, t.TableId });
+            combinationTable.HasIndex(t => t.TableId);
+            combinationTable.HasOne<Tenant>().WithMany().HasForeignKey(t => t.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // The endpoints delete the combinations of a deleted table; the cascade keeps the database consistent all the same.
+            combinationTable.HasOne<Table>().WithMany().HasForeignKey(t => t.TableId).OnDelete(DeleteBehavior.Cascade);
+        });
+
         modelBuilder.Entity<RoomElement>(element =>
         {
             element.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
@@ -186,6 +215,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             reservation.Property(r => r.Language).HasMaxLength(10);
             reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             reservation.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);
+            reservation.HasMany(r => r.Tables).WithOne().HasForeignKey(t => t.ReservationId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ReservationTable>(reservationTable =>
+        {
+            reservationTable.HasKey(t => new { t.ReservationId, t.TableId });
+            reservationTable.HasIndex(t => t.TableId);
+            reservationTable.HasOne<Tenant>().WithMany().HasForeignKey(t => t.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Like Reservation.TableId: a table with reservations cannot be deleted by the database (TableDeletion).
+            reservationTable.HasOne<Table>().WithMany().HasForeignKey(t => t.TableId).OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<ReservationEvent>(reservationEvent =>

@@ -228,8 +228,9 @@ public static class AreaEndpoints
         });
 
         // Not while one of its tables has reservations that have not ended yet. Its tables are deleted or archived one by one
-        // (TableDeletion). Without an archived table the area is deleted with its floor plan image and its photo; with one, the area
-        // is archived and keeps both, so the reservations on its archived tables keep their area.
+        // (TableDeletion), and their combinations are deleted. Without an archived table the area is deleted with its floor plan
+        // image and its photo; with one, the area is archived and keeps both, so the reservations on its archived tables keep
+        // their area.
         group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, TimeProvider timeProvider,
             IConfiguration configuration, IWebHostEnvironment environment) =>
         {

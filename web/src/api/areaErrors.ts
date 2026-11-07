@@ -24,6 +24,10 @@ const errorKeys = {
   invalid_room_element_position: 'areas.errors.roomElementPositionInvalid',
   invalid_room_element_label: 'areas.errors.roomElementLabelInvalid',
   too_many_room_elements: 'areas.errors.tooManyRoomElements',
+  combination_tables_invalid: 'areas.errors.combinationTablesInvalid',
+  combination_exists: 'areas.errors.combinationExists',
+  combination_seats_invalid: 'areas.errors.combinationSeatsInvalid',
+  combination_min_guests_invalid: 'areas.errors.combinationMinGuestsInvalid',
 } as const
 
 /** The error code of a failed request, e.g. "table_number_taken", or null. */

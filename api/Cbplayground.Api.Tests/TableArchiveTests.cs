@@ -70,6 +70,7 @@ public class TableArchiveTests(ApiFactory factory) : IClassFixture<ApiFactory>
         var reservation = new Reservation
         {
             TableId = restaurant.Tables[tableNumber],
+            Tables = [new ReservationTable { TableId = restaurant.Tables[tableNumber] }],
             StartLocal = startLocal,
             EndLocal = startLocal.AddMinutes(120),
             DurationMinutes = 120,

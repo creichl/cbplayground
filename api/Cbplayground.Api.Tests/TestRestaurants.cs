@@ -133,6 +133,7 @@ public static class TestRestaurants
         var reservation = new Reservation
         {
             TableId = restaurant.Tables[tableNumber],
+            Tables = [new ReservationTable { TableId = restaurant.Tables[tableNumber] }],
             StartLocal = startLocal,
             EndLocal = startLocal.AddMinutes(durationMinutes),
             DurationMinutes = durationMinutes,

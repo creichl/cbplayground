@@ -53,7 +53,11 @@ public class Reservation : ITenantOwned
 
     public Guid TenantId { get; set; }
 
+    /// <summary>The first table of the reservation (in number order); all its tables are in <see cref="Tables"/>.</summary>
     public Guid TableId { get; set; }
+
+    /// <summary>All tables the reservation occupies: its table, or all tables of a combination (<see cref="TableCombination"/>).</summary>
+    public List<ReservationTable> Tables { get; set; } = [];
 
     /// <summary>Start in the restaurant's local time. DateTime instead of DateTimeOffset, so SQLite can sort and compare it.</summary>
     public DateTime StartLocal { get; set; }

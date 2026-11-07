@@ -98,13 +98,19 @@ type FormValues = {
   guests: NumberValue
   date: string | null
   time: string | null
-  tableId: string | null
+  /** The chosen table or combination: its tables' ids, joined by commas (tableKey). */
+  tables: string | null
   overrideDuration: boolean
   durationMinutes: NumberValue
   name: string
   phone: string
   email: string
   notes: string
+}
+
+/** The value of a table or combination in the table choice: its tables' ids. */
+function tableKey(tableIds: string[]) {
+  return tableIds.join(',')
 }
 
 function wholeNumber(value: NumberValue) {
@@ -127,7 +133,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
       guests: reservation?.guests ?? 2,
       date: initialDate,
       time: reservation?.time ?? null,
-      tableId: reservation?.tableId ?? null,
+      tables: reservation === null ? null : tableKey(reservation.tableIds),
       overrideDuration: initialDuration !== null,
       durationMinutes: initialDuration ?? reservation?.durationMinutes ?? 120,
       name: reservation?.name ?? '',
@@ -158,35 +164,40 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
   const freeTables = times.find((slot) => slot.time === time)?.tables ?? []
   const suggestion = freeTables.at(0) ?? null
 
-  // A change offers the tables that are free for the chosen time and duration, and always its current table
-  // (the reservation itself occupies it, so it is not among the free ones).
-  const currentArea = isNew ? undefined : floor.data?.find((area) => area.tables.some((table) => table.id === reservation.tableId))
-  const currentTable = currentArea?.tables.find((table) => table.id === reservation?.tableId)
-  const offeredTables = isNew ? freeTables : freeTables.filter((table) => table.id !== reservation.tableId)
+  // A change offers the tables and combinations that are free for the chosen time and duration, and always its current
+  // table or tables (the reservation itself occupies them, so they are not among the free ones). The seats of current tables
+  // that are not a free combination are their own seats added up.
+  const currentKey = isNew ? null : tableKey(reservation.tableIds)
+  const floorTables = floor.data?.flatMap((area) => area.tables) ?? []
+  const currentSeats = isNew
+    ? 0
+    : reservation.tableIds.reduce((sum, id) => sum + (floorTables.find((table) => table.id === id)?.seats ?? 0), 0)
+  const offeredTables = isNew ? freeTables : freeTables.filter((table) => tableKey(table.tableIds) !== currentKey)
+  const combined = (tableIds: string[]) => tableIds.length > 1
   const tableOptions = [
     ...(reservation !== null
       ? [
           {
-            value: reservation.tableId,
-            label: t('reservations.form.tableOptionCurrent', {
+            value: currentKey!,
+            label: t(combined(reservation.tableIds) ? 'reservations.form.combinationOptionCurrent' : 'reservations.form.tableOptionCurrent', {
               number: reservation.tableNumber,
               area: reservation.areaName,
-              count: currentTable?.seats ?? 0,
+              count: currentSeats,
             }),
           },
         ]
       : []),
-    ...offeredTables.map((table) => ({
-      value: table.id,
-      label: t(isNew && table.id === suggestion?.id ? 'reservations.form.tableOptionSuggested' : 'reservations.form.tableOption', {
-        number: table.number,
-        area: table.areaName,
-        count: table.seats,
-      }),
-    })),
+    ...offeredTables.map((table) => {
+      const suggested = isNew && table.id === suggestion?.id
+      const kind = table.kind === 'combination' ? 'combinationOption' : 'tableOption'
+      return {
+        value: tableKey(table.tableIds),
+        label: t(`reservations.form.${kind}${suggested ? 'Suggested' : ''}`, { number: table.label, area: table.areaName, count: table.seats }),
+      }
+    }),
   ]
-  const fallbackTableId = isNew ? (suggestion?.id ?? null) : reservation.tableId
-  const tableId = tableOptions.some((option) => option.value === values.tableId) ? values.tableId : fallbackTableId
+  const fallbackTables = isNew ? (suggestion === null ? null : tableKey(suggestion.tableIds)) : currentKey
+  const chosenTables = tableOptions.some((option) => option.value === values.tables) ? values.tables : fallbackTables
 
   const submit = form.onSubmit((submitted) => {
     if (!closed && (time === null || submitted.date === null)) {
@@ -195,12 +206,18 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
     }
     const booking =
       reservation !== null && closed
-        ? { date: reservation.date, time: reservation.time, guests: reservation.guests, tableId: reservation.tableId, durationMinutes: reservation.durationMinutes }
+        ? {
+            date: reservation.date,
+            time: reservation.time,
+            guests: reservation.guests,
+            tableIds: reservation.tableIds,
+            durationMinutes: reservation.durationMinutes,
+          }
         : {
             date: submitted.date!,
             time: time!,
             guests: Number(submitted.guests),
-            tableId,
+            tableIds: chosenTables === null ? null : chosenTables.split(','),
             durationMinutes: submitted.overrideDuration ? Number(submitted.durationMinutes) : null,
           }
     const input: ReservationInput = {
@@ -343,8 +360,8 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
               description={isNew ? t('reservations.form.tableDescriptionNew') : t('reservations.form.tableDescriptionEdit')}
               placeholder={isNew && time === null ? t('reservations.form.tablePlaceholder') : undefined}
               data={tableOptions}
-              value={tableId}
-              onChange={(value) => form.setFieldValue('tableId', value)}
+              value={chosenTables}
+              onChange={(value) => form.setFieldValue('tables', value)}
               disabled={isNew ? time === null : floor.isPending}
               allowDeselect={false}
               size="md"

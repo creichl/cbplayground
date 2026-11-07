@@ -258,3 +258,83 @@ test.describe('Not found', () => {
     await screenshot(page, 'not-found', 'reservation-not-found')
   })
 })
+
+/**
+ * A day of Gasthaus zur Linde at least `daysAhead` days ahead, beyond the demo reservations (today and the next 7 days), on
+ * which a party of `guests` can book online, and its first free evening time.
+ */
+async function freeLindeEvening(page: Page, daysAhead: number, guests: number) {
+  const slug = '/api/public/restaurants/zur-linde'
+  const today = new Date()
+  for (let offset = daysAhead; offset < daysAhead + 30; offset++) {
+    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + offset)).toISOString().slice(0, 10)
+    const availability = (await (await page.request.get(`${slug}/availability?date=${day}&guests=${guests}`)).json()) as {
+      periods: { start: string; times: { time: string; available: boolean }[] }[]
+    }
+    const time = availability.periods
+      .filter((period) => period.start >= '17:00')
+      .flatMap((period) => period.times)
+      .find((option) => option.available)?.time
+    if (time !== undefined) {
+      return { day, time }
+    }
+  }
+  throw new Error('Gasthaus zur Linde has no free evening for this party.')
+}
+
+test.describe('Table combinations', () => {
+  test('books 8 people online at Gasthaus zur Linde on two combined tables', async ({ page }) => {
+    const { day, time } = await freeLindeEvening(page, 12, 8)
+    // An earlier booking takes the table for 8, so only the combination of tables 2 and 3 seats the next group of 8.
+    const first = await page.request.post('/api/public/restaurants/zur-linde/reservations', {
+      data: { date: day, time, guests: 8, name: 'Erste Gruppe', phone: '+49 89 1234567', language: 'en' },
+    })
+    expect(first.status()).toBe(201)
+    expect(await first.json()).toMatchObject({ tableNumber: '8' })
+
+    await page.goto(`/r/zur-linde?guests=8&date=${day}&time=${time}&step=details`)
+    const dialog = page.getByRole('dialog')
+    await dialog.getByLabel('Name').fill('Zweite Gruppe')
+    await dialog.getByLabel('Phone').fill('+49 89 7654321')
+    await dialog.getByRole('button', { name: 'Book now' }).click()
+
+    await expect(dialog.getByRole('heading', { name: 'Your table is reserved' })).toBeVisible()
+    await expect(dialog.getByText('Tables 2 + 3 · Gaststube')).toBeVisible()
+    await settle(page)
+    await screenshot(page, 'combinations', 'online-confirmation', { fullPage: false })
+  })
+
+  test('skips the table step where the guest chooses, when only a combination seats the group', async ({ page }) => {
+    const slug = '/api/public/restaurants/kafana-dunav'
+    const time = '19:00'
+    // A day beyond the demo reservations; the two tables for 8 are taken by earlier groups.
+    const today = new Date()
+    const day = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + 16)).toISOString().slice(0, 10)
+    const areas = (await (await page.request.get(`${slug}/tables?date=${day}&time=${time}&guests=8`)).json()) as {
+      tables: { id: string; seats: number; available: boolean }[]
+    }[]
+    const largeTables = areas.flatMap((area) => area.tables).filter((table) => table.available && table.seats >= 8)
+    expect(largeTables.length).toBeGreaterThan(0)
+    for (const table of largeTables) {
+      const response = await page.request.post(`${slug}/reservations`, {
+        data: { date: day, time, guests: 8, tableId: table.id, name: 'Velika grupa', phone: '+381 21 123456', language: 'en' },
+      })
+      expect(response.status()).toBe(201)
+    }
+
+    await page.goto(`/r/kafana-dunav?guests=8&date=${day}`)
+    await page.locator(`[data-time-chip="${time}"]`).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog.getByRole('heading', { name: 'Your contact details' })).toBeVisible()
+    await expect(page).toHaveURL(/step=details/)
+    await expect(dialog.getByText('Table', { exact: true })).toHaveCount(0)
+    await dialog.getByLabel('Name').fill('Druga grupa')
+    await dialog.getByLabel('Phone').fill('+381 21 654321')
+    await dialog.getByRole('button', { name: 'Send request' }).click()
+
+    await expect(dialog.getByRole('heading', { name: 'Request sent' })).toBeVisible()
+    await expect(dialog.getByText('Tables 2 + 3 · Sala')).toBeVisible()
+    await settle(page)
+    await screenshot(page, 'combinations', 'guest-chooses-combined', { fullPage: false })
+  })
+})

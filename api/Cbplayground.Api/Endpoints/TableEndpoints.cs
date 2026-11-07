@@ -100,7 +100,8 @@ public static class TableEndpoints
         });
 
         // A table with reservations that have not ended yet cannot be deleted. A table without reservations is deleted, one with
-        // reservations (past, cancelled, declined ones) is archived, so they keep their table.
+        // reservations (past, cancelled, declined ones) is archived, so they keep their table. The combinations it
+        // is part of are deleted in both cases.
         group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, TimeProvider timeProvider) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync();

@@ -40,6 +40,9 @@ public static class DevelopmentSeed
 
     private record DemoPeriod(DayOfWeek Day, TimeOnly Start, TimeOnly End);
 
+    /// <summary>Tables of a demo area that can be pushed together; seats and the smallest online party are the defaults.</summary>
+    private record DemoCombination(string Area, string[] Tables);
+
     /// <summary>A demo branding; <see cref="LogoFile"/> and <see cref="CoverFile"/> are files in <see cref="SeedAssetsPath"/>.</summary>
     private record DemoBranding(string BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string LogoFile, string CoverFile);
 
@@ -57,7 +60,8 @@ public static class DevelopmentSeed
         ReservationSettings Settings,
         DurationRule[] DurationRules,
         DemoBranding Branding,
-        DemoGalleryPhoto[] Gallery);
+        DemoGalleryPhoto[] Gallery,
+        DemoCombination[] Combinations);
 
     private static readonly DayOfWeek[] TuesdayToSunday =
         [DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
@@ -129,7 +133,9 @@ public static class DevelopmentSeed
                 new("zur-linde-gallery-weisswurst-brezn.jpg", "Weißwurst mit Brezn und süßem Senf"),
                 new("zur-linde-gallery-helles.jpg", "Ein frisches Helles im Garten"),
                 new("zur-linde-gallery-kaiserschmarrn.jpg", "Kaiserschmarrn mit Apfelmus"),
-            ]),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Gaststube", ["2", "3"])]),
         new(
             Name: "Kafana Dunav",
             Slug: "kafana-dunav",
@@ -187,7 +193,9 @@ public static class DevelopmentSeed
                 new("kafana-dunav-gallery-dunav.jpg", "Veče na Dunavu"),
                 new("kafana-dunav-gallery-tamburasi.jpg", "Tamburaši petkom i subotom"),
                 new("kafana-dunav-gallery-sto.jpg", "Postavljen sto čeka goste"),
-            ]),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Sala", ["2", "3"])]),
         new(
             Name: "Rooftop Belvedere",
             Slug: "rooftop-belvedere",
@@ -244,7 +252,9 @@ public static class DevelopmentSeed
                 new("rooftop-belvedere-gallery-lounge.jpg", "Die Lounge-Ecke"),
                 new("rooftop-belvedere-gallery-champagner.jpg", "Champagner zum Anstoßen"),
                 new("rooftop-belvedere-gallery-blick.jpg", "Blick über die Dächer Wiens"),
-            ]),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Lounge", ["L2", "L3"])]),
     ];
 
     /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
@@ -414,6 +424,31 @@ public static class DevelopmentSeed
                         {
                             area.PhotoFileName = CopySeedAsset(demoArea.PhotoFile);
                         }
+                    }
+                }
+
+                // Saved first, so the combinations find the tables of new areas.
+                await db.SaveChangesAsync();
+                if (!await db.TableCombinations.AnyAsync())
+                {
+                    var areas = await db.Areas.ToListAsync();
+                    var tables = await db.Tables.ToListAsync();
+                    foreach (var demoCombination in demo.Combinations)
+                    {
+                        // Only while the area and its tables are as in the demo.
+                        var area = areas.SingleOrDefault(a => a.Name == demoCombination.Area);
+                        var combined = demoCombination.Tables.Select(number => tables.SingleOrDefault(t => t.Number == number && t.AreaId == area?.Id)).ToList();
+                        if (area is null || combined.Any(t => t is null))
+                        {
+                            continue;
+                        }
+                        db.TableCombinations.Add(new TableCombination
+                        {
+                            AreaId = area.Id,
+                            Seats = combined.Sum(t => t!.Seats),
+                            MinGuests = combined.Max(t => t!.Seats) + 1,
+                            Tables = combined.Select(t => new TableCombinationTable { TableId = t!.Id }).ToList(),
+                        });
                     }
                 }
 
@@ -601,6 +636,7 @@ public static class DevelopmentSeed
                     var reservation = new Reservation
                     {
                         TableId = entry.Table.Id,
+                        Tables = [new ReservationTable { TableId = entry.Table.Id }],
                         StartLocal = start,
                         EndLocal = end,
                         DurationMinutes = duration,

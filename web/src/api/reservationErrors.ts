@@ -17,6 +17,7 @@ const errorKeys = {
   in_the_past: 'reservations.errors.inThePast',
   slot_unavailable: 'reservations.errors.slotUnavailable',
   table_unavailable: 'reservations.errors.tableUnavailable',
+  invalid_tables: 'reservations.errors.invalidTables',
   invalid_status: 'reservations.errors.invalidStatus',
   invalid_status_transition: 'reservations.errors.invalidStatusTransition',
   status_not_allowed_now: 'reservations.errors.statusNotAllowedNow',

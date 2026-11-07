@@ -262,7 +262,9 @@
       "tableInArea": "Table {{number}} · {{area}}",
       "address": "Address",
       "copyLink": "Copy link",
-      "copy": "Copy"
+      "copy": "Copy",
+      "tables": "Tables",
+      "tablesInArea": "Tables {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -1033,7 +1035,11 @@
       "roomElementLabelInvalid": "Please enter a label of at most 40 characters.",
       "tooManyRoomElements": "A room can have at most 60 elements.",
       "roomNotSaved": "The room could not be saved",
-      "widthInvalid": "Please enter a width from 5 to 80 m, or leave the field empty."
+      "widthInvalid": "Please enter a width from 5 to 80 m, or leave the field empty.",
+      "combinationTablesInvalid": "Please select two or more tables of this area.",
+      "combinationExists": "These tables are already combined.",
+      "combinationSeatsInvalid": "A combination needs at least one seat more than its largest table.",
+      "combinationMinGuestsInvalid": "Please enter a whole number from 1 to the combination's seats."
     },
     "roomDragHint": "Drag tables and room elements to move them; the arrow keys move a selected element. Click one to edit it.",
     "photo": {
@@ -1094,6 +1100,34 @@
       "labelHint": "Optional, shown in the plan, e.g. “Kitchen”.",
       "delete": "Delete element",
       "defaultLabel": "Text"
+    },
+    "combinations": {
+      "title": "Combinations",
+      "text": "Tables that can be pushed together for a larger group. The system only gives a combination when no single table fits the party.",
+      "select": "Select tables to combine",
+      "pickHint": "Click the tables on the plan that are pushed together.",
+      "pickedNone": "No table selected yet.",
+      "picked": "Selected tables: {{tables}}",
+      "combine": "Combine",
+      "created": "Tables {{label}} have been combined.",
+      "empty": "No combinations yet.",
+      "label": "Tables {{label}}",
+      "summary_one": "{{count}} seat · online from {{minGuests}} people",
+      "summary_other": "{{count}} seats · online from {{minGuests}} people",
+      "summaryOffline_one": "{{count}} seat · not bookable online",
+      "summaryOffline_other": "{{count}} seats · not bookable online",
+      "seats": "Seats",
+      "seatsHint": "At least one more than its largest table: {{min}}.",
+      "minGuests": "Online from (people)",
+      "minGuestsHint": "Online, the combination is only offered to parties of at least this size.",
+      "onlineBookable": "Bookable online",
+      "onlineBookableHint": "When off, only staff can give it, e.g. for a phone reservation.",
+      "saved": "The combination has been saved.",
+      "edit": "Edit",
+      "editLabel": "Edit tables {{label}}",
+      "delete": "Delete",
+      "deleteLabel": "Delete tables {{label}}",
+      "deleted": "The combination has been deleted."
     }
   },
   "floorPlan": {
@@ -1335,7 +1369,13 @@
         "time": "Please choose a time.",
         "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
         "name": "Please enter the guest's name."
-      }
+      },
+      "combinationOption_one": "Tables {{number}} · {{area}} · {{count}} seat",
+      "combinationOption_other": "Tables {{number}} · {{area}} · {{count}} seats",
+      "combinationOptionSuggested_one": "Tables {{number}} · {{area}} · {{count}} seat (suggested)",
+      "combinationOptionSuggested_other": "Tables {{number}} · {{area}} · {{count}} seats (suggested)",
+      "combinationOptionCurrent_one": "Tables {{number}} · {{area}} · {{count}} seat (current)",
+      "combinationOptionCurrent_other": "Tables {{number}} · {{area}} · {{count}} seats (current)"
     },
     "history": {
       "title": "History",
@@ -1388,7 +1428,8 @@
       "reservationClosed": "This reservation is closed: only the guest's details and the note can be changed.",
       "cannotDeleteReservation": "Only a seated walk-in can be removed. Someone else may have changed it; the list has been reloaded.",
       "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
-      "statusTitle": "The status could not be changed"
+      "statusTitle": "The status could not be changed",
+      "invalidTables": "Please choose one table or a combination of tables."
     },
     "chart": {
       "title": "Covers per quarter hour",

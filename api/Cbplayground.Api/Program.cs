@@ -223,6 +223,7 @@ app.MapAdminEndpoints();
 app.MapStaffEndpoints();
 app.MapAreaEndpoints();
 app.MapTableEndpoints();
+app.MapTableCombinationEndpoints();
 app.MapOpeningHoursEndpoints();
 app.MapSpecialDayEndpoints();
 app.MapReservationSettingsEndpoints();

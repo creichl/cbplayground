@@ -48,7 +48,11 @@ export type Availability = {
   date: string
   guests: number
   durationMinutes: number
-  periods: { start: string; end: string; times: { time: string; available: boolean }[] }[]
+  /**
+   * `combined`: available, but only for a combination of tables (no single table seats the party then), which the system
+   * assigns; where the guest chooses the table, the booking then skips that step.
+   */
+  periods: { start: string; end: string; times: { time: string; available: boolean; combined: boolean }[] }[]
 }
 
 /** A table on an area's floor plan; the position is relative to the plan (image or schematic plan), 0–1. */
@@ -89,7 +93,7 @@ export type BookingRequest = {
   date: string
   time: string
   guests: number
-  /** Required when the guest chooses the table, ignored otherwise. */
+  /** Required when the guest chooses the table (unless only a combination of tables is free then), ignored otherwise. */
   tableId: string | null
   name: string
   phone: string | null
@@ -107,7 +111,11 @@ export type BookingResult = {
   guests: number
   durationMinutes: number
   area: string
+  /** Its tables' numbers joined, e.g. "4 + 5" for a combination of tables. */
   tableNumber: string
+  /** All its tables in number order: one, or the tables of a combination. */
+  tableIds: string[]
+  tableNumbers: string[]
   /** Belongs in the guest's link to view and cancel the reservation (managePath); only returned by the booking. */
   manageToken: string
 }
@@ -123,7 +131,10 @@ export type GuestReservation = {
   guests: number
   durationMinutes: number
   area: string
+  /** Its tables' numbers joined, e.g. "4 + 5" for a combination of tables. */
   tableNumber: string
+  tableIds: string[]
+  tableNumbers: string[]
   name: string
   cancelledByGuest: boolean
   /** Whether the guest can still cancel online: an open reservation before its start. */

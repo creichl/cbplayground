@@ -262,7 +262,9 @@
       "tableInArea": "Tisch {{number}} · {{area}}",
       "address": "Adresse",
       "copyLink": "Link kopieren",
-      "copy": "Kopieren"
+      "copy": "Kopieren",
+      "tables": "Tische",
+      "tablesInArea": "Tische {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Tischreservierung – {{restaurant}}",
@@ -1033,7 +1035,11 @@
       "roomElementLabelInvalid": "Bitte geben Sie eine Beschriftung mit höchstens 40 Zeichen ein.",
       "tooManyRoomElements": "Ein Raum kann höchstens 60 Elemente haben.",
       "roomNotSaved": "Der Raum konnte nicht gespeichert werden",
-      "widthInvalid": "Bitte geben Sie eine Breite von 5 bis 80 m ein oder lassen Sie das Feld leer."
+      "widthInvalid": "Bitte geben Sie eine Breite von 5 bis 80 m ein oder lassen Sie das Feld leer.",
+      "combinationTablesInvalid": "Bitte wählen Sie zwei oder mehr Tische dieses Bereichs aus.",
+      "combinationExists": "Diese Tische sind bereits kombiniert.",
+      "combinationSeatsInvalid": "Eine Kombination braucht mindestens einen Platz mehr als ihr größter Tisch.",
+      "combinationMinGuestsInvalid": "Bitte geben Sie eine ganze Zahl von 1 bis zu den Plätzen der Kombination ein."
     },
     "roomDragHint": "Ziehen Sie Tische und Raumelemente, um sie zu verschieben; die Pfeiltasten verschieben ein gewähltes Element. Klicken Sie darauf, um es zu bearbeiten.",
     "photo": {
@@ -1094,6 +1100,34 @@
       "labelHint": "Optional, erscheint im Plan, z. B. „Küche“.",
       "delete": "Element löschen",
       "defaultLabel": "Text"
+    },
+    "combinations": {
+      "title": "Kombinationen",
+      "text": "Tische, die für eine größere Gruppe zusammengestellt werden können. Das System vergibt eine Kombination nur, wenn kein einzelner Tisch passt.",
+      "select": "Tische zum Kombinieren auswählen",
+      "pickHint": "Klicken Sie auf dem Plan die Tische an, die zusammengestellt werden.",
+      "pickedNone": "Noch kein Tisch ausgewählt.",
+      "picked": "Ausgewählte Tische: {{tables}}",
+      "combine": "Kombinieren",
+      "created": "Die Tische {{label}} wurden kombiniert.",
+      "empty": "Noch keine Kombinationen.",
+      "label": "Tische {{label}}",
+      "summary_one": "{{count}} Platz · online ab {{minGuests}} Personen",
+      "summary_other": "{{count}} Plätze · online ab {{minGuests}} Personen",
+      "summaryOffline_one": "{{count}} Platz · nicht online buchbar",
+      "summaryOffline_other": "{{count}} Plätze · nicht online buchbar",
+      "seats": "Plätze",
+      "seatsHint": "Mindestens einer mehr als ihr größter Tisch: {{min}}.",
+      "minGuests": "Online ab (Personen)",
+      "minGuestsHint": "Online wird die Kombination nur Gruppen ab dieser Größe angeboten.",
+      "onlineBookable": "Online buchbar",
+      "onlineBookableHint": "Wenn aus, vergibt sie nur das Personal, z. B. bei einer telefonischen Reservierung.",
+      "saved": "Die Kombination wurde gespeichert.",
+      "edit": "Bearbeiten",
+      "editLabel": "Tische {{label}} bearbeiten",
+      "delete": "Löschen",
+      "deleteLabel": "Tische {{label}} löschen",
+      "deleted": "Die Kombination wurde gelöscht."
     }
   },
   "floorPlan": {
@@ -1335,7 +1369,13 @@
         "time": "Bitte eine Uhrzeit wählen.",
         "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
         "name": "Bitte den Namen des Gastes angeben."
-      }
+      },
+      "combinationOption_one": "Tische {{number}} · {{area}} · {{count}} Platz",
+      "combinationOption_other": "Tische {{number}} · {{area}} · {{count}} Plätze",
+      "combinationOptionSuggested_one": "Tische {{number}} · {{area}} · {{count}} Platz (Vorschlag)",
+      "combinationOptionSuggested_other": "Tische {{number}} · {{area}} · {{count}} Plätze (Vorschlag)",
+      "combinationOptionCurrent_one": "Tische {{number}} · {{area}} · {{count}} Platz (aktuell)",
+      "combinationOptionCurrent_other": "Tische {{number}} · {{area}} · {{count}} Plätze (aktuell)"
     },
     "history": {
       "title": "Verlauf",
@@ -1388,7 +1428,8 @@
       "reservationClosed": "Diese Reservierung ist abgeschlossen: Nur die Angaben zum Gast und die Notiz lassen sich ändern.",
       "cannotDeleteReservation": "Nur ein platzierter Walk-in lässt sich entfernen. Vielleicht hat jemand anderes ihn geändert; die Liste wurde neu geladen.",
       "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
-      "statusTitle": "Der Status konnte nicht geändert werden"
+      "statusTitle": "Der Status konnte nicht geändert werden",
+      "invalidTables": "Bitte wählen Sie einen Tisch oder eine Kombination von Tischen."
     },
     "chart": {
       "title": "Gäste je Viertelstunde",

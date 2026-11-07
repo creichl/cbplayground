@@ -21,10 +21,15 @@ export type Reservation = {
   guests: number
   status: ReservationStatus
   source: ReservationSource
+  /** The first of its tables. */
   tableId: string
+  /** Its tables' numbers joined, e.g. "4 + 5" for a combination of tables. */
   tableNumber: string
-  /** The table was deleted after this reservation and is archived: it is on no floor plan any more, the reservation keeps it. */
+  /** One of its tables was deleted after this reservation and is archived: it is on no floor plan any more, the reservation keeps it. */
   tableArchived: boolean
+  /** All its tables in number order: one, or the tables of a combination. */
+  tableIds: string[]
+  tableNumbers: string[]
   areaId: string
   areaName: string
   name: string
@@ -66,9 +71,16 @@ export type ReservationEvent = {
   changes: ReservationChange[]
 }
 
-/** A table that is free for the whole duration, in the order the system would assign them. */
+/**
+ * A table, or a combination of tables, that is free for the whole duration, in the order the system would assign them: the
+ * tables first, then the combinations. `id` is the table's or the combination's, `tableIds` its tables in number order,
+ * `label` (and `number`) their numbers, e.g. "4 + 5". Walk-ins only get tables.
+ */
 export type FreeTable = {
+  kind: 'table' | 'combination'
   id: string
+  tableIds: string[]
+  label: string
   number: string
   seats: number
   areaId: string
@@ -130,14 +142,15 @@ export type WalkInInput = {
 }
 
 /**
- * A new or changed reservation. Without `tableId` the system assigns a table, without `durationMinutes`
- * the restaurant's duration for the party size applies. The language is left to the server.
+ * A new or changed reservation. `tableIds` are one table or the tables of one combination; without them the system assigns a
+ * table (or, when none fits, a combination). Without `durationMinutes` the restaurant's duration for the party size applies.
+ * The language is left to the server.
  */
 export type ReservationInput = {
   date: string
   time: string
   guests: number
-  tableId: string | null
+  tableIds: string[] | null
   durationMinutes: number | null
   name: string
   phone: string | null
