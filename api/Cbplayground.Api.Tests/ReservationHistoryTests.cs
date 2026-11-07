@@ -197,18 +197,18 @@ public class ReservationHistoryTests(ApiFactory factory) : IClassFixture<ApiFact
     }
 
     [Fact]
-    public async Task The_history_is_deleted_with_its_reservation_when_its_table_is_deleted()
+    public async Task The_history_stays_with_its_reservation_when_its_table_is_deleted()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, OneRoom);
         using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
         var reservation = await CreatedAsync(admin, Body(TestRestaurants.NextOpenDay(factory), "18:00", 2, restaurant.Tables["1"]));
-        // A cancelled reservation no longer matters, so the table can be deleted with it.
+        // A cancelled reservation no longer blocks the table, so the table can be deleted; it is archived and keeps the reservation.
         await StatusSetAsync(admin, reservation.Id, "Cancelled");
         Assert.Equal(2, StoredEvents(restaurant, reservation.Id).Count);
 
         Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/admin/tables/{restaurant.Tables["1"]}", Token)).StatusCode);
 
-        Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync($"/api/staff/reservations/{reservation.Id}/history", Token)).StatusCode);
-        Assert.Empty(StoredEvents(restaurant, reservation.Id));
+        Assert.Equal(HttpStatusCode.OK, (await admin.GetAsync($"/api/staff/reservations/{reservation.Id}/history", Token)).StatusCode);
+        Assert.Equal(2, StoredEvents(restaurant, reservation.Id).Count);
     }
 }

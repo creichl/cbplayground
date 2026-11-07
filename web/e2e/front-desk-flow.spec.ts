@@ -27,6 +27,11 @@ function reservationRow(page: Page, name: string) {
   return page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).locator('..')
 }
 
+/** The notification of a status change on the service screen (design system: a list item in the region "Notifications"). */
+function statusToast(page: Page, text: string) {
+  return page.getByRole('region', { name: /^Notifications/ }).getByRole('listitem').filter({ hasText: text })
+}
+
 /**
  * Enters a reservation for 2 at Kafana Dunav today, at the first time with a free table, through the staff API, signed in as
  * its front desk; null when no time is left today (e.g. late in the evening).
@@ -55,7 +60,7 @@ test.describe('Front desk: accepting a request', () => {
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
 
-    await expect(page.getByRole('heading', { name: /^Open requests \(\d+\)$/ })).toBeVisible()
+    await page.getByRole('tab', { name: /^Requests/ }).click()
     const row = reservationRow(page, name)
     await expect(row.getByText('Requested', { exact: true })).toBeVisible()
     await row.getByRole('button', { name: 'Accept', exact: true }).click()
@@ -65,7 +70,7 @@ test.describe('Front desk: accepting a request', () => {
     await screenshot(page, 'front-desk', 'request-accepted', { fullPage: false })
 
     // On its day it is confirmed.
-    await page.goto(`/frontdesk/reservations?date=${date}`)
+    await page.goto(`/frontdesk?date=${date}`)
     await expect(reservationRow(page, name).getByText('Confirmed', { exact: true })).toBeVisible()
   })
 })
@@ -82,18 +87,21 @@ test.describe('Front desk: status with undo', () => {
 
     const row = reservationRow(page, name)
     await expect(row.getByText('Confirmed', { exact: true })).toBeVisible()
-    await row.getByRole('button', { name: 'Mark as arrived' }).click()
+    await row.getByRole('button', { name: 'Arrived', exact: true }).click()
+    // Arrived, it moves from the tab "Upcoming" to "Seated".
+    await page.getByRole('tab', { name: /^Seated/ }).click()
     await expect(row.getByText('Arrived', { exact: true })).toBeVisible()
-    const toast = page.getByRole('alert').filter({ hasText: `${name}: Arrived` })
+    const toast = statusToast(page, `${name}: Arrived`)
     await expect(toast.getByRole('button', { name: 'Undo' })).toBeVisible()
     // Once the notification or popover has finished coming in.
     await settle(page)
     await screenshot(page, 'front-desk', 'status-arrived-with-undo', { fullPage: false })
 
     await toast.getByRole('button', { name: 'Undo' }).click()
+    await expect(statusToast(page, `${name}: Confirmed`)).toBeVisible()
+    await page.getByRole('tab', { name: /^Upcoming/ }).click()
     await expect(row.getByText('Confirmed', { exact: true })).toBeVisible()
-    await expect(page.getByRole('alert').filter({ hasText: `${name}: Confirmed` })).toBeVisible()
-    await expect(row.getByRole('button', { name: 'Mark as arrived' })).toBeVisible()
+    await expect(row.getByRole('button', { name: 'Arrived', exact: true })).toBeVisible()
     await screenshot(page, 'front-desk', 'status-undone', { fullPage: false })
 
     // Cancelling asks first; "Back" keeps the reservation.
@@ -109,6 +117,8 @@ test.describe('Front desk: status with undo', () => {
     // Cancelled for real, it frees its table again.
     await row.getByRole('button', { name: 'Cancel', exact: true }).click()
     await dialog.getByRole('button', { name: 'Cancel reservation' }).click()
+    await expect(statusToast(page, `${name}: Cancelled`)).toBeVisible()
+    await page.getByRole('tab', { name: /^Finished/ }).click()
     await expect(row.getByText('Cancelled', { exact: true })).toBeVisible()
   })
 })
@@ -118,10 +128,9 @@ test.describe('Front desk: phone reservation', () => {
     const name = 'Jovana Telefon'
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    await page.getByRole('tab', { name: 'Reservations' }).click()
     // Tomorrow: Kafana Dunav is open every day, and the whole day lies ahead.
     await page.getByRole('button', { name: 'Next day' }).click()
-    await expect(page).toHaveURL(/\/frontdesk\/reservations\?date=/)
+    await expect(page).toHaveURL(/\/frontdesk\?date=/)
     const date = new URL(page.url()).searchParams.get('date')!
     // The address changes first; the page shows the day right after.
     await expect(page.getByRole('button', { name: 'Date', exact: true })).toHaveText(pickerDate(date))
@@ -173,6 +182,8 @@ test.describe('Front desk: walk-in', () => {
     await drawer.getByRole('button', { name: 'Seat walk-in', exact: true }).click()
     await expect(drawer).toBeHidden()
     await expect(page.getByText(`${name} seated at table ${suggested.number} since`, { exact: false })).toBeVisible()
+    // An arrived walk-in is in the tab "Seated".
+    await page.getByRole('tab', { name: /^Seated/ }).click()
     const row = reservationRow(page, name)
     await expect(row.getByText('Arrived', { exact: true })).toBeVisible()
     await expect(row).toContainText(`Table ${suggested.number}`)
@@ -185,9 +196,8 @@ test.describe('Front desk: table overview', () => {
   test('shows the timeline and the floor plans, and the details of a reservation on a click', async ({ page }) => {
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    await page.getByRole('tab', { name: 'Table overview' }).click()
-    await expect(page.getByRole('heading', { name: 'Table overview' })).toBeVisible()
-    await expect(page.getByRole('radio', { name: 'Timeline' })).toBeChecked()
+    await page.getByRole('tab', { name: 'Timeline' }).click()
+    await expect(page.getByRole('tab', { name: 'Timeline' })).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByText('Table · seats')).toBeVisible()
     await screenshot(page, 'table-overview', 'timeline')
 
@@ -204,7 +214,7 @@ test.describe('Front desk: table overview', () => {
     await screenshot(page, 'table-overview', 'timeline-details', { fullPage: false })
 
     await page.goto('/frontdesk/tables?view=floor')
-    await expect(page.getByRole('radio', { name: 'Floor plan' })).toBeChecked()
+    await expect(page.getByRole('tab', { name: 'Floor plan' })).toHaveAttribute('aria-selected', 'true')
     await expect(page.getByLabel(/^Table \S+, seats: \d+, /).first()).toBeVisible()
     await screenshot(page, 'table-overview', 'floor')
   })
@@ -216,6 +226,6 @@ test.describe('Front desk: access', () => {
     await expect(page).toHaveURL(/\/frontdesk$/)
     await page.goto('/admin')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    await expect(page.getByRole('heading', { name: 'Today' }).first()).toBeVisible()
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
   })
 })

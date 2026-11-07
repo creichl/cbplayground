@@ -29,9 +29,9 @@ public static class StackedTables
             scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = tenantId;
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-            var areas = await db.Areas.Where(a => a.FloorPlanFileName == null).ToListAsync();
+            var areas = await db.Areas.Where(a => a.FloorPlanFileName == null && a.ArchivedAtUtc == null).ToListAsync();
             var areaIds = areas.Select(a => a.Id).ToList();
-            var tables = await db.Tables.Where(t => areaIds.Contains(t.AreaId)).ToListAsync();
+            var tables = await db.Tables.Where(t => areaIds.Contains(t.AreaId) && t.ArchivedAtUtc == null).ToListAsync();
             var elements = await db.RoomElements.Where(e => areaIds.Contains(e.AreaId)).ToListAsync();
             foreach (var area in areas)
             {

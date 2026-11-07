@@ -65,8 +65,8 @@ public static partial class ProfileEndpoints
                 Profile: tenant is { Street: not null, PostalCode: not null, City: not null, Phone: not null },
                 Location: tenant.CountryCode is not null,
                 OpeningHours: await db.OpeningPeriods.AnyAsync(),
-                FloorPlan: await db.Areas.AnyAsync(a => a.FloorPlanFileName != null),
-                Tables: await db.Tables.AnyAsync(),
+                FloorPlan: await db.Areas.AnyAsync(a => a.FloorPlanFileName != null && a.ArchivedAtUtc == null),
+                Tables: await db.Tables.AnyAsync(t => t.ArchivedAtUtc == null),
                 ReservationSettings: await db.ReservationSettings.AnyAsync());
         });
     }

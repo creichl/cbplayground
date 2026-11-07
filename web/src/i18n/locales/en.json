@@ -975,7 +975,7 @@
       "moveRight": "Move right",
       "delete": "Delete area",
       "deleteTitle": "Delete “{{name}}”?",
-      "deleteText": "The area’s tables ({{tables}}) and its floor plan will be deleted as well. This cannot be undone.",
+      "deleteText": "The area and its tables ({{tables}}) will be removed and can no longer be booked. Past and cancelled reservations are kept. This cannot be undone.",
       "deleteConfirm": "Delete",
       "description": "Description",
       "descriptionHint": "A short text guests see when they choose the area.",
@@ -1004,7 +1004,7 @@
       "saved": "The table has been saved.",
       "delete": "Delete table",
       "deleteTitle": "Delete table {{number}}?",
-      "deleteText": "The table will be deleted, together with its past, cancelled and declined reservations. This cannot be undone.",
+      "deleteText": "The table will be removed from the floor plan and can no longer be booked. Its past and cancelled reservations are kept. This cannot be undone.",
       "deleteConfirm": "Delete",
       "notDeleted": "The table was not deleted",
       "hasReservations": "This table still has upcoming reservations. Move them to another table or cancel them first."
@@ -1420,7 +1420,9 @@
     "legend": "Status colours",
     "party": "{{name}} ({{guests}})",
     "timeline": {
-      "tableColumn": "Table · seats"
+      "tableColumn": "Table · seats",
+      "archivedTables": "Archived tables",
+      "archivedTable": "Archived table {{number}} · {{area}}"
     },
     "floor": {
       "time": "Time",

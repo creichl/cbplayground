@@ -665,6 +665,69 @@ test.describe('Styleguide', () => {
   })
 })
 
+test.describe('Archived tables', () => {
+  test('deleting a table with a reservation in the area editor keeps the reservation on its day', async ({ page }) => {
+    // The end-to-end run has no clock to go back to: the API refuses reservations in the past, so the table gets a cancelled
+    // one, which blocks the deletion just as little and keeps the table as well.
+    const number = 'E2E-A1'
+    const name = 'Archiv Gast'
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    const areas = (await (await page.request.get('/api/admin/areas')).json()) as { id: string; name: string }[]
+    const area = areas[0]
+    const created = await page.request.post('/api/admin/tables', { data: { areaId: area.id, number, seats: 2 } })
+    expect(created.status()).toBe(201)
+    const table = (await created.json()) as { id: string }
+
+    // A day from ten days ahead on which the new table is free, after the demo reservations.
+    let reservation: { id: string; date: string } | undefined
+    for (let days = 10; days < 40 && reservation === undefined; days++) {
+      const date = dateFromToday(days)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+        periods: { times: { time: string; tables: { id: string }[] }[] }[]
+      }
+      const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.tables.some((free) => free.id === table.id))?.time
+      if (time === undefined) continue
+      const booked = await page.request.post('/api/staff/reservations', { data: { date, time, guests: 2, tableId: table.id, name } })
+      expect(booked.status()).toBe(201)
+      reservation = (await booked.json()) as { id: string; date: string }
+    }
+    expect(reservation, 'a free time for the new table').toBeDefined()
+    expect((await page.request.post(`/api/staff/reservations/${reservation!.id}/status`, { data: { status: 'Cancelled' } })).status()).toBe(200)
+
+    await page.goto('/admin/areas')
+    await page.getByRole('tab', { name: area.name }).click()
+    await page.getByRole('button', { name: new RegExp(`^Table ${number}`) }).press('Enter')
+    await expect(page.getByRole('heading', { name: `Table ${number}` })).toBeVisible()
+    await page.getByRole('button', { name: 'Delete table' }).click()
+    const dialog = page.getByRole('dialog', { name: `Delete table ${number}?` })
+    await expect(dialog.getByText('Its past and cancelled reservations are kept.', { exact: false })).toBeVisible()
+    // After the dialog's entrance animation.
+    await expect(dialog).toHaveCSS('opacity', '1')
+    await screenshot(page, 'archived-tables', 'delete-table-confirmation', { fullPage: false })
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByRole('button', { name: new RegExp(`^Table ${number}`) })).toHaveCount(0)
+    const tables = (await (await page.request.get('/api/admin/tables')).json()) as { id: string }[]
+    expect(tables.map((candidate) => candidate.id)).not.toContain(table.id)
+
+    // On its day the reservation still shows, with its table and area, in the row of the archived tables.
+    await page.goto(`/admin/tables?date=${reservation!.date}`)
+    await expect(page.getByText('Archived tables', { exact: true })).toBeVisible()
+    const row = page.getByLabel(`Archived table ${number} · ${area.name}`).locator('..')
+    await expect(row.getByRole('button', { name: new RegExp(`^${name} \\(2\\)`) })).toBeVisible()
+    await screenshot(page, 'archived-tables', 'timeline-archived-table')
+    // A day with demo reservations, but none on archived tables, has no such row.
+    const upcoming = (await (await page.request.get(`/api/staff/reservations?from=${dateFromToday(1)}&to=${dateFromToday(7)}`)).json()) as {
+      date: string
+    }[]
+    expect(upcoming.length, 'demo reservations in the next days').toBeGreaterThan(0)
+    await page.goto(`/admin/tables?date=${upcoming[0].date}`)
+    await expect(page.getByRole('button', { name: /^.+ \(\d+\), / }).first()).toBeVisible()
+    await expect(page.getByText('Archived tables', { exact: true })).toHaveCount(0)
+  })
+})
+
 /** A time "HH:mm" as the English UI shows it, e.g. "7:30 PM", as a pattern (the space before AM/PM may be a narrow one). */
 function englishTime(time: string) {
   const [hours, minutes] = time.split(':').map(Number)

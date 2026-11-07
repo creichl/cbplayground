@@ -538,7 +538,9 @@ public static class DevelopmentSeed
         }
         var weekAgo = todayStart.AddDays(-7);
         var firstDay = await db.Reservations.AnyAsync(r => r.StartLocal >= weekAgo) ? 0 : -7;
-        var tables = await db.Tables.Join(db.Areas, t => t.AreaId, a => a.Id, (t, a) => new { Table = t, Area = a }).ToListAsync();
+        var tables = await db.Tables.Where(t => t.ArchivedAtUtc == null)
+            .Join(db.Areas.Where(a => a.ArchivedAtUtc == null), t => t.AreaId, a => a.Id, (t, a) => new { Table = t, Area = a })
+            .ToListAsync();
         if (tables.Count == 0)
         {
             return;

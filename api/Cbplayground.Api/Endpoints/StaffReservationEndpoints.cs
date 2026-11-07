@@ -34,6 +34,7 @@ public static class StaffReservationEndpoints
         ReservationSource Source,
         Guid TableId,
         string TableNumber,
+        bool TableArchived,
         Guid AreaId,
         string AreaName,
         string Name,
@@ -104,11 +105,11 @@ public static class StaffReservationEndpoints
     {
         var group = app.MapGroup("/api/staff").RequireAuthorization(Policies.RequireStaff);
 
-        // Areas and tables for the front desk; the admin endpoints are for Tenant Admins only.
+        // Areas and tables for the front desk, without the archived ones; the admin endpoints are for Tenant Admins only.
         group.MapGet("/floor", async (AppDbContext db) =>
         {
-            var areas = await db.Areas.OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
-            var tables = (await db.Tables.ToListAsync())
+            var areas = await db.Areas.Where(a => a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
+            var tables = (await db.Tables.Where(t => t.ArchivedAtUtc == null).ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .ToList();
             var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync();
@@ -502,7 +503,7 @@ public static class StaffReservationEndpoints
     private static Task<string> TableNumberAsync(AppDbContext db, Guid tableId, CancellationToken cancellationToken) =>
         db.Tables.Where(t => t.Id == tableId).Select(t => t.Number).SingleAsync(cancellationToken);
 
-    /// <summary>The reservations with their table and area, sorted by start and table number.</summary>
+    /// <summary>The reservations with their table and area, archived ones included, sorted by start and table number.</summary>
     private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
     {
         var rows = await reservations
@@ -531,6 +532,7 @@ public static class StaffReservationEndpoints
         reservation.Source,
         table.Id,
         table.Number,
+        table.ArchivedAtUtc is not null,
         area.Id,
         area.Name,
         reservation.GuestName,

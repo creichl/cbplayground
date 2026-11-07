@@ -102,6 +102,9 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
@@ -537,6 +540,9 @@ namespace Cbplayground.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<DateTime?>("ArchivedAtUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<Guid>("AreaId")
                         .HasColumnType("TEXT");
 
@@ -573,7 +579,8 @@ namespace Cbplayground.Api.Migrations
                     b.HasIndex("AreaId");
 
                     b.HasIndex("TenantId", "Number")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasFilter("\"ArchivedAtUtc\" IS NULL");
 
                     b.ToTable("Tables");
                 });

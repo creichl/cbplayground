@@ -990,7 +990,7 @@
       "moveRight": "Pomeri desno",
       "delete": "Obriši prostor",
       "deleteTitle": "Obrisati „{{name}}“?",
-      "deleteText": "Stolovi ovog prostora ({{tables}}) i njegov tlocrt biće takođe obrisani. Ovo ne može da se poništi.",
+      "deleteText": "Prostor i njegovi stolovi ({{tables}}) biće uklonjeni i više se ne mogu rezervisati. Prošle i otkazane rezervacije ostaju sačuvane. Ovo ne može da se poništi.",
       "deleteConfirm": "Obriši",
       "description": "Opis",
       "descriptionHint": "Kratak tekst koji gosti vide kada biraju prostor.",
@@ -1019,7 +1019,7 @@
       "saved": "Sto je sačuvan.",
       "delete": "Obriši sto",
       "deleteTitle": "Obrisati sto {{number}}?",
-      "deleteText": "Sto će biti obrisan, zajedno sa njegovim prošlim, otkazanim i odbijenim rezervacijama. Ovo ne može da se poništi.",
+      "deleteText": "Sto će biti uklonjen sa tlocrta i više se ne može rezervisati. Njegove prošle i otkazane rezervacije ostaju sačuvane. Ovo ne može da se poništi.",
       "deleteConfirm": "Obriši",
       "notDeleted": "Sto nije obrisan",
       "hasReservations": "Za ovaj sto još postoje predstojeće rezervacije. Prvo ih premestite za drugi sto ili ih otkažite."
@@ -1456,7 +1456,9 @@
     "legend": "Boje statusa",
     "party": "{{name}} ({{guests}})",
     "timeline": {
-      "tableColumn": "Sto · mesta"
+      "tableColumn": "Sto · mesta",
+      "archivedTables": "Arhivirani stolovi",
+      "archivedTable": "Arhivirani sto {{number}} · {{area}}"
     },
     "floor": {
       "time": "Vreme",

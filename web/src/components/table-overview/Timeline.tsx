@@ -1,4 +1,4 @@
-import { type CSSProperties, useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
@@ -53,8 +53,9 @@ function closedRanges(openPeriods: OpenPeriod[], start: number, end: number) {
 
 /**
  * Tables (grouped by area) × time of day: one row per table with its reservations as blocks in their status colour,
- * an hour grid and a line at the current time. Scrolls horizontally; the table column stays in place. A click on a block
- * selects the reservation and shows its details with the status actions.
+ * an hour grid and a line at the current time. Archived tables with reservations on the day follow in a group of their own.
+ * Scrolls horizontally; the table column stays in place. A click on a block selects the reservation and shows its details
+ * with the status actions.
  */
 export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes, initialTime, selectedId, onSelect }: TimelineProps) {
   const { t, i18n } = useTranslation()
@@ -91,6 +92,75 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
 
   const labelCell = 'sticky left-0 z-3 flex shrink-0 items-center border-r border-border px-2'
 
+  // Reservations on archived tables keep their table and area; their tables get a row each in a group of their own, only on
+  // the days they have reservations.
+  const archivedTables = [...new Map(reservations.filter((reservation) => reservation.tableArchived).map((reservation) => [reservation.tableId, reservation])).values()]
+    .sort((a, b) => a.tableNumber.length - b.tableNumber.length || (a.tableNumber < b.tableNumber ? -1 : a.tableNumber > b.tableNumber ? 1 : 0))
+
+  /**
+   * The header row of a group of tables: an area, or the archived tables. The row has no reservations, so its title may run
+   * past the table column instead of being cut off.
+   */
+  const groupHeader = (title: string) => (
+    <div className="flex h-7 border-b border-border bg-secondary">
+      <div className="sticky left-0 z-3 flex items-center bg-secondary px-2">
+        <span className="text-sm font-semibold whitespace-nowrap">{title}</span>
+      </div>
+    </div>
+  )
+
+  /** The row of a table with its label and its reservations as blocks. */
+  const row = (key: string, label: ReactNode, ariaLabel: string, rowReservations: Reservation[]) => (
+    <div key={key} className="flex border-b border-border/60" style={{ height: rowHeight }}>
+      <div className={cn(labelCell, 'bg-card')} style={{ width: labelWidth }} aria-label={ariaLabel}>
+        {label}
+      </div>
+      <div className="relative shrink-0" style={{ width, backgroundImage: gridLines }}>
+        {rowReservations.map((reservation) => {
+          const active = isActive(reservation)
+          const selected = reservation.id === selectedId
+          const { color, surface } = statusColors[reservation.status]
+          const left = x(toMinutes(reservation.time))
+          // A guest who left ends at the time they left.
+          const until = occupiedUntil(reservation)
+          const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
+          const times = t('common.timeRange', {
+            start: formatTime(reservation.time, language),
+            end: formatTime(until, language),
+          })
+          const style: CSSProperties = {
+            left: left + 1,
+            width: Math.max(x(toMinutes(until)) - left - 2, 8),
+            backgroundColor: surface,
+            borderColor: color,
+            borderStyle: active ? 'solid' : 'dashed',
+            opacity: active ? 1 : 0.5,
+          }
+          return (
+            <ReservationPopover key={reservation.id} reservation={reservation}>
+              <button
+                type="button"
+                data-reservation-block={reservation.id}
+                data-selected={selected ? '' : undefined}
+                aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
+                aria-current={selected ? 'true' : undefined}
+                // The popover replaces the click handler; selecting happens before it.
+                onClickCapture={() => onSelect(reservation)}
+                className={cn(
+                  'absolute top-1 bottom-1 flex cursor-pointer items-center overflow-hidden rounded-md border border-l-4 px-1.5 text-left text-foreground focus-ring',
+                  selected ? 'z-2 ring-2 ring-foreground ring-offset-1' : 'z-1',
+                )}
+                style={style}
+              >
+                <span className={cn('truncate text-sm', !active && 'line-through')}>{party}</span>
+              </button>
+            </ReservationPopover>
+          )
+        })}
+      </div>
+    </div>
+  )
+
   return (
     <div ref={scrollRef} className="overflow-x-auto rounded-xl border border-border bg-card">
       <div className="relative" style={{ width: labelWidth + width }}>
@@ -119,69 +189,35 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
           .filter((area) => area.tables.length > 0)
           .map((area) => (
             <div key={area.id}>
-              <div className="flex h-7 border-b border-border bg-secondary">
-                <div className={cn(labelCell, 'bg-secondary')} style={{ width: labelWidth }}>
-                  <span className="truncate text-sm font-semibold">{area.name}</span>
-                </div>
-              </div>
-              {area.tables.map((table) => (
-                <div key={table.id} className="flex border-b border-border/60" style={{ height: rowHeight }}>
-                  <div
-                    className={cn(labelCell, 'bg-card')}
-                    style={{ width: labelWidth }}
-                    aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
-                  >
-                    <span className="truncate text-sm font-semibold">{t('common.tableLabel', { number: table.number, seats: table.seats })}</span>
-                  </div>
-                  <div className="relative shrink-0" style={{ width, backgroundImage: gridLines }}>
-                    {sorted
-                      .filter((reservation) => reservation.tableId === table.id)
-                      .map((reservation) => {
-                        const active = isActive(reservation)
-                        const selected = reservation.id === selectedId
-                        const { color, surface } = statusColors[reservation.status]
-                        const left = x(toMinutes(reservation.time))
-                        // A guest who left ends at the time they left.
-                        const until = occupiedUntil(reservation)
-                        const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
-                        const times = t('common.timeRange', {
-                          start: formatTime(reservation.time, language),
-                          end: formatTime(until, language),
-                        })
-                        const style: CSSProperties = {
-                          left: left + 1,
-                          width: Math.max(x(toMinutes(until)) - left - 2, 8),
-                          backgroundColor: surface,
-                          borderColor: color,
-                          borderStyle: active ? 'solid' : 'dashed',
-                          opacity: active ? 1 : 0.5,
-                        }
-                        return (
-                          <ReservationPopover key={reservation.id} reservation={reservation}>
-                            <button
-                              type="button"
-                              data-reservation-block={reservation.id}
-                              data-selected={selected ? '' : undefined}
-                              aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
-                              aria-current={selected ? 'true' : undefined}
-                              // The popover replaces the click handler; selecting happens before it.
-                              onClickCapture={() => onSelect(reservation)}
-                              className={cn(
-                                'absolute top-1 bottom-1 flex cursor-pointer items-center overflow-hidden rounded-md border border-l-4 px-1.5 text-left text-foreground focus-ring',
-                                selected ? 'z-2 ring-2 ring-foreground ring-offset-1' : 'z-1',
-                              )}
-                              style={style}
-                            >
-                              <span className={cn('truncate text-sm', !active && 'line-through')}>{party}</span>
-                            </button>
-                          </ReservationPopover>
-                        )
-                      })}
-                  </div>
-                </div>
-              ))}
+              {groupHeader(area.name)}
+              {area.tables.map((table) =>
+                row(
+                  table.id,
+                  <span className="truncate text-sm font-semibold">{t('common.tableLabel', { number: table.number, seats: table.seats })}</span>,
+                  t('areas.tableMarker', { number: table.number, seats: table.seats }),
+                  sorted.filter((reservation) => reservation.tableId === table.id),
+                ),
+              )}
             </div>
           ))}
+
+        {archivedTables.length > 0 && (
+          <div>
+            {groupHeader(t('tableOverview.timeline.archivedTables'))}
+            {archivedTables.map((table) =>
+              row(
+                table.tableId,
+                // The number, and below it the area the table belonged to.
+                <div className="min-w-0" title={`${table.tableNumber} · ${table.areaName}`}>
+                  <div className="truncate text-sm font-semibold">{table.tableNumber}</div>
+                  <div className="truncate text-xs text-muted-foreground">{table.areaName}</div>
+                </div>,
+                t('tableOverview.timeline.archivedTable', { number: table.tableNumber, area: table.areaName }),
+                sorted.filter((reservation) => reservation.tableId === table.tableId),
+              ),
+            )}
+          </div>
+        )}
 
         {nowMinutes !== null && nowMinutes >= start && nowMinutes <= end && (
           <div
