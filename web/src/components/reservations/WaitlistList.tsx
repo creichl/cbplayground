@@ -115,7 +115,10 @@ function WaitlistRow({ entry, nowMinutes, onSeat, onEdit }: { entry: WaitlistEnt
       <span className="w-[4.5rem] shrink-0 text-sm font-semibold whitespace-nowrap tabular-nums">{added}</span>
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
         <span className="flex min-w-0 items-center gap-1.5">
-          <span className={cn('truncate font-semibold', entry.status !== 'Waiting' && 'text-muted-foreground')}>{entry.name}</span>
+          <span className={cn('truncate font-semibold', entry.status !== 'Waiting' && 'text-muted-foreground')}>
+            {/* The name the server stores after the guest's data was deleted (a seated entry only), shown translated. */}
+            {entry.name === 'Deleted guest' ? t('guests.deletedName') : entry.name}
+          </span>
           {entry.notes !== null && (
             <Tooltip>
               <TooltipTrigger asChild>

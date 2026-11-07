@@ -247,6 +247,29 @@ public class WaitlistTests(BookingRulesTests.FixedClockApiFactory factory) : ICl
     }
 
     [Fact]
+    public async Task Deleting_the_guest_s_data_anonymises_the_waitlist_entry_they_were_seated_from()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, TwoTables);
+        using var admin = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var entry = await AddedAsync(admin, "Familie Huber", 2, phone: "+43 660 7654321", notes: "Kinderstuhl");
+        var other = await AddedAsync(admin, "Paar Berger", 2, phone: "+43 660 1112223", notes: "Terrasse");
+        var seated = (await (await admin.PostAsJsonAsync($"{WaitlistPath}/{entry.Id}/seat", new { tableId = restaurant.Tables["2"] }, Token))
+            .Content.ReadFromJsonAsync<SeatResponse>(Token))!;
+        var guestId = seated.Reservation.GuestId;
+        Assert.NotNull(guestId);
+
+        Assert.Equal(HttpStatusCode.NoContent, (await admin.DeleteAsync($"/api/staff/guests/{guestId}", Token)).StatusCode);
+
+        var listed = await ListAsync(admin);
+        var anonymised = listed.Single(e => e.Id == entry.Id);
+        Assert.Equal((Reservation.DeletedGuestName, null, null, WaitlistStatus.Seated, seated.Reservation.Id),
+            (anonymised.Name, anonymised.Phone, anonymised.Notes, anonymised.Status, anonymised.SeatedReservationId));
+        // Another party keeps its details.
+        var kept = listed.Single(e => e.Id == other.Id);
+        Assert.Equal(("Paar Berger", "+43 660 1112223", "Terrasse"), (kept.Name, kept.Phone, kept.Notes));
+    }
+
+    [Fact]
     public async Task Removing_the_seated_walk_in_puts_the_party_back_on_the_waitlist()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, TwoTables);

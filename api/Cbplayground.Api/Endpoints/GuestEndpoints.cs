@@ -150,7 +150,8 @@ public static class GuestEndpoints
         });
 
         // On the guest's request (GDPR): the profile goes, and its reservations keep only what the restaurant needs for its figures
-        // (date, time, party, table, status, occasion). Their history loses the changes of the guest's personal data.
+        // (date, time, party, table, status, occasion). Their history loses the changes of the guest's personal data, and the
+        // waitlist entries the guest was seated from lose name, phone number and notes as well.
         group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
@@ -172,6 +173,17 @@ public static class GuestEndpoints
                 reservation.UpdatedAtUtc = now;
             }
             var reservationIds = reservations.Select(r => r.Id).ToList();
+            // A party seated from the waitlist keeps its name, phone number and notes on its waitlist entry too.
+            var waitlistEntries = await db.WaitlistEntries
+                .Where(e => e.SeatedReservationId != null && reservationIds.Contains(e.SeatedReservationId.Value))
+                .ToListAsync(cancellationToken);
+            foreach (var entry in waitlistEntries)
+            {
+                entry.Name = Reservation.DeletedGuestName;
+                entry.Phone = null;
+                entry.Notes = null;
+                entry.UpdatedAtUtc = now;
+            }
             var events = await db.ReservationEvents.Where(e => reservationIds.Contains(e.ReservationId)).ToListAsync(cancellationToken);
             foreach (var reservationEvent in events)
             {
