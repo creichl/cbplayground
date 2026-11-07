@@ -44,6 +44,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<Guest> Guests => Set<Guest>();
 
+    public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -270,6 +272,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             guest.Property(g => g.AllergyNotes).HasMaxLength(Guest.MaxAllergyNotesLength);
             // Stored as a JSON array of the names, e.g. ["Vip","Regular"].
             guest.PrimitiveCollection(g => g.Tags).ElementType().HasConversion<string>();
+        });
+
+        modelBuilder.Entity<WaitlistEntry>(entry =>
+        {
+            entry.HasIndex(e => new { e.TenantId, e.Date });
+            entry.HasOne<Tenant>().WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Removing the walk-in (the undo of its seating) puts the party back on the waitlist; the endpoint does it, the
+            // database keeps the link consistent all the same.
+            entry.HasOne<Reservation>().WithMany().HasForeignKey(e => e.SeatedReservationId).OnDelete(DeleteBehavior.SetNull);
+            entry.Property(e => e.Name).HasMaxLength(Reservation.MaxNameLength);
+            entry.Property(e => e.Phone).HasMaxLength(Reservation.MaxPhoneLength);
+            entry.Property(e => e.Notes).HasMaxLength(Reservation.MaxNotesLength);
+            entry.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
         });
 
         // The roles are fixed, so the migrations create them in every environment.

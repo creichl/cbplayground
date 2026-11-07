@@ -930,7 +930,8 @@
       "upcoming": "Очекују се",
       "seated": "За столом",
       "finished": "Завршено",
-      "requests": "Захтеви"
+      "requests": "Захтеви",
+      "waitlist": "Чекање"
     },
     "empty": {
       "upcoming": "Више се не очекују гости.",
@@ -1048,6 +1049,64 @@
       "contactTaken": "Други гост већ има овај број телефона или имејл адресу.",
       "notFound": "Овај гост не постоји (више).",
       "forbidden": "Ово могу само администратори."
+    }
+  },
+  "waitlist": {
+    "add": "На листу чекања",
+    "titleNew": "Додај на листу чекања",
+    "titleEdit": "Измени унос на листи чекања",
+    "seatTitle": "Смести: {{name}}",
+    "seat": "Смести",
+    "seatParty": "Смести госте",
+    "left": "Отишли",
+    "save": "Сачувај",
+    "notSaved": "Унос није сачуван",
+    "quotedWait": "Најављено чекање",
+    "quotedNone": "Без најаве",
+    "quotedOwn": "Друга вредност",
+    "quotedOwnLabel": "Минута",
+    "minutes_one": "{{count}} мин",
+    "minutes_few": "{{count}} мин",
+    "minutes_other": "{{count}} мин",
+    "hours": "{{hours}} х",
+    "hoursMinutes": "{{hours}} х {{minutes}} мин",
+    "party_one": "{{count}} особа",
+    "party_few": "{{count}} особе",
+    "party_other": "{{count}} особа",
+    "waited": "Чека {{duration}}",
+    "quoted": "најављено {{duration}}",
+    "quotedExceeded": "најављено {{duration}}, прекорачено",
+    "nextFreeAt": "Следећи слободан сто у {{time}}",
+    "tableFreeNow": "Сто је сада слободан",
+    "noTableToday": "Данас се ниједан сто не ослобађа",
+    "open": "Измени унос за {{name}}, на листи од {{time}}",
+    "noMatches": "Нико на листи чекања не одговара претрази.",
+    "groupWaiting": "Чекају",
+    "groupDone": "Смештени или отишли",
+    "status": {
+      "waiting": "Чекају",
+      "seated": "Смештени",
+      "left": "Отишли"
+    },
+    "empty": {
+      "today": "Нико не чека.",
+      "past": "Тог дана нико није био на листи чекања.",
+      "future": "Листа чекања се води на сам дан."
+    },
+    "validation": {
+      "name": "Унесите име."
+    },
+    "toast": {
+      "added": "{{name}} је на листи чекања.",
+      "left": "{{name}} више није на листи чекања.",
+      "waitingAgain": "{{name}} поново чека."
+    },
+    "errors": {
+      "title": "Листа чекања није измењена",
+      "invalidQuotedWait": "Унесите време чекања од 1 до 240 минута.",
+      "notWaiting": "Ови гости више не чекају.",
+      "notLeft": "Ови гости нису отишли са листе чекања.",
+      "notToday": "Може се мењати само данашња листа чекања."
     }
   },
   "notFound": {
@@ -1372,6 +1431,7 @@
       "reservations": "Резервације",
       "seated": "Сада за столом",
       "noShows": "Нису дошли",
+      "waiting": "Чекају",
       "openRequests": "Отворени захтеви",
       "finished": "Завршено",
       "covers_one": "{{count}} гост",

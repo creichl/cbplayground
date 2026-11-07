@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next'
 import { ApiError, httpErrorMessage } from './client.ts'
 
-/** The error codes of /api/staff/reservations, /api/staff/availability and the walk-in endpoints, and their texts. */
+/** The error codes of /api/staff/reservations, /api/staff/availability, the walk-in endpoints and the waitlist, and their texts. */
 const errorKeys = {
   invalid_date: 'reservations.errors.invalidDate',
   invalid_time: 'reservations.errors.invalidTime',
@@ -24,6 +24,10 @@ const errorKeys = {
   status_not_allowed_now: 'reservations.errors.statusNotAllowedNow',
   reservation_closed: 'reservations.errors.reservationClosed',
   cannot_delete_reservation: 'reservations.errors.cannotDeleteReservation',
+  invalid_quoted_wait: 'waitlist.errors.invalidQuotedWait',
+  entry_not_waiting: 'waitlist.errors.notWaiting',
+  entry_not_left: 'waitlist.errors.notLeft',
+  entry_not_today: 'waitlist.errors.notToday',
 } as const
 
 /** A failed reservation request in the user's language. */

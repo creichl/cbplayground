@@ -11,8 +11,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Cbplayground.Api.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261107093028_AddGuestProfiles")]
-    partial class AddGuestProfiles
+    [Migration("20261107100144_AddWaitlist")]
+    partial class AddWaitlist
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -211,61 +211,6 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("GalleryPhotos");
                 });
 
-            modelBuilder.Entity("Cbplayground.Api.Data.Guest", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("AllergyNotes")
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(254)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Notes")
-                        .HasMaxLength(1000)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Phone")
-                        .HasMaxLength(40)
-                        .HasColumnType("TEXT");
-
-                    b.PrimitiveCollection<string>("Tags")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("TenantId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("UpdatedAtUtc")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("TenantId", "Email")
-                        .IsUnique()
-                        .HasFilter("\"Email\" IS NOT NULL");
-
-                    b.HasIndex("TenantId", "Name");
-
-                    b.HasIndex("TenantId", "Phone")
-                        .IsUnique()
-                        .HasFilter("\"Phone\" IS NOT NULL");
-
-                    b.ToTable("Guests");
-                });
-
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.Property<Guid>("Id")
@@ -368,9 +313,6 @@ namespace Cbplayground.Api.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("GuestId")
-                        .HasColumnType("TEXT");
-
                     b.Property<string>("GuestName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -390,11 +332,6 @@ namespace Cbplayground.Api.Migrations
 
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Occasion")
-                        .IsRequired()
-                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("PartySize")
@@ -431,8 +368,6 @@ namespace Cbplayground.Api.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("GuestId");
 
                     b.HasIndex("ReferenceCode")
                         .IsUnique();
@@ -844,6 +779,63 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("Tenants");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.WaitlistEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("AddedAtLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateOnly>("Date")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PartySize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(30)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("QuotedWaitMinutes")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid?>("SeatedReservationId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("UpdatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SeatedReservationId");
+
+                    b.HasIndex("TenantId", "Date");
+
+                    b.ToTable("WaitlistEntries");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
                     b.Property<string>("Id")
@@ -1032,15 +1024,6 @@ namespace Cbplayground.Api.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Cbplayground.Api.Data.Guest", b =>
-                {
-                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
-                        .WithMany()
-                        .HasForeignKey("TenantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-                });
-
             modelBuilder.Entity("Cbplayground.Api.Data.HolidayOverride", b =>
                 {
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
@@ -1070,11 +1053,6 @@ namespace Cbplayground.Api.Migrations
 
             modelBuilder.Entity("Cbplayground.Api.Data.Reservation", b =>
                 {
-                    b.HasOne("Cbplayground.Api.Data.Guest", null)
-                        .WithMany()
-                        .HasForeignKey("GuestId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("Cbplayground.Api.Data.Table", null)
                         .WithMany()
                         .HasForeignKey("TableId")
@@ -1243,6 +1221,20 @@ namespace Cbplayground.Api.Migrations
                         .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.WaitlistEntry", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Reservation", null)
+                        .WithMany()
+                        .HasForeignKey("SeatedReservationId")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("Cbplayground.Api.Data.Tenant", null)
                         .WithMany()

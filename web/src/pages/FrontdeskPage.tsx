@@ -4,6 +4,7 @@ import {
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  ListPlusIcon,
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
@@ -24,12 +25,14 @@ import {
   useRestaurantNow,
   useWalkInTables,
 } from '../api/reservations.ts'
+import { useWaitlist, type WaitlistEntry, type WaitlistInput } from '../api/waitlist.ts'
 import { RequestError } from '../components/booking/RequestError.tsx'
 import { CoversChart } from '../components/reservations/CoversChart.tsx'
 import { DayStats } from '../components/reservations/DayStats.tsx'
 import { ReservationFormDrawer } from '../components/reservations/ReservationFormDrawer.tsx'
 import { ReservationListPanel } from '../components/reservations/ReservationListPanel.tsx'
 import { type ListTab, listTabOf } from '../components/reservations/status.ts'
+import { WaitlistDrawer } from '../components/reservations/WaitlistDrawer.tsx'
 import { WalkInDrawer } from '../components/reservations/WalkInDrawer.tsx'
 import { dayRange, type MinuteRange } from '../components/table-overview/dayRange.ts'
 import { PlanPane, type PlanView } from '../components/table-overview/PlanPane.tsx'
@@ -50,8 +53,11 @@ const dateFormat = 'YYYY-MM-DD'
 /** The value of the service select for the whole day; a service is chosen by the start of its opening window ("HH:mm"). */
 const wholeDay = 'day'
 
-/** Whether the reservation matches the search: part of the name or reference code, or of the phone number's digits. */
-function matches(reservation: Reservation, search: string) {
+/**
+ * Whether the reservation (or the party on the waitlist) matches the search: part of the name or reference code, or of the
+ * phone number's digits.
+ */
+function matches(reservation: Pick<Reservation, 'name' | 'phone'> & { referenceCode?: string }, search: string) {
   const text = search.trim().toLowerCase()
   if (text.length === 0) {
     return true
@@ -59,7 +65,7 @@ function matches(reservation: Reservation, search: string) {
   const digits = text.replace(/\D/g, '')
   return (
     reservation.name.toLowerCase().includes(text) ||
-    reservation.referenceCode.toLowerCase().includes(text) ||
+    (reservation.referenceCode ?? '').toLowerCase().includes(text) ||
     (digits.length > 0 && (reservation.phone ?? '').replace(/\D/g, '').includes(digits))
   )
 }
@@ -73,8 +79,9 @@ function toDate(date: string) {
 /**
  * The service screen of the front desk: in the top bar the day, the service, the search, the way to the guest directory and the
  * main actions; below it the key figures of the service with the covers per quarter hour; then the list panel (the day's
- * reservations by where the guests are, and the open requests) beside the plan pane (floor plans or timeline). Selecting a reservation in the list
- * highlights its table and its block, and the other way round. Day, service and view are kept in the address
+ * reservations by where the guests are, the open requests and the day's waitlist of walk-ins) beside the plan pane (floor plans
+ * or timeline). Selecting a reservation in the list highlights its table and its block, and the other way round. Day, service
+ * and view are kept in the address
  * (`?date=YYYY-MM-DD`, `?service=HH:mm`, `?view=timeline`), so a reload or a shared link shows the same.
  */
 export function FrontdeskPage() {
@@ -98,6 +105,10 @@ export function FrontdeskPage() {
   const [editing, setEditing] = useState<Reservation | null | undefined>(undefined)
   // undefined: no walk-in drawer; null: walk-in at the suggested table; otherwise at this table.
   const [walkInTable, setWalkInTable] = useState<string | null | undefined>(undefined)
+  // The waiting party being seated in the walk-in drawer.
+  const [seating, setSeating] = useState<WaitlistEntry | undefined>(undefined)
+  // undefined: no waitlist drawer; otherwise the entry to change, or what a new party starts with.
+  const [waitlistForm, setWaitlistForm] = useState<{ entry?: WaitlistEntry; initial?: Partial<WaitlistInput> } | undefined>(undefined)
   // Phones show one pane at a time; tablets can collapse the list panel.
   const [phonePane, setPhonePane] = useState<'list' | 'plan'>('list')
   const [listCollapsed, setListCollapsed] = useState(false)
@@ -106,6 +117,7 @@ export function FrontdeskPage() {
   const reservations = useReservations(date)
   const openPeriods = useOpenPeriods(date)
   const openRequests = useOpenRequests(today)
+  const waitlist = useWaitlist(date)
   const isToday = today !== null && date === today
   // The floor plans offer "Seat walk-in here" only on the tables the server accepts for a walk-in now (with the buffer and the
   // walk-in's duration), for the party size the walk-in drawer starts with. Closed now: an error, so no table is offered.
@@ -148,6 +160,8 @@ export function FrontdeskPage() {
   const ofService = reservations.data?.filter(inService)
   const searched = ofService?.filter((reservation) => matches(reservation, search))
   const requests = openRequests.data?.filter((reservation) => matches(reservation, search))
+  const waitlistEntries = waitlist.data?.filter((entry) => matches(entry, search))
+  const waiting = waitlist.data?.filter((entry) => entry.status === 'Waiting')
   const closed = openPeriods.data !== undefined && openPeriods.data.length === 0
   const nowMinutes = isToday && now !== null ? now.minutes : null
   // Only today, and not from an earlier answer once the server refuses walk-ins (e.g. after closing time).
@@ -234,12 +248,18 @@ export function FrontdeskPage() {
         </TooltipTrigger>
         <TooltipContent className="2xl:hidden">{t('guests.title')}</TooltipContent>
       </Tooltip>
-      {/* A walk-in is seated now, so only on today. */}
+      {/* A walk-in is seated now and the waitlist is today's, so only on today. */}
       {isToday && (
-        <Button variant="outline" onClick={() => setWalkInTable(null)} aria-label={t('reservations.walkIn.button')}>
-          <UserRoundPlusIcon aria-hidden="true" />
-          <span className="max-sm:sr-only">{t('reservations.walkIn.button')}</span>
-        </Button>
+        <>
+          <Button variant="outline" onClick={() => setWaitlistForm({})} aria-label={t('waitlist.add')}>
+            <ListPlusIcon aria-hidden="true" />
+            <span className="max-sm:sr-only">{t('waitlist.add')}</span>
+          </Button>
+          <Button variant="outline" onClick={() => setWalkInTable(null)} aria-label={t('reservations.walkIn.button')}>
+            <UserRoundPlusIcon aria-hidden="true" />
+            <span className="max-sm:sr-only">{t('reservations.walkIn.button')}</span>
+          </Button>
+        </>
       )}
       <Button onClick={() => setEditing(null)} disabled={today === null} aria-label={t('reservations.new')}>
         <PlusIcon aria-hidden="true" />
@@ -264,7 +284,13 @@ export function FrontdeskPage() {
           </div>
         ) : (
           <>
-            <DayStats reservations={ofService} openRequests={openRequests.data?.length ?? 0} onOpenRequests={() => setTab('requests')} className="flex-nowrap" />
+            <DayStats
+              reservations={ofService}
+              openRequests={openRequests.data?.length ?? 0}
+              onOpenRequests={() => setTab('requests')}
+              waiting={waiting === undefined ? undefined : { parties: waiting.length, guests: waiting.reduce((sum, entry) => sum + entry.guests, 0) }}
+              className="flex-nowrap"
+            />
             {chartRange !== null && (
               <CoversChart
                 reservations={ofService}
@@ -330,6 +356,13 @@ export function FrontdeskPage() {
             searching={search.trim().length > 0}
             selectedId={selectedId}
             onOpen={open}
+            waitlist={waitlistEntries}
+            waitlistError={waitlist.error}
+            onRetryWaitlist={() => void waitlist.refetch()}
+            nowMinutes={nowMinutes}
+            waitlistEmptyText={t(date !== null && today !== null && date > today ? 'waitlist.empty.future' : isToday ? 'waitlist.empty.today' : 'waitlist.empty.past')}
+            onSeat={setSeating}
+            onEditEntry={(entry) => setWaitlistForm({ entry })}
           />
         </aside>
 
@@ -380,7 +413,20 @@ export function FrontdeskPage() {
       {editing !== undefined && today !== null && date !== null && (
         <ReservationFormDrawer reservation={editing} defaultDate={date < today ? today : date} today={today} onClose={() => setEditing(undefined)} />
       )}
-      {walkInTable !== undefined && <WalkInDrawer tableId={walkInTable ?? undefined} onClose={() => setWalkInTable(undefined)} />}
+      {walkInTable !== undefined && (
+        <WalkInDrawer
+          tableId={walkInTable ?? undefined}
+          onAddToWaitlist={(initial) => {
+            setWalkInTable(undefined)
+            setWaitlistForm({ initial })
+          }}
+          onClose={() => setWalkInTable(undefined)}
+        />
+      )}
+      {seating !== undefined && <WalkInDrawer waitlistEntry={seating} onClose={() => setSeating(undefined)} />}
+      {waitlistForm !== undefined && (
+        <WaitlistDrawer entry={waitlistForm.entry} initial={waitlistForm.initial} onAdded={() => setTab('waitlist')} onClose={() => setWaitlistForm(undefined)} />
+      )}
     </>
   )
 }
