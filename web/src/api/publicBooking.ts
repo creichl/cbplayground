@@ -4,6 +4,7 @@ import { ApiError, apiGet, apiPost } from './client.ts'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import type { Branding } from './branding.ts'
 import type { OpeningPeriod } from './openingHours.ts'
+import type { Occasion } from './reservations.ts'
 import type { ConfirmationMode, TableSelectionMode } from './reservationSettings.ts'
 
 /** A restaurant for the guest booking, as returned by GET /api/public/restaurants/{slug}. Empty profile fields are null. */
@@ -99,6 +100,8 @@ export type BookingRequest = {
   phone: string | null
   email: string | null
   notes: string | null
+  /** What the guests celebrate, optional; "None" when nothing is chosen. */
+  occasion: Occasion
   language: Language
 }
 

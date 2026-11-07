@@ -71,8 +71,9 @@ public static class PublicRestaurantEndpoints
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
     /// the guest chooses the table, unless only a combination of tables is free for the party then (<see cref="AvailabilityTime.Combined"/>),
-    /// and ignored otherwise. Errors (400): "invalid_date", "invalid_time", "invalid_party_size",
-    /// "invalid_name", "contact_required", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language", "table_required",
+    /// and ignored otherwise. <see cref="Occasion"/> is optional, e.g. "Birthday" (<see cref="Data.Occasion"/>). Errors (400): "invalid_date",
+    /// "invalid_time", "invalid_party_size", "invalid_name", "contact_required", "invalid_phone", "invalid_email", "invalid_notes",
+    /// "invalid_language", "invalid_occasion", "table_required",
     /// "outside_opening_hours", "too_short_notice", "too_far_ahead", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
     /// </summary>
     public record BookingRequest(
@@ -84,7 +85,8 @@ public static class PublicRestaurantEndpoints
         string? Phone,
         string? Email,
         string? Notes,
-        string? Language);
+        string? Language,
+        string? Occasion = null);
 
     /// <summary>
     /// A booked table or combination of tables. <see cref="TableNumber"/> is the joined label of <see cref="TableNumbers"/>, e.g. "4 + 5".
@@ -291,7 +293,7 @@ public static class PublicRestaurantEndpoints
                 .ToList());
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
-        group.MapPost("/reservations", async (BookingRequest request, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
+        group.MapPost("/reservations", async (BookingRequest request, ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
             TimeProvider timeProvider, CancellationToken cancellationToken) =>
         {
             if (!DateOnly.TryParseExact(request.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
@@ -314,6 +316,10 @@ public static class PublicRestaurantEndpoints
             if (request.Language is null || !ReservationRules.Languages.Contains(request.Language))
             {
                 return Error("invalid_language");
+            }
+            if (!StaffReservationEndpoints.TryParseOccasion(request.Occasion, out var occasion))
+            {
+                return Error("invalid_occasion");
             }
 
             var settings = await LoadSettingsAsync(db);
@@ -348,6 +354,7 @@ public static class PublicRestaurantEndpoints
                 GuestPhone = guest.Phone,
                 GuestEmail = guest.Email,
                 Notes = guest.Notes,
+                Occasion = occasion ?? Occasion.None,
                 Status = settings.ConfirmationMode == ConfirmationMode.Request ? ReservationStatus.Requested : ReservationStatus.Confirmed,
                 WasRequested = settings.ConfirmationMode == ConfirmationMode.Request,
                 Source = ReservationSource.Online,
@@ -357,6 +364,8 @@ public static class PublicRestaurantEndpoints
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now,
             };
+            var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
+            await GuestProfiles.LinkAsync(db, reservation, countryCode, now, cancellationToken);
             db.Reservations.Add(reservation);
             ReservationHistory.Record(db, reservation, ReservationEventKind.Created, ReservationEditor.Guest, now);
             await db.SaveChangesAsync(cancellationToken);

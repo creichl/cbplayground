@@ -3,16 +3,21 @@ import { type ComponentProps, type FormEvent, type ReactNode, useId, useRef, use
 import { useTranslation } from 'react-i18next'
 import { isValidEmail } from '../../api/profile.ts'
 import { guestMaxLengths, isValidPhone } from '../../api/publicBooking.ts'
+import type { Occasion } from '../../api/reservations.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
 import { Button } from '../../ui/button.tsx'
 import { Input } from '../../ui/input.tsx'
 import { Label } from '../../ui/label.tsx'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select.tsx'
 import { Textarea } from '../../ui/textarea.tsx'
+import { occasionLabels, occasions } from '../guests/labels.ts'
 import { StepActions } from './StepActions.tsx'
 
-export type GuestDetailsValues = { name: string; phone: string; email: string; notes: string }
+export type GuestDetailsValues = { name: string; phone: string; email: string; notes: string; occasion: Occasion }
 
-type Errors = Partial<Record<keyof GuestDetailsValues, string>>
+type TextField = Exclude<keyof GuestDetailsValues, 'occasion'>
+
+type Errors = Partial<Record<TextField, string>>
 
 type GuestDetailsFormProps = {
   initialValues: GuestDetailsValues
@@ -27,7 +32,8 @@ type GuestDetailsFormProps = {
 }
 
 /**
- * Name, phone or email (one of them is enough, and the form says so) and a note. The fields carry the autocomplete and
+ * Name, phone or email (one of them is enough, and the form says so), a note and an optional occasion (e.g. a birthday), which the
+ * restaurant sees at the reservation. The fields carry the autocomplete and
  * input mode of their content; errors appear at the field once the guest tries to book, and the focus goes to the first
  * one. Below them what happens next: in the request mode that the restaurant confirms, and that the reservation can be
  * cancelled through the link. The main button books or sends the request, with a loading state.
@@ -39,6 +45,7 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
   const [validated, setValidated] = useState(false)
   const formRef = useRef<HTMLFormElement>(null)
   const contactId = useId()
+  const occasionId = useId()
 
   const validate = (next: GuestDetailsValues): Errors => {
     const noContact = next.phone.trim() === '' && next.email.trim() === ''
@@ -57,7 +64,7 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
     }
   }
 
-  const change = (field: keyof GuestDetailsValues, value: string) => {
+  const change = <Field extends keyof GuestDetailsValues>(field: Field, value: GuestDetailsValues[Field]) => {
     const next = { ...values, [field]: value }
     setValues(next)
     onValuesChange(next)
@@ -84,7 +91,7 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
     onSubmit(values)
   }
 
-  const field = (name: keyof GuestDetailsValues) => ({
+  const field = (name: TextField) => ({
     name,
     value: values[name],
     onChange: (event: { currentTarget: { value: string } }) => change(name, event.currentTarget.value),
@@ -126,6 +133,24 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
       <Field label={t('booking.details.notes')} description={t('booking.details.notesDescription', { count: guestMaxLengths.notes })} {...field('notes')}>
         {(props) => <Textarea {...props} rows={3} maxLength={guestMaxLengths.notes} />}
       </Field>
+
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor={occasionId} className="font-semibold">
+          {t('booking.details.occasion')}
+        </Label>
+        <Select value={values.occasion} onValueChange={(value) => change('occasion', value as Occasion)}>
+          <SelectTrigger id={occasionId} className="h-12 touch:h-12 sm:max-w-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {occasions.map((occasion) => (
+              <SelectItem key={occasion} value={occasion}>
+                {t(occasionLabels[occasion])}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <ul className="flex flex-col gap-1 text-sm text-muted-foreground">
         {request && <li>{t('booking.details.requestHint')}</li>}

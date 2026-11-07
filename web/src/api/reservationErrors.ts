@@ -13,6 +13,7 @@ const errorKeys = {
   invalid_email: 'reservations.errors.invalidEmail',
   invalid_notes: 'reservations.errors.invalidNotes',
   invalid_language: 'reservations.errors.invalidLanguage',
+  invalid_occasion: 'reservations.errors.invalidOccasion',
   outside_opening_hours: 'reservations.errors.outsideOpeningHours',
   in_the_past: 'reservations.errors.inThePast',
   slot_unavailable: 'reservations.errors.slotUnavailable',

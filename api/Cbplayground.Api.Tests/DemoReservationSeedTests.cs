@@ -22,6 +22,34 @@ public class DemoReservationSeedTests(ApiFactory factory) : IClassFixture<ApiFac
         return scope.ServiceProvider.GetRequiredService<AppDbContext>().ReservationEvents.AsNoTracking().ToList();
     }
 
+    private List<Guest> GuestsOf(Guid tenantId)
+    {
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = tenantId;
+        return scope.ServiceProvider.GetRequiredService<AppDbContext>().Guests.AsNoTracking().ToList();
+    }
+
+    [Fact]
+    public async Task Demo_reservations_belong_to_guest_profiles_some_with_several_visits_and_one_with_an_allergy()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory,
+            [new TestArea("Gaststube", true, 100, ("1", 2), ("2", 2), ("3", 4), ("4", 4), ("5", 6), ("6", 4), ("7", 4))]);
+
+        await DevelopmentSeed.SeedReservationsAsync(factory.Services);
+
+        var reservations = ReservationsOf(restaurant.Id);
+        var guests = GuestsOf(restaurant.Id);
+        // Every demo reservation has a phone number or an email address, so each has its guest.
+        Assert.All(reservations, r => Assert.Contains(guests, g => g.Id == r.GuestId));
+        Assert.True(guests.Count < reservations.Count);
+        Assert.Contains(reservations.GroupBy(r => r.GuestId), g => g.Count(r => r.Status == ReservationStatus.Completed) >= 2);
+        var allergic = Assert.Single(guests, g => g.AllergyNotes is not null);
+        Assert.Equal("Nussallergie", allergic.AllergyNotes);
+        Assert.True(reservations.Count(r => r.GuestId == allergic.Id) >= 2);
+        // The birthday note comes with the occasion.
+        Assert.All(reservations.Where(r => r.Notes == "Geburtstag"), r => Assert.Equal(Occasion.Birthday, r.Occasion));
+    }
+
     [Fact]
     public async Task Restaurants_with_tables_get_demo_reservations_for_the_past_7_days_today_and_the_next_7_days_once()
     {

@@ -586,6 +586,8 @@ public static class DevelopmentSeed
 
         // Same demo data on every start of an empty database, different per restaurant.
         var random = new Random(tenant.Id.GetHashCode());
+        // Guests who come again: a third of the reservations is theirs, so the front desk sees guests with several visits.
+        var regulars = Enumerable.Range(0, RegularGuests).Select(_ => guests.NextRegular(random)).ToList();
         var reservations = new List<Reservation>();
         var referenceCodes = new HashSet<string>();
         for (var day = firstDay; day <= 7; day++)
@@ -631,7 +633,12 @@ public static class DevelopmentSeed
                         ? ReservationSource.Online
                         : ReservationSource.Staff;
 
-                    var guest = guests.Next(random);
+                    var guest = random.NextDouble() < RegularShare ? regulars[random.Next(regulars.Count)] : guests.Next(random);
+                    // A regular comes at most once a day.
+                    if (regulars.Contains(guest) && reservations.Any(r => r.GuestPhone == guest.Phone && r.StartLocal.Date == start.Date))
+                    {
+                        guest = guests.Next(random);
+                    }
                     var status = day < 0 ? PastDemoStatus(random) : DemoStatus(random, start <= now, source, settings.ConfirmationMode);
                     var reservation = new Reservation
                     {
@@ -645,6 +652,7 @@ public static class DevelopmentSeed
                         GuestPhone = guest.Phone,
                         GuestEmail = guest.Email,
                         Notes = guest.Notes,
+                        Occasion = guest.Notes == guests.BirthdayNote ? Occasion.Birthday : Occasion.None,
                         Status = status,
                         WasRequested = status == ReservationStatus.Requested,
                         Source = source,
@@ -661,6 +669,18 @@ public static class DevelopmentSeed
                     reservations.Add(reservation);
                 }
             }
+        }
+
+        // The guest profiles, as the bookings would have made them, in the order the reservations were made.
+        foreach (var reservation in reservations.OrderBy(r => r.CreatedAtUtc).ThenBy(r => r.StartLocal))
+        {
+            await GuestProfiles.LinkAsync(db, reservation, tenant.CountryCode, reservation.CreatedAtUtc);
+        }
+        // The regular with the most reservations has an allergy the kitchen has to know about.
+        var allergic = reservations.Where(r => regulars.Any(g => g.Phone == r.GuestPhone)).GroupBy(r => r.GuestId).MaxBy(g => g.Count())?.Key;
+        if (db.Guests.Local.FirstOrDefault(g => g.Id == allergic) is { } allergicGuest)
+        {
+            allergicGuest.AllergyNotes = guests.AllergyNote;
         }
 
         db.Reservations.AddRange(reservations);
@@ -723,9 +743,23 @@ public static class DevelopmentSeed
         }
     }
 
-    /// <summary>Plausible guests for the restaurant's country: German names for Germany and Austria (and without location), Serbian ones for Serbia.</summary>
-    private class DemoGuests(string[] firstNames, string[] lastNames, string phonePrefix, string[] languages, string[] notes)
+    /// <summary>The number of demo guests per restaurant who come again and again.</summary>
+    private const int RegularGuests = 8;
+
+    /// <summary>The share of the demo reservations that belongs to them.</summary>
+    private const double RegularShare = 0.35;
+
+    /// <summary>
+    /// Plausible guests for the restaurant's country: German names for Germany and Austria (and without location), Serbian ones for
+    /// Serbia. The first of the notes is the birthday, which the reservation also has as its occasion.
+    /// </summary>
+    private class DemoGuests(string[] firstNames, string[] lastNames, string phonePrefix, string[] languages, string[] notes, string allergyNote)
     {
+        public string BirthdayNote => notes[0];
+
+        /// <summary>The allergy note of one of the regulars' profiles.</summary>
+        public string AllergyNote => allergyNote;
+
         public record Guest(string Name, string? Phone, string? Email, string? Notes, string Language);
 
         public static DemoGuests For(string? countryCode) => countryCode switch
@@ -735,19 +769,22 @@ public static class DevelopmentSeed
                 ["Jovanović", "Petrović", "Nikolić", "Marković", "Đorđević", "Stojanović", "Ilić", "Stanković", "Pavlović", "Popović", "Kostić", "Savić"],
                 "+381 6",
                 ["sr-Latn", "sr-Latn", "sr-Cyrl", "en"],
-                ["Rođendan", "Dečja stolica, molim", "Sto pored prozora ako je moguće"]),
+                ["Rođendan", "Dečja stolica, molim", "Sto pored prozora ako je moguće"],
+                "Alergija na orašaste plodove"),
             Locations.Austria => new DemoGuests(
                 ["Lukas", "Anna", "Maximilian", "Sophie", "Florian", "Katharina", "Tobias", "Lena", "Stefan", "Sabine", "Johannes", "Theresa"],
                 ["Gruber", "Huber", "Bauer", "Wagner", "Müller", "Pichler", "Steiner", "Moser", "Mayer", "Hofer", "Leitner", "Berger"],
                 "+43 66",
                 ["de", "de", "de", "en"],
-                ["Geburtstag", "Bitte einen Kinderstuhl", "Wenn möglich am Fenster"]),
+                ["Geburtstag", "Bitte einen Kinderstuhl", "Wenn möglich am Fenster"],
+                "Nussallergie"),
             _ => new DemoGuests(
                 ["Lukas", "Anna", "Jonas", "Marie", "Felix", "Laura", "Paul", "Julia", "Thomas", "Monika", "Stefan", "Katrin"],
                 ["Müller", "Schmidt", "Schneider", "Fischer", "Weber", "Meyer", "Wagner", "Becker", "Hoffmann", "Schulz", "Koch", "Richter"],
                 "+49 15",
                 ["de", "de", "de", "en"],
-                ["Geburtstag", "Bitte einen Kinderstuhl", "Wenn möglich am Fenster"]),
+                ["Geburtstag", "Bitte einen Kinderstuhl", "Wenn möglich am Fenster"],
+                "Nussallergie"),
         };
 
         /// <summary>A guest with a phone number, an email address or both, sometimes with a note.</summary>
@@ -760,6 +797,13 @@ public static class DevelopmentSeed
             var email = contact > 0.6 ? $"{Ascii(firstName)}.{Ascii(lastName)}@example.com" : null;
             var note = random.NextDouble() < 0.15 ? notes[random.Next(notes.Length)] : null;
             return new Guest($"{firstName} {lastName}", phone, email, note, languages[random.Next(languages.Length)]);
+        }
+
+        /// <summary>A guest who comes again: always with a phone number, by which the profiles recognise them, and without a note.</summary>
+        public Guest NextRegular(Random random)
+        {
+            var guest = Next(random);
+            return guest with { Phone = guest.Phone ?? $"{phonePrefix}{random.Next(0, 10)} {random.Next(1000000, 9999999)}", Notes = null };
         }
 
         private static string Ascii(string name) => name.ToLowerInvariant()

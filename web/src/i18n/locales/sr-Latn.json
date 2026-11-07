@@ -236,12 +236,14 @@
       "notesDescription_one": "Npr. dečja stolica ili alergije. Najviše {{count}} znak.",
       "notesDescription_few": "Npr. dečja stolica ili alergije. Najviše {{count}} znaka.",
       "notesDescription_other": "Npr. dečja stolica ili alergije. Najviše {{count}} znakova.",
+      "occasion": "Povod (opciono)",
       "contactHint": "Telefon ili imejl – dovoljno je jedno od to dvoje.",
       "contactRequired": "Unesite broj telefona ili imejl adresu.",
       "nameRequired": "Unesite svoje ime.",
       "invalidPhone": "Unesite ispravan broj telefona (najmanje 6 cifara).",
       "invalidEmail": "Unesite ispravnu imejl adresu.",
       "invalidNotes": "Napomena je predugačka.",
+      "invalidOccasion": "Izaberite povod sa liste.",
       "submit": "Rezerviši",
       "submitRequest": "Pošalji zahtev",
       "contactTitle": "Kako restoran može da vas kontaktira?",
@@ -962,6 +964,111 @@
       }
     }
   },
+  "guests": {
+    "title": "Gosti",
+    "listLabel": "Lista gostiju",
+    "count_one": "{{count}} gost",
+    "count_few": "{{count}} gosta",
+    "count_other": "{{count}} gostiju",
+    "search": "Pretraži goste",
+    "searchPlaceholder": "Ime, telefon ili imejl",
+    "empty": "Još nema gostiju. Svaka rezervacija sa brojem telefona ili imejl adresom dodaje svog gosta.",
+    "noMatches": "Nijedan gost ne odgovara pretrazi.",
+    "chooseHint": "Izaberite gosta da vidite profil i posete.",
+    "backToService": "Nazad na pregled smene",
+    "backToList": "Svi gosti",
+    "previousPage": "Prethodna strana",
+    "nextPage": "Sledeća strana",
+    "page": "Strana {{page}} od {{pages}}",
+    "noContact": "Nema broja telefona ni imejl adrese",
+    "edit": "Izmeni profil",
+    "saved": "Profil gosta {{name}} je sačuvan.",
+    "notSaved": "Profil nije sačuvan",
+    "deletedName": "Obrisan gost",
+    "row": {
+      "visits_one": "{{count}} poseta",
+      "visits_few": "{{count}} posete",
+      "visits_other": "{{count}} poseta",
+      "noShows_one": "{{count}} put nije došao",
+      "noShows_few": "{{count}} puta nije došao",
+      "noShows_other": "{{count}} puta nije došao",
+      "lastVisit": "poslednji put {{date}}"
+    },
+    "figures": {
+      "visits": "Posete",
+      "noShows": "Nisu došli",
+      "cancellations": "Otkazivanja",
+      "lastVisit": "Poslednja poseta",
+      "nextVisit": "Sledeća rezervacija",
+      "never": "Nikad",
+      "none": "Nema"
+    },
+    "fields": {
+      "name": "Ime",
+      "phone": "Telefon",
+      "email": "Imejl",
+      "tags": "Oznake",
+      "notes": "Beleške o gostu",
+      "allergyNotes": "Alergije"
+    },
+    "tags": {
+      "Vip": "VIP",
+      "Regular": "Stalni gost",
+      "Press": "Novinar",
+      "Staff": "Osoblje",
+      "Difficult": "Zahtevan"
+    },
+    "occasions": {
+      "None": "Bez povoda",
+      "Birthday": "Rođendan",
+      "Anniversary": "Godišnjica",
+      "Business": "Poslovno",
+      "Date": "Sastanak",
+      "Celebration": "Proslava",
+      "Other": "Drugi povod"
+    },
+    "markers": {
+      "vip": "VIP",
+      "allergies": "Alergije",
+      "firstVisit": "Prva poseta"
+    },
+    "card": {
+      "title": "Profil gosta",
+      "openInDirectory": "Otvori gosta {{name}} u listi gostiju",
+      "noProfile": "Nema profila gosta: rezervacija nema ni broj telefona ni imejl adresu.",
+      "edit": "Izmeni profil",
+      "save": "Sačuvaj profil"
+    },
+    "reservations": {
+      "title": "Rezervacije",
+      "empty": "Nema rezervacija.",
+      "when": "{{date}}, {{time}}",
+      "summary_one": "{{count}} osoba · Sto {{table}} ({{area}})",
+      "summary_few": "{{count}} osobe · Sto {{table}} ({{area}})",
+      "summary_other": "{{count}} osoba · Sto {{table}} ({{area}})"
+    },
+    "delete": {
+      "button": "Obriši podatke gosta",
+      "title": "Obrisati podatke gosta?",
+      "text_one": "Profil gosta {{name}} biće obrisan. Njegova {{count}} rezervacija zadržava samo datum, vreme, broj osoba, sto i status; ime, broj telefona, imejl adresa i napomene se uklanjaju. Ovo se ne može poništiti.",
+      "text_few": "Profil gosta {{name}} biće obrisan. Njegove {{count}} rezervacije zadržavaju samo datum, vreme, broj osoba, sto i status; ime, broj telefona, imejl adresa i napomene se uklanjaju. Ovo se ne može poništiti.",
+      "text_other": "Profil gosta {{name}} biće obrisan. Njegovih {{count}} rezervacija zadržava samo datum, vreme, broj osoba, sto i status; ime, broj telefona, imejl adresa i napomene se uklanjaju. Ovo se ne može poništiti.",
+      "back": "Nazad",
+      "confirm": "Obriši podatke",
+      "done": "Podaci gosta {{name}} su obrisani."
+    },
+    "errors": {
+      "invalidName": "Unesite ime.",
+      "invalidPhone": "Unesite ispravan broj telefona (najmanje 6 cifara, najviše 30 znakova).",
+      "invalidEmail": "Unesite ispravnu imejl adresu.",
+      "invalidNotes": "Beleške su predugačke (najviše 1000 znakova).",
+      "invalidAllergyNotes": "Alergije su predugačke (najviše 500 znakova).",
+      "invalidTags": "Jedna od oznaka nije poznata.",
+      "contactTaken": "Drugi gost već ima ovaj broj telefona ili imejl adresu.",
+      "notFound": "Ovaj gost ne postoji (više).",
+      "forbidden": "Ovo mogu samo administratori."
+    }
+  },
   "waitlist": {
     "add": "Na listu čekanja",
     "titleNew": "Dodaj na listu čekanja",
@@ -1492,6 +1599,7 @@
       "phone": "Telefon",
       "email": "Imejl",
       "notes": "Napomena",
+      "occasion": "Povod",
       "notSaved": "Rezervacija nije sačuvana",
       "create": "Napravi rezervaciju",
       "created": "Rezervacija za {{name}} je napravljena (šifra {{code}}).",
@@ -1543,6 +1651,7 @@
         "phone": "Telefon",
         "email": "Imejl",
         "notes": "Napomena",
+        "occasion": "Povod",
         "status": "Status"
       }
     },
@@ -1556,6 +1665,7 @@
       "invalidEmail": "Unesite ispravnu imejl adresu.",
       "invalidNotes": "Napomena može imati najviše 500 znakova.",
       "invalidLanguage": "Jezik gosta nije podržan.",
+      "invalidOccasion": "Povod nije poznat.",
       "outsideOpeningHours": "Restoran u to vreme ne radi ili bi se rezervacija završila posle zatvaranja.",
       "inThePast": "Ovo vreme je u prošlosti.",
       "slotUnavailable": "U ovo vreme više nema slobodnog stola.",

@@ -1,5 +1,6 @@
 import dayjs from 'dayjs'
 import {
+  BookUserIcon,
   CalendarIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
@@ -12,7 +13,7 @@ import {
 } from 'lucide-react'
 import { type PointerEvent, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
   defaultWalkInGuests,
   type Reservation,
@@ -50,6 +51,7 @@ import { Input } from '../ui/input.tsx'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover.tsx'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/tooltip.tsx'
 
 const dateFormat = 'YYYY-MM-DD'
 
@@ -94,11 +96,11 @@ function toDate(date: string) {
 }
 
 /**
- * The service screen of the front desk: in the top bar the day, the service, the search and the main actions; below it the
- * key figures of the service with the covers per quarter hour; then the list panel (the day's reservations by where the
- * guests are, the open requests and the day's waitlist of walk-ins) beside the plan pane (floor plans or timeline).
- * Selecting a reservation in the list highlights its table and its block, and the other way round. Day, service and view are
- * kept in the address
+ * The service screen of the front desk: in the top bar the day, the service, the search, the way to the guest directory and the
+ * main actions; below it the key figures of the service with the covers per quarter hour; then the list panel (the day's
+ * reservations by where the guests are, the open requests and the day's waitlist of walk-ins) beside the plan pane (floor plans
+ * or timeline). Selecting a reservation in the list highlights its table and its block, and the other way round. Day, service
+ * and view are kept in the address
  * (`?date=YYYY-MM-DD`, `?service=HH:mm`, `?view=timeline`), so a reload or a shared link shows the same.
  * A guest of "Upcoming" is dragged by the grip of its row onto a table of the floor plans to seat them there (see
  * useReservationMoves); a tap on a free cell of the timeline opens a new reservation at that table and time.
@@ -298,7 +300,7 @@ export function FrontdeskPage() {
           ))}
         </SelectContent>
       </Select>
-      <div className="relative min-w-48 flex-1">
+      <div className="relative min-w-40 flex-1">
         <SearchIcon aria-hidden="true" className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input
           type="search"
@@ -314,6 +316,18 @@ export function FrontdeskPage() {
 
   const actions = (
     <>
+      {/* An icon below 1536 px, so the top bar keeps one row at 1440 px. */}
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button asChild variant="ghost" size="icon" className="2xl:w-auto 2xl:px-4" aria-label={t('guests.title')}>
+            <Link to="/frontdesk/guests">
+              <BookUserIcon aria-hidden="true" />
+              <span className="max-2xl:sr-only">{t('guests.title')}</span>
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent className="2xl:hidden">{t('guests.title')}</TooltipContent>
+      </Tooltip>
       {/* A walk-in is seated now and the waitlist is today's, so only on today. */}
       {isToday && (
         <>

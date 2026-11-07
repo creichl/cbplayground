@@ -224,12 +224,14 @@
       "notes": "Anmerkung (optional)",
       "notesDescription_one": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
       "notesDescription_other": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
+      "occasion": "Anlass (optional)",
       "contactHint": "Telefon oder E-Mail – eines von beiden genügt.",
       "contactRequired": "Bitte geben Sie eine Telefonnummer oder eine E-Mail-Adresse an.",
       "nameRequired": "Bitte geben Sie Ihren Namen an.",
       "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer an (mindestens 6 Ziffern).",
       "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse an.",
       "invalidNotes": "Die Anmerkung ist zu lang.",
+      "invalidOccasion": "Bitte einen Anlass aus der Liste wählen.",
       "submit": "Jetzt reservieren",
       "submitRequest": "Anfrage senden",
       "contactTitle": "Wie erreicht Sie das Restaurant?",
@@ -947,6 +949,106 @@
       }
     }
   },
+  "guests": {
+    "title": "Gäste",
+    "listLabel": "Gästeliste",
+    "count_one": "{{count}} Gast",
+    "count_other": "{{count}} Gäste",
+    "search": "Gäste suchen",
+    "searchPlaceholder": "Name, Telefon oder E-Mail",
+    "empty": "Noch keine Gäste. Jede Reservierung mit Telefonnummer oder E-Mail-Adresse legt ihren Gast an.",
+    "noMatches": "Kein Gast passt zur Suche.",
+    "chooseHint": "Einen Gast wählen, um Profil und Besuche zu sehen.",
+    "backToService": "Zurück zum Service",
+    "backToList": "Alle Gäste",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "page": "Seite {{page}} von {{pages}}",
+    "noContact": "Keine Telefonnummer oder E-Mail-Adresse",
+    "edit": "Profil bearbeiten",
+    "saved": "Das Profil von {{name}} wurde gespeichert.",
+    "notSaved": "Das Profil wurde nicht gespeichert",
+    "deletedName": "Gelöschter Gast",
+    "row": {
+      "visits_one": "{{count}} Besuch",
+      "visits_other": "{{count}} Besuche",
+      "noShows_one": "{{count}}× nicht erschienen",
+      "noShows_other": "{{count}}× nicht erschienen",
+      "lastVisit": "zuletzt {{date}}"
+    },
+    "figures": {
+      "visits": "Besuche",
+      "noShows": "Nicht erschienen",
+      "cancellations": "Stornierungen",
+      "lastVisit": "Letzter Besuch",
+      "nextVisit": "Nächste Reservierung",
+      "never": "Noch nie",
+      "none": "Keine"
+    },
+    "fields": {
+      "name": "Name",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "tags": "Merkmale",
+      "notes": "Notizen zum Gast",
+      "allergyNotes": "Allergien"
+    },
+    "tags": {
+      "Vip": "VIP",
+      "Regular": "Stammgast",
+      "Press": "Presse",
+      "Staff": "Personal",
+      "Difficult": "Schwierig"
+    },
+    "occasions": {
+      "None": "Kein Anlass",
+      "Birthday": "Geburtstag",
+      "Anniversary": "Jahrestag",
+      "Business": "Geschäftlich",
+      "Date": "Date",
+      "Celebration": "Feier",
+      "Other": "Anderer Anlass"
+    },
+    "markers": {
+      "vip": "VIP",
+      "allergies": "Allergien",
+      "firstVisit": "Erster Besuch"
+    },
+    "card": {
+      "title": "Gästeprofil",
+      "openInDirectory": "{{name}} in der Gästeliste öffnen",
+      "noProfile": "Kein Gästeprofil: Die Reservierung hat weder Telefonnummer noch E-Mail-Adresse.",
+      "edit": "Profil bearbeiten",
+      "save": "Profil speichern"
+    },
+    "reservations": {
+      "title": "Reservierungen",
+      "empty": "Keine Reservierungen.",
+      "when": "{{date}}, {{time}}",
+      "summary_one": "{{count}} Pers. · Tisch {{table}} ({{area}})",
+      "summary_other": "{{count}} Pers. · Tisch {{table}} ({{area}})"
+    },
+    "delete": {
+      "button": "Gästedaten löschen",
+      "title": "Daten des Gastes löschen?",
+      "text_one": "Das Profil von {{name}} wird gelöscht. Seine {{count}} Reservierung behält nur Datum, Uhrzeit, Personen, Tisch und Status; Name, Telefonnummer, E-Mail-Adresse und Notizen werden entfernt. Das lässt sich nicht rückgängig machen.",
+      "text_other": "Das Profil von {{name}} wird gelöscht. Seine {{count}} Reservierungen behalten nur Datum, Uhrzeit, Personen, Tisch und Status; Name, Telefonnummer, E-Mail-Adresse und Notizen werden entfernt. Das lässt sich nicht rückgängig machen.",
+      "back": "Zurück",
+      "confirm": "Daten löschen",
+      "done": "Die Daten von {{name}} wurden gelöscht."
+    },
+    "errors": {
+      "invalidName": "Bitte einen Namen angeben.",
+      "invalidPhone": "Bitte eine gültige Telefonnummer angeben (mindestens 6 Ziffern, höchstens 30 Zeichen).",
+      "invalidEmail": "Bitte eine gültige E-Mail-Adresse angeben.",
+      "invalidNotes": "Die Notizen sind zu lang (höchstens 1000 Zeichen).",
+      "invalidAllergyNotes": "Die Allergien sind zu lang (höchstens 500 Zeichen).",
+      "invalidTags": "Eines der Merkmale ist unbekannt.",
+      "contactTaken": "Ein anderer Gast hat diese Telefonnummer oder E-Mail-Adresse bereits.",
+      "notFound": "Diesen Gast gibt es nicht (mehr).",
+      "forbidden": "Das dürfen nur Admins."
+    }
+  },
   "waitlist": {
     "add": "Auf die Warteliste",
     "titleNew": "Auf die Warteliste setzen",
@@ -1457,6 +1559,7 @@
       "phone": "Telefon",
       "email": "E-Mail",
       "notes": "Notiz",
+      "occasion": "Anlass",
       "notSaved": "Die Reservierung wurde nicht gespeichert",
       "create": "Reservierung anlegen",
       "created": "Die Reservierung für {{name}} wurde angelegt (Referenz {{code}}).",
@@ -1503,6 +1606,7 @@
         "phone": "Telefon",
         "email": "E-Mail",
         "notes": "Notiz",
+        "occasion": "Anlass",
         "status": "Status"
       }
     },
@@ -1516,6 +1620,7 @@
       "invalidEmail": "Bitte eine gültige E-Mail-Adresse angeben.",
       "invalidNotes": "Die Notiz darf höchstens 500 Zeichen lang sein.",
       "invalidLanguage": "Die Sprache des Gastes wird nicht unterstützt.",
+      "invalidOccasion": "Der Anlass ist unbekannt.",
       "outsideOpeningHours": "Zu dieser Zeit hat das Restaurant nicht geöffnet, oder die Reservierung würde nach Ladenschluss enden.",
       "inThePast": "Diese Zeit liegt in der Vergangenheit.",
       "slotUnavailable": "Zu dieser Zeit ist kein Tisch mehr frei.",
