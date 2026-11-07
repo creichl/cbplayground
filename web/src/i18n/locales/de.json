@@ -767,7 +767,7 @@
         "custom": "Eigener"
       },
       "range": "Von – bis",
-      "tooLong": "Wähle einen Zeitraum von höchstens 366 Tagen."
+      "tooLong": "Wählen Sie einen Zeitraum von höchstens 366 Tagen."
     },
     "figures": {
       "reservations": "Reservierungen",

@@ -19,6 +19,7 @@ test.describe('Front desk: day sheet', () => {
 
     const print = page.getByRole('link', { name: 'Print the day sheet' })
     await expect(print).toHaveAttribute('href', `/frontdesk/print?date=${todayInBelgrade()}`)
+    await screenshot(page, 'day-sheet', 'service-screen-print-button', { fullPage: false })
     const [sheet] = await Promise.all([context.waitForEvent('page'), print.click()])
 
     await expect(sheet).toHaveURL(/\/frontdesk\/print\?date=/)
