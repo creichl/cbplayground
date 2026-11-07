@@ -137,10 +137,11 @@ test.describe('Guests: directory', () => {
     const result = page.locator(`a[href="/frontdesk/guests/${guest.id}"]`)
     await expect(result).toBeVisible()
     await expect(result.getByRole('img', { name: 'Allergies' })).toBeVisible()
-    // Only guests whose name, email address or phone number matches.
-    for (const name of await page.getByRole('complementary', { name: 'Guest list' }).locator('a[href^="/frontdesk/guests/"] .font-semibold').allTextContents()) {
-      expect(name.toLowerCase()).toContain(guest.name.toLowerCase())
-    }
+    // Only guests whose name matches, once the search (after a short pause in typing) has answered.
+    const names = page.getByRole('complementary', { name: 'Guest list' }).locator('a[href^="/frontdesk/guests/"] .font-semibold')
+    await expect
+      .poll(async () => (await names.allTextContents()).every((name) => name.toLowerCase().includes(guest.name.toLowerCase())))
+      .toBe(true)
     await screenshot(page, 'guests', 'directory-search')
 
     await result.click()
