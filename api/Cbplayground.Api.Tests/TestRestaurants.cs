@@ -140,6 +140,8 @@ public static class TestRestaurants
             GuestName = "Direct Guest",
             GuestPhone = "+43 660 1234567",
             Status = status,
+            // As the migration sets it for existing reservations: open and declined requests were requests.
+            WasRequested = status is ReservationStatus.Requested or ReservationStatus.Declined,
             Source = source,
             CompletedAtLocal = completedAtLocal,
             ReferenceCode = $"{Guid.NewGuid():N}"[..6].ToUpperInvariant(),

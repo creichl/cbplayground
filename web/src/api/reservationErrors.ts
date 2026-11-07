@@ -20,6 +20,8 @@ const errorKeys = {
   invalid_status: 'reservations.errors.invalidStatus',
   invalid_status_transition: 'reservations.errors.invalidStatusTransition',
   status_not_allowed_now: 'reservations.errors.statusNotAllowedNow',
+  reservation_closed: 'reservations.errors.reservationClosed',
+  cannot_delete_reservation: 'reservations.errors.cannotDeleteReservation',
 } as const
 
 /** A failed reservation request in the user's language. */

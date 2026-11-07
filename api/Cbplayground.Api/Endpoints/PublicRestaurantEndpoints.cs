@@ -334,6 +334,7 @@ public static class PublicRestaurantEndpoints
                 GuestEmail = guest.Email,
                 Notes = guest.Notes,
                 Status = settings.ConfirmationMode == ConfirmationMode.Request ? ReservationStatus.Requested : ReservationStatus.Confirmed,
+                WasRequested = settings.ConfirmationMode == ConfirmationMode.Request,
                 Source = ReservationSource.Online,
                 ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
                 Language = request.Language,

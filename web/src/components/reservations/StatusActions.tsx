@@ -1,11 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query'
-import type { TFunction } from 'i18next'
 import { LoaderCircleIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { ApiError } from '../../api/client.ts'
-import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import {
   type Reservation,
   type ReservationStatus,
@@ -18,6 +15,7 @@ import { cn } from '../../lib/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog.tsx'
 import { availableActions, guestName, type StatusAction, statusColors, statusLabels, undoStatus } from './status.ts'
+import { removeWalkIn, removeWalkInQuestion, statusErrorMessage } from './walkInRemoval.ts'
 
 type StatusActionsProps = {
   reservation: Reservation
@@ -25,14 +23,9 @@ type StatusActionsProps = {
   compact?: boolean
   /** Called after a successful change, e.g. to close the popover. */
   onDone?: () => void
-  /** Called when the question before cancelling, a no-show or declining opens or closes. */
+  /** Called when the question before cancelling, a no-show, declining or removing a walk-in opens or closes. */
   onConfirmingChange?: (confirming: boolean) => void
   className?: string
-}
-
-/** A failed status change in the user's language; a taken table means an undo came too late. */
-function statusErrorMessage(error: unknown, t: TFunction) {
-  return error instanceof ApiError && error.code === 'table_unavailable' ? t('reservations.errors.tableTaken') : reservationErrorMessage(error, t)
 }
 
 /** The texts of the question before a change that asks first (see status.ts), by the status it sets. */
@@ -44,7 +37,7 @@ const questions = {
 
 /**
  * The quick status changes of a reservation as buttons, the same in the lists and on the plans (see status.ts). Cancelling,
- * no-show and declining ask first. After every change a toast offers to undo it.
+ * no-show, declining and removing a walk-in ask first. After every change a toast offers to undo it where the server allows it.
  */
 export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange, className }: StatusActionsProps) {
   const { t, i18n } = useTranslation()
@@ -52,8 +45,13 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
   const now = useRestaurantNow()
   const setStatus = useSetReservationStatus()
   const [confirming, setConfirming] = useState<StatusAction | null>(null)
+  const [removing, setRemoving] = useState(false)
   const actions = availableActions(reservation, now)
-  const question = questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
+  const question =
+    confirming?.status === null
+      ? removeWalkInQuestion
+      : questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
+  const pending = setStatus.isPending || removing
 
   const confirm = (action: StatusAction | null) => {
     setConfirming(action)
@@ -64,7 +62,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
 
   // Shown after every change, also after an undo; it stays when the row or popover that started it is gone.
   const showChanged = (previous: ReservationStatus, changed: Reservation) => {
-    const undo = undoStatus(previous, changed.status)
+    const undo = undoStatus(previous, changed, now)
     toast(t('reservations.toast.changed', { name: guestName(changed, t), status: t(statusLabels[changed.status]) }), {
       duration: 8000,
       icon: <span aria-hidden="true" className="size-3 rounded-full" style={{ backgroundColor: statusColors[changed.status].color }} />,
@@ -80,7 +78,24 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
     })
   }
 
-  const change = (status: ReservationStatus) => {
+  const remove = () => {
+    setRemoving(true)
+    // The walk-in leaves the lists, and with it this row or popover.
+    removeWalkIn(queryClient, reservation, t).then(
+      () => {
+        setRemoving(false)
+        confirm(null)
+        onDone?.()
+      },
+      () => setRemoving(false),
+    )
+  }
+
+  const change = (status: ReservationStatus | null) => {
+    if (status === null) {
+      remove()
+      return
+    }
     const previous = reservation.status
     // A promise instead of the callbacks of mutate(): the change may move this row to another tab or close the popover,
     // and the toast has to appear anyway.
@@ -95,7 +110,8 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
     return null
   }
 
-  const pending = (action: StatusAction) => setStatus.isPending && setStatus.variables.status === action.status
+  const isPending = (action: StatusAction) =>
+    action.status === null ? removing : setStatus.isPending && setStatus.variables.status === action.status
 
   return (
     <>
@@ -108,10 +124,10 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
               size="sm"
               variant={primary ? 'primary' : 'outline'}
               className={compact ? 'px-2.5' : undefined}
-              disabled={setStatus.isPending}
+              disabled={pending}
               onClick={() => (action.confirm ? confirm(action) : change(action.status))}
             >
-              {pending(action) ? (
+              {isPending(action) ? (
                 <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />
               ) : (
                 <action.icon size={16} style={primary || action.color === null ? undefined : { color: action.color.text }} />
@@ -136,6 +152,7 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
               {t(question.text, {
                 name: guestName(reservation, t),
                 time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
+                table: reservation.tableNumber,
                 count: reservation.guests,
               })}
             </DialogDescription>
@@ -146,10 +163,10 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
             </DialogClose>
             <Button
               className="bg-destructive text-background hover:bg-destructive/90"
-              disabled={setStatus.isPending}
+              disabled={pending}
               onClick={() => confirming !== null && change(confirming.status)}
             >
-              {setStatus.isPending && <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />}
+              {pending && <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />}
               {t(question.confirm)}
             </Button>
           </DialogFooter>

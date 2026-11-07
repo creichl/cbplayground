@@ -51,7 +51,8 @@ public static class StaffReservationEndpoints
     /// the system assigns a table, without <see cref="DurationMinutes"/> the restaurant's duration for the party size applies,
     /// without <see cref="Language"/> the language of the restaurant's country. Errors (400): "invalid_date", "invalid_time",
     /// "invalid_party_size", "invalid_duration", "invalid_name", "invalid_phone", "invalid_email", "invalid_notes",
-    /// "invalid_language", "outside_opening_hours", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
+    /// "invalid_language", "outside_opening_hours", "in_the_past"; (409): "slot_unavailable", "table_unavailable", "reservation_closed"
+    /// (a change of date, time, party size, table or duration of a reservation in one of the <see cref="ReservationRules.ClosedStatuses"/>).
     /// </summary>
     public record ReservationRequest(
         string? Date,
@@ -67,7 +68,8 @@ public static class StaffReservationEndpoints
 
     /// <summary>
     /// Errors: "invalid_status" (400); (409): "invalid_status_transition", "status_not_allowed_now" ("arrived" and "late" only on
-    /// the day of the reservation, "no-show" only from its start), "table_unavailable" (an undo while the table is taken).
+    /// the day of the reservation, "no-show" only from its start, the undo of a cancellation only until its end),
+    /// "table_unavailable" (an undo while the table is taken).
     /// </summary>
     public record StatusRequest(string? Status);
 
@@ -212,7 +214,8 @@ public static class StaffReservationEndpoints
         // off the quarter-hour grid and may end after closing time: as long as its start is kept, the opening hours do not apply.
         // The opening hours, the availability and the table are only checked when the booking itself changes (date, time,
         // duration, party size or table; no table means the system assigns one), so the guest's details and notes can
-        // still be changed after the opening hours or the tables have changed.
+        // still be changed after the opening hours or the tables have changed. A closed reservation (cancelled, declined, no-show,
+        // guest left) keeps its booking: only the guest's details, notes and language can still be changed.
         group.MapPut("/reservations/{id:guid}", async (Guid id, ReservationRequest request, ClaimsPrincipal user, ITenantContext tenantContext,
             AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
@@ -234,6 +237,10 @@ public static class StaffReservationEndpoints
                 || input.Duration != reservation.DurationMinutes
                 || request.Guests != reservation.PartySize
                 || request.TableId != reservation.TableId;
+            if (bookingChanged && ReservationRules.ClosedStatuses.Contains(reservation.Status))
+            {
+                return ErrorResponse.Result("reservation_closed", StatusCodes.Status409Conflict);
+            }
             var tableId = reservation.TableId;
             if (bookingChanged)
             {
@@ -279,12 +286,12 @@ public static class StaffReservationEndpoints
             {
                 return Results.NotFound();
             }
-            if (!ReservationRules.IsTransitionAllowed(reservation.Status, status))
+            if (!ReservationRules.IsTransitionAllowed(reservation, status))
             {
                 return ErrorResponse.Result("invalid_status_transition", StatusCodes.Status409Conflict);
             }
             var now = await availability.GetLocalNowAsync(cancellationToken) ?? DateTime.UtcNow;
-            if (!ReservationRules.IsAllowedNow(status, reservation.StartLocal, now))
+            if (!ReservationRules.IsAllowedNow(reservation, status, now))
             {
                 return ErrorResponse.Result("status_not_allowed_now", StatusCodes.Status409Conflict);
             }
@@ -305,6 +312,25 @@ public static class StaffReservationEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
             return Results.Ok(await LoadResponseAsync(db, reservation.Id));
+        });
+
+        // The undo of a walk-in's arrival: a walk-in was never expected, so it is removed instead of becoming a confirmed
+        // reservation. Only an arrived walk-in can be deleted; every other reservation keeps its history (409).
+        group.MapDelete("/reservations/{id:guid}", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
+        {
+            var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
+            if (reservation is null)
+            {
+                return Results.NotFound();
+            }
+            if (reservation.Source != ReservationSource.WalkIn || reservation.Status != ReservationStatus.Arrived)
+            {
+                return ErrorResponse.Result("cannot_delete_reservation", StatusCodes.Status409Conflict);
+            }
+
+            db.Reservations.Remove(reservation);
+            await db.SaveChangesAsync(cancellationToken);
+            return Results.NoContent();
         });
 
         // Who changed what and when, newest first.
