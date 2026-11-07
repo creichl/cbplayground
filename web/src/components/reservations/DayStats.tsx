@@ -16,6 +16,8 @@ type DayStatsProps = {
   requestsTo?: string
   /** Shows the open requests, e.g. the tab "Requests" of the front desk; wins over `requestsTo`. */
   onOpenRequests?: () => void
+  /** The parties on the waitlist and their guests (front desk); left out without it. */
+  waiting?: { parties: number; guests: number }
   className?: string
 }
 
@@ -23,9 +25,10 @@ const sum = (reservations: Reservation[]) => reservations.reduce((total, reserva
 
 /**
  * The key figures of a day or a service: reservations and covers expected (without cancelled, declined and no-show ones),
- * guests seated now (arrived and not left yet), finished reservations (the guests left), no-shows and the open requests.
+ * guests seated now (arrived and not left yet), finished reservations (the guests left), no-shows, the parties waiting on the
+ * waitlist and the open requests.
  */
-export function DayStats({ reservations, openRequests, withArrived = true, requestsTo, onOpenRequests, className }: DayStatsProps) {
+export function DayStats({ reservations, openRequests, withArrived = true, requestsTo, onOpenRequests, waiting, className }: DayStatsProps) {
   const { t } = useTranslation()
   const active = reservations.filter(isActive)
   const arrived = reservations.filter((reservation) => reservation.status === 'Arrived')
@@ -53,6 +56,9 @@ export function DayStats({ reservations, openRequests, withArrived = true, reque
           <Stat label={t('reservations.stats.finished')} value={completed.length} detail={t('reservations.stats.covers', { count: sum(completed) })} />
           <Stat label={t('reservations.stats.noShows')} value={noShows.length} />
         </>
+      )}
+      {waiting !== undefined && (
+        <Stat label={t('reservations.stats.waiting')} value={waiting.parties} detail={t('reservations.stats.covers', { count: waiting.guests })} />
       )}
       <div className="contents">
         <dt className="sr-only">{requestsLabel}</dt>

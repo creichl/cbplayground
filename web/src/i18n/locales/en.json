@@ -958,7 +958,8 @@
       "upcoming": "Upcoming",
       "seated": "Seated",
       "finished": "Finished",
-      "requests": "Requests"
+      "requests": "Requests",
+      "waitlist": "Waitlist"
     },
     "empty": {
       "upcoming": "No more guests are expected.",
@@ -990,6 +991,62 @@
       },
       "tableValue": "{{table}} ({{area}})",
       "empty": "There are no reservations on this day."
+    }
+  },
+  "waitlist": {
+    "add": "Add to waitlist",
+    "titleNew": "Add to the waitlist",
+    "titleEdit": "Change the waitlist entry",
+    "seatTitle": "Seat {{name}}",
+    "seat": "Seat",
+    "seatParty": "Seat party",
+    "left": "Left",
+    "save": "Save",
+    "notSaved": "The entry was not saved",
+    "quotedWait": "Quoted wait",
+    "quotedNone": "None",
+    "quotedOwn": "Own value",
+    "quotedOwnLabel": "Minutes",
+    "minutes_one": "{{count}} min",
+    "minutes_other": "{{count}} min",
+    "hours": "{{hours}} h",
+    "hoursMinutes": "{{hours}} h {{minutes}} min",
+    "party_one": "Party of {{count}}",
+    "party_other": "Party of {{count}}",
+    "waited": "Waiting {{duration}}",
+    "quoted": "quoted {{duration}}",
+    "quotedExceeded": "quoted {{duration}}, exceeded",
+    "nextFreeAt": "Next table free at {{time}}",
+    "tableFreeNow": "A table is free now",
+    "noTableToday": "No table frees up today",
+    "open": "Change the entry of {{name}}, on the list since {{time}}",
+    "noMatches": "Nobody on the waitlist matches the search.",
+    "groupWaiting": "Waiting",
+    "groupDone": "Seated or left",
+    "status": {
+      "waiting": "Waiting",
+      "seated": "Seated",
+      "left": "Left"
+    },
+    "empty": {
+      "today": "Nobody is waiting.",
+      "past": "Nobody was on the waitlist on this day.",
+      "future": "The waitlist is kept on the day itself."
+    },
+    "validation": {
+      "name": "Please enter a name."
+    },
+    "toast": {
+      "added": "{{name}} is on the waitlist.",
+      "left": "{{name}} has left the waitlist.",
+      "waitingAgain": "{{name}} is waiting again."
+    },
+    "errors": {
+      "title": "The waitlist was not changed",
+      "invalidQuotedWait": "Please enter a waiting time of 1 to 240 minutes.",
+      "notWaiting": "This party is no longer waiting.",
+      "notLeft": "This party has not left the waitlist.",
+      "notToday": "Only today's waitlist can be changed."
     }
   },
   "notFound": {
@@ -1311,6 +1368,7 @@
       "reservations": "Reservations",
       "seated": "Seated now",
       "noShows": "No-shows",
+      "waiting": "Waiting",
       "openRequests": "Open requests",
       "finished": "Finished",
       "covers_one": "{{count}} cover",

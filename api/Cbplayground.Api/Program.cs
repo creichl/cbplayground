@@ -233,6 +233,7 @@ app.MapBrandingEndpoints();
 app.MapGalleryEndpoints();
 app.MapPublicRestaurantEndpoints();
 app.MapStaffReservationEndpoints();
+app.MapWaitlistEndpoints();
 
 app.Run();
 
