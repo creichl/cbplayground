@@ -93,6 +93,14 @@ public interface IAvailabilityService
     /// </summary>
     Task<bool> AreTablesFreeAsync(IReadOnlyCollection<Guid> tableIds, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// The tables and combinations free for <paramref name="guests"/> from <paramref name="startLocal"/> to <paramref name="endLocal"/>
+    /// (plus the buffer) for the staff, apart from the reservation <paramref name="ignoreReservationId"/>, in the order the system assigns
+    /// them: those a change of only the tables of that reservation can get. Neither the opening hours nor "in the past" apply.
+    /// </summary>
+    Task<IReadOnlyList<FreeTable>> GetFreeTablesAsync(DateTime startLocal, DateTime endLocal, int guests, Guid ignoreReservationId,
+        CancellationToken cancellationToken = default);
 }
 
 public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, IOpeningCalendar openingCalendar, TimeProvider timeProvider) : IAvailabilityService
@@ -274,6 +282,15 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
         var busy = await LoadBusyAsync(await LoadFloorAsync(cancellationToken), startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
         return busy.All(r => !r.TableIds.Any(tableIds.Contains));
+    }
+
+    public async Task<IReadOnlyList<FreeTable>> GetFreeTablesAsync(DateTime startLocal, DateTime endLocal, int guests, Guid ignoreReservationId,
+        CancellationToken cancellationToken = default)
+    {
+        var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
+        var floor = await LoadFloorAsync(cancellationToken);
+        var busy = await LoadBusyAsync(floor, startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
+        return FreeTables(floor, busy, startLocal, endLocal, bufferMinutes, guests, ReservationSource.Staff);
     }
 
     private static BookingCheck Error(string error) => new(error, null);
