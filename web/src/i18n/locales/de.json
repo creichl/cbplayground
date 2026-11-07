@@ -236,7 +236,14 @@
       "submitRequest": "Anfrage senden",
       "contactTitle": "Wie erreicht Sie das Restaurant?",
       "requestHint": "Das ist eine Anfrage: Das Restaurant prüft sie und meldet sich bei Ihnen.",
-      "cancelHint": "Nach der Buchung erhalten Sie einen Link, über den Sie Ihre Reservierung ansehen und bis zum Beginn stornieren können."
+      "cancelHint": "Nach der Buchung erhalten Sie einen Link, über den Sie Ihre Reservierung ansehen und bis zum Beginn stornieren können.",
+      "phoneCode": "Ländervorwahl",
+      "phoneCodeOther": "Andere",
+      "remember": "Meine Daten auf diesem Gerät merken",
+      "notYou": "Nicht Sie?",
+      "clearRemembered": "Löschen",
+      "submitting": "Wird reserviert…",
+      "submittingRequest": "Anfrage wird gesendet…"
     },
     "errors": {
       "slotTaken": "Diese Uhrzeit wurde leider gerade vergeben. Bitte wählen Sie eine andere – die freien Zeiten sind aktualisiert.",
@@ -291,7 +298,16 @@
       "stepTable": "Tisch",
       "stepDetails": "Kontaktdaten",
       "stepDone": "Bestätigung",
-      "stepOf": "Schritt {{step}} von {{total}}"
+      "stepOf": "Schritt {{step}} von {{total}}",
+      "back": "Zurück"
+    },
+    "hold": {
+      "holding": "Wir halten Tisch {{table}} für Sie frei · {{left}}",
+      "holdingTables": "Wir halten die Tische {{table}} für Sie frei · {{left}}",
+      "expired": "Wir halten den Tisch nicht mehr für Sie frei. Vielleicht ist er noch frei – Sie können trotzdem reservieren.",
+      "nearbyTimes": "Freie Zeiten in der Nähe",
+      "noNearbyTimes": "An diesem Tag gibt es keine anderen freien Zeiten.",
+      "otherDay": "Anderen Tag oder andere Uhrzeit wählen"
     },
     "gallery": {
       "title": "Fotos",

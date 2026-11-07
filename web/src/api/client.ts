@@ -53,8 +53,14 @@ export function requestErrorMessage(error: Error, t: TFunction) {
   return t('errors.invalidResponse')
 }
 
-async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown): Promise<T> {
-  const headers: Record<string, string> = { Accept: 'application/json' }
+/**
+ * Extra settings of a request: `headers` beside the usual ones (e.g. an idempotency key), `keepalive` lets it finish after the
+ * page is left (e.g. releasing a held table while the page closes).
+ */
+export type RequestOptions = { headers?: Record<string, string>; keepalive?: boolean }
+
+async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
+  const headers: Record<string, string> = { Accept: 'application/json', ...options.headers }
   // A file is sent as it is, everything else as JSON.
   const isFile = body instanceof Blob
   if (isFile) {
@@ -69,6 +75,7 @@ async function request<T>(method: 'GET' | 'POST' | 'PUT' | 'DELETE', path: strin
       method,
       headers,
       body: isFile ? body : body === undefined ? undefined : JSON.stringify(body),
+      keepalive: options.keepalive,
     })
   } catch (error) {
     throw new ApiError('network', null, error instanceof Error ? error.message : String(error))
@@ -104,8 +111,8 @@ export function apiGet<T>(path: string): Promise<T> {
 }
 
 /** POSTs `body` as JSON to the API and returns the JSON answer (undefined for 204). Throws ApiError. */
-export function apiPost<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>('POST', path, body)
+export function apiPost<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
+  return request<T>('POST', path, body, options)
 }
 
 /** PUTs `body` to the API, as JSON or, for a File/Blob, as the raw file. Returns the JSON answer (undefined for 204). Throws ApiError. */
@@ -114,8 +121,8 @@ export function apiPut<T>(path: string, body: unknown): Promise<T> {
 }
 
 /** DELETEs a resource of the API and returns the JSON answer, if any (undefined for 204). Throws ApiError. */
-export function apiDelete<T = void>(path: string): Promise<T> {
-  return request<T>('DELETE', path)
+export function apiDelete<T = void>(path: string, options?: RequestOptions): Promise<T> {
+  return request<T>('DELETE', path, undefined, options)
 }
 
 /**

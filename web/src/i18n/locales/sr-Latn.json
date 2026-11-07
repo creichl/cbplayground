@@ -248,7 +248,14 @@
       "submitRequest": "Pošalji zahtev",
       "contactTitle": "Kako restoran može da vas kontaktira?",
       "requestHint": "Ovo je zahtev: restoran ga proverava i javiće vam se.",
-      "cancelHint": "Posle rezervacije dobijate link preko kog možete da vidite rezervaciju i da je otkažete do početka."
+      "cancelHint": "Posle rezervacije dobijate link preko kog možete da vidite rezervaciju i da je otkažete do početka.",
+      "phoneCode": "Pozivni broj zemlje",
+      "phoneCodeOther": "Drugo",
+      "remember": "Zapamti moje podatke na ovom uređaju",
+      "notYou": "Niste vi?",
+      "clearRemembered": "Obriši",
+      "submitting": "Rezervišemo…",
+      "submittingRequest": "Šaljemo zahtev…"
     },
     "errors": {
       "slotTaken": "Nažalost, ovo vreme je upravo zauzeto. Izaberite drugo – slobodna vremena su ažurirana.",
@@ -303,7 +310,16 @@
       "stepTable": "Sto",
       "stepDetails": "Kontakt podaci",
       "stepDone": "Potvrda",
-      "stepOf": "Korak {{step}} od {{total}}"
+      "stepOf": "Korak {{step}} od {{total}}",
+      "back": "Nazad"
+    },
+    "hold": {
+      "holding": "Čuvamo sto {{table}} za vas · {{left}}",
+      "holdingTables": "Čuvamo stolove {{table}} za vas · {{left}}",
+      "expired": "Vreme čuvanja stola je isteklo. Sto je možda još slobodan – i dalje možete da rezervišete.",
+      "nearbyTimes": "Slobodna vremena u blizini",
+      "noNearbyTimes": "Ovog dana nema drugih slobodnih vremena.",
+      "otherDay": "Izaberite drugi dan ili vreme"
     },
     "gallery": {
       "title": "Fotografije",
