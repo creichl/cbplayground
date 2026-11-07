@@ -39,6 +39,7 @@ const detailsErrors: Record<string, ParseKeys> = {
   invalid_phone: 'booking.details.invalidPhone',
   invalid_email: 'booking.details.invalidEmail',
   invalid_notes: 'booking.details.invalidNotes',
+  invalid_occasion: 'booking.details.invalidOccasion',
 }
 
 /** Errors after which the guest picks the time again, from freshly loaded times: the dialog closes, the card says why. */
@@ -169,7 +170,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [details, setDetails] = useState<GuestDetailsValues>({ name: '', phone: '', email: '', notes: '' })
+  const [details, setDetails] = useState<GuestDetailsValues>({ name: '', phone: '', email: '', notes: '', occasion: 'None' })
   const booking = useCreateBooking(slug)
 
   const today = todayIn(timeZoneId)
@@ -317,6 +318,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
         phone: optional(values.phone),
         email: optional(values.email),
         notes: optional(values.notes),
+        occasion: values.occasion,
         language,
       },
       {

@@ -2,9 +2,10 @@ import { Accordion, Group, Skeleton, Stack, Text } from '@mantine/core'
 import type { TFunction } from 'i18next'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type ReservationChange, type ReservationEvent, type ReservationStatus, useReservationHistory } from '../../api/reservations.ts'
+import { type Occasion, type ReservationChange, type ReservationEvent, type ReservationStatus, useReservationHistory } from '../../api/reservations.ts'
 import { formatShortDate, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
+import { occasionLabels } from '../guests/labels.ts'
 import { statusLabels } from './status.ts'
 
 const fieldLabels = {
@@ -17,6 +18,7 @@ const fieldLabels = {
   Phone: 'reservations.history.fields.phone',
   Email: 'reservations.history.fields.email',
   Notes: 'reservations.history.fields.notes',
+  Occasion: 'reservations.history.fields.occasion',
   Status: 'reservations.history.fields.status',
 } as const
 
@@ -36,6 +38,8 @@ function formatValue(field: ReservationChange['field'], value: string | null, t:
       return t('reservations.history.minutes', { count: Number(value) })
     case 'Status':
       return t(statusLabels[value as ReservationStatus])
+    case 'Occasion':
+      return t(occasionLabels[value as Occasion])
     default:
       return value
   }

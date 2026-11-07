@@ -4,6 +4,7 @@ import { formatShortDate, formatTime } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Badge } from '../../ui/badge.tsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip.tsx'
+import { GuestMarkers } from '../guests/GuestMarkers.tsx'
 import { NoteIcon } from '../icons.tsx'
 import { StatusActions } from './StatusActions.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
@@ -20,8 +21,8 @@ type ReservationRowProps = {
 }
 
 /**
- * One reservation in the list panel: time, guest, party, table and area, source, who cancelled, a note marker, the status
- * and the quick status actions. A click on the row opens it.
+ * One reservation in the list panel: time, guest, party, table and area, source, who cancelled, a note marker, the guest's markers
+ * (VIP, allergies, occasion, first visit), the status and the quick status actions. A click on the row opens it.
  */
 export function ReservationRow({ reservation, onOpen, withDate = false, selected = false }: ReservationRowProps) {
   const { t, i18n } = useTranslation()
@@ -65,6 +66,7 @@ export function ReservationRow({ reservation, onOpen, withDate = false, selected
                 <TooltipContent>{reservation.notes}</TooltipContent>
               </Tooltip>
             )}
+            <GuestMarkers reservation={reservation} />
           </span>
           <span className="text-sm text-muted-foreground">
             {t('reservations.row.summary', {

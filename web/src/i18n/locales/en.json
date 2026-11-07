@@ -224,12 +224,14 @@
       "notes": "Note (optional)",
       "notesDescription_one": "E.g. high chair or allergies. At most {{count}} character.",
       "notesDescription_other": "E.g. high chair or allergies. At most {{count}} characters.",
+      "occasion": "Occasion (optional)",
       "contactHint": "Phone or email – one of the two is enough.",
       "contactRequired": "Please enter a phone number or an email address.",
       "nameRequired": "Please enter your name.",
       "invalidPhone": "Please enter a valid phone number (at least 6 digits).",
       "invalidEmail": "Please enter a valid email address.",
       "invalidNotes": "The note is too long.",
+      "invalidOccasion": "Please choose an occasion from the list.",
       "submit": "Book now",
       "submitRequest": "Send request",
       "contactTitle": "How can the restaurant reach you?",
@@ -928,6 +930,106 @@
       "option": "{{name}} {{time}}"
     }
   },
+  "guests": {
+    "title": "Guests",
+    "listLabel": "Guest list",
+    "count_one": "{{count}} guest",
+    "count_other": "{{count}} guests",
+    "search": "Search guests",
+    "searchPlaceholder": "Name, phone or email",
+    "empty": "No guests yet. Every reservation with a phone number or email address adds its guest.",
+    "noMatches": "No guest matches the search.",
+    "chooseHint": "Choose a guest to see their profile and visits.",
+    "backToService": "Back to the service screen",
+    "backToList": "All guests",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "page": "Page {{page}} of {{pages}}",
+    "noContact": "No phone number or email address",
+    "edit": "Edit profile",
+    "saved": "The profile of {{name}} has been saved.",
+    "notSaved": "The profile was not saved",
+    "deletedName": "Deleted guest",
+    "row": {
+      "visits_one": "{{count}} visit",
+      "visits_other": "{{count}} visits",
+      "noShows_one": "{{count}} no-show",
+      "noShows_other": "{{count}} no-shows",
+      "lastVisit": "last {{date}}"
+    },
+    "figures": {
+      "visits": "Visits",
+      "noShows": "No-shows",
+      "cancellations": "Cancellations",
+      "lastVisit": "Last visit",
+      "nextVisit": "Next reservation",
+      "never": "Never",
+      "none": "None"
+    },
+    "fields": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "tags": "Tags",
+      "notes": "Guest notes",
+      "allergyNotes": "Allergies"
+    },
+    "tags": {
+      "Vip": "VIP",
+      "Regular": "Regular",
+      "Press": "Press",
+      "Staff": "Staff",
+      "Difficult": "Difficult"
+    },
+    "occasions": {
+      "None": "No occasion",
+      "Birthday": "Birthday",
+      "Anniversary": "Anniversary",
+      "Business": "Business",
+      "Date": "Date night",
+      "Celebration": "Celebration",
+      "Other": "Other occasion"
+    },
+    "markers": {
+      "vip": "VIP",
+      "allergies": "Allergies",
+      "firstVisit": "First visit"
+    },
+    "card": {
+      "title": "Guest profile",
+      "openInDirectory": "Open {{name}} in the guest directory",
+      "noProfile": "No guest profile: the reservation has no phone number or email address.",
+      "edit": "Edit profile",
+      "save": "Save profile"
+    },
+    "reservations": {
+      "title": "Reservations",
+      "empty": "No reservations.",
+      "when": "{{date}}, {{time}}",
+      "summary_one": "Party of {{count}} · Table {{table}} ({{area}})",
+      "summary_other": "Party of {{count}} · Table {{table}} ({{area}})"
+    },
+    "delete": {
+      "button": "Delete guest data",
+      "title": "Delete the guest's data?",
+      "text_one": "The profile of {{name}} is deleted. Its {{count}} reservation keeps only the date, time, party size, table and status; name, phone number, email address and notes are removed. This cannot be undone.",
+      "text_other": "The profile of {{name}} is deleted. Its {{count}} reservations keep only the date, time, party size, table and status; name, phone number, email address and notes are removed. This cannot be undone.",
+      "back": "Back",
+      "confirm": "Delete data",
+      "done": "The data of {{name}} has been deleted."
+    },
+    "errors": {
+      "invalidName": "Please enter a name.",
+      "invalidPhone": "Please enter a valid phone number (at least 6 digits, at most 30 characters).",
+      "invalidEmail": "Please enter a valid email address.",
+      "invalidNotes": "The guest notes are too long (at most 1000 characters).",
+      "invalidAllergyNotes": "The allergies are too long (at most 500 characters).",
+      "invalidTags": "One of the tags is unknown.",
+      "contactTaken": "Another guest already has this phone number or email address.",
+      "notFound": "This guest does not exist (any more).",
+      "forbidden": "Only admins can do this."
+    }
+  },
   "notFound": {
     "title": "Page not found",
     "text": "The page you are looking for does not exist or has been moved."
@@ -1381,6 +1483,7 @@
       "phone": "Phone",
       "email": "Email",
       "notes": "Note",
+      "occasion": "Occasion",
       "notSaved": "The reservation was not saved",
       "create": "Create reservation",
       "created": "The reservation for {{name}} has been created (reference {{code}}).",
@@ -1427,6 +1530,7 @@
         "phone": "Phone",
         "email": "Email",
         "notes": "Note",
+        "occasion": "Occasion",
         "status": "Status"
       }
     },
@@ -1440,6 +1544,7 @@
       "invalidEmail": "Please enter a valid email address.",
       "invalidNotes": "The note may have at most 500 characters.",
       "invalidLanguage": "The guest's language is not supported.",
+      "invalidOccasion": "The occasion is unknown.",
       "outsideOpeningHours": "The restaurant is not open at this time, or the reservation would end after closing time.",
       "inThePast": "This time is in the past.",
       "slotUnavailable": "There is no free table at this time any more.",

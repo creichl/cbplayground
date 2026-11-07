@@ -634,6 +634,11 @@ public static class DevelopmentSeed
                         : ReservationSource.Staff;
 
                     var guest = random.NextDouble() < RegularShare ? regulars[random.Next(regulars.Count)] : guests.Next(random);
+                    // A regular comes at most once a day.
+                    if (regulars.Contains(guest) && reservations.Any(r => r.GuestPhone == guest.Phone && r.StartLocal.Date == start.Date))
+                    {
+                        guest = guests.Next(random);
+                    }
                     var status = day < 0 ? PastDemoStatus(random) : DemoStatus(random, start <= now, source, settings.ConfirmationMode);
                     var reservation = new Reservation
                     {

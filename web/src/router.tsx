@@ -86,6 +86,8 @@ export const router = createBrowserRouter([
           })),
         children: [
           { index: true, lazy: () => import('./pages/FrontdeskPage.tsx').then(({ FrontdeskPage }) => ({ Component: FrontdeskPage })) },
+          { path: 'guests', lazy: () => import('./pages/GuestsPage.tsx').then(({ GuestsPage }) => ({ Component: GuestsPage })) },
+          { path: 'guests/:id', lazy: () => import('./pages/GuestsPage.tsx').then(({ GuestsPage }) => ({ Component: GuestsPage })) },
           { path: 'reservations', element: <ToServiceScreen /> },
           { path: 'tables', element: <ToServiceScreen tableOverview /> },
           { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
