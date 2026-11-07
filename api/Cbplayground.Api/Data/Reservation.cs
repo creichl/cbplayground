@@ -37,6 +37,19 @@ public enum ReservationSource
     WalkIn,
 }
 
+/// <summary>What the guests celebrate or why they come; the front desk sees it at the reservation.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter<Occasion>))]
+public enum Occasion
+{
+    None,
+    Birthday,
+    Anniversary,
+    Business,
+    Date,
+    Celebration,
+    Other,
+}
+
 /// <summary>A table reservation. Times are local times of the restaurant (<see cref="Tenant.TimeZoneId"/>), like the opening hours.</summary>
 public class Reservation : ITenantOwned
 {
@@ -48,6 +61,9 @@ public class Reservation : ITenantOwned
 
     /// <summary>The name stored for a walk-in without a name; the front desk shows it translated.</summary>
     public const string WalkInName = "Walk-in";
+
+    /// <summary>The name of a reservation whose guest's data was deleted; the front desk shows it translated.</summary>
+    public const string DeletedGuestName = "Deleted guest";
 
     public Guid Id { get; set; }
 
@@ -76,6 +92,14 @@ public class Reservation : ITenantOwned
     public string? GuestEmail { get; set; }
 
     public string? Notes { get; set; }
+
+    /// <summary>
+    /// The guest's profile, found by the phone number or email address (<see cref="Reservations.GuestProfiles"/>); null for a
+    /// reservation without either, e.g. a walk-in without contact, and after the guest's data was deleted.
+    /// </summary>
+    public Guid? GuestId { get; set; }
+
+    public Occasion Occasion { get; set; }
 
     public ReservationStatus Status { get; set; }
 

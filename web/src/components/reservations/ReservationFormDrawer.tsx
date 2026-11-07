@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications'
 import { useTranslation } from 'react-i18next'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import {
+  type Occasion,
   type Reservation,
   type ReservationInput,
   useCreateReservation,
@@ -16,6 +17,8 @@ import {
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
 import { datePickerFormatter, formatDate, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
+import { GuestCard } from '../guests/GuestCard.tsx'
+import { occasionLabels, occasions } from '../guests/labels.ts'
 import { ReservationHistory } from './ReservationHistory.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 import { blockingStatuses, closedStatuses, sourceLabels, statusLabels } from './status.ts'
@@ -72,6 +75,7 @@ function EditForm({ reservation, today, onClose }: { reservation: Reservation; t
   }
   return (
     <Stack gap="xl">
+      <GuestCard reservation={reservation} />
       <ReservationForm
         reservation={reservation}
         initialDate={reservation.date}
@@ -110,6 +114,7 @@ type FormValues = {
   phone: string
   email: string
   notes: string
+  occasion: Occasion
 }
 
 /** The value of a table or combination in the table choice: its tables' ids. */
@@ -150,6 +155,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, initial, t
       phone: reservation?.phone ?? '',
       email: reservation?.email ?? '',
       notes: reservation?.notes ?? '',
+      occasion: reservation?.occasion ?? 'None',
     },
     validate: {
       guests: (value) => (wholeNumber(value) !== null && Number(value) >= 1 ? null : t('reservations.form.validation.guests')),
@@ -250,6 +256,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, initial, t
       phone: submitted.phone.trim() || null,
       email: submitted.email.trim() || null,
       notes: submitted.notes.trim() || null,
+      occasion: submitted.occasion,
     }
     const onSuccess = (saved: Reservation) => {
       notifications.show({
@@ -442,6 +449,14 @@ function ReservationForm({ reservation, initialDate, initialDuration, initial, t
           <TextInput label={t('reservations.form.email')} type="email" maxLength={254} size="md" {...form.getInputProps('email')} />
         </SimpleGrid>
         <Textarea label={t('reservations.form.notes')} autosize minRows={2} maxLength={maxNotesLength} size="md" {...form.getInputProps('notes')} />
+        <Select
+          label={t('reservations.form.occasion')}
+          data={occasions.map((occasion) => ({ value: occasion, label: t(occasionLabels[occasion]) }))}
+          value={values.occasion}
+          onChange={(value) => form.setFieldValue('occasion', (value ?? 'None') as Occasion)}
+          allowDeselect={false}
+          size="md"
+        />
 
         {mutation.error !== null && (
           <Alert color="red" variant="light" title={t('reservations.form.notSaved')}>

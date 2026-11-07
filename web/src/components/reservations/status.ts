@@ -79,8 +79,14 @@ export function occupiesTable(reservation: Pick<Reservation, 'status'>) {
   return blockingStatuses.includes(reservation.status) || reservation.status === 'Completed'
 }
 
-/** The name of the guest; a walk-in without a name is shown as "Walk-in" in the user's language. */
+/**
+ * The name of the guest; a walk-in without a name is shown as "Walk-in" in the user's language, a reservation whose guest's data was
+ * deleted as "Deleted guest" (the names the server stores for them).
+ */
 export function guestName(reservation: Pick<Reservation, 'name' | 'source'>, t: TFunction) {
+  if (reservation.name === 'Deleted guest') {
+    return t('guests.deletedName')
+  }
   return reservation.source === 'WalkIn' && reservation.name === 'Walk-in' ? t('reservations.walkIn.defaultName') : reservation.name
 }
 

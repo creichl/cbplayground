@@ -75,6 +75,12 @@ This README describes the full product vision.
 - The status of today's reservations: arrived, late, no-show, guest left, cancelled; walk-ins without a reservation.
 - The table overview.
 
+### Guest profiles
+
+- Every reservation with a phone number or an email address belongs to a guest profile of its restaurant, recognised on every channel.
+- Staff see at the reservation how often the guest came, their no-shows, tags (VIP, regular, …), notes and allergies, and the occasion (birthday, anniversary, …).
+- A guest directory lists all guests with their visits; Tenant Admins delete a guest's data on request (GDPR).
+
 ### Embedding
 
 - Restaurants embed the guest booking UI into their own website with an **iframe** snippet.
@@ -466,6 +472,29 @@ In Development, every start adds demo reservations from today to today + 7 days 
 The demo reservations have no guest link (no manage token), so they cannot be opened on the guest's page "Your reservation". To see a reservation with a link after its start (cancelling is no longer possible): while a demo restaurant is open, e.g. Kafana Dunav (12:00–22:00 start times, Europe/Belgrade), book the next free quarter hour of today online, keep the link from the confirmation and open it again once that time has passed in the restaurant's time zone.
 
 Uploaded floor plans, logos, cover images, area photos and gallery photos are stored in the folder `Uploads:Path` of `appsettings.json`, relative to `api/Cbplayground.Api` (default `data/uploads`, ignored by git).
+
+### Guest profiles and occasions
+
+A guest (`Data/Guest.cs`, tenant-owned) has a name, a phone number, an email address, notes (at most 1000 characters), allergies (at most 500) and tags from the fixed set `Vip`, `Regular`, `Press`, `Staff`, `Difficult`. Within a restaurant no two guests have the same phone number or email address (unique indexes); guests of different restaurants are never matched.
+
+**Matching** (`Reservations/GuestProfiles.cs`): every new reservation (online booking, staff reservation, walk-in), and a changed one whose phone number or email address changes, is linked to the guest of its restaurant with the same phone number, otherwise the same email address, otherwise to a new guest. A change that keeps the contact keeps the guest, also when the profile's own phone number or email address was changed in the directory since. Phone numbers are compared normalised: "+" with the country code and the digits; "00" counts as "+", and a national number ("0" first) gets the country code of the restaurant's country (49, 43, 381) instead of the "0", so "+43 660 1234567", "0043 660/1234567" and, in Austria, "0660 1234567" are the same guest. Email addresses are compared in lower case. Empty fields of the profile are filled in from the reservation (a phone number or email address only when no other guest has it), existing values are kept; a walk-in's "Walk-in" is replaced by the first real name. A reservation without phone number and email address has no guest (`guestId` null). The reservation keeps the guest's details it was made with; the profile is edited separately.
+
+**Occasion:** `Reservation.Occasion` is `None`, `Birthday`, `Anniversary`, `Business`, `Date`, `Celebration` or `Other`. The online booking's contact step has an optional "Occasion" select, staff set it in the reservation drawer; the API takes `occasion` (optional) on `POST /api/public/restaurants/{slug}/reservations`, `POST /api/staff/reservations` (without: `None`) and `PUT /api/staff/reservations/{id}` (without: unchanged); an unknown name is `invalid_occasion` (400). Its changes are in the reservation's history. The list of occasions and the tags are the same for every restaurant.
+
+**API** (staff of the own restaurant; another restaurant's guest is 404):
+
+- `GET /api/staff/guests?search=&page=`: the guests sorted by name, 50 per page (`items`, `total`, `page`, `pageSize`), each with tags, whether allergies are noted, visits, no-shows and the last visit. The search matches part of the name or email address, or of the phone number's digits (without a leading "0").
+- `GET /api/staff/guests/{id}`: the profile with its figures (visits = reservations arrived or left, no-shows, cancellations, the day of the last visit and of the next requested or confirmed reservation) and all its reservations, the newest first.
+- `PUT /api/staff/guests/{id}`: name, phone, email, notes, allergy notes and tags, every field replaced. Errors: `invalid_name`, `invalid_phone`, `invalid_email`, `invalid_notes`, `invalid_allergy_notes`, `invalid_tags` (400); a phone number or email address of another guest is `guest_contact_taken` (409).
+- `DELETE /api/staff/guests/{id}`, **Tenant Admins only** (Front desk: 403): deletes the profile and anonymises its reservations in one transaction: the name becomes "Deleted guest" (shown translated), phone, email and notes are removed, and their history loses the changes of these fields (an entry that changed nothing else goes). Date, time, party size, table, status and occasion stay for the restaurant's figures. A later reservation with the same phone number makes a new profile.
+
+The reservation responses of `/api/staff` carry `occasion`, `guestId` and `guest`, a short summary (`tags`, `hasAllergies`, `visits`, `noShows`; null without a guest).
+
+**Web:** the rows of the service screen show icons for VIP, allergies, the occasion and a first visit (the guest has no visit apart from this reservation), each with its name as tooltip. The reservation drawer shows the guest card at the top: the figures, tags, allergies and notes, which "Edit profile" changes (tags, allergies, notes), and the link to the guest in the directory; below it the form has the occasion select. The guest directory `/frontdesk/guests` (the "Guests" button in the service screen's top bar) lists the guests with a search and pages; `/frontdesk/guests/<id>` shows a guest beside the list (on phones instead of it) with the figures, tags, allergies and notes, "Edit profile" for all fields, the reservations (a click opens the day on the service screen) and, for Tenant Admins, "Delete guest data", which asks first.
+
+**Migrations:** `AddGuestProfiles` adds the table and the columns; `BackfillGuestProfiles` creates the guests of the existing reservations in SQL as the matching would (one per restaurant and normalised phone number, otherwise email address; named as at the first reservation) and links them.
+
+**Demo data:** the demo reservations reuse 8 regular guests per restaurant (by phone number, about a third of the reservations), so some guests show several visits; the regular with the most reservations has an allergy note ("Nussallergie", in Serbia "Alergija na orašaste plodove"), and a reservation with the note "Geburtstag"/"Rođendan" has the occasion `Birthday`. Only when the seed creates the reservations.
 
 ### Backups
 

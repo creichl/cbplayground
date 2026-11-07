@@ -46,6 +46,7 @@ public enum ReservationField
     Phone,
     Email,
     Notes,
+    Occasion,
     Status,
 }
 
@@ -79,7 +80,8 @@ public class ReservationEvent : ITenantOwned
 
 /// <summary>
 /// A changed field with its old and new value as text, as the history shows them: date "yyyy-MM-dd", time "HH:mm", party size and
-/// duration (minutes) as numbers, the table's number, the status's name; null for an empty value.
+/// duration (minutes) as numbers, the table's number, the occasion's and the status's name; null for an empty value (also
+/// for the occasion <see cref="Occasion.None"/>).
 /// </summary>
 public class ReservationChange
 {
