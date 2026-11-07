@@ -207,8 +207,10 @@ export function Timeline({ date, areas, reservations, openPeriods, start, end, n
 
   /** The rows a drop at `time` on the row of `rowId` takes: the target's tables, or only that row when nothing fits there. */
   const ghostOf = (reservation: Reservation, time: number, rowId: string, phase: Ghost['phase']): Ghost => {
-    const target = dropTarget(freeAt(reservation, time) ?? [], rowId, reservation)
-    return { reservation, time, rowIds: target?.tableIds ?? [rowId], fits: target !== undefined, phase }
+    const free = freeAt(reservation, time)
+    const target = free === undefined ? undefined : dropTarget(free, rowId, reservation)
+    // While the free tables load, the copy is drawn as fitting; the server decides on the drop.
+    return { reservation, time, rowIds: target?.tableIds ?? [rowId], fits: free === undefined || target !== undefined, phase }
   }
 
   /** The table row at the pointer's height, of the live tables (archived tables take no reservations). */
