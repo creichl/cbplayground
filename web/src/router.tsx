@@ -69,10 +69,23 @@ export const router = createBrowserRouter([
           { path: 'areas', lazy: () => import('./pages/AreasPage.tsx').then(({ AreasPage }) => ({ Component: AreasPage })) },
           { path: 'opening-hours', lazy: () => import('./pages/OpeningHoursPage.tsx').then(({ OpeningHoursPage }) => ({ Component: OpeningHoursPage })) },
           { path: 'reservation-settings', lazy: () => import('./pages/ReservationSettingsPage.tsx').then(({ ReservationSettingsPage }) => ({ Component: ReservationSettingsPage })) },
+          { path: 'reports', lazy: () => import('./pages/ReportsPage.tsx').then(({ ReportsPage }) => ({ Component: ReportsPage })) },
           { path: 'staff', lazy: () => import('./pages/StaffPage.tsx').then(({ StaffPage }) => ({ Component: StaffPage })) },
           { path: 'embed', lazy: () => import('./pages/EmbedSnippetPage.tsx').then(({ EmbedSnippetPage }) => ({ Component: EmbedSnippetPage })) },
           { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
         ],
+      },
+      // The front desk's day sheet, without the frame of the front desk, so it prints on its own.
+      {
+        path: 'frontdesk/print',
+        lazy: () =>
+          import('./pages/FrontdeskPrintPage.tsx').then(({ FrontdeskPrintPage }) => ({
+            element: (
+              <RequireRole roles={['TenantAdmin', 'FrontDesk']}>
+                <FrontdeskPrintPage />
+              </RequireRole>
+            ),
+          })),
       },
       {
         path: 'frontdesk',

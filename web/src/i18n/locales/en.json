@@ -373,6 +373,7 @@
     "nav": {
       "overview": "Overview",
       "serviceScreen": "Service screen",
+      "reports": "Reports",
       "profile": "Profile",
       "design": "Appearance",
       "areas": "Areas & tables",
@@ -755,6 +756,50 @@
       "actionFailed": "The change could not be saved. Please try again."
     }
   },
+  "reports": {
+    "description": "How the restaurant is doing over a period: reservations and covers, booking channels, no-shows and cancellations, busy days and hours.",
+    "period": {
+      "label": "Period",
+      "options": {
+        "7": "Last 7 days",
+        "30": "Last 30 days",
+        "90": "Last 90 days",
+        "custom": "Custom"
+      },
+      "range": "From – to",
+      "tooLong": "Choose a period of at most 366 days."
+    },
+    "figures": {
+      "reservations": "Reservations",
+      "covers": "Covers",
+      "averageParty": "Average party",
+      "noShows": "No-shows",
+      "noShowRate": "{{rate}} of the reservations",
+      "cancellations": "Cancellations",
+      "cancelledBy": "{{guest}} by guests · {{restaurant}} by the restaurant",
+      "declined": "Declined requests",
+      "hint": "Reservations and covers count every reservation except cancelled ones, declined requests and no-shows; the no-show rate is the share of no-shows among them and the no-shows."
+    },
+    "reservationCount_one": "{{count}} reservation",
+    "reservationCount_other": "{{count}} reservations",
+    "charts": {
+      "bySource": "By booking channel",
+      "sourceValue": "{{reservations}} · {{covers}}",
+      "byWeekday": "Covers by weekday",
+      "byHour": "Covers by start time",
+      "byDay": "Covers per day",
+      "bar_one": "{{label}}: {{count}} cover",
+      "bar_other": "{{label}}: {{count}} covers",
+      "busiest_one": "busiest {{label}} with {{count}} cover",
+      "busiest_other": "busiest {{label}} with {{count}} covers",
+      "none": "no covers"
+    },
+    "empty": "There are no reservations in this period.",
+    "days": {
+      "title": "Per day",
+      "date": "Date"
+    }
+  },
   "openingHours": {
     "subtitle": "When guests can book: the weekly hours, closing days and special hours, the location and the public holidays.",
     "save": "Save",
@@ -926,6 +971,25 @@
       "label": "Service",
       "wholeDay": "Whole day",
       "option": "{{name}} {{time}}"
+    },
+    "print": {
+      "button": "Print the day sheet",
+      "print": "Print",
+      "title": "Day sheet",
+      "totals": "Totals per service",
+      "reservations_one": "{{count}} reservation",
+      "reservations_other": "{{count}} reservations",
+      "columns": {
+        "time": "Time",
+        "name": "Name",
+        "party": "Party",
+        "table": "Table",
+        "phone": "Phone",
+        "status": "Status",
+        "notes": "Notes"
+      },
+      "tableValue": "{{table}} ({{area}})",
+      "empty": "There are no reservations on this day."
     }
   },
   "notFound": {

@@ -75,6 +75,11 @@ This README describes the full product vision.
 - The status of today's reservations: arrived, late, no-show, guest left, cancelled; walk-ins without a reservation.
 - The table overview.
 
+### Day sheet & reports
+
+- The front desk prints the day's reservations, or those of one service, on one A4 sheet for the service briefing.
+- The Tenant Admin sees how the restaurant is doing over a period: reservations and covers, booking channels, no-show and cancellation figures, busy weekdays and hours, and the covers per day.
+
 ### Embedding
 
 - Restaurants embed the guest booking UI into their own website with an **iframe** snippet.
@@ -259,6 +264,14 @@ Endpoints:
   - `floorPlan`: at least one area with a floor plan (archived areas do not count);
   - `tables`: at least one table (archived tables do not count);
   - `reservationSettings`: the reservation settings have been saved once.
+- `GET /api/admin/reports?from=YYYY-MM-DD&to=YYYY-MM-DD`: the figures of the restaurant over the days `from` to `to` (both inclusive; without `to`: today in the restaurant's time zone, without `from`: the last 30 days up to `to`; at most 366 days, otherwise 400 `invalid_range`). A reservation counts on the day and in the hour it starts in the restaurant's time zone. Returns `from`, `to` and:
+  - `totals`: `reservations` and `covers` (their guests) count every reservation except cancelled ones, declined requests and no-shows, as the key figures of the front desk; `averagePartySize` (covers per reservation), `noShows` and `noShowRate` (0–1, the share of the no-shows among the counted reservations and the no-shows), `cancellations` with `cancelledByGuest` (through the guest's link) and `cancelledByRestaurant`, `declinedRequests`; every figure is 0 without reservations.
+  - `bySource`: per channel (`Online`, `Staff`, `WalkIn`) its `reservations` and `covers`;
+  - `byWeekday`: the `covers` per `weekday`, 1 (Monday) to 7 (Sunday);
+  - `byHour`: the `covers` per `hour` of the start, 0–23;
+  - `days`: per day of the period its `date`, `reservations` and `covers`.
+
+  Every channel, weekday, hour and day is listed, also without reservations. Front desk users get 403.
 - Staff management, Tenant Admins only, always for the signed-in admin's own restaurant (users of other restaurants get 404):
   - `GET /api/admin/staff`: the restaurant's users: `id`, `email`, `displayName`, `role`, `isActive`, sorted by name.
   - `POST /api/admin/staff`: body `{ "email", "displayName", "role", "password" }` with the role `TenantAdmin` or `FrontDesk` and the start password. Returns 201 with the new user.
@@ -626,6 +639,14 @@ A restaurant's guest pages, `/r/<slug>`, its confirmation and `/r/<slug>/reserva
 `/admin/design` ("Appearance", Tenant Admins only) sets the accent colour (ten suggestions, hex input with picker, "Reset" back to the platform's colour; below a contrast of 3:1 to the background of the chosen mode a hint appears, saving is still possible), light or dark, the font pair (five cards with a sample in the restaurant's name), the tables on the plan (four cards: Classic, Natural, Minimal, Glow, each with a short description) and logo and cover image (upload, replace and remove with preview; PNG, JPEG or WebP, logo at most 2 MB with the hint "PNG with a transparent background recommended", cover image at most 10 MB, landscape and at least 1600 pixels wide recommended). A live preview next to the form (below it on phones) shows the top of the booking page with the header (logo or name), the cover image with name and city, sample buttons and, on a strip of drawn floor, a free, a chosen and a sample table that is not available in the chosen table style, in the unsaved state. Colour, mode, fonts and table style are kept with "Save" in the save bar (see Routes); logo and cover image are saved as soon as they are uploaded or removed. "View booking page" opens `/r/<slug>` in a new tab.
 
 Below logo and cover image, the section "Gallery" manages the restaurant's photo gallery (`/api/admin/gallery`, see above; types and hooks in `web/src/api/gallery.ts`, the section in `web/src/components/GalleryManager.tsx`). It shows how many photos there are ("8 / 20 photos"), the hint on formats, size and good motifs (dishes, drinks, ambience, view; landscape, at least 1600 pixels wide) and the link "View the gallery on the booking page" (`/r/<slug>` in a new tab). Photos are dropped onto the drop zone or chosen with "Choose photos", several at once; they are uploaded one after another, each with its progress bar, and each file shows its own result: "Uploaded", or why it was not added (too large, format not supported, gallery full) while the others go on. Files that are not PNG, JPEG or WebP or larger than 10 MB are not sent at all; once the gallery holds 20 photos, the remaining files are rejected with that hint (the button is disabled then). "Hide list" removes the finished files from the list. The photos are shown as 4:3 tiles in their order; the first one is marked "Large image in the gallery", because it appears large in the guests' mosaic. A tile is moved by dragging its handle (mouse, pen and touch, with pointer events like the floor plan editor; the other tiles make room while dragging) or with the buttons "Move forward" and "Move back", which keep the keyboard focus. The new order shows right away and is saved at once (`PUT /api/admin/gallery/order`); if saving fails, the old order comes back with a message. The caption is edited in the tile, with a counter (at most 120 characters), and saved when leaving the field or with Enter. "Delete photo" asks first. Without photos the drop zone shows a friendly text with example motifs. Every change of the gallery reloads the booking page's data.
+
+#### Day sheet
+
+"Print" in the top bar of the service screen opens the day sheet of the shown day and service in a new tab, `/frontdesk/print?date=YYYY-MM-DD&service=HH:mm` (`FrontdeskPrintPage`; without `date` today in the restaurant's time zone, without `service` the whole day). It is a page of its own in the design system, without the front desk's top bar and navigation, laid out for A4 portrait (`@page` in `app.css`, `print:` classes): the restaurant, the date and the service on top, then the totals per service (reservations and covers; for the whole day every service and the day), then the expected reservations (without cancelled, declined and no-show ones) in a table grouped by start time, each with name, party, table and area, phone, status and notes. Once the reservations are loaded, the browser's print dialog opens on its own (`window.print()`); on screen the sheet stands on a grey background with a "Print" button, which is not printed.
+
+#### Reports
+
+`/admin/reports` ("Reports" in the sidebar group "Service", Tenant Admins only) shows `GET /api/admin/reports` (see above): a period to choose (the last 7, 30 or 90 days up to today in the restaurant's time zone, or a custom range of at most 366 days, the last 30 days at first), the figures as cards (reservations, covers, average party, no-shows with their rate, cancellations by guests and by the restaurant, declined requests), bar charts of the booking channels, the covers by weekday, by start hour (from the first to the last hour with covers) and per day, and a table per day. The bars are plain HTML in the tokens (`bg-primary`, `bg-border`), without a chart library; each carries its value as a tooltip, and the chart names its busiest bar for screen readers.
 
 #### Superadmin
 
