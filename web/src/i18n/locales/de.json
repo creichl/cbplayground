@@ -297,6 +297,38 @@
       "title": "Fotos",
       "showAll": "Alle Fotos ({{total}})",
       "more": "+{{number}}"
+    },
+    "menu": {
+      "title": "Speisekarte",
+      "recommendations": "Empfehlungen des Hauses",
+      "sections": "Abschnitte der Speisekarte",
+      "showAll": "Ganze Speisekarte zeigen",
+      "legend": "Legende",
+      "allergenNote": "Die Angaben zu Allergenen macht das Restaurant. Wenn Sie eine Allergie haben, sagen Sie es bitte dem Service.",
+      "showPhoto": "Foto von {{name}} zeigen",
+      "allergens": "Allergene: {{list}}",
+      "marks": {
+        "vegetarian": "Vegetarisch",
+        "vegan": "Vegan",
+        "glutenFree": "Glutenfrei",
+        "spicy": "Scharf"
+      },
+      "allergenNames": {
+        "Gluten": "Gluten",
+        "Crustaceans": "Krebstiere",
+        "Eggs": "Eier",
+        "Fish": "Fisch",
+        "Peanuts": "Erdnüsse",
+        "Soy": "Soja",
+        "Milk": "Milch",
+        "Nuts": "Schalenfrüchte",
+        "Celery": "Sellerie",
+        "Mustard": "Senf",
+        "Sesame": "Sesam",
+        "Sulphites": "Sulfite",
+        "Lupin": "Lupinen",
+        "Molluscs": "Weichtiere"
+      }
     }
   },
   "lightbox": {
@@ -377,6 +409,7 @@
       "serviceScreen": "Service-Bildschirm",
       "reports": "Berichte",
       "profile": "Profil",
+      "menu": "Speisekarte",
       "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
       "openingHours": "Öffnungszeiten",
@@ -695,6 +728,114 @@
         "Minimal": "Flache Formen wie ein Sitzplan, die Plätze als Punkte; ruhig und sehr klar.",
         "Glow": "Dunkles Glas mit Lichtlinien; freie Tische leuchten sanft in Ihrer Akzentfarbe. Für dunkle Seiten gemacht."
       }
+    }
+  },
+  "menu": {
+    "title": "Speisekarte",
+    "description": "Ihre Speisen und Getränke nach Abschnitten, mit Preisen, Kennzeichnungen, Allergenen und Fotos. Gäste sehen die Karte auf Ihrer Buchungsseite; jede Änderung wird sofort gespeichert.",
+    "empty": {
+      "title": "Noch keine Speisekarte",
+      "text": "Beginnen Sie mit einem Abschnitt wie Vorspeisen, Hauptgerichte, Desserts oder Getränke und fügen Sie dann seine Gerichte hinzu. Empfohlene Gerichte mit Foto erscheinen oben in der Karte auf Ihrer Buchungsseite.",
+      "action": "Ersten Abschnitt anlegen"
+    },
+    "section": {
+      "add": "Abschnitt hinzufügen",
+      "full": "Die Speisekarte hat die höchste Zahl an Abschnitten ({{max}}).",
+      "moveUp": "Abschnitt nach oben",
+      "moveDown": "Abschnitt nach unten",
+      "edit": "Abschnitt umbenennen",
+      "delete": "Abschnitt löschen",
+      "noItems": "Noch keine Gerichte in diesem Abschnitt. Gäste sehen nur Abschnitte mit Gerichten.",
+      "addTitle": "Neuer Abschnitt",
+      "editTitle": "Abschnitt bearbeiten",
+      "name": "Name",
+      "namePlaceholder": "z. B. Vorspeisen",
+      "descriptionLabel": "Beschreibung",
+      "descriptionPlaceholder": "Optional, z. B. Alle Hauptgerichte mit Beilage",
+      "addConfirm": "Abschnitt anlegen",
+      "save": "Speichern",
+      "deleteTitle": "Abschnitt löschen?",
+      "deleteEmpty": "Der Abschnitt „{{name}}“ wird gelöscht.",
+      "deleteText_one": "Der Abschnitt „{{name}}“ und sein {{count}} Gericht werden gelöscht, mit Foto.",
+      "deleteText_other": "Der Abschnitt „{{name}}“ und seine {{count}} Gerichte werden gelöscht, mit ihren Fotos.",
+      "deleteConfirm": "Abschnitt löschen"
+    },
+    "item": {
+      "open": "{{name}} bearbeiten",
+      "moveUp": "Gericht nach oben",
+      "moveDown": "Gericht nach unten",
+      "moveToSection": "In Abschnitt verschieben",
+      "add": "Gericht hinzufügen",
+      "addTitle": "Neues Gericht",
+      "editTitle": "Gericht bearbeiten",
+      "name": "Name",
+      "namePlaceholder": "z. B. Schweinsbraten mit Knödel",
+      "description": "Beschreibung",
+      "descriptionPlaceholder": "Optional, z. B. mit Blaukraut und Dunkelbiersoße",
+      "price": "Preis ({{currency}})",
+      "priceHint": "Leer lassen für keinen Preis.",
+      "marks": "Kennzeichnungen",
+      "allergens": "Allergene",
+      "photo": "Foto",
+      "photoAlt": "Foto von {{name}}",
+      "noPhoto": "Noch kein Foto.",
+      "choosePhoto": "Foto auswählen",
+      "replacePhoto": "Foto ersetzen",
+      "removePhoto": "Foto entfernen",
+      "photoHint": "PNG, JPEG oder WebP, höchstens 10 MB. Gezeigt in 4:3 und als quadratisches Vorschaubild.",
+      "delete": "Gericht löschen",
+      "save": "Gericht speichern",
+      "deleteTitle": "Gericht löschen?",
+      "deleteText": "„{{name}}“ wird aus der Speisekarte gelöscht, mit Foto.",
+      "deleteConfirm": "Gericht löschen"
+    },
+    "marks": {
+      "recommended": "Empfehlung",
+      "recommendedLong": "Empfehlung des Hauses",
+      "vegetarian": "Vegetarisch",
+      "vegan": "Vegan",
+      "glutenFree": "Glutenfrei",
+      "spicy": "Scharf"
+    },
+    "allergens": {
+      "Gluten": "Gluten",
+      "Crustaceans": "Krebstiere",
+      "Eggs": "Eier",
+      "Fish": "Fisch",
+      "Peanuts": "Erdnüsse",
+      "Soy": "Soja",
+      "Milk": "Milch",
+      "Nuts": "Schalenfrüchte",
+      "Celery": "Sellerie",
+      "Mustard": "Senf",
+      "Sesame": "Sesam",
+      "Sulphites": "Sulfite",
+      "Lupin": "Lupinen",
+      "Molluscs": "Weichtiere"
+    },
+    "toast": {
+      "orderSaved": "Reihenfolge gespeichert.",
+      "itemMoved": "„{{name}}“ nach {{section}} verschoben.",
+      "sectionAdded": "Abschnitt angelegt.",
+      "sectionSaved": "Abschnitt gespeichert.",
+      "sectionDeleted": "Abschnitt „{{name}}“ gelöscht.",
+      "photoSaved": "Foto gespeichert.",
+      "photoRemoved": "Foto entfernt.",
+      "itemSaved": "„{{name}}“ gespeichert.",
+      "itemAdded": "„{{name}}“ hinzugefügt.",
+      "itemDeleted": "„{{name}}“ gelöscht."
+    },
+    "errors": {
+      "invalidName": "Geben Sie einen Namen ein (Abschnitte bis 60, Gerichte bis 100 Zeichen).",
+      "invalidDescription": "Die Beschreibung ist zu lang (Abschnitte bis 200, Gerichte bis 300 Zeichen).",
+      "invalidPrice": "Geben Sie einen Preis von 0 bis 100.000 mit höchstens zwei Nachkommastellen ein oder lassen Sie ihn leer.",
+      "invalidAllergen": "Ein Allergen ist unbekannt. Laden Sie die Seite neu und versuchen Sie es erneut.",
+      "invalidOrder": "Die Speisekarte wurde inzwischen geändert. Laden Sie die Seite neu und versuchen Sie es erneut.",
+      "menuFull": "Die Speisekarte ist voll: höchstens 20 Abschnitte und 300 Gerichte.",
+      "sectionNotFound": "Den Abschnitt gibt es nicht mehr. Laden Sie die Seite neu.",
+      "photoTooLarge": "Das Foto ist größer als 10 MB.",
+      "photoTypeInvalid": "Wählen Sie ein PNG-, JPEG- oder WebP-Bild.",
+      "notFound": "Das wurde inzwischen gelöscht. Laden Sie die Seite neu."
     }
   },
   "staff": {

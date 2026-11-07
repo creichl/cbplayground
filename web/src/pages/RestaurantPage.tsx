@@ -6,6 +6,7 @@ import { requestErrorMessage } from '../api/client.ts'
 import { isNotFound, type PublicRestaurant, usePublicRestaurant } from '../api/publicBooking.ts'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
 import { Gallery } from '../components/booking/Gallery.tsx'
+import { MenuSection } from '../components/booking/MenuSection.tsx'
 import { bookingSectionId, scrollToBooking } from '../components/booking/layout.ts'
 import { OpeningHoursList } from '../components/booking/OpeningHoursList.tsx'
 import { useOpeningStatus } from '../components/booking/openingStatus.ts'
@@ -110,6 +111,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
               <p className="max-w-prose text-lg leading-relaxed whitespace-pre-line">{description}</p>
             </Section>
           )}
+          <MenuSection slug={slug} restaurantName={name} />
           {restaurant.areas.length > 0 && (
             <Section title={t('booking.restaurant.areas')}>
               <AreaCards areas={restaurant.areas} />
