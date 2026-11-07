@@ -7,6 +7,7 @@ import {
   PanelLeftCloseIcon,
   PanelLeftOpenIcon,
   PlusIcon,
+  PrinterIcon,
   SearchIcon,
   UserRoundPlusIcon,
 } from 'lucide-react'
@@ -90,9 +91,10 @@ function toDate(date: string) {
 
 /**
  * The service screen of the front desk: in the top bar the day, the service, the search, the way to the guest directory and the
- * main actions; below it the key figures of the service with the covers per quarter hour; then the list panel (the day's
- * reservations by where the guests are, and the open requests) beside the plan pane (floor plans or timeline). Selecting a reservation in the list
- * highlights its table and its block, and the other way round. Day, service and view are kept in the address
+ * main actions ("Print" opens the day sheet of the day and service); below it the key figures of the service with the covers per
+ * quarter hour; then the list panel (the day's reservations by where the guests are, and the open requests) beside the plan pane
+ * (floor plans or timeline). Selecting a reservation in the list highlights its table and its block, and the other way round.
+ * Day, service and view are kept in the address
  * (`?date=YYYY-MM-DD`, `?service=HH:mm`, `?view=timeline`), so a reload or a shared link shows the same.
  * A guest of "Upcoming" is dragged by the grip of its row onto a table of the floor plans to seat them there (see
  * useReservationMoves); a tap on a free cell of the timeline opens a new reservation at that table and time.
@@ -312,6 +314,19 @@ export function FrontdeskPage() {
         </TooltipTrigger>
         <TooltipContent className="2xl:hidden">{t('guests.title')}</TooltipContent>
       </Tooltip>
+      {/* The day sheet of the shown day and service, in a tab of its own, where the print dialog opens. */}
+      {date !== null && (
+        <Button variant="outline" asChild>
+          <Link
+            to={`/frontdesk/print?date=${date}${service === null ? '' : `&service=${encodeURIComponent(service.value)}`}`}
+            target="_blank"
+            aria-label={t('frontdesk.print.button')}
+          >
+            <PrinterIcon aria-hidden="true" />
+            <span className="max-sm:sr-only">{t('frontdesk.print.print')}</span>
+          </Link>
+        </Button>
+      )}
       {/* A walk-in is seated now, so only on today. */}
       {isToday && (
         <Button variant="outline" onClick={() => setWalkInTable(null)} aria-label={t('reservations.walkIn.button')}>

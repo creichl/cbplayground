@@ -42,6 +42,12 @@
   }
 }
 
+/* Printing (the front desk's day sheet, /frontdesk/print): A4 portrait with a margin of 12 mm. */
+@page {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
 /*
  * Colours, light. Neutrals from Tailwind's Stone: a warm grey that sits well with food, wood and linen and with the warm
  * accent colours of restaurants (green, gold, red), where the cooler Zinc looks technical.

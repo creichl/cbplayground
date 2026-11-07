@@ -375,6 +375,7 @@
     "nav": {
       "overview": "Übersicht",
       "serviceScreen": "Service-Bildschirm",
+      "reports": "Berichte",
       "profile": "Profil",
       "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
@@ -757,6 +758,50 @@
       "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
     }
   },
+  "reports": {
+    "description": "Wie es dem Restaurant in einem Zeitraum geht: Reservierungen und Gäste, Buchungswege, No-Shows und Stornierungen, starke Tage und Stunden.",
+    "period": {
+      "label": "Zeitraum",
+      "options": {
+        "7": "Letzte 7 Tage",
+        "30": "Letzte 30 Tage",
+        "90": "Letzte 90 Tage",
+        "custom": "Eigener"
+      },
+      "range": "Von – bis",
+      "tooLong": "Wählen Sie einen Zeitraum von höchstens 366 Tagen."
+    },
+    "figures": {
+      "reservations": "Reservierungen",
+      "covers": "Gäste",
+      "averageParty": "Ø Personen",
+      "noShows": "Nicht erschienen",
+      "noShowRate": "{{rate}} der Reservierungen",
+      "cancellations": "Stornierungen",
+      "cancelledBy": "{{guest}} von Gästen · {{restaurant}} vom Restaurant",
+      "declined": "Abgelehnte Anfragen",
+      "hint": "Reservierungen und Gäste zählen jede Reservierung außer stornierten, abgelehnten Anfragen und nicht erschienenen; die No-Show-Quote ist der Anteil der nicht Erschienenen an diesen und den nicht Erschienenen."
+    },
+    "reservationCount_one": "{{count}} Reservierung",
+    "reservationCount_other": "{{count}} Reservierungen",
+    "charts": {
+      "bySource": "Nach Buchungsweg",
+      "sourceValue": "{{reservations}} · {{covers}}",
+      "byWeekday": "Gäste nach Wochentag",
+      "byHour": "Gäste nach Beginn",
+      "byDay": "Gäste pro Tag",
+      "bar_one": "{{label}}: {{count}} Gast",
+      "bar_other": "{{label}}: {{count}} Gäste",
+      "busiest_one": "am stärksten {{label}} mit {{count}} Gast",
+      "busiest_other": "am stärksten {{label}} mit {{count}} Gästen",
+      "none": "keine Gäste"
+    },
+    "empty": "In diesem Zeitraum gibt es keine Reservierungen.",
+    "days": {
+      "title": "Pro Tag",
+      "date": "Datum"
+    }
+  },
   "openingHours": {
     "subtitle": "Wann Gäste buchen können: Wochenzeiten, Schließtage und Sonderöffnungszeiten, Standort und Feiertage.",
     "save": "Speichern",
@@ -946,6 +991,25 @@
         "closed": "Geschlossen",
         "past": "Vorbei"
       }
+    },
+    "print": {
+      "button": "Tagesliste drucken",
+      "print": "Drucken",
+      "title": "Tagesliste",
+      "totals": "Summen je Service",
+      "reservations_one": "{{count}} Reservierung",
+      "reservations_other": "{{count}} Reservierungen",
+      "columns": {
+        "time": "Zeit",
+        "name": "Name",
+        "party": "Personen",
+        "table": "Tisch",
+        "phone": "Telefon",
+        "status": "Status",
+        "notes": "Notizen"
+      },
+      "tableValue": "{{table}} ({{area}})",
+      "empty": "An diesem Tag gibt es keine Reservierungen."
     }
   },
   "guests": {
