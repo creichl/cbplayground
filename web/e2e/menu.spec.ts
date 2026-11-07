@@ -6,15 +6,19 @@ import { screenshot } from './screenshot.ts'
 /** A photo of a dish for the upload: one of the seed assets. */
 const dishPhoto = join(import.meta.dirname, '../../api/Cbplayground.Api/Data/SeedAssets/zur-linde-gallery-kaiserschmarrn.jpg')
 
-/** The menu section of the restaurant page, scrolled into view, so it loads (it loads when it comes near the view). */
+/**
+ * The loaded menu section of the restaurant page, scrolled into view: it loads once it comes near the view, and while it
+ * loads a skeleton with the same heading stands in.
+ */
 async function menuSection(page: Page) {
-  const heading = page.getByRole('heading', { name: 'Menu', level: 2, exact: true })
-  for (let y = 0; !(await heading.isVisible()) && y < 8000; y += 500) {
+  const menu = page.locator('section[aria-labelledby="menu-heading"]')
+  for (let y = 0; (await menu.count()) === 0 && y < 8000; y += 500) {
     await page.evaluate(`window.scrollTo(0, ${y})`)
     await page.waitForTimeout(100)
   }
-  await heading.scrollIntoViewIfNeeded()
-  return page.locator('section[aria-labelledby="menu-heading"]')
+  await expect(menu.getByRole('heading', { name: 'Menu', level: 2, exact: true })).toBeAttached()
+  await menu.scrollIntoViewIfNeeded()
+  return menu
 }
 
 test.describe('Menu', () => {
