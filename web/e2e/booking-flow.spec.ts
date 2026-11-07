@@ -142,7 +142,9 @@ test.describe('Embed', () => {
   test('books in German with the steps below the card', async ({ page }) => {
     await page.goto('/embed/zur-linde?lang=de')
     await expect(page.getByRole('heading', { name: 'Tisch reservieren' })).toBeVisible()
-    const chip = page.locator('[data-time-chip]').first()
+    // The latest time offered: the earliest one can fall within the lead time while the test runs (at a quarter hour), and
+    // the booking then sends the guest back to the times.
+    const chip = page.locator('[data-time-chip]').last()
     await chip.click()
     // No dialog in the embed: the step follows below the card.
     const heading = page.getByRole('heading', { name: 'Ihre Kontaktdaten' })
