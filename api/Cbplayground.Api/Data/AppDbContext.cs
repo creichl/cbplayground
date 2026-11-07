@@ -18,6 +18,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<GalleryPhoto> GalleryPhotos => Set<GalleryPhoto>();
 
+    public DbSet<MenuSection> MenuSections => Set<MenuSection>();
+
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
     public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
 
     public DbSet<HolidayOverride> HolidayOverrides => Set<HolidayOverride>();
@@ -200,6 +204,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(p => p.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MenuSection>(section =>
+        {
+            section.Property(s => s.Name).HasMaxLength(MenuSection.MaxNameLength);
+            section.Property(s => s.Description).HasMaxLength(MenuSection.MaxDescriptionLength);
+            section.HasIndex(s => new { s.TenantId, s.SortOrder });
+            section.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Deleting a section deletes its items; the endpoint deletes their photo files.
+            section.HasMany(s => s.Items).WithOne().HasForeignKey(i => i.SectionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MenuItem>(item =>
+        {
+            item.Property(i => i.Name).HasMaxLength(MenuItem.MaxNameLength);
+            item.Property(i => i.Description).HasMaxLength(MenuItem.MaxDescriptionLength);
+            item.Property(i => i.PhotoFileName).HasMaxLength(100);
+            item.HasIndex(i => new { i.SectionId, i.SortOrder });
+            item.HasOne<Tenant>().WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Stored as a JSON array of the names, e.g. ["Gluten","Milk"].
+            item.PrimitiveCollection(i => i.Allergens).ElementType().HasConversion<string>();
         });
 
         modelBuilder.Entity<ReservationSettings>(settings =>
