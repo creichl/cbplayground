@@ -1,17 +1,21 @@
-import { use, useState } from 'react'
+import { Fragment, use, useState } from 'react'
+import type { PriceLevel as Level } from '../../api/restaurantDetails.ts'
 import { cn } from '../../lib/utils.ts'
 import { ParallaxImage } from '../../ui/motion/parallax-image.tsx'
 import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Photo } from '../../ui/photo.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { HeroContext } from './layout.ts'
+import { PriceLevel } from './PriceLevel.tsx'
 
 type RestaurantHeaderProps = {
   name: string
   city: string | null
   coverUrl: string | null
-  /** One or two short facts after the city. */
+  /** One or two short facts after the city, e.g. the cuisines. */
   facts?: string[]
+  /** The price level after the facts, as € to €€€€ (PriceLevel); null when not set. */
+  priceLevel?: Level | null
   /** Whether the restaurant is open today, as a chip below the city (openingStatus.ts); only on the booking page. */
   status?: { open: boolean; text: string } | null
   /** "page": the booking page, about 60 % of the screen high (45 % on phones); "preview": a fixed height (/admin/design). */
@@ -30,7 +34,8 @@ const heights = {
 /**
  * The top of the restaurant's guest pages, in the full width and behind the transparent header: the cover image (cropped to
  * fit, loaded first, fading in) with a gradient towards the bottom, on it at the bottom left the name large in the display
- * font, the city and, on the booking page, a chip whether it is open today. Without cover image a calm band in the accent
+ * font, a line with the city, the facts (on the booking page the cuisines) and the price level, e.g. "München · Bavarian · €€",
+ * and, on the booking page, a chip whether it is open today. Without cover image a calm band in the accent
  * colour; a cover image that cannot be loaded shows the band in the cover image's height, so nothing jumps. The logo is not
  * repeated here: it is in the header.
  *
@@ -38,9 +43,12 @@ const heights = {
  * scrolls, darkening (ParallaxImage); name, city and chip rise in one after another (Stagger). In page transitions it is
  * the element the photo of the start page's card moves into (view-transition-name restaurant-cover, app.css).
  */
-export function RestaurantHeader({ name, city, coverUrl, facts = [], status = null, size = 'page' }: RestaurantHeaderProps) {
+export function RestaurantHeader({ name, city, coverUrl, facts = [], priceLevel = null, status = null, size = 'page' }: RestaurantHeaderProps) {
   const registerHero = use(HeroContext)
-  const details = [city, ...facts].filter((part) => part !== null && part !== '')
+  const details = [
+    ...[city, ...facts].filter((part) => part !== null && part !== ''),
+    ...(priceLevel !== null ? [<PriceLevel key="price" level={priceLevel} />] : []),
+  ]
   const [failedCover, setFailedCover] = useState<string | null>(null)
   const withCover = coverUrl !== null && failedCover !== coverUrl
   const page = size === 'page'
@@ -48,7 +56,16 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], status = nu
   const text = (
     <div className={cn('relative mx-auto w-full max-w-page px-4 sm:px-6', size === 'preview' ? 'pb-4' : 'pb-6 lg:pb-10')}>
       <h1 className={cn('font-display text-balance wrap-anywhere', page ? 'text-4xl sm:text-5xl xl:text-6xl' : 'text-2xl')}>{name}</h1>
-      {details.length > 0 && <p className={cn('mt-2 font-medium', size === 'preview' ? 'text-base' : 'text-lg')}>{details.join(' · ')}</p>}
+      {details.length > 0 && (
+        <p className={cn('mt-2 font-medium', size === 'preview' ? 'text-base' : 'text-lg')}>
+          {details.map((part, index) => (
+            <Fragment key={index}>
+              {index > 0 && ' · '}
+              {part}
+            </Fragment>
+          ))}
+        </p>
+      )}
       {status !== null && (
         <p
           className={cn(

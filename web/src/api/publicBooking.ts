@@ -3,6 +3,7 @@ import type { Language } from '../i18n/index.ts'
 import { ApiError, apiGet, apiPost } from './client.ts'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import type { Branding } from './branding.ts'
+import type { Cuisine, PriceLevel, RestaurantFeature } from './restaurantDetails.ts'
 import type { OpeningPeriod } from './openingHours.ts'
 import type { Occasion } from './reservations.ts'
 import type { ConfirmationMode, TableSelectionMode } from './reservationSettings.ts'
@@ -36,6 +37,15 @@ export type PublicRestaurant = {
   areas: { name: string; description: string | null; photoUrl: string | null }[]
   /** The photo gallery in its order; empty without photos. `caption` is null without one. */
   gallery: GalleryPhoto[]
+  /** The cuisines, the main one first, and the features; empty when not given. */
+  cuisines: Cuisine[]
+  /** From 1 (€) to 4 (€€€€); null when not set. */
+  priceLevel: PriceLevel | null
+  features: RestaurantFeature[]
+  /** In the restaurant's language with its line breaks; null when empty. */
+  houseRules: string | null
+  /** The frequently asked questions in their order; empty without. */
+  faq: { question: string; answer: string }[]
 }
 
 /** A photo of the restaurant's gallery; `url` is the public URL of the image with its version. */
