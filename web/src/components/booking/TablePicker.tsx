@@ -477,7 +477,7 @@ function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; f
         </span>
       </span>
       {selected && (
-        <span aria-hidden="true" className="flex size-6 shrink-0 animate-pop-in items-center justify-center rounded-full bg-primary text-primary-foreground">
+        <span aria-hidden="true" className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground motion-safe:animate-pop-in">
           <CheckIcon className="size-4" strokeWidth={3} />
         </span>
       )}
