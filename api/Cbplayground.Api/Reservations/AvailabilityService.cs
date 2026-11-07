@@ -299,7 +299,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
         var floor = await LoadFloorAsync(cancellationToken);
         var busy = await LoadBusyAsync(floor, startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
-        return FreeTables(floor, busy, startLocal, endLocal, bufferMinutes, guests, ReservationSource.Staff);
+        var blocks = await LoadBlocksAsync(startLocal, endLocal, cancellationToken);
+        return FreeTables(floor, busy, blocks, startLocal, endLocal, bufferMinutes, guests, ReservationSource.Staff);
     }
 
     private static BookingCheck Error(string error) => new(error, null);

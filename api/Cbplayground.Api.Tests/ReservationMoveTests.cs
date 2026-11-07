@@ -63,6 +63,19 @@ public class ReservationMoveTests(ApiFactory factory) : IClassFixture<ApiFactory
     }
 
     [Fact]
+    public async Task A_table_blocked_during_the_reservation_is_not_among_its_free_tables()
+    {
+        var (restaurant, frontDesk) = await CreateAsync();
+        var date = TestRestaurants.NextOpenDay(factory);
+        var reservation = await BookAsync(frontDesk, date, "18:00", 4, [restaurant.Tables["4"]]);
+        var blocked = await frontDesk.PostAsJsonAsync("/api/staff/table-blocks",
+            new { tableId = restaurant.Tables["6"], date = date.ToString("yyyy-MM-dd"), start = "19:00", end = "20:00", reason = "Repair" }, Token);
+        Assert.Equal(HttpStatusCode.Created, blocked.StatusCode);
+
+        Assert.Equal(["4", "5", "4 + 5"], (await FreeTablesAsync(frontDesk, reservation.Id)).Select(t => t.Label));
+    }
+
+    [Fact]
     public async Task The_free_tables_of_a_reservation_that_has_started_are_those_of_its_booked_time()
     {
         var (restaurant, frontDesk) = await CreateAsync();
