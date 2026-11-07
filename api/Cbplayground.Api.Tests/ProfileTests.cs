@@ -105,7 +105,7 @@ public class ProfileTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [InlineData("postalCode", 10, "invalid_postal_code")]
     [InlineData("city", 100, "invalid_city")]
     [InlineData("phone", 30, "invalid_phone")]
-    [InlineData("description", 500, "invalid_description")]
+    [InlineData("description", 2000, "invalid_description")]
     public async Task A_field_longer_than_its_maximum_is_rejected(string field, int maxLength, string error)
     {
         using var client = await LoginAsync("admin@zur-linde.test");
