@@ -1,13 +1,8 @@
 import { expect, type Page, test } from '@playwright/test'
-import { signIn } from './helpers.ts'
+import { settle, signIn } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 test.describe('Admin structure', () => {
-  /** Waits until the save bar and the dialog have finished their entrance, so the screenshots show them as they stay. */
-  async function settle(page: Page) {
-    await page.waitForFunction("document.getAnimations().every((animation) => animation.playState !== 'running')")
-  }
-
   /** The sidebar's groups with their entries, in their order. */
   const groups = {
     Service: ['Overview', 'Service screen'],
