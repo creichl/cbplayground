@@ -1,4 +1,3 @@
-import type { MantineColor } from '@mantine/core'
 import type { ParseKeys, TFunction } from 'i18next'
 import type { ComponentType } from 'react'
 import { type Reservation, type ReservationSource, type ReservationStatus, type RestaurantNow, toMinutes } from '../../api/reservations.ts'
@@ -9,16 +8,26 @@ import { BanIcon, CheckIcon, ClockIcon, DoorExitIcon, type IconProps, UndoIcon, 
  * The reservation lists, the table overview and the key figures all take them from here.
  */
 
-/** One colour per status, the same everywhere reservations are shown (lists, badges, table overview). */
-export const statusColors: Record<ReservationStatus, MantineColor> = {
-  Requested: 'yellow',
-  Confirmed: 'blue',
-  Late: 'orange',
-  Arrived: 'green',
-  Completed: 'teal',
-  NoShow: 'grape',
-  Cancelled: 'red',
-  Declined: 'gray',
+/**
+ * The colours of a status, as CSS colours of the design-system tokens (styles/app.css, "--status-*"): `color` for fills and
+ * outlines (at least 3:1 on white), `surface` for a calm background, `text` for text on white and on the surface (4.5:1).
+ */
+export type StatusColor = { color: string; surface: string; text: string }
+
+function statusColor(token: string): StatusColor {
+  return { color: `var(--status-${token})`, surface: `var(--status-${token}-surface)`, text: `var(--status-${token}-text)` }
+}
+
+/** One colour per status, the same everywhere reservations are shown (lists, badges, timeline, floor plans, key figures). */
+export const statusColors: Record<ReservationStatus, StatusColor> = {
+  Requested: statusColor('requested'),
+  Confirmed: statusColor('confirmed'),
+  Late: statusColor('late'),
+  Arrived: statusColor('arrived'),
+  Completed: statusColor('completed'),
+  NoShow: statusColor('no-show'),
+  Cancelled: statusColor('cancelled'),
+  Declined: statusColor('declined'),
 }
 
 export const statusLabels: Record<ReservationStatus, ParseKeys> = {
@@ -78,21 +87,22 @@ export type StatusAction = {
   shortLabel: ParseKeys
   /** Decorative, next to the label. */
   icon: ComponentType<IconProps>
-  color: MantineColor
+  /** The colour of its icon, the status it sets; null for the neutral ones (decline, undo). */
+  color: StatusColor | null
   /** Asks first, because the guest is no longer expected: cancelling, no-show and declining a request (which is final). */
   confirm: boolean
 }
 
 const actions = {
-  accept: { status: 'Confirmed', label: 'reservations.actions.accept', shortLabel: 'reservations.actionsShort.accept', icon: CheckIcon, color: 'green', confirm: false },
-  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: XIcon, color: 'gray', confirm: true },
-  arrived: { status: 'Arrived', label: 'reservations.actions.arrived', shortLabel: 'reservations.actionsShort.arrived', icon: CheckIcon, color: 'green', confirm: false },
-  late: { status: 'Late', label: 'reservations.actions.late', shortLabel: 'reservations.actionsShort.late', icon: ClockIcon, color: 'orange', confirm: false },
-  noShow: { status: 'NoShow', label: 'reservations.actions.noShow', shortLabel: 'reservations.actionsShort.noShow', icon: BanIcon, color: 'grape', confirm: true },
-  completed: { status: 'Completed', label: 'reservations.actions.completed', shortLabel: 'reservations.actionsShort.completed', icon: DoorExitIcon, color: 'teal', confirm: false },
-  cancel: { status: 'Cancelled', label: 'reservations.actions.cancel', shortLabel: 'reservations.actionsShort.cancel', icon: XIcon, color: 'red', confirm: true },
-  undoToConfirmed: { status: 'Confirmed', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
-  undoToArrived: { status: 'Arrived', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: 'gray', confirm: false },
+  accept: { status: 'Confirmed', label: 'reservations.actions.accept', shortLabel: 'reservations.actionsShort.accept', icon: CheckIcon, color: statusColors.Confirmed, confirm: false },
+  decline: { status: 'Declined', label: 'reservations.actions.decline', shortLabel: 'reservations.actionsShort.decline', icon: XIcon, color: null, confirm: true },
+  arrived: { status: 'Arrived', label: 'reservations.actions.arrived', shortLabel: 'reservations.actionsShort.arrived', icon: CheckIcon, color: statusColors.Arrived, confirm: false },
+  late: { status: 'Late', label: 'reservations.actions.late', shortLabel: 'reservations.actionsShort.late', icon: ClockIcon, color: statusColors.Late, confirm: false },
+  noShow: { status: 'NoShow', label: 'reservations.actions.noShow', shortLabel: 'reservations.actionsShort.noShow', icon: BanIcon, color: statusColors.NoShow, confirm: true },
+  completed: { status: 'Completed', label: 'reservations.actions.completed', shortLabel: 'reservations.actionsShort.completed', icon: DoorExitIcon, color: statusColors.Completed, confirm: false },
+  cancel: { status: 'Cancelled', label: 'reservations.actions.cancel', shortLabel: 'reservations.actionsShort.cancel', icon: XIcon, color: statusColors.Cancelled, confirm: true },
+  undoToConfirmed: { status: 'Confirmed', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: null, confirm: false },
+  undoToArrived: { status: 'Arrived', label: 'reservations.actions.undo', shortLabel: 'reservations.actionsShort.undo', icon: UndoIcon, color: null, confirm: false },
 } as const satisfies Record<string, StatusAction>
 
 /** The buttons of each status. The undo of "late" is offered in the notification after the change. */
@@ -148,4 +158,24 @@ export function undoStatus(previous: ReservationStatus, current: ReservationStat
     return previous
   }
   return transitions[current].includes('Confirmed') ? 'Confirmed' : null
+}
+
+/** The tabs of the front desk's list panel: the day's reservations by where the guests are, and the open requests from today on. */
+export type ListTab = 'upcoming' | 'seated' | 'finished' | 'requests'
+
+/** The tab of the day's lists that holds a reservation in this status. */
+const tabOfStatus: Record<ReservationStatus, Exclude<ListTab, 'requests'>> = {
+  Requested: 'upcoming',
+  Confirmed: 'upcoming',
+  Late: 'upcoming',
+  Arrived: 'seated',
+  Completed: 'finished',
+  NoShow: 'finished',
+  Cancelled: 'finished',
+  Declined: 'finished',
+}
+
+/** The tab of the day's lists that holds the reservation. */
+export function listTabOf(reservation: Pick<Reservation, 'status'>) {
+  return tabOfStatus[reservation.status]
 }
