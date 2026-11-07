@@ -13,12 +13,14 @@ type ReservationPopoverProps = {
   nextReservation?: Reservation
   /** Offers to seat a walk-in at the reservation's table, which is free now. */
   onWalkIn?: () => void
+  /** Offers to block the reservation's table (the menu of a table on the floor plan). */
+  onBlock?: () => void
   /** The element that opens the popover on click; it must accept a ref and onClick. */
   children: ReactElement<{ onClick?: () => void }>
 }
 
 /** Details of a reservation with the status actions of the lists (see StatusActions). */
-export function ReservationPopover({ reservation, nextReservation, onWalkIn, children }: ReservationPopoverProps) {
+export function ReservationPopover({ reservation, nextReservation, onWalkIn, onBlock, children }: ReservationPopoverProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const [opened, setOpened] = useState(false)
@@ -95,6 +97,20 @@ export function ReservationPopover({ reservation, nextReservation, onWalkIn, chi
                 }}
               >
                 {t('tableOverview.walkInHere')}
+              </Button>
+            </>
+          )}
+          {onBlock !== undefined && (
+            <>
+              <Divider />
+              <Button
+                variant="default"
+                onClick={() => {
+                  setOpened(false)
+                  onBlock()
+                }}
+              >
+                {t('tableBlocks.block')}
               </Button>
             </>
           )}
