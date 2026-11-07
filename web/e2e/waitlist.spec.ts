@@ -48,20 +48,31 @@ test.describe('Front desk: waitlist', () => {
     await expect(page.getByRole('region', { name: 'Key figures of the service' }).getByText('Waiting', { exact: true })).toBeVisible()
     await screenshot(page, 'waitlist', 'waiting')
 
-    // Seated now, as a walk-in: only while the restaurant is open and a table for two is free.
+    // "Seat" opens the walk-in drawer with the party's details, also while the restaurant is closed (it then says so).
     const walkInTables = await page.request.get('/api/staff/walk-in-tables?guests=2')
-    test.skip(walkInTables.status() === 400, 'Kafana Dunav is closed at the time of the run, so no party can be seated from the waitlist now.')
+    const closed = walkInTables.status() === 400
+    await row.getByRole('button', { name: 'Seat', exact: true }).click()
+    const drawer = page.getByRole('dialog', { name: `Seat ${name}` })
+    await expect(drawer.getByLabel('Guests')).toHaveValue('2')
+    await expect(drawer.getByLabel('Name')).toHaveValue(name)
+    await expect(drawer.getByLabel('Phone')).toHaveValue('+381 63 777888')
+    await expect(drawer.getByLabel('Note')).toHaveValue('By the window, please')
+    await expect(drawer.getByRole('button', { name: 'Seat party', exact: true })).toBeVisible()
+    if (closed) {
+      await expect(drawer.getByText('The restaurant is not open right now.')).toBeVisible()
+    } else {
+      await expect(drawer.getByRole('combobox', { name: 'Table', exact: true }).or(drawer.getByText(/No table for a party of 2/))).toBeVisible()
+    }
+    await settle(page)
+    await screenshot(page, 'waitlist', 'seat-drawer', { fullPage: false })
+
+    // Seated now, as a walk-in: only while the restaurant is open and a table for two is free.
+    test.skip(closed, 'Kafana Dunav is closed at the time of the run (it opens at 12:00), so no party can be seated from the waitlist now.')
     expect(walkInTables.status()).toBe(200)
     const suggested = ((await walkInTables.json()) as { tables: { number: string }[] }).tables[0]
     test.skip(suggested === undefined, 'No table of Kafana Dunav is free for a party of two now, so it cannot be seated.')
     await expect(row).toContainText('A table is free now')
-
-    await row.getByRole('button', { name: 'Seat', exact: true }).click()
-    const drawer = page.getByRole('dialog', { name: `Seat ${name}` })
-    await expect(drawer.getByLabel('Name')).toHaveValue(name)
-    await expect(drawer.getByLabel('Note')).toHaveValue('By the window, please')
     await expect(drawer.getByRole('combobox', { name: 'Table', exact: true })).toHaveValue(new RegExp(`^Table ${suggested.number} · .*\\(suggested\\)$`))
-    await screenshot(page, 'waitlist', 'seat-drawer', { fullPage: false })
 
     await drawer.getByRole('button', { name: 'Seat party', exact: true }).click()
     await expect(drawer).toBeHidden()
@@ -99,5 +110,74 @@ test.describe('Front desk: waitlist', () => {
     await expect(page.getByText(`${name} is waiting again.`)).toBeVisible()
     await expect(row.getByText('Waiting', { exact: true })).toBeVisible()
     await expect(row.getByRole('button', { name: 'Seat', exact: true })).toBeVisible()
+  })
+
+  test('marks the quoted time as exceeded and changes the entry', async ({ page }) => {
+    const name = 'Jelena Strpljiva'
+    // The waiting time runs with the browser's clock, so the test moves it on instead of waiting.
+    await page.clock.install()
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await addToWaitlist(page, name)
+    await page.reload()
+
+    await page.getByRole('tab', { name: /^Waitlist/ }).click()
+    const row = waitlistRow(page, name)
+    await expect(row).toContainText(/Waiting \d+ min · quoted 15 min/)
+    await expect(row).not.toContainText('exceeded')
+
+    await page.clock.fastForward('16:00')
+    await expect(row).toContainText(/Waiting (1[6-9]|2\d) min · quoted 15 min, exceeded/)
+    await expect(row.getByText('Waiting', { exact: true })).toBeVisible()
+    // The search shows only this party, so the screenshot shows its mark whatever the other tests left on the list.
+    await page.getByRole('searchbox', { name: 'Search' }).fill(name)
+    await expect(page.locator('[data-waitlist-entry-id]')).toHaveCount(1)
+    await screenshot(page, 'waitlist', 'exceeded', { fullPage: false })
+
+    // A click on the party opens it to change it; a longer quoted time takes the mark away.
+    await row.getByRole('button', { name: new RegExp(`^Change the entry of ${name}, `) }).click()
+    const form = page.getByRole('dialog', { name: 'Change the waitlist entry' })
+    await expect(form.getByLabel('Name')).toHaveValue(name)
+    await expect(form.getByLabel('Phone')).toHaveValue('+381 64 2223334')
+    await expect(form.getByRole('radio', { name: '15 min' })).toBeChecked()
+    await form.getByText('45 min', { exact: true }).click()
+    await form.getByLabel('Guests').fill('3')
+    await settle(page)
+    await screenshot(page, 'waitlist', 'edit-form', { fullPage: false })
+
+    await form.getByRole('button', { name: 'Save', exact: true }).click()
+    await expect(form).toBeHidden()
+    await expect(row).toContainText('Party of 3 · +381 64 2223334')
+    await expect(row).toContainText(/quoted 45 min/)
+    await expect(row).not.toContainText('exceeded')
+  })
+
+  test('offers the waitlist in the walk-in drawer when no table is free', async ({ page }) => {
+    const name = 'Grupa Osmoro'
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // "No table free now" depends on the time of the run and on the other tests' walk-ins, so the answer of the free tables is
+    // set here: open, but every table that seats the party taken.
+    await page.route('**/api/staff/walk-in-tables?*', (route) =>
+      route.fulfill({ json: { time: '19:00', durationMinutes: 120, tables: [] } }),
+    )
+
+    await page.getByRole('button', { name: 'Walk-in', exact: true }).click()
+    const drawer = page.getByRole('dialog', { name: 'Seat a walk-in' })
+    await drawer.getByLabel('Guests').fill('8')
+    await drawer.getByLabel('Name').fill(name)
+    await expect(drawer.getByText('No table for a party of 8 is free right now.')).toBeVisible()
+    await expect(drawer.getByRole('button', { name: 'Seat walk-in', exact: true })).toBeDisabled()
+    await settle(page)
+    await screenshot(page, 'waitlist', 'walk-in-no-table', { fullPage: false })
+
+    // The waitlist drawer takes over what was entered.
+    await drawer.getByRole('button', { name: 'Add to waitlist', exact: true }).click()
+    const form = page.getByRole('dialog', { name: 'Add to the waitlist' })
+    await expect(form.getByLabel('Name')).toHaveValue(name)
+    await expect(form.getByLabel('Guests')).toHaveValue('8')
+    await form.getByRole('button', { name: 'Add to waitlist', exact: true }).click()
+    await expect(form).toBeHidden()
+    await expect(waitlistRow(page, name)).toContainText('Party of 8')
   })
 })
