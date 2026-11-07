@@ -25,7 +25,8 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
 - Front desk: `service-screen.spec.ts` (layout, views, selection, services, sizes, old addresses),
   `front-desk-flow.spec.ts` (accepting, status with undo, phone reservation, walk-in, table overview, access),
   `front-desk-requests.spec.ts` (declining and undoing an accepted request), `walk-in.spec.ts` (walk-in on the floor
-  plans and its undo), `closed-reservations.spec.ts`, `reservation-history.spec.ts`.
+  plans and its undo), `closed-reservations.spec.ts`, `reservation-history.spec.ts`, `front-desk-moves.spec.ts` (drag and
+  drop on the timeline and the floor plans, tapping a free cell, arrival at another table, combined reservations).
 - Both sides: `combinations.spec.ts` (table combinations online, in the area editor and by phone).
 - API: `api.spec.ts`.
 

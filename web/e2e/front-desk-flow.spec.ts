@@ -1,35 +1,14 @@
 import { expect, type Page, test } from '@playwright/test'
-import { bookRequest, settle, signIn } from './helpers.ts'
+import { bookRequest, reservationRow, settle, signIn, statusToast, timeOfDay, todayInBelgrade } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 // The front desk's flows end to end: open requests, status changes with undo, phone reservations, walk-ins, the table
 // overview and the access to the admin area.
 
-/** Today in Kafana Dunav's time zone (Europe/Belgrade), "YYYY-MM-DD": the day its front desk calls today. */
-function todayInBelgrade() {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Belgrade' }).format(new Date())
-}
-
-/** A time "HH:mm" as the front desk shows it in English, e.g. "7:00 PM". */
-function timeOfDay(time: string) {
-  const [hours, minutes] = time.split(':').map(Number)
-  return new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, hours, minutes))
-}
-
 /** A day "YYYY-MM-DD" as the date pickers show it in English, e.g. "Sat, Nov 7, 2026". */
 function pickerDate(date: string) {
   const [year, month, day] = date.split('-').map(Number)
   return new Intl.DateTimeFormat('en-US', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(year, month - 1, day))
-}
-
-/** The row of a reservation in the lists of the front desk: the button that opens it, its status and its status actions. */
-function reservationRow(page: Page, name: string) {
-  return page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).locator('..')
-}
-
-/** The notification of a status change on the service screen (design system: a list item in the region "Notifications"). */
-function statusToast(page: Page, text: string) {
-  return page.getByRole('region', { name: /^Notifications/ }).getByRole('listitem').filter({ hasText: text })
 }
 
 /**

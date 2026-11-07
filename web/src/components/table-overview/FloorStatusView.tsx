@@ -29,7 +29,12 @@ type FloorStatusViewProps = {
   selectedId: string | null
   /** Called when a table with a reservation is clicked: the reservation shown at it becomes the selected one. */
   onSelect: (reservation: Reservation) => void
+  /** While a guest is dragged from the list onto the plans: the tables it fits (null while they load) and those it would take. */
+  drop: FloorDrop | null
 }
+
+/** The tables a guest dragged onto the plans fits (null while they load), and those of the table under the pointer. */
+export type FloorDrop = { fitting: ReadonlySet<string> | null; target: readonly string[] }
 
 /** The slider moves in quarter hours, like the reservation start times. */
 const step = 15
@@ -58,15 +63,18 @@ export function FloorStatusView({
   onWalkIn,
   selectedId,
   onSelect,
+  drop,
 }: FloorStatusViewProps) {
   const { t, i18n } = useTranslation()
   const [time, setTime] = useState(initialTime)
   const plansRef = useRef<HTMLDivElement>(null)
   const active = reservations.filter(occupiesTable)
   const label = (minutes: number) => formatTime(formatMinutes(minutes), i18n.resolvedLanguage ?? 'en')
-  const selectedTableId = reservations.find((reservation) => reservation.id === selectedId)?.tableId ?? null
+  // All tables of a combined reservation carry it.
+  const selectedTableIds = reservations.find((reservation) => reservation.id === selectedId)?.tableIds ?? []
+  const selectedTableId = selectedTableIds.at(0) ?? null
 
-  // A reservation selected elsewhere (the list) brings its table into view.
+  // A reservation selected elsewhere (the list) brings its (first) table into view.
   useEffect(() => {
     if (selectedTableId === null) {
       return
@@ -134,8 +142,9 @@ export function FloorStatusView({
                     time={time}
                     freeNow={walkInTableIds.has(table.id)}
                     onWalkIn={onWalkIn}
-                    selected={table.id === selectedTableId}
+                    selected={selectedTableIds.includes(table.id)}
                     onSelect={onSelect}
+                    drop={drop === null ? null : drop.target.includes(table.id) ? 'target' : drop.fitting === null ? null : drop.fitting.has(table.id) ? 'fits' : 'unfit'}
                   />
                 ))}
               </FloorPlan>
@@ -156,9 +165,11 @@ type TableStatusProps = {
   /** Whether the server lists the table as free now for a walk-in, with the buffer and the walk-in's duration. */
   freeNow: boolean
   onWalkIn: (tableId: string) => void
-  /** The table of the selected reservation. */
+  /** A table of the selected reservation. */
   selected: boolean
   onSelect: (reservation: Reservation) => void
+  /** While a guest is dragged onto the plans: the table under the pointer (target), one it fits, or one it does not fit. */
+  drop: 'target' | 'fits' | 'unfit' | null
 }
 
 /** Whether the reservation occupies its table at `minutes`; a guest who left only until they left. */
@@ -167,13 +178,15 @@ function occupiesAt(reservation: Reservation, minutes: number) {
 }
 
 /**
- * A table in the colour of its status at `time`, with the end of the current or the start of the next reservation.
- * A table that is free now for a walk-in offers to seat one. The table of the selected reservation carries a thick outline.
+ * A table in the colour of its status at `time`, with the end of the current or the start of the next reservation; every table
+ * of a combined reservation carries it. A table that is free now for a walk-in offers to seat one. The tables of the selected
+ * reservation carry a thick outline. While a guest is dragged onto the plans, the tables it does not fit fade and the one under
+ * the pointer is outlined.
  */
-function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn, selected, onSelect }: TableStatusProps) {
+function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn, selected, onSelect, drop }: TableStatusProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
-  const atTable = reservations.filter((reservation) => reservation.tableId === table.id)
+  const atTable = reservations.filter((reservation) => reservation.tableIds.includes(table.id))
   const current = atTable.find((reservation) => occupiesAt(reservation, time))
   const next = atTable.find((reservation) => toMinutes(reservation.time) > time)
   const shown = current ?? next
@@ -185,6 +198,7 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
     <TableShape
       data-table-id={table.id}
       data-selected={selected ? '' : undefined}
+      data-drop={drop ?? undefined}
       number={table.number}
       seats={table.seats}
       shape={table.shape}
@@ -193,9 +207,9 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
       posY={table.posY}
       tableScale={tableScale}
       fill={color === null ? 'var(--card)' : color.surface}
-      stroke={selected ? 'var(--foreground)' : color === null ? 'var(--status-declined)' : color.color}
+      stroke={drop === 'target' ? 'var(--primary)' : selected ? 'var(--foreground)' : color === null ? 'var(--status-declined)' : color.color}
       color="var(--foreground)"
-      strokeWidth={selected ? 4 : 2}
+      strokeWidth={selected || drop === 'target' ? 4 : 2}
       note={
         shown === undefined
           ? undefined
@@ -216,7 +230,12 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
       }}
       // The popover replaces the click handler; selecting the reservation shown at the table happens before it.
       onClickCapture={shown === undefined ? undefined : () => onSelect(shown)}
-      style={{ cursor: clickable ? 'pointer' : 'default', zIndex: selected ? 2 : 1 }}
+      style={{
+        cursor: clickable ? 'pointer' : 'default',
+        zIndex: selected || drop === 'target' ? 2 : 1,
+        opacity: drop === 'unfit' ? 0.35 : 1,
+        transition: 'opacity 150ms',
+      }}
     />
   )
 

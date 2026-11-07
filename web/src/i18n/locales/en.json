@@ -926,6 +926,24 @@
       "label": "Service",
       "wholeDay": "Whole day",
       "option": "{{name}} {{time}}"
+    },
+    "moves": {
+      "moved": "{{name}} moved to table {{table}} at {{time}}",
+      "seated": "{{name}} arrived at table {{table}}",
+      "tableChanged": "{{name}} moved to table {{table}}",
+      "undone": "{{name}} is back at table {{table}} at {{time}}",
+      "notMoved": "The reservation could not be moved",
+      "dragHandle": "Drag onto a table on the floor plan to seat the guest there",
+      "arrivedElsewhere": "Arrived at another table…",
+      "arrivedElsewhereHint": "Free until the end of the reservation",
+      "noFreeTables": "No other table is free until the end of the reservation.",
+      "combined": "tables {{tables}}",
+      "unfit": {
+        "taken": "Taken",
+        "tooSmall": "Too small",
+        "closed": "Closed",
+        "past": "In the past"
+      }
     }
   },
   "notFound": {

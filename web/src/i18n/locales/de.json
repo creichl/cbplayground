@@ -926,6 +926,24 @@
       "label": "Service",
       "wholeDay": "Ganzer Tag",
       "option": "{{name}} {{time}}"
+    },
+    "moves": {
+      "moved": "{{name}} an Tisch {{table}} um {{time}} verschoben",
+      "seated": "{{name}} an Tisch {{table}} angekommen",
+      "tableChanged": "{{name}} an Tisch {{table}} umgesetzt",
+      "undone": "{{name}} wieder an Tisch {{table}} um {{time}}",
+      "notMoved": "Die Reservierung konnte nicht verschoben werden",
+      "dragHandle": "Auf einen Tisch im Grundriss ziehen, um den Gast dort zu platzieren",
+      "arrivedElsewhere": "An anderem Tisch angekommen…",
+      "arrivedElsewhereHint": "Frei bis zum Ende der Reservierung",
+      "noFreeTables": "Bis zum Ende der Reservierung ist kein anderer Tisch frei.",
+      "combined": "Tische {{tables}}",
+      "unfit": {
+        "taken": "Belegt",
+        "tooSmall": "Zu klein",
+        "closed": "Geschlossen",
+        "past": "Vorbei"
+      }
     }
   },
   "notFound": {

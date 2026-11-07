@@ -30,11 +30,13 @@ type ReservationFormDrawerProps = {
   defaultDate: string
   /** Today in the restaurant's time zone; earlier days cannot be chosen. */
   today: string
+  /** The time ("HH:mm") and tables a new reservation starts with, e.g. of the free cell tapped on the timeline. */
+  initial?: { time: string; tableIds: string[] }
   onClose: () => void
 }
 
 /** Drawer to enter a new reservation, e.g. a phone booking, or to change an existing one. */
-export function ReservationFormDrawer({ reservation, defaultDate, today, onClose }: ReservationFormDrawerProps) {
+export function ReservationFormDrawer({ reservation, defaultDate, today, initial, onClose }: ReservationFormDrawerProps) {
   const { t } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
 
@@ -47,7 +49,7 @@ export function ReservationFormDrawer({ reservation, defaultDate, today, onClose
       title={<Text fw={650} size="lg">{t(reservation === null ? 'reservations.form.createTitle' : 'reservations.form.editTitle')}</Text>}
     >
       {reservation === null ? (
-        <ReservationForm reservation={null} initialDate={defaultDate} initialDuration={null} today={today} onClose={onClose} />
+        <ReservationForm reservation={null} initialDate={defaultDate} initialDuration={null} initial={initial} today={today} onClose={onClose} />
       ) : (
         <EditForm reservation={reservation} today={today} onClose={onClose} />
       )}
@@ -87,6 +89,8 @@ type ReservationFormProps = {
   initialDate: string
   /** The overridden duration; null when the restaurant's duration applies. */
   initialDuration: number | null
+  /** The time and tables of a new reservation; they apply while they are free for the party. */
+  initial?: { time: string; tableIds: string[] }
   today: string
   onClose: () => void
 }
@@ -123,7 +127,7 @@ function wholeNumber(value: NumberValue) {
   return typeof value === 'number' && Number.isInteger(value) ? value : null
 }
 
-function ReservationForm({ reservation, initialDate, initialDuration, today, onClose }: ReservationFormProps) {
+function ReservationForm({ reservation, initialDate, initialDuration, initial, today, onClose }: ReservationFormProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const isNew = reservation === null
@@ -138,8 +142,8 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
     initialValues: {
       guests: reservation?.guests ?? 2,
       date: initialDate,
-      time: reservation?.time ?? null,
-      tables: reservation === null ? null : tableKey(reservation.tableIds),
+      time: reservation?.time ?? initial?.time ?? null,
+      tables: reservation === null ? (initial === undefined ? null : tableKey(initial.tableIds)) : tableKey(reservation.tableIds),
       overrideDuration: initialDuration !== null,
       durationMinutes: initialDuration ?? reservation?.durationMinutes ?? 120,
       name: reservation?.name ?? '',
