@@ -42,6 +42,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<ReservationEvent> ReservationEvents => Set<ReservationEvent>();
 
+    public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
+
     public DbSet<TableBlock> TableBlocks => Set<TableBlock>();
 
     /// <summary>
@@ -261,6 +263,19 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 change.ToJson();
                 change.Property(c => c.Field).HasConversion<string>();
             });
+        });
+
+        modelBuilder.Entity<WaitlistEntry>(entry =>
+        {
+            entry.HasIndex(e => new { e.TenantId, e.Date });
+            entry.HasOne<Tenant>().WithMany().HasForeignKey(e => e.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Removing the walk-in (the undo of its seating) puts the party back on the waitlist; the endpoint does it, the
+            // database keeps the link consistent all the same.
+            entry.HasOne<Reservation>().WithMany().HasForeignKey(e => e.SeatedReservationId).OnDelete(DeleteBehavior.SetNull);
+            entry.Property(e => e.Name).HasMaxLength(Reservation.MaxNameLength);
+            entry.Property(e => e.Phone).HasMaxLength(Reservation.MaxPhoneLength);
+            entry.Property(e => e.Notes).HasMaxLength(Reservation.MaxNotesLength);
+            entry.Property(e => e.Status).HasConversion<string>().HasMaxLength(20);
         });
 
         // The roles are fixed, so the migrations create them in every environment.

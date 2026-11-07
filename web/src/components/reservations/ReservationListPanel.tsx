@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { Reservation } from '../../api/reservations.ts'
+import type { WaitlistEntry } from '../../api/waitlist.ts'
 import { cn } from '../../lib/utils.ts'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx'
@@ -8,6 +9,7 @@ import { RequestError } from '../booking/RequestError.tsx'
 import { PendingRequests } from './PendingRequests.tsx'
 import { ReservationList } from './ReservationList.tsx'
 import { type ListTab, listTabOf } from './status.ts'
+import { WaitlistList } from './WaitlistList.tsx'
 
 type ReservationListPanelProps = {
   tab: ListTab
@@ -28,12 +30,25 @@ type ReservationListPanelProps = {
   selectedId: string | null
   /** Opens a reservation: selects it and opens the edit drawer. */
   onOpen: (reservation: Reservation) => void
+  /** The waitlist of the day (matching the search) in the order of arrival; undefined while it loads. */
+  waitlist: WaitlistEntry[] | undefined
+  waitlistError: Error | null
+  onRetryWaitlist: () => void
+  /** The restaurant's time of day in minutes when the day is today; null on other days, whose waitlist is read-only. */
+  nowMinutes: number | null
+  /** Why the waitlist is empty before the search, e.g. a day ahead has none yet. */
+  waitlistEmptyText: string
+  /** Seats a waiting party: opens the walk-in drawer for it. */
+  onSeat: (entry: WaitlistEntry) => void
+  /** Opens a waiting entry to change it. */
+  onEditEntry: (entry: WaitlistEntry) => void
   className?: string
 }
 
 /**
  * The list panel of the front desk: the tabs "Upcoming", "Seated", "Finished" and "Requests" with their numbers, each with
- * the reservations grouped by start time and their quick actions. The selected reservation is scrolled into view.
+ * the reservations grouped by start time and their quick actions, and "Waitlist" with the number of parties waiting. The
+ * selected reservation is scrolled into view.
  */
 export function ReservationListPanel({
   tab,
@@ -48,13 +63,27 @@ export function ReservationListPanel({
   searching,
   selectedId,
   onOpen,
+  waitlist,
+  waitlistError,
+  onRetryWaitlist,
+  nowMinutes,
+  waitlistEmptyText,
+  onSeat,
+  onEditEntry,
   className,
 }: ReservationListPanelProps) {
   const { t } = useTranslation()
   const scrollRef = useRef<HTMLDivElement>(null)
-  const byTab = (shown: Exclude<ListTab, 'requests'>) => (reservations ?? []).filter((reservation) => listTabOf(reservation) === shown)
+  const byTab = (shown: Exclude<ListTab, 'requests' | 'waitlist'>) => (reservations ?? []).filter((reservation) => listTabOf(reservation) === shown)
   const lists = { upcoming: byTab('upcoming'), seated: byTab('seated'), finished: byTab('finished') }
-  const count = (shown: ListTab) => (shown === 'requests' ? requests?.length : reservations === undefined ? undefined : lists[shown].length)
+  const count = (shown: ListTab) =>
+    shown === 'requests'
+      ? requests?.length
+      : shown === 'waitlist'
+        ? waitlist?.filter((entry) => entry.status === 'Waiting').length
+        : reservations === undefined
+          ? undefined
+          : lists[shown].length
 
   // A reservation selected elsewhere (the plan) is brought into view.
   useEffect(() => {
@@ -69,20 +98,21 @@ export function ReservationListPanel({
     { value: 'seated', label: t('frontdesk.tabs.seated') },
     { value: 'finished', label: t('frontdesk.tabs.finished') },
     { value: 'requests', label: t('frontdesk.tabs.requests') },
+    { value: 'waitlist', label: t('frontdesk.tabs.waitlist') },
   ]
 
-  const emptyOf = (shown: Exclude<ListTab, 'requests'>) =>
+  const emptyOf = (shown: Exclude<ListTab, 'requests' | 'waitlist'>) =>
     searching ? t('reservations.list.noMatches') : (reservations ?? []).length === 0 ? emptyText : t(`frontdesk.empty.${shown}`)
 
   return (
     <Tabs value={tab} onValueChange={(value) => onTabChange(value as ListTab)} className={cn('min-h-0 gap-0', className)}>
       <div className="border-b border-border px-3 py-2">
-        {/* Four equal columns, the number below the label, so the longer labels (de, sr) fit the 400 px panel too. */}
-        <TabsList className="grid h-auto w-full grid-cols-4">
+        {/* Five columns as wide as their labels, the number below the label, so the longer labels (de, sr) fit the 400 px panel too. */}
+        <TabsList className="flex h-auto w-full">
           {tabs.map(({ value, label }) => {
             const number = count(value)
             return (
-              <TabsTrigger key={value} value={value} className="h-auto min-h-11 min-w-0 flex-col gap-0.5 px-1 py-1 text-[0.8125rem] leading-tight touch:h-auto">
+              <TabsTrigger key={value} value={value} className="h-auto min-h-11 min-w-0 flex-auto flex-col gap-0.5 px-1 py-1 text-[0.8125rem] leading-tight touch:h-auto">
                 <span className="max-w-full truncate">{label}</span>
                 {number !== undefined && (
                   <span
@@ -124,6 +154,23 @@ export function ReservationListPanel({
               onOpen={onOpen}
               selectedId={selectedId}
               emptyText={searching ? t('reservations.list.noMatches') : t('frontdesk.empty.requests')}
+            />
+          )}
+        </TabsContent>
+        <TabsContent value="waitlist" className="pt-2">
+          {waitlist === undefined ? (
+            waitlistError !== null ? (
+              <RequestError error={waitlistError} onRetry={onRetryWaitlist} />
+            ) : (
+              <ListSkeleton />
+            )
+          ) : (
+            <WaitlistList
+              entries={waitlist}
+              nowMinutes={nowMinutes}
+              onSeat={onSeat}
+              onEdit={onEditEntry}
+              emptyText={searching ? t('waitlist.noMatches') : waitlistEmptyText}
             />
           )}
         </TabsContent>

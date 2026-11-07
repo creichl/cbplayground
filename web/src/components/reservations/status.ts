@@ -190,11 +190,14 @@ export function undoStatus(previous: ReservationStatus, reservation: StatusReser
   return isAllowedNow(undo, reservation, now) ? undo : null
 }
 
-/** The tabs of the front desk's list panel: the day's reservations by where the guests are, and the open requests from today on. */
-export type ListTab = 'upcoming' | 'seated' | 'finished' | 'requests'
+/**
+ * The tabs of the front desk's list panel: the day's reservations by where the guests are, the open requests from today on and
+ * the day's waitlist of walk-ins.
+ */
+export type ListTab = 'upcoming' | 'seated' | 'finished' | 'requests' | 'waitlist'
 
 /** The tab of the day's lists that holds a reservation in this status. */
-const tabOfStatus: Record<ReservationStatus, Exclude<ListTab, 'requests'>> = {
+const tabOfStatus: Record<ReservationStatus, Exclude<ListTab, 'requests' | 'waitlist'>> = {
   Requested: 'upcoming',
   Confirmed: 'upcoming',
   Late: 'upcoming',
