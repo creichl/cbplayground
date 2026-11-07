@@ -25,6 +25,7 @@ import {
   useRestaurantNow,
   useWalkInTables,
 } from '../api/reservations.ts'
+import { useTableBlocks } from '../api/tableBlocks.ts'
 import { useWaitlist, type WaitlistEntry, type WaitlistInput } from '../api/waitlist.ts'
 import { RequestError } from '../components/booking/RequestError.tsx'
 import { CoversChart } from '../components/reservations/CoversChart.tsx'
@@ -139,6 +140,7 @@ export function FrontdeskPage() {
   const floor = useFloor()
   const reservations = useReservations(date)
   const openPeriods = useOpenPeriods(date)
+  const blocks = useTableBlocks(date)
   const openRequests = useOpenRequests(today)
   const waitlist = useWaitlist(date)
   const isToday = today !== null && date === today
@@ -339,8 +341,9 @@ export function FrontdeskPage() {
     </>
   )
 
-  const planReady = date !== null && floor.data !== undefined && reservations.data !== undefined && openPeriods.data !== undefined
-  const planError = floor.error ?? reservations.error ?? openPeriods.error
+  const planReady =
+    date !== null && floor.data !== undefined && reservations.data !== undefined && openPeriods.data !== undefined && blocks.data !== undefined
+  const planError = floor.error ?? reservations.error ?? openPeriods.error ?? blocks.error
 
   return (
     <>
@@ -453,6 +456,7 @@ export function FrontdeskPage() {
               onWalkIn={setWalkInTable}
               selectedId={selectedId}
               onSelect={select}
+              blocks={blocks.data}
               onBook={canBook ? book : undefined}
               drop={floorDrop}
               // Tablets: the list panel is hidden and shown again from the plan pane, so its tab row keeps the full width.
@@ -476,6 +480,7 @@ export function FrontdeskPage() {
                 void floor.refetch()
                 void reservations.refetch()
                 void openPeriods.refetch()
+                void blocks.refetch()
               }}
             />
           ) : (

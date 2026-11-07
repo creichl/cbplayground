@@ -1,6 +1,7 @@
 import { type KeyboardEvent, type ReactElement, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, type FloorTable, formatMinutes, type Reservation, toMinutes } from '../../api/reservations.ts'
+import type { TableBlock } from '../../api/tableBlocks.ts'
 import { formatTime } from '../../i18n/format.ts'
 import { Button } from '../../ui/button.tsx'
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
@@ -9,6 +10,8 @@ import { TableShape } from '../floor-plan/TableShape.tsx'
 import { occupiedUntil, occupiesTable, statusColors, statusLabels } from '../reservations/status.ts'
 import { TimeAxis } from '../reservations/TimeAxis.tsx'
 import { ReservationPopover } from './ReservationPopover.tsx'
+import { blockAt, blockColor } from './blocks.ts'
+import { BlockPopover } from './TableBlocks.tsx'
 
 type FloorStatusViewProps = {
   areas: FloorArea[]
@@ -29,6 +32,10 @@ type FloorStatusViewProps = {
   selectedId: string | null
   /** Called when a table with a reservation is clicked: the reservation shown at it becomes the selected one. */
   onSelect: (reservation: Reservation) => void
+  /** The blocked tables of the day. */
+  blocks: TableBlock[]
+  /** Opens the dialog that blocks the table, from the time of the slider. */
+  onBlock: (table: FloorTable, start: number) => void
   /** While a guest is dragged from the list onto the plans: the tables it fits (null while they load) and those it would take. */
   drop: FloorDrop | null
 }
@@ -50,7 +57,8 @@ function ZoomButton({ label, icon, disabled, onClick, placement }: ZoomButtonPro
 
 /**
  * The plan of every area (floor plan image or drawn room) with its tables drawn in the colour of their status at the
- * chosen time, and the end of the current or the start of the next reservation at each table.
+ * chosen time, and the end of the current or the start of the next reservation at each table. A table blocked at that time
+ * is drawn in a neutral colour with the end of the block. A click on a table offers to block it.
  */
 export function FloorStatusView({
   areas,
@@ -63,6 +71,8 @@ export function FloorStatusView({
   onWalkIn,
   selectedId,
   onSelect,
+  blocks,
+  onBlock,
   drop,
 }: FloorStatusViewProps) {
   const { t, i18n } = useTranslation()
@@ -144,6 +154,8 @@ export function FloorStatusView({
                     onWalkIn={onWalkIn}
                     selected={selectedTableIds.includes(table.id)}
                     onSelect={onSelect}
+                    block={blockAt(blocks, table.id, time)}
+                    onBlock={() => onBlock(table, time)}
                     drop={drop === null ? null : drop.target.includes(table.id) ? 'target' : drop.fitting === null ? null : drop.fitting.has(table.id) ? 'fits' : 'unfit'}
                   />
                 ))}
@@ -168,6 +180,9 @@ type TableStatusProps = {
   /** A table of the selected reservation. */
   selected: boolean
   onSelect: (reservation: Reservation) => void
+  /** The block of the table at `time`, if any. */
+  block: TableBlock | undefined
+  onBlock: () => void
   /** While a guest is dragged onto the plans: the table under the pointer (target), one it fits, or one it does not fit. */
   drop: 'target' | 'fits' | 'unfit' | null
 }
@@ -179,11 +194,12 @@ function occupiesAt(reservation: Reservation, minutes: number) {
 
 /**
  * A table in the colour of its status at `time`, with the end of the current or the start of the next reservation; every table
- * of a combined reservation carries it. A table that is free now for a walk-in offers to seat one. The tables of the selected
- * reservation carry a thick outline. While a guest is dragged onto the plans, the tables it does not fit fade and the one under
- * the pointer is outlined.
+ * of a combined reservation carries it. Blocked at `time`, in a neutral colour with the end of the block, and a click offers to
+ * remove the block. Otherwise a click offers to block the table, and a table that is free now for a walk-in to seat one. The
+ * tables of the selected reservation carry a thick outline. While a guest is dragged onto the plans, the tables it does not fit
+ * fade and the one under the pointer is outlined.
  */
-function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn, selected, onSelect, drop }: TableStatusProps) {
+function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn, selected, onSelect, block, onBlock, drop }: TableStatusProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const atTable = reservations.filter((reservation) => reservation.tableIds.includes(table.id))
@@ -191,8 +207,8 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
   const next = atTable.find((reservation) => toMinutes(reservation.time) > time)
   const shown = current ?? next
   const color = current === undefined ? null : statusColors[current.status]
-  const status = current === undefined ? t('tableOverview.free') : t(statusLabels[current.status])
-  const clickable = shown !== undefined || freeNow
+  const status =
+    block !== undefined ? t('tableBlocks.blocked') : current === undefined ? t('tableOverview.free') : t(statusLabels[current.status])
 
   const marker = (
     <TableShape
@@ -206,19 +222,31 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
       posX={table.posX}
       posY={table.posY}
       tableScale={tableScale}
-      fill={color === null ? 'var(--card)' : color.surface}
-      stroke={drop === 'target' ? 'var(--primary)' : selected ? 'var(--foreground)' : color === null ? 'var(--status-declined)' : color.color}
+      fill={block !== undefined ? blockColor : color === null ? 'var(--card)' : color.surface}
+      stroke={
+        drop === 'target'
+          ? 'var(--primary)'
+          : selected
+            ? 'var(--foreground)'
+            : block !== undefined
+              ? 'var(--muted-foreground)'
+              : color === null
+                ? 'var(--status-declined)'
+                : color.color
+      }
       color="var(--foreground)"
       strokeWidth={selected || drop === 'target' ? 4 : 2}
       note={
-        shown === undefined
-          ? undefined
-          : current !== undefined
-            ? t('tableOverview.floor.until', { time: formatTime(occupiedUntil(current), language) })
-            : t('tableOverview.floor.nextAt', { time: formatTime(shown.time, language) })
+        block !== undefined
+          ? t('tableBlocks.floorUntil', { time: formatTime(block.end, language) })
+          : shown === undefined
+            ? undefined
+            : current !== undefined
+              ? t('tableOverview.floor.until', { time: formatTime(occupiedUntil(current), language) })
+              : t('tableOverview.floor.nextAt', { time: formatTime(shown.time, language) })
       }
-      role={clickable ? 'button' : undefined}
-      tabIndex={clickable ? 0 : undefined}
+      role="button"
+      tabIndex={0}
       aria-label={`${t('areas.tableMarker', { number: table.number, seats: table.seats })}, ${status}`}
       aria-current={selected ? 'true' : undefined}
       // The popover opens on click; Enter and Space do the same for keyboard users.
@@ -229,9 +257,9 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
         }
       }}
       // The popover replaces the click handler; selecting the reservation shown at the table happens before it.
-      onClickCapture={shown === undefined ? undefined : () => onSelect(shown)}
+      onClickCapture={block !== undefined || shown === undefined ? undefined : () => onSelect(shown)}
       style={{
-        cursor: clickable ? 'pointer' : 'default',
+        cursor: 'pointer',
         zIndex: selected || drop === 'target' ? 2 : 1,
         opacity: drop === 'unfit' ? 0.35 : 1,
         transition: 'opacity 150ms',
@@ -239,19 +267,22 @@ function TableStatus({ table, tableScale, reservations, time, freeNow, onWalkIn,
     />
   )
 
+  if (block !== undefined) {
+    return <BlockPopover block={block}>{marker}</BlockPopover>
+  }
   const walkIn = freeNow ? () => onWalkIn(table.id) : undefined
   if (shown !== undefined) {
     return (
-      <ReservationPopover reservation={shown} nextReservation={current !== undefined ? next : undefined} onWalkIn={walkIn}>
+      <ReservationPopover reservation={shown} nextReservation={current !== undefined ? next : undefined} onWalkIn={walkIn} onBlock={onBlock}>
         {marker}
       </ReservationPopover>
     )
   }
-  return walkIn === undefined ? marker : <FreeTablePopover table={table} onWalkIn={walkIn} marker={marker} />
+  return <FreeTablePopover table={table} onWalkIn={walkIn} onBlock={onBlock} marker={marker} />
 }
 
-/** A free table without further reservations: offers to seat a walk-in there. */
-function FreeTablePopover({ table, onWalkIn, marker }: { table: FloorTable; onWalkIn: () => void; marker: ReactElement }) {
+/** A free table without further reservations: offers to block it, and to seat a walk-in there when it is free now. */
+function FreeTablePopover({ table, onWalkIn, onBlock, marker }: { table: FloorTable; onWalkIn?: () => void; onBlock: () => void; marker: ReactElement }) {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   return (
@@ -259,14 +290,25 @@ function FreeTablePopover({ table, onWalkIn, marker }: { table: FloorTable; onWa
       <PopoverTrigger asChild>{marker}</PopoverTrigger>
       <PopoverContent side="bottom" className="flex w-60 flex-col gap-3 font-sans">
         <p className="font-semibold">{t('tableOverview.freeTable', { number: table.number, count: table.seats })}</p>
+        {onWalkIn !== undefined && (
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setOpen(false)
+              onWalkIn()
+            }}
+          >
+            {t('tableOverview.walkInHere')}
+          </Button>
+        )}
         <Button
-          variant="secondary"
+          variant="outline"
           onClick={() => {
             setOpen(false)
-            onWalkIn()
+            onBlock()
           }}
         >
-          {t('tableOverview.walkInHere')}
+          {t('tableBlocks.block')}
         </Button>
       </PopoverContent>
     </Popover>
