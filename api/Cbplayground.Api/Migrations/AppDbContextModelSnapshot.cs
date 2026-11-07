@@ -634,6 +634,47 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("Tables");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.TableBlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByDisplayName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasMaxLength(450)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("StartLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TableId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TableId");
+
+                    b.HasIndex("TenantId", "StartLocal");
+
+                    b.ToTable("TableBlocks");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.TableCombination", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1180,6 +1221,21 @@ namespace Cbplayground.Api.Migrations
                     b.HasOne("Cbplayground.Api.Data.Area", null)
                         .WithMany()
                         .HasForeignKey("AreaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.TableBlock", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Table", null)
+                        .WithMany()
+                        .HasForeignKey("TableId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
