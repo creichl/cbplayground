@@ -262,7 +262,9 @@
       "tableInArea": "Tisch {{number}} · {{area}}",
       "address": "Adresse",
       "copyLink": "Link kopieren",
-      "copy": "Kopieren"
+      "copy": "Kopieren",
+      "tables": "Tische",
+      "tablesInArea": "Tische {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Tischreservierung – {{restaurant}}",
@@ -901,11 +903,29 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Heute",
-    "nav": {
-      "today": "Heute",
-      "reservations": "Reservierungen",
-      "tables": "Tischübersicht"
+    "keyFigures": "Kennzahlen des Service",
+    "listPanel": "Reservierungen",
+    "panes": "Anzeigen",
+    "panesList": "Liste",
+    "hideList": "Liste ausblenden",
+    "showList": "Liste zeigen",
+    "tabs": {
+      "upcoming": "Erwartet",
+      "seated": "Am Tisch",
+      "finished": "Erledigt",
+      "requests": "Anfragen"
+    },
+    "empty": {
+      "upcoming": "Es werden keine Gäste mehr erwartet.",
+      "seated": "Gerade sitzt niemand am Tisch.",
+      "finished": "Noch ist keine Reservierung erledigt.",
+      "requests": "Es gibt keine offenen Anfragen.",
+      "service": "In diesem Service gibt es keine Reservierungen."
+    },
+    "service": {
+      "label": "Service",
+      "wholeDay": "Ganzer Tag",
+      "option": "{{name}} {{time}}"
     }
   },
   "notFound": {
@@ -957,7 +977,7 @@
       "moveRight": "Nach rechts",
       "delete": "Bereich löschen",
       "deleteTitle": "„{{name}}“ löschen?",
-      "deleteText": "Die Tische des Bereichs ({{tables}}) und sein Grundriss werden ebenfalls gelöscht. Das lässt sich nicht rückgängig machen.",
+      "deleteText": "Der Bereich und seine Tische ({{tables}}) werden entfernt und können nicht mehr gebucht werden. Vergangene und stornierte Reservierungen bleiben erhalten. Das lässt sich nicht rückgängig machen.",
       "deleteConfirm": "Löschen",
       "description": "Beschreibung",
       "descriptionHint": "Ein kurzer Text, den Gäste bei der Wahl des Bereichs sehen.",
@@ -986,7 +1006,7 @@
       "saved": "Der Tisch wurde gespeichert.",
       "delete": "Tisch löschen",
       "deleteTitle": "Tisch {{number}} löschen?",
-      "deleteText": "Der Tisch wird gelöscht, mit ihm seine vergangenen, stornierten und abgelehnten Reservierungen. Das lässt sich nicht rückgängig machen.",
+      "deleteText": "Der Tisch wird aus dem Grundriss entfernt und kann nicht mehr gebucht werden. Seine vergangenen und stornierten Reservierungen bleiben erhalten. Das lässt sich nicht rückgängig machen.",
       "deleteConfirm": "Löschen",
       "notDeleted": "Der Tisch wurde nicht gelöscht",
       "hasReservations": "Für diesen Tisch gibt es noch anstehende Reservierungen. Verlegen Sie sie zuerst an einen anderen Tisch oder stornieren Sie sie."
@@ -1015,7 +1035,11 @@
       "roomElementLabelInvalid": "Bitte geben Sie eine Beschriftung mit höchstens 40 Zeichen ein.",
       "tooManyRoomElements": "Ein Raum kann höchstens 60 Elemente haben.",
       "roomNotSaved": "Der Raum konnte nicht gespeichert werden",
-      "widthInvalid": "Bitte geben Sie eine Breite von 5 bis 80 m ein oder lassen Sie das Feld leer."
+      "widthInvalid": "Bitte geben Sie eine Breite von 5 bis 80 m ein oder lassen Sie das Feld leer.",
+      "combinationTablesInvalid": "Bitte wählen Sie zwei oder mehr Tische dieses Bereichs aus.",
+      "combinationExists": "Diese Tische sind bereits kombiniert.",
+      "combinationSeatsInvalid": "Eine Kombination braucht mindestens einen Platz mehr als ihr größter Tisch.",
+      "combinationMinGuestsInvalid": "Bitte geben Sie eine ganze Zahl von 1 bis zu den Plätzen der Kombination ein."
     },
     "roomDragHint": "Ziehen Sie Tische und Raumelemente, um sie zu verschieben; die Pfeiltasten verschieben ein gewähltes Element. Klicken Sie darauf, um es zu bearbeiten.",
     "photo": {
@@ -1076,6 +1100,34 @@
       "labelHint": "Optional, erscheint im Plan, z. B. „Küche“.",
       "delete": "Element löschen",
       "defaultLabel": "Text"
+    },
+    "combinations": {
+      "title": "Kombinationen",
+      "text": "Tische, die für eine größere Gruppe zusammengestellt werden können. Das System vergibt eine Kombination nur, wenn kein einzelner Tisch passt.",
+      "select": "Tische zum Kombinieren auswählen",
+      "pickHint": "Klicken Sie auf dem Plan die Tische an, die zusammengestellt werden.",
+      "pickedNone": "Noch kein Tisch ausgewählt.",
+      "picked": "Ausgewählte Tische: {{tables}}",
+      "combine": "Kombinieren",
+      "created": "Die Tische {{label}} wurden kombiniert.",
+      "empty": "Noch keine Kombinationen.",
+      "label": "Tische {{label}}",
+      "summary_one": "{{count}} Platz · online ab {{minGuests}} Personen",
+      "summary_other": "{{count}} Plätze · online ab {{minGuests}} Personen",
+      "summaryOffline_one": "{{count}} Platz · nicht online buchbar",
+      "summaryOffline_other": "{{count}} Plätze · nicht online buchbar",
+      "seats": "Plätze",
+      "seatsHint": "Mindestens einer mehr als ihr größter Tisch: {{min}}.",
+      "minGuests": "Online ab (Personen)",
+      "minGuestsHint": "Online wird die Kombination nur Gruppen ab dieser Größe angeboten.",
+      "onlineBookable": "Online buchbar",
+      "onlineBookableHint": "Wenn aus, vergibt sie nur das Personal, z. B. bei einer telefonischen Reservierung.",
+      "saved": "Die Kombination wurde gespeichert.",
+      "edit": "Bearbeiten",
+      "editLabel": "Tische {{label}} bearbeiten",
+      "delete": "Löschen",
+      "deleteLabel": "Tische {{label}} löschen",
+      "deleted": "Die Kombination wurde gelöscht."
     }
   },
   "floorPlan": {
@@ -1142,6 +1194,20 @@
       "maxOnlinePartySizeDescription": "Größere Gruppen werden gebeten anzurufen. Leer: der größte online buchbare Tisch.",
       "maxOnlinePartySizePlaceholder": "Größter Tisch"
     },
+    "pacing": {
+      "title": "Pacing",
+      "description": "Begrenzt, wie viele Gäste in einem Zeitraum pro 15 Minuten beginnen dürfen, damit Küche und Service nicht auf einmal überrannt werden. Es zählen alle Reservierungen, die in der Viertelstunde beginnen, auch Walk-ins; stornierte nicht. Online wird eine Uhrzeit nur angeboten, solange ihre Viertelstunde noch Platz für die Gruppe hat; das Personal sieht eine Warnung, kann aber trotzdem buchen. Ohne Regel gibt es keine Grenze.",
+      "example": "Beispiel: Freitag und Samstag 18:00–20:00, höchstens 20 Gäste pro 15 Minuten. Mit 16 Gästen um 19:00 kann eine Gruppe von 4 online noch 19:00 buchen, eine Gruppe von 5 nicht; 19:15 wird für sich gezählt.",
+      "rule": "Pacing-Regel {{number}}",
+      "days": "Tage",
+      "from": "Von",
+      "to": "Bis",
+      "toDescription": "00:00 = Mitternacht",
+      "maxCovers": "Max. Gäste pro 15 Minuten",
+      "addRule": "+ Regel",
+      "deleteRule": "Regel löschen",
+      "noRules": "Noch keine Regeln: Es gibt keine Grenze."
+    },
     "validation": {
       "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
       "minGuests": "Geben Sie mindestens 1 Gast ein.",
@@ -1150,7 +1216,12 @@
       "leadTime": "Geben Sie {{min}} bis {{max}} Minuten ein.",
       "bookingHorizon": "Geben Sie {{min}} bis {{max}} Tage ein.",
       "buffer": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
-      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer."
+      "maxOnlinePartySize": "Geben Sie mindestens 1 Gast ein oder lassen Sie das Feld leer.",
+      "pacingDays": "Wählen Sie mindestens einen Tag.",
+      "pacingTime": "Geben Sie eine Uhrzeit ein.",
+      "pacingStartBeforeEnd": "„Bis“ muss nach „Von“ liegen.",
+      "pacingOverlap": "Dieser Zeitraum überschneidet sich am selben Tag mit einer anderen Pacing-Regel.",
+      "pacingMaxCovers": "Geben Sie {{min}} bis {{max}} Gäste ein."
     },
     "errors": {
       "title": "Die Einstellungen wurden nicht gespeichert",
@@ -1162,32 +1233,30 @@
       "invalidLeadTime": "Die Vorlaufzeit muss zwischen 0 und 1440 Minuten liegen.",
       "invalidBookingHorizon": "Der Buchungshorizont muss zwischen 1 und 365 Tagen liegen.",
       "invalidBuffer": "Die Pufferzeit muss zwischen 0 und 60 Minuten in 5er-Schritten liegen.",
-      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein."
+      "invalidMaxPartySize": "Die maximale Gruppengröße online muss mindestens 1 Gast sein.",
+      "invalidPacingRule": "Jede Pacing-Regel braucht mindestens einen Tag, einen Beginn vor dem Ende und 1 bis 500 Gäste.",
+      "overlappingPacingRules": "Zwei Pacing-Regeln überschneiden sich am selben Tag."
     },
     "saved": "Die Reservierungseinstellungen wurden gespeichert."
   },
   "reservations": {
-    "title": "Reservierungen",
-    "previousDay": "Vorheriger Tag",
-    "nextDay": "Nächster Tag",
-    "date": "Datum",
-    "today": "Heute",
     "search": "Suche",
     "searchPlaceholder": "Nach Name, Telefon oder Referenz suchen",
-    "filter": "Nach Status filtern",
-    "filterAll": "Alle Status",
     "new": "Neue Reservierung",
     "stats": {
       "reservations": "Reservierungen",
-      "guests": "Gäste",
-      "arrived": "Angekommen",
-      "seated": "Sitzende Gäste",
+      "seated": "Jetzt am Tisch",
       "noShows": "Nicht erschienen",
-      "openRequests": "Offene Anfragen"
+      "openRequests": "Offene Anfragen",
+      "finished": "Erledigt",
+      "covers_one": "{{count}} Gast",
+      "covers_other": "{{count}} Gäste",
+      "tables_one": "an {{count}} Tisch",
+      "tables_other": "an {{count}} Tischen"
     },
     "list": {
       "empty": "An diesem Tag gibt es keine Reservierungen.",
-      "noMatches": "Keine Reservierung passt zur Suche oder zum Filter.",
+      "noMatches": "Keine Reservierung passt zur Suche.",
       "groupGuests_one": "{{count}} Gast",
       "groupGuests_other": "{{count}} Gäste"
     },
@@ -1248,12 +1317,19 @@
     },
     "declineConfirm": {
       "title": "Anfrage ablehnen?",
-      "text_one": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
-      "text_other": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei. Das lässt sich nicht rückgängig machen.",
+      "text_one": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei.",
+      "text_other": "Die Anfrage von {{name}} um {{time}} ({{count}} Pers.) wird abgelehnt und ihr Tisch frei.",
       "confirm": "Anfrage ablehnen"
     },
+    "removeWalkInConfirm": {
+      "title": "Walk-in entfernen?",
+      "text_one": "{{name}} ({{count}} Pers.) an Tisch {{table}} seit {{time}} wird entfernt, als wäre der Gast nie platziert worden, und der Tisch frei.",
+      "text_other": "{{name}} ({{count}} Pers.) an Tisch {{table}} seit {{time}} wird entfernt, als wäre der Gast nie platziert worden, und der Tisch frei.",
+      "confirm": "Walk-in entfernen"
+    },
     "toast": {
-      "changed": "{{name}}: {{status}}"
+      "changed": "{{name}}: {{status}}",
+      "walkInRemoved": "{{name}} wurde entfernt."
     },
     "walkIn": {
       "button": "Walk-in",
@@ -1273,7 +1349,6 @@
       "closed": "Das Restaurant hat gerade nicht geöffnet."
     },
     "pending": {
-      "title": "Offene Anfragen ({{number}})",
       "text": "Diese Gäste warten auf Ihre Antwort. „Annehmen“ bestätigt die Reservierung, „Ablehnen“ lehnt sie ab."
     },
     "form": {
@@ -1284,6 +1359,7 @@
       "time": "Uhrzeit",
       "timeHint": "Geben Sie Personenzahl und Datum ein, um die freien Zeiten zu sehen.",
       "closed": "An diesem Tag ist das Restaurant geschlossen.",
+      "closedHint": "Diese Reservierung ist abgeschlossen ({{status}}): Datum, Uhrzeit, Personenzahl, Tisch und Dauer bleiben, wie sie sind. Die Angaben zum Gast und die Notiz lassen sich noch ändern.",
       "table": "Tisch",
       "tableDescriptionNew": "Der vorgeschlagene Tisch ist vorausgewählt; Sie können einen anderen freien Tisch wählen.",
       "tableDescriptionEdit": "Angeboten werden die Tische, die zur gewählten Zeit für die ganze Dauer frei sind, sowie der aktuelle Tisch.",
@@ -1294,10 +1370,13 @@
       "tableOptionSuggested_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (Vorschlag)",
       "tableOptionCurrent_one": "Tisch {{number}} · {{area}} · {{count}} Platz (aktuell)",
       "tableOptionCurrent_other": "Tisch {{number}} · {{area}} · {{count}} Plätze (aktuell)",
+      "tableReadOnly": "Tisch {{number}} · {{area}}",
       "overrideDuration": "Dauer überschreiben",
       "defaultDuration_one": "Dauer des Restaurants für diese Personenzahl: {{count}} Minute",
       "defaultDuration_other": "Dauer des Restaurants für diese Personenzahl: {{count}} Minuten",
       "duration": "Dauer in Minuten",
+      "pacingWarningTitle": "Über der Pacing-Grenze",
+      "pacingWarning": "Um {{time}} beginnen bereits {{booked}} Gäste; mit dieser Gruppe sind es {{total}}, die Grenze liegt bei {{max}} pro 15 Minuten. Sie können die Reservierung trotzdem speichern.",
       "name": "Name",
       "phone": "Telefon",
       "email": "E-Mail",
@@ -1313,7 +1392,13 @@
         "time": "Bitte eine Uhrzeit wählen.",
         "duration": "Geben Sie {{min}} bis {{max}} Minuten in Schritten von {{step}} ein.",
         "name": "Bitte den Namen des Gastes angeben."
-      }
+      },
+      "combinationOption_one": "Tische {{number}} · {{area}} · {{count}} Platz",
+      "combinationOption_other": "Tische {{number}} · {{area}} · {{count}} Plätze",
+      "combinationOptionSuggested_one": "Tische {{number}} · {{area}} · {{count}} Platz (Vorschlag)",
+      "combinationOptionSuggested_other": "Tische {{number}} · {{area}} · {{count}} Plätze (Vorschlag)",
+      "combinationOptionCurrent_one": "Tische {{number}} · {{area}} · {{count}} Platz (aktuell)",
+      "combinationOptionCurrent_other": "Tische {{number}} · {{area}} · {{count}} Plätze (aktuell)"
     },
     "history": {
       "title": "Verlauf",
@@ -1362,13 +1447,23 @@
       "invalidStatus": "Dieser Status ist nicht bekannt.",
       "invalidStatusTransition": "Der Status lässt sich so nicht ändern. Vielleicht hat jemand anderes die Reservierung geändert; die Liste wurde neu geladen.",
       "notFound": "Diese Reservierung gibt es nicht mehr. Bitte laden Sie die Seite neu.",
-      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit.",
+      "statusNotAllowedNow": "Das geht für diese Reservierung jetzt nicht: „Angekommen“ und „Verspätet“ nur am Tag der Reservierung, „Nicht erschienen“ erst ab ihrer Beginnzeit, das Rückgängigmachen einer Stornierung nur bis zum Ende der Reservierung.",
+      "reservationClosed": "Diese Reservierung ist abgeschlossen: Nur die Angaben zum Gast und die Notiz lassen sich ändern.",
+      "cannotDeleteReservation": "Nur ein platzierter Walk-in lässt sich entfernen. Vielleicht hat jemand anderes ihn geändert; die Liste wurde neu geladen.",
       "tableTaken": "Der Tisch ist inzwischen belegt, daher lässt sich das nicht rückgängig machen.",
-      "statusTitle": "Der Status konnte nicht geändert werden"
+      "statusTitle": "Der Status konnte nicht geändert werden",
+      "invalidTables": "Bitte wählen Sie einen Tisch oder eine Kombination von Tischen."
+    },
+    "chart": {
+      "title": "Gäste je Viertelstunde",
+      "summary_one": "am meisten um {{time}} mit {{count}} Gast",
+      "summary_other": "am meisten um {{time}} mit {{count}} Gästen",
+      "empty": "keine Gäste",
+      "bar_one": "{{time}}: {{count}} Gast",
+      "bar_other": "{{time}}: {{count}} Gäste"
     }
   },
   "tableOverview": {
-    "title": "Tischübersicht",
     "views": {
       "timeline": "Zeitleiste",
       "floor": "Grundriss"
@@ -1386,9 +1481,12 @@
     "freeTable_other": "Tisch {{number}} · {{count}} Plätze · frei",
     "walkInHere": "Walk-in hier setzen",
     "legendInactive": "Storniert, abgelehnt oder nicht erschienen",
+    "legend": "Farben der Status",
     "party": "{{name}} ({{guests}})",
     "timeline": {
-      "tableColumn": "Tisch · Plätze"
+      "tableColumn": "Tisch · Plätze",
+      "archivedTables": "Archivierte Tische",
+      "archivedTable": "Archivierter Tisch {{number}} · {{area}}"
     },
     "floor": {
       "time": "Uhrzeit",
@@ -1425,6 +1523,8 @@
     "dark": "Dunkel",
     "colors": "Farben",
     "primaryScale": "Stufen der Akzentfarbe",
+    "statusColors": "Status der Reservierungen",
+    "statusColorsHint": "Die Statusfarben des Front desk, nur hell: die Farbe für Flächen und Umrisse (mindestens 3:1 auf Weiß), die Fläche für Badges und Blöcke und die Textfarbe auf beiden (mindestens 4,5:1).",
     "typography": "Schrift",
     "radii": "Radien",
     "radiusCard": "Karten",

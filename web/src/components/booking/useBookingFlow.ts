@@ -103,6 +103,11 @@ function readState(params: URLSearchParams, restaurant: PublicRestaurant, today:
   const stepParam = params.get('step') ?? ''
   const requested = steps.find((step) => step === stepParam) ?? formerSteps[stepParam] ?? missing
   let step = steps.indexOf(requested) <= steps.indexOf(missing) ? requested : missing
+  // The contact details follow the time without a table when only a combination of tables is free then; the flow checks
+  // that once the times are loaded (useBookingFlow) and otherwise goes back to the table.
+  if (requested === 'details' && missing === 'table') {
+    step = 'details'
+  }
   if (step === 'table' && !guestChooses) {
     step = 'details'
   }
@@ -177,6 +182,8 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const tooLarge = partySize > restaurant.maxOnlinePartySize
   const firstFreeDay = useFirstFreeDay(slug, today, lastDay, partySize, date === null && !tooLarge)
   const day = date ?? firstFreeDay.day ?? (firstFreeDay.isPending ? null : today)
+  // The times of the card (the same request as its grid), to know which ones only a combination of tables has free.
+  const dayAvailability = useAvailability(slug, day ?? '', partySize, guestChooses && day !== null && !tooLarge)
 
   // Why the guest has to pick the time again; it belongs to the history entry of the time step.
   const timeNotice = step === 'time' ? ((location.state as { timeNotice?: ParseKeys } | null)?.timeNotice ?? null) : null
@@ -201,6 +208,11 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
         ? 'booking.errors.timeNotBookable'
         : 'booking.errors.slotTaken'
 
+  // Only a combination of tables is free at the chosen time: the system assigns it, the guest chooses no table.
+  const combined = guestChooses && slot?.available === true && slot.combined
+  const tableStepWrong = checkTime && timeTaken === null && guestChooses && slot !== undefined
+    && ((step === 'details' && tableId === null && !combined) || (step === 'table' && combined))
+
   const tables = usePublicTables(slug, date ?? '', time ?? '', partySize, guestChooses && tableId !== null && time !== null)
   const chosenArea = tables.data?.find((area) => area.tables.some((option) => option.id === tableId))
   const table = chosenArea?.tables.find((option) => option.id === tableId)
@@ -215,7 +227,9 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
       ? writeState(searchParams, { ...state, step: 'time', time: null, tableId: null }).toString()
       : tableTaken
         ? writeState(searchParams, { ...state, step: 'table', tableId: null }).toString()
-        : null
+        : tableStepWrong
+          ? writeState(searchParams, { ...state, step: combined ? 'details' : 'table', tableId: null }).toString()
+          : null
   useEffect(() => {
     if (correction !== null) {
       setSearchParams(correction, { replace: true, state: timeTaken !== null ? { timeNotice: timeTaken } : undefined })
@@ -261,8 +275,9 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
 
   // From here on, the presets are written into the address: the booking is about this party and this day.
   const chooseTime = (value: string) => {
-    const next = { guests: partySize, date: day, time: value, tableId: value !== time ? null : tableId }
-    void go(next, afterTime)
+    const onlyCombined = guestChooses && dayAvailability.data?.periods.flatMap((period) => period.times).find((option) => option.time === value)?.combined === true
+    const next = { guests: partySize, date: day, time: value, tableId: value !== time || onlyCombined ? null : tableId }
+    void go(next, onlyCombined ? 'details' : afterTime)
   }
 
   const chooseTable = (value: string) => void go({ guests, date, time, tableId: value }, 'table')
@@ -337,6 +352,8 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     today,
     lastDay,
     guestChooses,
+    /** Only a combination of tables is free at the chosen time, which the system assigns: there is no table step. */
+    combined,
     request: restaurant.confirmationMode === 'Request',
     timeNotice,
     /** The chosen time and table are being checked; the step waits for it. */

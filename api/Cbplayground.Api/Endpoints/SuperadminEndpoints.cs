@@ -307,8 +307,9 @@ public static partial class SuperadminEndpoints
 
         // IgnoreQueryFilters (here and below): the Superadmin has no tenant, so the tenant filter would hide every row of the
         // restaurants. Every query is restricted to the given restaurants explicitly, grouped by restaurant, and only reads.
+        // Archived tables do not count, neither here nor for the setup step.
         var tableCounts = await db.Tables.IgnoreQueryFilters()
-            .Where(t => ids.Contains(t.TenantId))
+            .Where(t => ids.Contains(t.TenantId) && t.ArchivedAtUtc == null)
             .GroupBy(t => t.TenantId)
             .Select(g => new { TenantId = g.Key, Count = g.Count() })
             .ToDictionaryAsync(x => x.TenantId, x => x.Count);
@@ -317,7 +318,7 @@ public static partial class SuperadminEndpoints
             .Where(p => ids.Contains(p.TenantId)).Select(p => p.TenantId).Distinct().ToListAsync()).ToHashSet();
         // IgnoreQueryFilters: which restaurants have an area with a floor plan, for their setup steps (read only, see above).
         var withFloorPlan = (await db.Areas.IgnoreQueryFilters()
-            .Where(a => ids.Contains(a.TenantId) && a.FloorPlanFileName != null).Select(a => a.TenantId).Distinct().ToListAsync()).ToHashSet();
+            .Where(a => ids.Contains(a.TenantId) && a.FloorPlanFileName != null && a.ArchivedAtUtc == null).Select(a => a.TenantId).Distinct().ToListAsync()).ToHashSet();
         // IgnoreQueryFilters: which restaurants have saved their reservation settings, for their setup steps (read only, see above).
         var withReservationSettings = (await db.ReservationSettings.IgnoreQueryFilters()
             .Where(r => ids.Contains(r.TenantId)).Select(r => r.TenantId).Distinct().ToListAsync()).ToHashSet();

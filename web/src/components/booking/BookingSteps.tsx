@@ -52,6 +52,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const headingRef = useRef<HTMLHeadingElement>(null)
+  const rootRef = useRef<HTMLDivElement>(null)
   const dark = restaurant.branding.themeMode === 'Dark'
 
   // What the dialog shows; kept while it closes, so it does not empty before it is gone.
@@ -72,7 +73,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     if (step !== null) {
       headingRef.current?.focus({ preventScroll: frame !== 'inline' })
       if (frame === 'inline') {
-        headingRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+        // From the top of the steps, so their summary bar, which stays at the top while an embed scrolls on its own, does
+        // not cover the heading.
+        rootRef.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
       }
     }
   }, [step, frame])
@@ -81,7 +84,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     return null
   }
 
-  const steps: DialogStep[] = flow.guestChooses ? ['table', 'details', 'done'] : ['details', 'done']
+  // Without a table step when only a combination of tables is (or was, for the confirmation) free.
+  const tableStep = flow.guestChooses && !flow.combined && (shown.result === null || shown.result.tableNumbers.length === 1)
+  const steps: DialogStep[] = tableStep ? ['table', 'details', 'done'] : ['details', 'done']
   const index = steps.indexOf(step)
 
   const headingClassName = 'scroll-mt-4 font-display text-2xl outline-none'
@@ -108,7 +113,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
 
   return (
     // Clipped sideways, so a step sliding in never makes the dialog or the sheet scroll horizontally.
-    <div className="flex min-h-full flex-col overflow-x-clip">
+    <div ref={rootRef} className="flex min-h-full flex-col overflow-x-clip">
       <header className={cn('sticky top-0 z-20 flex items-start gap-3 border-b border-border bg-card px-4 py-3 md:px-6 md:py-4', frame === 'dialog' && 'rounded-t-xl pr-14')}>
         <div className="flex min-w-0 flex-1 flex-col gap-3">
           {step !== 'done' && parts.length > 0 && (
@@ -139,7 +144,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
               >
                 <span aria-hidden="true" className={cn('h-1 rounded-full', position <= index ? 'bg-primary' : 'bg-muted')} />
                 <span className={cn('truncate', position !== index && 'max-sm:sr-only')}>
-                  <span className="sr-only">{`${t('booking.dialog.stepOf', { step: position + 1, count: steps.length })}: `}</span>
+                  <span className="sr-only">{`${t('booking.dialog.stepOf', { step: position + 1, total: steps.length })}: `}</span>
                   {t(stepLabels[option])}
                 </span>
               </li>

@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test'
-import { signIn } from './helpers.ts'
+import { bookRequest, dateFromToday, signIn } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 test.describe('Sign-in', () => {
@@ -32,8 +32,15 @@ test.describe('Admin', () => {
     await expect(page.getByText('Welcome, Anna Admin!', { exact: false })).toBeVisible()
     await screenshot(page, 'admin', 'overview')
 
+    // The key figure of the open requests opens them on the front desk.
+    await page.getByRole('link', { name: /^Open requests: / }).click()
+    await expect(page).toHaveURL(/\/frontdesk\?tab=requests$/)
+    await expect(page.getByRole('tab', { name: /^Requests/ })).toHaveAttribute('aria-selected', 'true')
+
+    // The reservations and the table overview of the admin are the front desk's service screen now.
     await page.goto('/admin/reservations')
-    await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible()
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
     await screenshot(page, 'admin', 'reservations')
   })
 })
@@ -252,15 +259,6 @@ test.describe('Table style and real size', () => {
   })
 })
 
-test.describe('Front desk', () => {
-  test('shows today', async ({ page }) => {
-    await signIn(page, 'frontdesk@zur-linde.local')
-    await expect(page).toHaveURL(/\/frontdesk$/)
-    await expect(page.getByRole('heading', { name: 'Today' }).first()).toBeVisible()
-    await screenshot(page, 'front-desk', 'today')
-  })
-})
-
 /** The number of a key figure, by its label (the value is the element after it). */
 async function figure(page: Page, label: string) {
   return Number(await page.getByText(label, { exact: true }).locator('xpath=following-sibling::*[1]').textContent())
@@ -356,41 +354,6 @@ test.describe('Superadmin', () => {
   })
 })
 
-/** The date `days` from today, "YYYY-MM-DD" (the device's today; the restaurants are in its time zone or close to it). */
-function dateFromToday(days: number) {
-  const date = new Date()
-  date.setDate(date.getDate() + days)
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-}
-
-/**
- * Books an online request at Kafana Dunav (request mode, the guest chooses the table) on the first day from ten days ahead
- * with a free time and table, after the demo reservations, so the test does not depend on them.
- */
-async function bookRequest(page: Page, name: string) {
-  const restaurant = '/api/public/restaurants/kafana-dunav'
-  for (let days = 10; days < 40; days++) {
-    const date = dateFromToday(days)
-    const availability = (await (await page.request.get(`${restaurant}/availability?date=${date}&guests=2`)).json()) as {
-      periods: { times: { time: string; available: boolean }[] }[]
-    }
-    const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.available)?.time
-    if (time === undefined) continue
-    const areas = (await (await page.request.get(`${restaurant}/tables?date=${date}&time=${time}&guests=2`)).json()) as {
-      tables: { id: string; available: boolean }[]
-    }[]
-    const table = areas.flatMap((area) => area.tables).find((candidate) => candidate.available)
-    if (table === undefined) continue
-    const booking = await page.request.post(`${restaurant}/reservations`, {
-      data: { date, time, guests: 2, tableId: table.id, name, phone: '+381 64 1234567', language: 'en' },
-    })
-    expect(booking.status()).toBe(201)
-    expect(await booking.json()).toMatchObject({ status: 'Requested' })
-    return
-  }
-  throw new Error('No free time at Kafana Dunav in the next 40 days.')
-}
-
 test.describe('Front desk: declining a request', () => {
   test('asks first, and "Back" leaves the request open', async ({ page }) => {
     const name = 'Mila Petrović'
@@ -398,7 +361,8 @@ test.describe('Front desk: declining a request', () => {
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
 
-    // The open requests list the request; its row holds the button that opens it and the status actions.
+    // The tab "Requests" lists the open requests; a row holds the button that opens it and the status actions.
+    await page.getByRole('tab', { name: /^Requests/ }).click()
     const row = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).locator('..')
     await row.getByRole('button', { name: 'Decline', exact: true }).click()
     const dialog = page.getByRole('dialog', { name: 'Decline the request?' })
@@ -419,27 +383,6 @@ test.describe('Front desk: declining a request', () => {
   })
 })
 
-test.describe('Front desk: tabs', () => {
-  test('keep the chosen day from Reservations to Table overview', async ({ page }) => {
-    const date = dateFromToday(3)
-    await signIn(page, 'frontdesk@zur-linde.local')
-    await expect(page).toHaveURL(/\/frontdesk$/)
-    await page.goto(`/frontdesk/reservations?date=${date}`)
-
-    await page.getByRole('tab', { name: 'Table overview' }).click()
-    await expect(page).toHaveURL(new RegExp(`/frontdesk/tables\\?date=${date}$`))
-    await expect(page.getByRole('heading', { name: 'Table overview' })).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Today', exact: true })).toBeEnabled()
-    await screenshot(page, 'front-desk', 'tabs-keep-date')
-
-    await page.getByRole('tab', { name: 'Reservations' }).click()
-    await expect(page).toHaveURL(new RegExp(`/frontdesk/reservations\\?date=${date}$`))
-    // "Today" has no chosen day.
-    await page.getByRole('tab', { name: 'Today' }).click()
-    await expect(page).toHaveURL(/\/frontdesk$/)
-  })
-})
-
 test.describe('Front desk: walk-in on the floor plans', () => {
   test('offers "Seat walk-in here" only on the tables the server lists as free now', async ({ page }) => {
     await signIn(page, 'frontdesk@kafana-dunav.local')
@@ -453,7 +396,8 @@ test.describe('Front desk: walk-in on the floor plans', () => {
     const marker = (table: { number: string; seats: number }) => page.getByLabel(`Table ${table.number}, seats: ${table.seats},`).first()
     const walkInHere = page.getByRole('button', { name: 'Seat walk-in here' })
 
-    await page.goto('/frontdesk/tables?view=floor')
+    // The service screen shows the floor plans unless the address asks for the timeline.
+    await page.goto('/frontdesk')
     // "Now" is only there on today, once the plans are shown.
     await expect(page.getByRole('button', { name: 'Now' })).toBeVisible()
 
@@ -477,6 +421,375 @@ test.describe('Front desk: walk-in on the floor plans', () => {
     await expect(drawer.getByRole('button', { name: 'Seat walk-in', exact: true })).toBeEnabled()
     await expect(drawer.getByText('The chosen table is not free', { exact: false })).toHaveCount(0)
     await drawer.getByRole('button', { name: 'Cancel' }).click()
+  })
+})
+
+type StaffReservation = { id: string; date: string; time: string; status: string; tableId: string; name: string }
+
+/** The reservations of a day, as the staff list them. */
+async function reservationsOf(page: Page, date: string) {
+  return (await (await page.request.get(`/api/staff/reservations?from=${date}&to=${date}`)).json()) as StaffReservation[]
+}
+
+/** The opening windows of a day ("HH:mm"); empty when the restaurant is closed. */
+async function openPeriodsOf(page: Page, date: string) {
+  const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=1`)).json()) as {
+    periods: { start: string; end: string }[]
+  }
+  return availability.periods
+}
+
+/** The first day from `from` days ahead on which `wanted` holds, "YYYY-MM-DD". */
+async function findDay(from: number, wanted: (date: string) => Promise<boolean>) {
+  for (let days = from; days < from + 60; days++) {
+    const date = dateFromToday(days)
+    if (await wanted(date)) return date
+  }
+  throw new Error(`No such day in the 60 days from ${from} days ahead.`)
+}
+
+/** The tabs of the list panel lie side by side within their row, none running into the next or out of the row. */
+async function expectTabsInside(page: Page) {
+  const list = (await page.getByRole('tablist').first().boundingBox())!
+  const tabs = page.getByRole('tablist').first().getByRole('tab')
+  let previousRight = list.x
+  for (let i = 0; i < (await tabs.count()); i++) {
+    const tab = tabs.nth(i)
+    const box = (await tab.boundingBox())!
+    expect(box.x, `tab ${i}`).toBeGreaterThanOrEqual(previousRight)
+    expect(box.x + box.width, `tab ${i}`).toBeLessThanOrEqual(list.x + list.width + 0.5)
+    // Its texts fit into it.
+    expect(await tab.evaluate((element) => element.scrollWidth <= element.clientWidth), `tab ${i}`).toBe(true)
+    previousRight = box.x + box.width - 0.5
+  }
+}
+
+test.describe('Front desk: service screen', () => {
+  test('shows list, key figures and floor plan on one screen at 1440 × 900', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await expect(page.getByRole('link', { name: 'Kafana Dunav' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Walk-in' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'New reservation' })).toBeVisible()
+    await expect(page.getByRole('region', { name: 'Key figures of the service' }).getByText('Seated now')).toBeVisible()
+    await expect(page.getByRole('img', { name: /^Covers per quarter hour/ })).toBeVisible()
+    await expect(page.getByRole('tab', { name: 'Floor plan' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByLabel('Time', { exact: true })).toBeVisible()
+    await screenshot(page, 'front-desk', 'service-1440-upcoming')
+
+    // The list tabs.
+    for (const [tab, name] of [
+      ['Seated', 'service-1440-seated'],
+      ['Finished', 'service-1440-finished'],
+      ['Requests', 'service-1440-requests'],
+    ] as const) {
+      await page.getByRole('tab', { name: new RegExp(`^${tab}`) }).click()
+      await expect(page.getByRole('tab', { name: new RegExp(`^${tab}`) })).toHaveAttribute('aria-selected', 'true')
+      await screenshot(page, 'front-desk', name)
+    }
+  })
+
+  test('switches to the timeline, which survives a reload', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await page.getByRole('tab', { name: 'Timeline' }).click()
+    await expect(page).toHaveURL(/\/frontdesk\?view=timeline$/)
+    await page.reload()
+    await expect(page.getByRole('tab', { name: 'Timeline' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByText('Table · seats')).toBeVisible()
+    await screenshot(page, 'front-desk', 'service-1440-timeline')
+  })
+
+  test('highlights the table and the block of the reservation selected in the list, and the other way round', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    // A coming day with reservations, so they are all upcoming whatever the time of the run.
+    const date = await findDay(1, async (day) => (await reservationsOf(page, day)).some((reservation) => reservation.status === 'Confirmed'))
+    const reservation = (await reservationsOf(page, date)).find((candidate) => candidate.status === 'Confirmed')!
+    await page.goto(`/frontdesk?date=${date}`)
+
+    const row = page.locator(`[data-reservation-id="${reservation.id}"]`)
+    await row.getByRole('button', { name: new RegExp(`^Open the reservation of ${reservation.name} `) }).click()
+    // The click opens the edit drawer; the selection stays after closing it.
+    await expect(page.getByRole('dialog', { name: 'Edit reservation' })).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(page.getByRole('dialog', { name: 'Edit reservation' })).toBeHidden()
+    await expect(row).toHaveAttribute('data-selected', '')
+    const table = page.locator(`[data-table-id="${reservation.tableId}"]`)
+    await expect(table).toHaveAttribute('data-selected', '')
+    await expect(page.locator('[data-table-id][data-selected]')).toHaveCount(1)
+    await screenshot(page, 'front-desk', 'service-selected-table')
+
+    await page.getByRole('tab', { name: 'Timeline' }).click()
+    await expect(page.locator(`[data-reservation-block="${reservation.id}"]`)).toHaveAttribute('data-selected', '')
+    await screenshot(page, 'front-desk', 'service-selected-block')
+
+    // A block on the timeline selects its reservation in the list.
+    const other = (await reservationsOf(page, date)).find((candidate) => candidate.status === 'Confirmed' && candidate.id !== reservation.id)
+    test.skip(other === undefined, 'Only one reservation on that day.')
+    await page.locator(`[data-reservation-block="${other!.id}"]`).click()
+    await expect(page.locator(`[data-reservation-id="${other!.id}"]`)).toHaveAttribute('data-selected', '')
+    await expect(page.locator(`[data-reservation-id="${reservation.id}"]`)).not.toHaveAttribute('data-selected', '')
+  })
+
+  test('chooses a service by its opening window and keeps day and service across a reload', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // Zur Linde opens for lunch and in the evening (closed on Mondays and public holidays).
+    const date = await findDay(1, async (day) => (await openPeriodsOf(page, day)).length === 2 && (await reservationsOf(page, day)).length > 0)
+    const [lunch] = await openPeriodsOf(page, date)
+    await page.goto(`/frontdesk?date=${date}`)
+    await page.getByRole('combobox', { name: 'Service' }).click()
+    await page.getByRole('option', { name: /^Lunch / }).click()
+    await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${date}&service=${lunch.start.replace(':', '%3A')}$`))
+    await page.reload()
+    await expect(page.getByRole('combobox', { name: 'Service' })).toHaveText(/^Lunch /)
+    // Only the reservations of the lunch service are listed.
+    for (const time of await page.locator('[data-reservation-id] button[aria-label^="Open the reservation"] span.tabular-nums').allTextContents()) {
+      const [hours] = time.split(':').map(Number)
+      expect(hours).toBeLessThan(15)
+    }
+    await screenshot(page, 'front-desk', 'service-lunch')
+  })
+
+  test('shows an empty day and a closed day', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // After the demo reservations (today + 7 days) and the requests booked by the tests.
+    const empty = await findDay(20, async (day) => (await openPeriodsOf(page, day)).length > 0 && (await reservationsOf(page, day)).length === 0)
+    await page.goto(`/frontdesk?date=${empty}`)
+    await expect(page.getByText('There are no reservations on this day.')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Walk-in' })).toHaveCount(0)
+    await screenshot(page, 'front-desk', 'service-empty-day')
+
+    const closed = await findDay(1, async (day) => (await openPeriodsOf(page, day)).length === 0 && (await reservationsOf(page, day)).length === 0)
+    await page.goto(`/frontdesk?date=${closed}`)
+    await expect(page.getByText('The restaurant is closed on this day.').first()).toBeVisible()
+    await screenshot(page, 'front-desk', 'service-closed-day')
+  })
+
+  test('collapses the list panel on a tablet at 1024 × 768', async ({ page }) => {
+    await page.setViewportSize({ width: 1024, height: 768 })
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
+    await expectTabsInside(page)
+    await screenshot(page, 'front-desk', 'service-1024')
+
+    await page.getByRole('button', { name: 'Hide the list' }).click()
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeHidden()
+    await screenshot(page, 'front-desk', 'service-1024-list-collapsed')
+    await page.getByRole('button', { name: 'Show list' }).click()
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
+
+    // The longer Serbian labels fit as well.
+    await page.getByRole('button', { name: 'Account menu' }).click()
+    await page.getByRole('menuitemradio', { name: 'Srpski (latinica)' }).click()
+    await expect(page.getByRole('tab', { name: /^Očekuju se/ })).toBeVisible()
+    await expectTabsInside(page)
+    await screenshot(page, 'front-desk', 'service-1024-sr-latn')
+  })
+
+  test('shows one pane at a time on a phone at 390 × 844', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeVisible()
+    // The main actions stay in the top bar.
+    await expect(page.getByRole('button', { name: 'New reservation' })).toBeVisible()
+    await screenshot(page, 'front-desk', 'service-390-list')
+
+    const panes = page.getByRole('group', { name: 'Show' })
+    await panes.getByRole('button', { name: 'Floor plan' }).click()
+    await expect(page.getByRole('tab', { name: /^Upcoming/ })).toBeHidden()
+    await expect(page.getByLabel('Time', { exact: true })).toBeVisible()
+    // The hour labels below the slider do not run into each other.
+    const axes = await page.locator('[data-time-axis]').evaluateAll((elements) =>
+      elements.map((axis) =>
+        [...axis.querySelectorAll('span')].map((span) => {
+          const box = span.getBoundingClientRect()
+          return { left: box.left, right: box.right, fits: span.scrollWidth <= span.clientWidth }
+        }),
+      ),
+    )
+    // The axis of the covers chart and the one of the slider.
+    expect(axes).toHaveLength(2)
+    for (const labels of axes) {
+      expect(labels.length).toBeGreaterThan(0)
+      for (const [i, label] of labels.entries()) {
+        expect(label.fits, `label ${i} fits its box`).toBe(true)
+        if (i > 0) expect(label.left, `label ${i}`).toBeGreaterThanOrEqual(labels[i - 1].right)
+      }
+    }
+    await screenshot(page, 'front-desk', 'service-390-floor')
+
+    await panes.getByRole('button', { name: 'Timeline' }).click()
+    await expect(page).toHaveURL(/view=timeline/)
+    await expect(page.getByText('Table · seats')).toBeVisible()
+    await screenshot(page, 'front-desk', 'service-390-timeline')
+  })
+
+  test('leads the old addresses to the service screen with their day and view', async ({ page }) => {
+    const date = dateFromToday(3)
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+
+    await page.goto(`/frontdesk/reservations?date=${date}`)
+    await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${date}$`))
+    await page.goto(`/frontdesk/tables?date=${date}`)
+    await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${date}&view=timeline$`))
+    await page.goto(`/frontdesk/tables?date=${date}&view=floor`)
+    await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${date}$`))
+    await page.goto(`/admin/tables?date=${date}`)
+    await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${date}&view=timeline$`))
+    await expect(page.getByRole('tab', { name: 'Timeline' })).toHaveAttribute('aria-selected', 'true')
+    await expect(page.getByRole('button', { name: 'Today', exact: true })).toBeEnabled()
+  })
+})
+
+test.describe('Styleguide', () => {
+  test('shows the status colours of the front desk', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto('/dev/ui')
+    const heading = page.getByRole('heading', { name: 'Reservation statuses' })
+    await expect(page.getByText('--status-no-show(-surface, -text)')).toBeVisible()
+    // The section at the top of the window, below the styleguide's sticky bar.
+    await heading.evaluate((element) => element.scrollIntoView({ block: 'start' }))
+    await page.evaluate('window.scrollBy(0, -120)')
+    await screenshot(page, 'styleguide', 'status-colors', { fullPage: false })
+  })
+})
+
+test.describe('Archived tables', () => {
+  test('deleting a table with a reservation in the area editor keeps the reservation on its day', async ({ page }) => {
+    // The end-to-end run has no clock to go back to: the API refuses reservations in the past, so the table gets a cancelled
+    // one, which blocks the deletion just as little and keeps the table as well.
+    const number = 'E2E-A1'
+    const name = 'Archiv Gast'
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    const areas = (await (await page.request.get('/api/admin/areas')).json()) as { id: string; name: string }[]
+    const area = areas[0]
+    const created = await page.request.post('/api/admin/tables', { data: { areaId: area.id, number, seats: 2 } })
+    expect(created.status()).toBe(201)
+    const table = (await created.json()) as { id: string }
+
+    // A day from ten days ahead on which the new table is free, after the demo reservations.
+    let reservation: { id: string; date: string } | undefined
+    for (let days = 10; days < 40 && reservation === undefined; days++) {
+      const date = dateFromToday(days)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+        periods: { times: { time: string; tables: { id: string }[] }[] }[]
+      }
+      const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.tables.some((free) => free.id === table.id))?.time
+      if (time === undefined) continue
+      const booked = await page.request.post('/api/staff/reservations', { data: { date, time, guests: 2, tableId: table.id, name } })
+      expect(booked.status()).toBe(201)
+      reservation = (await booked.json()) as { id: string; date: string }
+    }
+    expect(reservation, 'a free time for the new table').toBeDefined()
+    expect((await page.request.post(`/api/staff/reservations/${reservation!.id}/status`, { data: { status: 'Cancelled' } })).status()).toBe(200)
+
+    await page.goto('/admin/areas')
+    await page.getByRole('tab', { name: area.name }).click()
+    await page.getByRole('button', { name: new RegExp(`^Table ${number}`) }).press('Enter')
+    await expect(page.getByRole('heading', { name: `Table ${number}` })).toBeVisible()
+    await page.getByRole('button', { name: 'Delete table', exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: `Delete table ${number}?` })
+    await expect(dialog.getByText('Its past and cancelled reservations are kept.', { exact: false })).toBeVisible()
+    // After the dialog's entrance animation.
+    await expect(dialog).toHaveCSS('opacity', '1')
+    await screenshot(page, 'archived-tables', 'delete-table-confirmation', { fullPage: false })
+    await dialog.getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(dialog).toBeHidden()
+    await expect(page.getByRole('button', { name: new RegExp(`^Table ${number}`) })).toHaveCount(0)
+    const tables = (await (await page.request.get('/api/admin/tables')).json()) as { id: string }[]
+    expect(tables.map((candidate) => candidate.id)).not.toContain(table.id)
+
+    // On its day the reservation still shows, with its table and area, in the row of the archived tables.
+    await page.goto(`/admin/tables?date=${reservation!.date}`)
+    await expect(page.getByText('Archived tables', { exact: true })).toBeVisible()
+    const row = page.getByLabel(`Archived table ${number} · ${area.name}`).locator('..')
+    await expect(row.getByRole('button', { name: new RegExp(`^${name} \\(2\\)`) })).toBeVisible()
+    await screenshot(page, 'archived-tables', 'timeline-archived-table')
+    // A day with demo reservations, but none on archived tables, has no such row.
+    const upcoming = (await (await page.request.get(`/api/staff/reservations?from=${dateFromToday(1)}&to=${dateFromToday(7)}`)).json()) as {
+      date: string
+    }[]
+    expect(upcoming.length, 'demo reservations in the next days').toBeGreaterThan(0)
+    await page.goto(`/admin/tables?date=${upcoming[0].date}`)
+    await expect(page.getByRole('button', { name: /^.+ \(\d+\), / }).first()).toBeVisible()
+    await expect(page.getByText('Archived tables', { exact: true })).toHaveCount(0)
+  })
+})
+
+test.describe('Pacing', () => {
+  test('sets a rule on the settings page, and a staff booking above it shows the warning but is saved', async ({ page }) => {
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+
+    // A day three weeks ahead on which Zur Linde has a free table for 4, so the test does not depend on the demo data.
+    let date: string | undefined
+    let time: string | undefined
+    for (let days = 21; days < 35 && time === undefined; days++) {
+      date = dateFromToday(days)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=4`)).json()) as {
+        periods: { times: { time: string; tables: unknown[] }[] }[]
+      }
+      time = availability.periods.flatMap((period) => period.times).find((slot) => slot.tables.length > 0)?.time
+    }
+    expect(time, 'a free time at Zur Linde three weeks ahead').toBeDefined()
+    const [year, month, day] = date!.split('-').map(Number)
+    const weekday = new Intl.DateTimeFormat('en-US', { weekday: 'long' }).format(new Date(year, month - 1, day))
+
+    // The whole day of the week, at most 2 guests per 15 minutes.
+    await page.goto('/admin/reservation-settings')
+    await expect(page.getByRole('heading', { name: 'Pacing' })).toBeVisible()
+    await expect(page.getByText('No rules yet: there is no limit.')).toBeVisible()
+    await page.getByRole('button', { name: '+ Rule' }).last().click()
+    const rule = page.getByRole('group', { name: 'Pacing rule 1' })
+    await rule.getByText(weekday, { exact: true }).click()
+    await rule.getByLabel('From', { exact: true }).fill('00:00')
+    await rule.getByLabel('To', { exact: true }).fill('00:00')
+    await rule.getByLabel('Max. guests per 15 minutes').fill('2')
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('The reservation settings have been saved.')).toBeVisible()
+    const settings = await page.request.get('/api/admin/reservation-settings')
+    expect((await settings.json()).pacingRules).toEqual([
+      { days: [new Date(year, month - 1, day).getDay()], from: '00:00', to: '24:00', maxCovers: 2 },
+    ])
+    await screenshot(page, 'pacing', 'settings-rule')
+
+    // A party of 4 is above the limit of 2: the drawer warns, but the reservation can still be saved.
+    await page.goto(`/admin/reservations?date=${date}`)
+    await page.getByRole('button', { name: 'New reservation' }).click()
+    const drawer = page.getByRole('dialog', { name: 'New reservation' })
+    await drawer.getByLabel('Guests').fill('4')
+    const [hours, minutes] = time!.split(':').map(Number)
+    const label = new Intl.DateTimeFormat('en-US', { hour: 'numeric', minute: '2-digit' }).format(new Date(2000, 0, 1, hours, minutes))
+    await drawer.getByText(label, { exact: true }).click()
+    await expect(drawer.getByText('Above the pacing limit')).toBeVisible()
+    await expect(drawer.getByText(`0 guests already start at ${label}; with this party it will be 4, the limit is 2 per 15 minutes.`, { exact: false })).toBeVisible()
+    await drawer.getByLabel('Name').fill('Pacing Gast')
+    await screenshot(page, 'pacing', 'staff-booking-warning', { fullPage: false })
+    await drawer.getByRole('button', { name: 'Create reservation' }).click()
+    await expect(page.getByText('The reservation for Pacing Gast has been created', { exact: false })).toBeVisible()
+
+    // Back to the demo data for the other tests: cancel the reservation and remove the rule.
+    const reservations = (await (await page.request.get(`/api/staff/reservations?from=${date}&to=${date}`)).json()) as { id: string; name: string }[]
+    const created = reservations.find((reservation) => reservation.name === 'Pacing Gast')
+    expect(created).toBeDefined()
+    expect((await page.request.post(`/api/staff/reservations/${created!.id}/status`, { data: { status: 'Cancelled' } })).status()).toBe(200)
+    await page.goto('/admin/reservation-settings')
+    await page.getByRole('group', { name: 'Pacing rule 1' }).getByRole('button', { name: 'Delete rule' }).click()
+    await page.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText('The reservation settings have been saved.')).toBeVisible()
+    expect((await (await page.request.get('/api/admin/reservation-settings')).json()).pacingRules).toEqual([])
   })
 })
 
@@ -509,7 +822,7 @@ test.describe('Reservation history', () => {
     expect(created.status()).toBe(201)
 
     // The time is changed in the drawer.
-    await page.goto(`/admin/reservations?date=${date}`)
+    await page.goto(`/frontdesk?date=${date}`)
     const open = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })
     await open.click()
     const drawer = page.getByRole('dialog', { name: 'Edit reservation' })
@@ -520,9 +833,10 @@ test.describe('Reservation history', () => {
     await expect(page.getByText(`The changes to the reservation of ${name} have been saved.`)).toBeVisible()
     await expect(drawer).toBeHidden()
 
-    // The status is changed in the list.
+    // The status is changed in the list; the cancelled reservation moves to the tab "Finished".
     await open.locator('..').getByRole('button', { name: 'Cancel', exact: true }).click()
     await page.getByRole('dialog', { name: 'Cancel the reservation?' }).getByRole('button', { name: 'Cancel reservation' }).click()
+    await page.getByRole('tab', { name: /^Finished/ }).click()
     await expect(open.locator('..').getByText('Cancelled', { exact: true })).toBeVisible()
 
     // The history is folded until it is opened, newest first.
@@ -537,5 +851,247 @@ test.describe('Reservation history', () => {
     await expect(entries.nth(2)).toContainText('Entered by Anna Admin')
     await drawer.getByText('Entered by Anna Admin').scrollIntoViewIfNeeded()
     await screenshot(page, 'reservation-history', 'drawer-history', { fullPage: false })
+  })
+})
+
+/** The toast of a status change on the service screen (design system: a list item in the region "Notifications"). */
+function statusToast(page: Page, text: string) {
+  return page.getByRole('region', { name: /^Notifications/ }).getByRole('listitem').filter({ hasText: text })
+}
+
+test.describe('Front desk: undo of accepting a request', () => {
+  test('offers "Undo" after accepting, which makes it an open request again', async ({ page }) => {
+    const name = 'Nikola Vraćanje'
+    await bookRequest(page, name)
+    await signIn(page, 'frontdesk@kafana-dunav.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+
+    await page.getByRole('tab', { name: /^Requests/ }).click()
+    const open = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })
+    await open.locator('..').getByRole('button', { name: 'Accept', exact: true }).click()
+    // Accepted, it leaves the open requests (it lies days ahead, so it is not in today's list either).
+    await expect(open).toHaveCount(0)
+    const accepted = statusToast(page, `${name}: Confirmed`)
+    await expect(accepted.getByRole('button', { name: 'Undo' })).toBeVisible()
+    await screenshot(page, 'front-desk', 'accept-undo', { fullPage: false })
+
+    await accepted.getByRole('button', { name: 'Undo' }).click()
+    await expect(statusToast(page, `${name}: Requested`)).toBeVisible()
+    await expect(open.locator('..').getByText('Requested', { exact: true })).toBeVisible()
+    await screenshot(page, 'front-desk', 'accept-undone')
+
+    // Declined again, so the demo data stays as it was; the declining can be undone as well.
+    await open.locator('..').getByRole('button', { name: 'Decline', exact: true }).click()
+    await page.getByRole('dialog', { name: 'Decline the request?' }).getByRole('button', { name: 'Decline request' }).click()
+    await expect(open).toHaveCount(0)
+    await expect(statusToast(page, `${name}: Declined`).getByRole('button', { name: 'Undo' })).toBeVisible()
+  })
+})
+
+test.describe('Front desk: undo of a walk-in', () => {
+  test('"Undo" after seating a walk-in removes it, after asking', async ({ page }) => {
+    const name = 'Paul Spontan'
+    await signIn(page, 'frontdesk@rooftop-belvedere.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    const walkInTables = await page.request.get('/api/staff/walk-in-tables?guests=2')
+    test.skip(walkInTables.status() === 400, 'Rooftop Belvedere is closed at the time of the run, so no walk-in can be seated now.')
+    expect(walkInTables.status()).toBe(200)
+    const { tables } = (await walkInTables.json()) as { tables: unknown[] }
+    test.skip(tables.length === 0, 'No table of Rooftop Belvedere is free for a walk-in now.')
+
+    await page.getByRole('button', { name: 'Walk-in', exact: true }).click()
+    const drawer = page.getByRole('dialog', { name: 'Seat a walk-in' })
+    await drawer.getByLabel('Name').fill(name)
+    await drawer.getByRole('button', { name: 'Seat walk-in', exact: true }).click()
+    const seated = page.getByRole('alert').filter({ hasText: `${name} seated at table` })
+    await expect(seated).toBeVisible()
+    // An arrived walk-in is in the tab "Seated".
+    await page.getByRole('tab', { name: /^Seated/ }).click()
+    const row = page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) })
+    await expect(row).toHaveCount(1)
+
+    await seated.getByRole('button', { name: 'Undo' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Remove the walk-in?' })
+    await expect(dialog.getByText(`${name} (party of 2) at table`, { exact: false })).toBeVisible()
+    await screenshot(page, 'front-desk', 'walk-in-undo-asks', { fullPage: false })
+
+    await dialog.getByRole('button', { name: 'Remove walk-in' }).click()
+    await expect(page.getByText(`${name} has been removed.`)).toBeVisible()
+    await expect(row).toHaveCount(0)
+    await screenshot(page, 'front-desk', 'walk-in-removed')
+    let reservations = (await (await page.request.get('/api/staff/reservations')).json()) as { name: string }[]
+    expect(reservations.map((reservation) => reservation.name)).not.toContain(name)
+
+    // Seated again; the "Undo" of its row asks the same and removes it as well.
+    await page.getByRole('button', { name: 'Walk-in', exact: true }).click()
+    await drawer.getByLabel('Name').fill(name)
+    await drawer.getByRole('button', { name: 'Seat walk-in', exact: true }).click()
+    await expect(row).toHaveCount(1)
+    await row.locator('..').getByRole('button', { name: 'Undo', exact: true }).click()
+    await dialog.getByRole('button', { name: 'Remove walk-in' }).click()
+    await expect(row).toHaveCount(0)
+    reservations = (await (await page.request.get('/api/staff/reservations')).json()) as { name: string }[]
+    expect(reservations.map((reservation) => reservation.name)).not.toContain(name)
+  })
+})
+
+/** Checks the drawer of a closed reservation: date, time, party size, table and duration read-only, the contact editable. */
+async function expectClosedDrawer(page: Page) {
+  const drawer = page.getByRole('dialog', { name: 'Edit reservation' })
+  await expect(drawer.getByText('This reservation is closed', { exact: false })).toBeVisible()
+  for (const field of ['Guests', 'Date', 'Time', 'Table', 'Duration in minutes']) {
+    await expect(drawer.getByLabel(field, { exact: true }), field).toHaveAttribute('readonly')
+  }
+  await expect(drawer.getByLabel('Phone')).toBeEditable()
+  return drawer
+}
+
+test.describe('Front desk: closed reservations', () => {
+  test('shows the booking of a cancelled reservation read-only and still saves the contact', async ({ page }) => {
+    const name = 'Clara Storno'
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // A phone reservation on the first day from ten days ahead with a free time, cancelled right away.
+    let booked: { id: string; date: string } | undefined
+    for (let days = 10; days < 40 && booked === undefined; days++) {
+      const date = dateFromToday(days)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+        periods: { times: { time: string; tables: unknown[] }[] }[]
+      }
+      const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.tables.length > 0)?.time
+      if (time === undefined) continue
+      const created = await page.request.post('/api/staff/reservations', { data: { date, time, guests: 2, name } })
+      expect(created.status()).toBe(201)
+      booked = (await created.json()) as { id: string; date: string }
+    }
+    expect(booked).toBeDefined()
+    expect((await page.request.post(`/api/staff/reservations/${booked!.id}/status`, { data: { status: 'Cancelled' } })).status()).toBe(200)
+
+    // A closed reservation is in the tab "Finished".
+    await page.goto(`/frontdesk?date=${booked!.date}`)
+    await page.getByRole('tab', { name: /^Finished/ }).click()
+    await page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).click()
+    const drawer = await expectClosedDrawer(page)
+    await screenshot(page, 'reservations', 'cancelled-read-only', { fullPage: false })
+
+    await drawer.getByLabel('Phone').fill('+43 660 1112233')
+    await drawer.getByRole('button', { name: 'Save' }).click()
+    await expect(page.getByText(`The changes to the reservation of ${name} have been saved.`)).toBeVisible()
+  })
+
+  test('shows the time and table of a no-show read-only', async ({ page }) => {
+    const name = 'Nora Nichterschienen'
+    type PastReservation = {
+      id: string
+      date: string
+      time: string
+      guests: number
+      tableId: string
+      durationMinutes: number
+      phone: string | null
+      email: string | null
+      notes: string | null
+    }
+    // A no-show of the demo reservations of the past seven days, of the first demo restaurant that has one (their statuses are random).
+    let noShow: PastReservation | undefined
+    for (const frontDesk of ['frontdesk@rooftop-belvedere.local', 'frontdesk@zur-linde.local', 'frontdesk@kafana-dunav.local']) {
+      await page.context().clearCookies()
+      await signIn(page, frontDesk)
+      await expect(page).toHaveURL(/\/frontdesk$/)
+      const noShows = (await (
+        await page.request.get(`/api/staff/reservations?from=${dateFromToday(-7)}&to=${dateFromToday(-1)}&status=NoShow`)
+      ).json()) as PastReservation[]
+      noShow = noShows.at(0)
+      if (noShow !== undefined) break
+    }
+    expect(noShow, 'a no-show among the demo reservations of the past seven days').toBeDefined()
+    // Renamed, so the row can be found; a closed reservation still takes the guest's details.
+    const { id, date, time, guests, tableId, durationMinutes, phone, email, notes } = noShow!
+    const renamed = await page.request.put(`/api/staff/reservations/${id}`, {
+      data: { date, time, guests, tableId, durationMinutes, name, phone, email, notes },
+    })
+    expect(renamed.status()).toBe(200)
+
+    await page.goto(`/frontdesk?date=${date}`)
+    await page.getByRole('tab', { name: /^Finished/ }).click()
+    await page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).click()
+    await expectClosedDrawer(page)
+    await screenshot(page, 'reservations', 'no-show-read-only', { fullPage: false })
+  })
+})
+
+test.describe('Table combinations', () => {
+  test('combines two tables in the area editor and outlines them on the plan', async ({ page }) => {
+    await signIn(page, 'admin@zur-linde.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    await page.goto('/admin/areas')
+    // The demo combination of the dining room.
+    await expect(page.getByText('Tables 2 + 3', { exact: true })).toBeVisible()
+    await expect(page.getByText('8 seats · online from 5 people')).toBeVisible()
+
+    await page.getByRole('tab', { name: 'Terrasse' }).click()
+    await expect(page.getByText('No combinations yet.')).toBeVisible()
+    await page.getByRole('button', { name: 'Select tables to combine' }).click()
+    await page.getByRole('button', { name: 'Table T1, seats: 4' }).click()
+    await page.getByRole('button', { name: 'Table T2, seats: 4' }).click()
+    await expect(page.getByText('Selected tables: T1, T2')).toBeVisible()
+    await page.getByRole('button', { name: 'Combine', exact: true }).click()
+
+    await expect(page.getByText('Tables T1 + T2 have been combined.')).toBeVisible()
+    await expect(page.getByLabel('Seats', { exact: true })).toHaveValue('8')
+    await expect(page.getByLabel('Online from (people)')).toHaveValue('5')
+    await expect(page.getByRole('switch', { name: 'Bookable online' })).toBeChecked()
+    await expect(page.locator('[data-floor-table][data-outlined]')).toHaveCount(2)
+    await page.getByLabel('Seats', { exact: true }).fill('7')
+    await page.getByRole('button', { name: 'Save' }).first().click()
+    await expect(page.getByText('The combination has been saved.')).toBeVisible()
+    await expect(page.getByText('7 seats · online from 5 people')).toBeVisible()
+    await page.getByRole('button', { name: 'Edit tables T1 + T2' }).click()
+    await expect(page.locator('[data-floor-table][data-outlined]')).toHaveCount(2)
+    await screenshot(page, 'combinations', 'area-editor')
+
+    // The demo's terrace stays without combination.
+    await page.locator('[data-combinations]').getByRole('button', { name: 'Delete', exact: true }).click()
+    await expect(page.getByText('No combinations yet.')).toBeVisible()
+  })
+
+  test('enters a phone reservation for 8 people on a combination of tables', async ({ page }) => {
+    await signIn(page, 'frontdesk@zur-linde.local')
+    await expect(page).toHaveURL(/\/frontdesk$/)
+    // A day beyond the demo reservations on which the table for 8 and the combination are free in the evening.
+    const today = new Date()
+    let day = ''
+    for (let offset = 14; day === '' && offset < 44; offset++) {
+      const candidate = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate() + offset)).toISOString().slice(0, 10)
+      const availability = (await (await page.request.get(`/api/staff/availability?date=${candidate}&guests=8`)).json()) as {
+        periods: { times: { time: string; tables: { kind: string }[] }[] }[]
+      }
+      const sevenPm = availability.periods.flatMap((period) => period.times).find((option) => option.time === '19:00')
+      if (sevenPm !== undefined && sevenPm.tables.some((table) => table.kind === 'table') && sevenPm.tables.some((table) => table.kind === 'combination')) {
+        day = candidate
+      }
+    }
+    expect(day).not.toBe('')
+
+    await page.goto(`/frontdesk/reservations?date=${day}`)
+    await page.getByRole('button', { name: 'New reservation' }).click()
+    const drawer = page.getByRole('dialog', { name: 'New reservation' })
+    await drawer.getByLabel('Guests').fill('8')
+    await drawer.getByText('7:00 PM', { exact: true }).click()
+    // The system suggests the table for 8; the front desk takes the combination instead.
+    await expect(drawer.getByRole('combobox', { name: 'Table' })).toHaveValue('Table 8 · Gaststube · 8 seats (suggested)')
+    await drawer.getByRole('combobox', { name: 'Table' }).click()
+    await page.getByRole('option', { name: 'Tables 2 + 3 · Gaststube · 8 seats' }).click()
+    await expect(drawer.getByRole('combobox', { name: 'Table' })).toHaveValue('Tables 2 + 3 · Gaststube · 8 seats')
+    await drawer.getByLabel('Name').fill('Stammtisch Huber')
+    await drawer.getByLabel('Phone').fill('+49 89 5551234')
+    await screenshot(page, 'combinations', 'phone-reservation-drawer', { fullPage: false })
+    await drawer.getByRole('button', { name: 'Create reservation' }).click()
+
+    await expect(drawer).toHaveCount(0)
+    const reservations = (await (await page.request.get(`/api/staff/reservations?from=${day}`)).json()) as { name: string; tableNumbers: string[] }[]
+    expect(reservations.find((reservation) => reservation.name === 'Stammtisch Huber')?.tableNumbers).toEqual(['2', '3'])
+    await expect(page.getByText('Stammtisch Huber', { exact: true })).toBeVisible()
+    await screenshot(page, 'combinations', 'phone-reservation-list')
   })
 })

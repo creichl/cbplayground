@@ -8,7 +8,8 @@ namespace Cbplayground.Api.Endpoints;
 
 /// <summary>
 /// Areas of a restaurant with their floor plans, photos and descriptions. Managing them is for Tenant Admins;
-/// the floor plan images and photos can be read by everybody, because guests will see them to pick a table.
+/// the floor plan images and photos can be read by everybody, because guests will see them to pick a table. Archived areas
+/// (<see cref="Area.ArchivedAtUtc"/>) are not found by the admin endpoints, and their archived tables are left out.
 /// </summary>
 public static class AreaEndpoints
 {
@@ -55,7 +56,7 @@ public static class AreaEndpoints
         var group = app.MapGroup("/api/admin/areas").RequireAuthorization(Policies.RequireTenantAdmin);
 
         group.MapGet("/", async (AppDbContext db) =>
-            (await db.Areas.OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync()).Select(ToResponse));
+            (await db.Areas.Where(a => a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync()).Select(ToResponse));
 
         group.MapPost("/", async (CreateAreaRequest request, AppDbContext db) =>
         {
@@ -74,7 +75,7 @@ public static class AreaEndpoints
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateAreaRequest request, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
@@ -122,13 +123,13 @@ public static class AreaEndpoints
         // Without image the tables keep away from the room elements; on an image the image shows the room, so they are ignored.
         group.MapPost("/{id:guid}/arrange-tables", async (Guid id, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
             }
 
-            var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
+            var tables = await db.Tables.Where(t => t.AreaId == id && t.ArchivedAtUtc == null).ToListAsync();
             TableLayout.Arrange(tables, area.TableScale, await ElementsForLayoutAsync(db, area));
             await db.SaveChangesAsync();
             return Results.Ok(InNumberOrder(tables));
@@ -136,7 +137,7 @@ public static class AreaEndpoints
 
         group.MapGet("/{id:guid}/room", async (Guid id, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
@@ -149,7 +150,7 @@ public static class AreaEndpoints
         // Replaces the style and all elements of the room, all or nothing. The tables stay where they are.
         group.MapPut("/{id:guid}/room", async (Guid id, UpdateRoomRequest request, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
@@ -207,13 +208,13 @@ public static class AreaEndpoints
         // the tables anew around them; in an area with floor plan image without regard to the elements, as arrange-tables.
         group.MapPost("/{id:guid}/suggest-room", async (Guid id, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
             }
 
-            var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
+            var tables = await db.Tables.Where(t => t.AreaId == id && t.ArchivedAtUtc == null).ToListAsync();
             var elements = RoomSuggestion.Suggest(area.RoomStyle, tables.Count);
             foreach (var element in elements)
             {
@@ -226,24 +227,35 @@ public static class AreaEndpoints
             return Results.Ok(new SuggestedRoomResponse(area.RoomStyle, elements.Select(ToResponse).ToList(), InNumberOrder(tables)));
         });
 
-        // Deletes the area together with its tables (cascade), its floor plan image and its photo. Not while one of its tables
-        // has reservations that have not ended yet; the past, cancelled and declined ones are deleted with the tables.
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, IConfiguration configuration, IWebHostEnvironment environment) =>
+        // Not while one of its tables has reservations that have not ended yet. Its tables are deleted or archived one by one
+        // (TableDeletion), and their combinations are deleted. Without an archived table the area is deleted with its floor plan
+        // image and its photo; with one, the area is archived and keeps both, so the reservations on its archived tables keep
+        // their area.
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, TimeProvider timeProvider,
+            IConfiguration configuration, IWebHostEnvironment environment) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync();
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();
             }
-            // The tables are loaded, so EF Core deletes the reservations before the tables and the tables before the area.
+            // All its tables, the archived ones too: their reservations keep the area.
             var tables = await db.Tables.Where(t => t.AreaId == id).ToListAsync();
-            if (!await TableDeletion.TryRemoveReservationsAsync(db, availability, tables.Select(t => t.Id).ToList()))
+            var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+            var result = await TableDeletion.TryDeleteAsync(db, availability, tables, nowUtc);
+            if (result == TableDeletionResult.Blocked)
             {
                 return ErrorResponse.Result("table_has_reservations", StatusCodes.Status409Conflict);
             }
 
-            db.Tables.RemoveRange(tables);
+            if (result == TableDeletionResult.Archived)
+            {
+                area.ArchivedAtUtc = nowUtc;
+                await db.SaveChangesAsync();
+                await transaction.CommitAsync();
+                return Results.NoContent();
+            }
             db.Areas.Remove(area);
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -254,7 +266,7 @@ public static class AreaEndpoints
 
         group.MapPut("/order", async (ReorderAreasRequest request, AppDbContext db) =>
         {
-            var areas = await db.Areas.ToListAsync();
+            var areas = await db.Areas.Where(a => a.ArchivedAtUtc == null).ToListAsync();
             var areaIds = request.AreaIds ?? [];
             if (areaIds.Count != areas.Count || areaIds.Distinct().Count() != areaIds.Count || areas.Any(a => !areaIds.Contains(a.Id)))
             {
@@ -272,7 +284,7 @@ public static class AreaEndpoints
         // Uploads or replaces the floor plan. The body is the image itself (PNG, JPEG or WebP, at most 10 MB), see ImageUploads.
         group.MapPut("/{id:guid}/floorplan", async (Guid id, HttpRequest httpRequest, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment, CancellationToken cancellationToken) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null, cancellationToken);
             if (area is null)
             {
                 return Results.NotFound();
@@ -294,7 +306,7 @@ public static class AreaEndpoints
         // Uploads or replaces the photo of the area, like a cover image: PNG, JPEG or WebP, at most 10 MB (the code of the floor plans).
         group.MapPut("/{id:guid}/photo", async (Guid id, HttpRequest httpRequest, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment, CancellationToken cancellationToken) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id, cancellationToken);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null, cancellationToken);
             if (area is null)
             {
                 return Results.NotFound();
@@ -315,7 +327,7 @@ public static class AreaEndpoints
 
         group.MapDelete("/{id:guid}/photo", async (Guid id, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == id && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return Results.NotFound();

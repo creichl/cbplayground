@@ -20,7 +20,7 @@ public class Table : ITenantOwned
 
     public Guid AreaId { get; set; }
 
-    /// <summary>The table's label, e.g. "12" or "T3". Unique within the restaurant.</summary>
+    /// <summary>The table's label, e.g. "12" or "T3". Unique among the restaurant's tables that are not archived.</summary>
     public required string Number { get; set; }
 
     /// <summary>Number of guests, at least 1.</summary>
@@ -43,6 +43,12 @@ public class Table : ITenantOwned
 
     /// <summary>0 or 90 degrees. Stored for every table, visible only on rectangular ones: at 0 the long side is horizontal.</summary>
     public int Rotation { get; set; }
+
+    /// <summary>
+    /// When the table was deleted while it still had reservations (UTC); null while it is in use. An archived table keeps its
+    /// reservations, with their table number and area, but is left out of the floor plans, the availability and the setup.
+    /// </summary>
+    public DateTime? ArchivedAtUtc { get; set; }
 
     /// <summary>The shape of a new table for which none was chosen: square up to 4 seats, rectangular from 5.</summary>
     public static TableShape DefaultShape(int seats) => seats <= 4 ? TableShape.Square : TableShape.Rectangle;

@@ -53,7 +53,11 @@ public class Reservation : ITenantOwned
 
     public Guid TenantId { get; set; }
 
+    /// <summary>The first table of the reservation (in number order); all its tables are in <see cref="Tables"/>.</summary>
     public Guid TableId { get; set; }
+
+    /// <summary>All tables the reservation occupies: its table, or all tables of a combination (<see cref="TableCombination"/>).</summary>
+    public List<ReservationTable> Tables { get; set; } = [];
 
     /// <summary>Start in the restaurant's local time. DateTime instead of DateTimeOffset, so SQLite can sort and compare it.</summary>
     public DateTime StartLocal { get; set; }
@@ -76,6 +80,12 @@ public class Reservation : ITenantOwned
     public ReservationStatus Status { get; set; }
 
     public ReservationSource Source { get; set; }
+
+    /// <summary>
+    /// True when the reservation was created as <see cref="ReservationStatus.Requested"/>, so accepting it can be undone
+    /// (<see cref="ReservationStatus.Confirmed"/> back to <see cref="ReservationStatus.Requested"/>).
+    /// </summary>
+    public bool WasRequested { get; set; }
 
     /// <summary>When the guest left (status <see cref="ReservationStatus.Completed"/>), in the restaurant's local time; null otherwise.</summary>
     public DateTime? CompletedAtLocal { get; set; }

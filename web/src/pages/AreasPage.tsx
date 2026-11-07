@@ -14,7 +14,9 @@ import {
   type Table,
   type TablePosition,
   useAreas,
+  useCombinations,
   useCreateArea,
+  useCreateCombination,
   useCreateTable,
   useReorderAreas,
   useRoom,
@@ -26,6 +28,7 @@ import {
 } from '../api/areas.ts'
 import { errorMessage } from '../api/areaErrors.ts'
 import { AreaPanel } from '../components/AreaPanel.tsx'
+import { CombinationPanel } from '../components/CombinationPanel.tsx'
 import { ErrorAlert } from '../components/ErrorAlert.tsx'
 import { PageHeader } from '../components/PageHeader.tsx'
 import { roomElementDimensions, roomElementSize } from '../components/floor-plan/layout.ts'
@@ -185,6 +188,8 @@ function nextTableNumber(tables: Table[]) {
  * An area without floor plan image is a drawn room: its tables stand in it, the panel "Room" sets its style and adds
  * elements, which are moved like the tables; an image can be uploaded below it.
  * Shape and rotation of the selected table and the area's table size show in the plan before they are saved.
+ * Below the plan the area's table combinations: while tables are picked for a new one, a click on a table picks it instead of
+ * selecting it; a combination being edited outlines its tables on the plan.
  */
 export function AreasPage() {
   const { t } = useTranslation()
@@ -200,10 +205,15 @@ export function AreasPage() {
   const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null)
   const [selectedTableId, setSelectedTableId] = useState<string | null>(null)
   const [selectedElementId, setSelectedElementId] = useState<string | null>(null)
+  // The tables picked for a new combination; null while none is being picked.
+  const [pickedTableIds, setPickedTableIds] = useState<string[] | null>(null)
+  const [selectedCombinationId, setSelectedCombinationId] = useState<string | null>(null)
+  const createCombination = useCreateCombination()
   // The room of the shown area, only without floor plan image (the image shows the room).
   const shownArea = areas.data?.find((a) => a.id === selectedAreaId) ?? areas.data?.[0]
   const roomAreaId = shownArea !== undefined && shownArea.floorPlanUrl === null ? shownArea.id : null
   const savedRoom = useRoom(roomAreaId)
+  const combinations = useCombinations(shownArea?.id ?? null)
   // Not yet saved values of the panel, shown in the plan.
   const [tablePreview, setTablePreview] = useState<TablePreview | null>(null)
   const [scalePreview, setScalePreview] = useState<{ tableScale: number; widthMeters: number | null } | null>(null)
@@ -239,17 +249,32 @@ export function AreasPage() {
   const room = roomAreaId === null ? undefined : (pendingRooms.pending[roomAreaId] ?? savedRoom.data)
   const selectedElement = room?.elements.find((element) => element.id === selectedElementId)
 
+  const areaCombinations = combinations.data?.filter((combination) => combination.areaId === area?.id) ?? []
+  const selectedCombination = areaCombinations.find((combination) => combination.id === selectedCombinationId)
+
   function selectArea(areaId: string | null) {
     setSelectedAreaId(areaId)
     setSelectedTableId(null)
     setSelectedElementId(null)
+    setPickedTableIds(null)
+    setSelectedCombinationId(null)
     setTablePreview(null)
     setScalePreview(null)
   }
 
   /** Selecting a table shows its panel instead of the area's, so an unsaved table size is dropped. */
   function selectTable(tableId: string | null) {
+    if (pickedTableIds !== null) {
+      // While tables are picked for a combination, a click on a table picks it or puts it back; one beside the tables does nothing.
+      if (tableId !== null) {
+        setPickedTableIds(pickedTableIds.includes(tableId) ? pickedTableIds.filter((id) => id !== tableId) : [...pickedTableIds, tableId])
+      }
+      return
+    }
     setSelectedElementId(null)
+    if (tableId !== null) {
+      setSelectedCombinationId(null)
+    }
     if (tableId === selectedTableId) {
       return
     }
@@ -323,6 +348,27 @@ export function AreasPage() {
     )
   }
 
+  function startPicking() {
+    selectTable(null)
+    setSelectedElementId(null)
+    setSelectedCombinationId(null)
+    setPickedTableIds([])
+  }
+
+  function combine(area: Area) {
+    createCombination.mutate(
+      { areaId: area.id, tableIds: pickedTableIds ?? [] },
+      {
+        onSuccess: (combination) => {
+          setPickedTableIds(null)
+          setSelectedCombinationId(combination.id)
+          notifications.show({ color: 'brand', message: t('areas.combinations.created', { label: combination.label }) })
+        },
+        onError: (error) => notifications.show({ color: 'red', title: t('errors.title'), message: errorMessage(error, t) }),
+      },
+    )
+  }
+
   function moveArea(area: Area, direction: -1 | 1) {
     const ids = areas.data!.map((a) => a.id)
     const index = ids.indexOf(area.id)
@@ -389,7 +435,8 @@ export function AreasPage() {
                     tableScale={scalePreview?.tableScale ?? area.tableScale}
                     widthMeters={scalePreview !== null ? scalePreview.widthMeters : area.widthMeters}
                     tables={areaTables}
-                    selectedTableId={selectedTableId}
+                    selectedTableIds={pickedTableIds ?? (selectedTableId === null ? [] : [selectedTableId])}
+                    outlinedTableIds={selectedCombination?.tableIds ?? []}
                     onSelect={selectTable}
                     onMove={move}
                     roomStyle={room?.roomStyle ?? area.roomStyle}
@@ -415,6 +462,26 @@ export function AreasPage() {
                         })
                       : t('areas.capacityOnlineBlocked', { seats })}
                   </Text>
+                  <Divider />
+                  {combinations.isError ? (
+                    <ErrorAlert error={combinations.error} onRetry={() => void combinations.refetch()} />
+                  ) : combinations.data === undefined ? (
+                    <Center py="md">
+                      <Loader size="sm" />
+                    </Center>
+                  ) : (
+                    <CombinationPanel
+                      tables={areaTables}
+                      combinations={areaCombinations}
+                      picked={pickedTableIds}
+                      onStartPicking={startPicking}
+                      onCancelPicking={() => setPickedTableIds(null)}
+                      onCombine={() => combine(area)}
+                      combining={createCombination.isPending}
+                      selectedId={selectedCombinationId}
+                      onSelect={setSelectedCombinationId}
+                    />
+                  )}
                   {roomAreaId !== null && (
                     <>
                       <Divider />

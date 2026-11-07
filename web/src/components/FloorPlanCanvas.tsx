@@ -15,7 +15,10 @@ type FloorPlanCanvasProps = {
   widthMeters: number | null
   /** The tables of the area, with their current (possibly not yet saved) positions. */
   tables: Table[]
-  selectedTableId: string | null
+  /** The selected table, or the tables picked for a new combination. */
+  selectedTableIds: string[]
+  /** The tables of the selected combination, outlined. */
+  outlinedTableIds: string[]
   onSelect: (tableId: string | null) => void
   /** Called once when a table is dropped at a new position (0–1, relative to the plan). */
   onMove: (tableId: string, posX: number, posY: number) => void
@@ -71,7 +74,8 @@ export function FloorPlanCanvas({
   tableScale,
   widthMeters,
   tables,
-  selectedTableId,
+  selectedTableIds,
+  outlinedTableIds,
   onSelect,
   onMove,
   roomStyle,
@@ -234,7 +238,8 @@ export function FloorPlanCanvas({
         const isDragged = drag?.target === 'table' && drag.id === table.id
         const posX = isDragged ? drag.posX : table.posX
         const posY = isDragged ? drag.posY : table.posY
-        const selected = table.id === selectedTableId
+        const selected = selectedTableIds.includes(table.id)
+        const outlined = outlinedTableIds.includes(table.id)
         return (
           <TableShape
             key={table.id}
@@ -259,7 +264,11 @@ export function FloorPlanCanvas({
               touchAction: 'none',
               zIndex: isDragged || selected ? 2 : 1,
               filter: isDragged ? 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25))' : undefined,
+              outline: outlined ? '3px dashed var(--mantine-color-brand-7)' : undefined,
+              outlineOffset: 3,
+              borderRadius: 6,
             }}
+            data-outlined={outlined ? '' : undefined}
             onPointerDown={(event) => startDrag(event, 'table', table.id, table.posX, table.posY)}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}

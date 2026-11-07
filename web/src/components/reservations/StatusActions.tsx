@@ -1,12 +1,8 @@
-import { Box, Button, Group, Modal, Stack, Text } from '@mantine/core'
-import { randomId } from '@mantine/hooks'
-import { notifications } from '@mantine/notifications'
 import { useQueryClient } from '@tanstack/react-query'
-import type { TFunction } from 'i18next'
+import { LoaderCircleIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { ApiError } from '../../api/client.ts'
-import { reservationErrorMessage } from '../../api/reservationErrors.ts'
+import { toast } from 'sonner'
 import {
   type Reservation,
   type ReservationStatus,
@@ -15,21 +11,21 @@ import {
   useSetReservationStatus,
 } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
+import { cn } from '../../lib/utils.ts'
+import { Button } from '../../ui/button.tsx'
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog.tsx'
 import { availableActions, guestName, type StatusAction, statusColors, statusLabels, undoStatus } from './status.ts'
+import { removeWalkIn, removeWalkInQuestion, statusErrorMessage } from './walkInRemoval.ts'
 
 type StatusActionsProps = {
   reservation: Reservation
-  /** Short labels with icons on every screen, e.g. in the narrow popover of the table overview. */
+  /** Short labels with icons on every screen, e.g. in the list panel of the front desk or the narrow popover of the plans. */
   compact?: boolean
   /** Called after a successful change, e.g. to close the popover. */
   onDone?: () => void
-  /** Called when the question before cancelling, a no-show or declining opens or closes. */
+  /** Called when the question before cancelling, a no-show, declining or removing a walk-in opens or closes. */
   onConfirmingChange?: (confirming: boolean) => void
-}
-
-/** A failed status change in the user's language; a taken table means an undo came too late. */
-function statusErrorMessage(error: unknown, t: TFunction) {
-  return error instanceof ApiError && error.code === 'table_unavailable' ? t('reservations.errors.tableTaken') : reservationErrorMessage(error, t)
+  className?: string
 }
 
 /** The texts of the question before a change that asks first (see status.ts), by the status it sets. */
@@ -40,62 +36,69 @@ const questions = {
 } as const
 
 /**
- * The quick status changes of a reservation as large buttons for the tablet, the same in the lists and in the table overview
- * (see status.ts). Cancelling, no-show and declining ask first. After every change a notification offers to undo it.
+ * The quick status changes of a reservation as buttons, the same in the lists and on the plans (see status.ts). Cancelling,
+ * no-show, declining and removing a walk-in ask first. After every change a toast offers to undo it where the server allows it.
  */
-export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange }: StatusActionsProps) {
+export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange, className }: StatusActionsProps) {
   const { t, i18n } = useTranslation()
   const queryClient = useQueryClient()
   const now = useRestaurantNow()
   const setStatus = useSetReservationStatus()
   const [confirming, setConfirming] = useState<StatusAction | null>(null)
+  const [removing, setRemoving] = useState(false)
   const actions = availableActions(reservation, now)
-  const question = questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
+  const question =
+    confirming?.status === null
+      ? removeWalkInQuestion
+      : questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
+  const pending = setStatus.isPending || removing
 
   const confirm = (action: StatusAction | null) => {
     setConfirming(action)
     onConfirmingChange?.(action !== null)
   }
 
-  const showError = (error: unknown) =>
-    notifications.show({ color: 'red', title: t('reservations.errors.statusTitle'), message: statusErrorMessage(error, t) })
+  const showError = (error: unknown) => toast.error(t('reservations.errors.statusTitle'), { description: statusErrorMessage(error, t) })
 
   // Shown after every change, also after an undo; it stays when the row or popover that started it is gone.
   const showChanged = (previous: ReservationStatus, changed: Reservation) => {
-    const undo = undoStatus(previous, changed.status)
-    const id = randomId('status-')
-    notifications.show({
-      id,
-      color: statusColors[changed.status],
-      autoClose: 8000,
-      message: (
-        <Group justify="space-between" gap="sm" wrap="nowrap">
-          <Text size="sm">
-            {t('reservations.toast.changed', { name: guestName(changed, t), status: t(statusLabels[changed.status]) })}
-          </Text>
-          {undo !== null && (
-            <Button
-              size="compact-sm"
-              variant="light"
-              color="gray"
-              style={{ flexShrink: 0 }}
-              onClick={() => {
-                notifications.hide(id)
+    const undo = undoStatus(previous, changed, now)
+    toast(t('reservations.toast.changed', { name: guestName(changed, t), status: t(statusLabels[changed.status]) }), {
+      duration: 8000,
+      icon: <span aria-hidden="true" className="size-3 rounded-full" style={{ backgroundColor: statusColors[changed.status].color }} />,
+      action:
+        undo === null
+          ? undefined
+          : {
+              label: t('reservations.actions.undo'),
+              onClick: () => {
                 setReservationStatus(queryClient, changed.id, undo).then((undone) => showChanged(changed.status, undone), showError)
-              }}
-            >
-              {t('reservations.actions.undo')}
-            </Button>
-          )}
-        </Group>
-      ),
+              },
+            },
     })
   }
 
-  const change = (status: ReservationStatus) => {
+  const remove = () => {
+    setRemoving(true)
+    // The walk-in leaves the lists, and with it this row or popover.
+    removeWalkIn(queryClient, reservation, t).then(
+      () => {
+        setRemoving(false)
+        confirm(null)
+        onDone?.()
+      },
+      () => setRemoving(false),
+    )
+  }
+
+  const change = (status: ReservationStatus | null) => {
+    if (status === null) {
+      remove()
+      return
+    }
     const previous = reservation.status
-    // A promise instead of the callbacks of mutate(): the change may remove this row or popover (e.g. a status filter),
-    // and the notification has to appear anyway.
+    // A promise instead of the callbacks of mutate(): the change may move this row to another tab or close the popover,
+    // and the toast has to appear anyway.
     setStatus.mutateAsync({ id: reservation.id, status }).then((changed) => {
       confirm(null)
       showChanged(previous, changed)
@@ -107,62 +110,68 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
     return null
   }
 
+  const isPending = (action: StatusAction) =>
+    action.status === null ? removing : setStatus.isPending && setStatus.variables.status === action.status
+
   return (
     <>
-      <Group gap="xs" wrap="wrap">
-        {actions.map((action) => (
-          <Button
-            key={action.label}
-            size={compact ? 'sm' : 'md'}
-            variant={action.status === 'Confirmed' && reservation.status === 'Requested' ? 'filled' : action.color === 'gray' ? 'default' : 'light'}
-            color={action.color}
-            leftSection={<action.icon size={16} />}
-            loading={setStatus.isPending && setStatus.variables.status === action.status}
-            disabled={setStatus.isPending}
-            onClick={() => (action.confirm ? confirm(action) : change(action.status))}
-          >
-            {compact ? (
-              t(action.shortLabel)
-            ) : (
-              <>
-                <Box component="span" visibleFrom="lg">
-                  {t(action.label)}
-                </Box>
-                <Box component="span" hiddenFrom="lg">
-                  {t(action.shortLabel)}
-                </Box>
-              </>
-            )}
-          </Button>
-        ))}
-      </Group>
-      <Modal
-        opened={confirming !== null}
-        onClose={() => confirm(null)}
-        title={t(question.title)}
-      >
-        <Stack gap="md">
-          <Text size="sm">
-            {t(question.text, {
-              name: guestName(reservation, t),
-              time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
-              count: reservation.guests,
-            })}
-          </Text>
-          <Group justify="flex-end">
-            <Button variant="default" onClick={() => confirm(null)}>
-              {t('reservations.cancelConfirm.back')}
-            </Button>
+      <div className={cn('flex flex-wrap gap-2', className)}>
+        {actions.map((action) => {
+          const primary = action.status === 'Confirmed' && reservation.status === 'Requested'
+          return (
             <Button
-              color={confirming?.color}
-              loading={setStatus.isPending}
+              key={action.label}
+              size="sm"
+              variant={primary ? 'primary' : 'outline'}
+              className={compact ? 'px-2.5' : undefined}
+              disabled={pending}
+              onClick={() => (action.confirm ? confirm(action) : change(action.status))}
+            >
+              {isPending(action) ? (
+                <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />
+              ) : (
+                <action.icon size={16} style={primary || action.color === null ? undefined : { color: action.color.text }} />
+              )}
+              {compact ? (
+                t(action.shortLabel)
+              ) : (
+                <>
+                  <span className="hidden xl:inline">{t(action.label)}</span>
+                  <span className="xl:hidden">{t(action.shortLabel)}</span>
+                </>
+              )}
+            </Button>
+          )
+        })}
+      </div>
+      <Dialog open={confirming !== null} onOpenChange={(open) => !open && confirm(null)}>
+        <DialogContent className="font-sans">
+          <DialogHeader>
+            <DialogTitle>{t(question.title)}</DialogTitle>
+            <DialogDescription>
+              {t(question.text, {
+                name: guestName(reservation, t),
+                time: formatTime(reservation.time, i18n.resolvedLanguage ?? 'en'),
+                table: reservation.tableNumber,
+                count: reservation.guests,
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">{t('reservations.cancelConfirm.back')}</Button>
+            </DialogClose>
+            <Button
+              className="bg-destructive text-background hover:bg-destructive/90"
+              disabled={pending}
               onClick={() => confirming !== null && change(confirming.status)}
             >
+              {pending && <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />}
               {t(question.confirm)}
             </Button>
-          </Group>
-        </Stack>
-      </Modal>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

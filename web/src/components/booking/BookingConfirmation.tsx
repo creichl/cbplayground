@@ -49,8 +49,11 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
     { icon: <UsersIcon />, label: t('booking.confirmation.guests'), value: t('booking.guestsCount', { count: result.guests }) },
     {
       icon: <ArmchairIcon />,
-      label: t('booking.confirmation.table'),
-      value: t('booking.confirmation.tableInArea', { number: result.tableNumber, area: result.area }),
+      label: t(result.tableNumbers.length > 1 ? 'booking.confirmation.tables' : 'booking.confirmation.table'),
+      value: t(result.tableNumbers.length > 1 ? 'booking.confirmation.tablesInArea' : 'booking.confirmation.tableInArea', {
+        number: result.tableNumber,
+        area: result.area,
+      }),
     },
     ...(address !== '' ? [{ icon: <MapPinIcon />, label: t('booking.confirmation.address'), value: address }] : []),
   ]

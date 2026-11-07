@@ -1,8 +1,8 @@
-import { Box, Text, UnstyledButton } from '@mantine/core'
-import { useEffect, useRef, useState } from 'react'
+import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type FloorArea, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
 import { formatTime } from '../../i18n/format.ts'
+import { cn } from '../../lib/utils.ts'
 import { guestName, isActive, occupiedUntil, statusColors, statusLabels } from '../reservations/status.ts'
 import { ReservationPopover } from './ReservationPopover.tsx'
 
@@ -16,6 +16,12 @@ type TimelineProps = {
   end: number
   /** The current time in minutes since midnight when the day is today, otherwise null. */
   nowMinutes: number | null
+  /** The time the timeline is scrolled to when it opens, e.g. now or the start of the chosen service. */
+  initialTime: number
+  /** The reservation selected on the screen: its block is highlighted and scrolled into view. */
+  selectedId: string | null
+  /** Called when a block is clicked: it becomes the selected reservation. */
+  onSelect: (reservation: Reservation) => void
 }
 
 const hourWidth = 96
@@ -24,8 +30,8 @@ const rowHeight = 44
 const headerHeight = 28
 
 const gridLines = [
-  `repeating-linear-gradient(to right, var(--mantine-color-gray-3) 0 1px, transparent 1px ${hourWidth}px)`,
-  `repeating-linear-gradient(to right, var(--mantine-color-gray-1) 0 1px, transparent 1px ${hourWidth / 4}px)`,
+  `repeating-linear-gradient(to right, var(--border) 0 1px, transparent 1px ${hourWidth}px)`,
+  `repeating-linear-gradient(to right, var(--muted) 0 1px, transparent 1px ${hourWidth / 4}px)`,
 ].join(', ')
 
 /** The parts of [start, end) in which the restaurant is closed, e.g. the afternoon break. */
@@ -47,9 +53,11 @@ function closedRanges(openPeriods: OpenPeriod[], start: number, end: number) {
 
 /**
  * Tables (grouped by area) × time of day: one row per table with its reservations as blocks in their status colour,
- * an hour grid and a line at the current time. Scrolls horizontally; the table column stays in place.
+ * an hour grid and a line at the current time. Archived tables with reservations on the day follow in a group of their own.
+ * Scrolls horizontally; the table column stays in place. A click on a block selects the reservation and shows its details
+ * with the status actions.
  */
-export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes }: TimelineProps) {
+export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes, initialTime, selectedId, onSelect }: TimelineProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -61,150 +69,163 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
     hours.push(hour)
   }
 
-  // Shows the current time when the timeline opens; afterwards the user scrolls freely, also when the clock moves on.
-  const [initialScrollLeft] = useState(() => (nowMinutes === null ? 0 : Math.max(0, x(nowMinutes) - hourWidth)))
+  // Shows `initialTime` when the timeline opens; afterwards the user scrolls freely, also when the clock moves on.
+  const [initialScrollLeft] = useState(() => Math.max(0, x(initialTime) - hourWidth / 2))
   useEffect(() => {
     if (scrollRef.current !== null) {
       scrollRef.current.scrollLeft = initialScrollLeft
     }
   }, [initialScrollLeft])
 
+  // A reservation selected elsewhere (the list) is brought into view.
+  useEffect(() => {
+    if (selectedId === null) {
+      return
+    }
+    scrollRef.current
+      ?.querySelector(`[data-reservation-block="${CSS.escape(selectedId)}"]`)
+      ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' })
+  }, [selectedId])
+
   // Cancelled, declined and no-show reservations go first, so the active reservations of the same table lie on top of them.
   const sorted = [...reservations].sort((a, b) => Number(isActive(a)) - Number(isActive(b)))
 
-  const labelCell = {
-    position: 'sticky',
-    left: 0,
-    zIndex: 3,
-    width: labelWidth,
-    flexShrink: 0,
-    borderRight: '1px solid var(--mantine-color-gray-3)',
-  } as const
+  const labelCell = 'sticky left-0 z-3 flex shrink-0 items-center border-r border-border px-2'
+
+  // Reservations on archived tables keep their table and area; their tables get a row each in a group of their own, only on
+  // the days they have reservations.
+  const archivedTables = [...new Map(reservations.filter((reservation) => reservation.tableArchived).map((reservation) => [reservation.tableId, reservation])).values()]
+    .sort((a, b) => a.tableNumber.length - b.tableNumber.length || (a.tableNumber < b.tableNumber ? -1 : a.tableNumber > b.tableNumber ? 1 : 0))
+
+  /**
+   * The header row of a group of tables: an area, or the archived tables. The row has no reservations, so its title may run
+   * past the table column instead of being cut off.
+   */
+  const groupHeader = (title: string) => (
+    <div className="flex h-7 border-b border-border bg-secondary">
+      <div className="sticky left-0 z-3 flex items-center bg-secondary px-2">
+        <span className="text-sm font-semibold whitespace-nowrap">{title}</span>
+      </div>
+    </div>
+  )
+
+  /** The row of a table with its label and its reservations as blocks. */
+  const row = (key: string, label: ReactNode, ariaLabel: string, rowReservations: Reservation[]) => (
+    <div key={key} className="flex border-b border-border/60" style={{ height: rowHeight }}>
+      <div className={cn(labelCell, 'bg-card')} style={{ width: labelWidth }} aria-label={ariaLabel}>
+        {label}
+      </div>
+      <div className="relative shrink-0" style={{ width, backgroundImage: gridLines }}>
+        {rowReservations.map((reservation) => {
+          const active = isActive(reservation)
+          const selected = reservation.id === selectedId
+          const { color, surface } = statusColors[reservation.status]
+          const left = x(toMinutes(reservation.time))
+          // A guest who left ends at the time they left.
+          const until = occupiedUntil(reservation)
+          const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
+          const times = t('common.timeRange', {
+            start: formatTime(reservation.time, language),
+            end: formatTime(until, language),
+          })
+          const style: CSSProperties = {
+            left: left + 1,
+            width: Math.max(x(toMinutes(until)) - left - 2, 8),
+            backgroundColor: surface,
+            borderColor: color,
+            borderStyle: active ? 'solid' : 'dashed',
+            opacity: active ? 1 : 0.5,
+          }
+          return (
+            <ReservationPopover key={reservation.id} reservation={reservation}>
+              <button
+                type="button"
+                data-reservation-block={reservation.id}
+                data-selected={selected ? '' : undefined}
+                aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
+                aria-current={selected ? 'true' : undefined}
+                // The popover replaces the click handler; selecting happens before it.
+                onClickCapture={() => onSelect(reservation)}
+                className={cn(
+                  'absolute top-1 bottom-1 flex cursor-pointer items-center overflow-hidden rounded-md border border-l-4 px-1.5 text-left text-foreground focus-ring',
+                  selected ? 'z-2 ring-2 ring-foreground ring-offset-1' : 'z-1',
+                )}
+                style={style}
+              >
+                <span className={cn('truncate text-sm', !active && 'line-through')}>{party}</span>
+              </button>
+            </ReservationPopover>
+          )
+        })}
+      </div>
+    </div>
+  )
 
   return (
-    <Box
-      ref={scrollRef}
-      bg="white"
-      style={{ overflowX: 'auto', border: '1px solid var(--mantine-color-gray-3)', borderRadius: 'var(--mantine-radius-md)' }}
-    >
-      <Box pos="relative" style={{ width: labelWidth + width }}>
+    <div ref={scrollRef} className="overflow-x-auto rounded-xl border border-border bg-card">
+      <div className="relative" style={{ width: labelWidth + width }}>
         {closedRanges(openPeriods, start, end).map((range) => (
-          <Box
+          <div
             key={range.from}
-            bg="gray.1"
-            style={{
-              position: 'absolute',
-              top: headerHeight,
-              bottom: 0,
-              left: labelWidth + x(range.from),
-              width: x(range.to) - x(range.from),
-              pointerEvents: 'none',
-            }}
+            className="pointer-events-none absolute bottom-0 bg-muted"
+            style={{ top: headerHeight, left: labelWidth + x(range.from), width: x(range.to) - x(range.from) }}
           />
         ))}
 
-        <Box display="flex" h={headerHeight} style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-          <Box bg="white" px="xs" style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
-            <Text size="xs" c="dimmed" truncate>
-              {t('tableOverview.timeline.tableColumn')}
-            </Text>
-          </Box>
-          <Box pos="relative" style={{ width, flexShrink: 0 }}>
+        <div className="flex border-b border-border" style={{ height: headerHeight }}>
+          <div className={cn(labelCell, 'bg-card')} style={{ width: labelWidth }}>
+            <span className="truncate text-xs text-muted-foreground">{t('tableOverview.timeline.tableColumn')}</span>
+          </div>
+          <div className="relative shrink-0" style={{ width }}>
             {hours.map((hour) => (
-              <Text key={hour} size="xs" c="dimmed" style={{ position: 'absolute', left: x(hour * 60) + 4, top: 6 }}>
+              <span key={hour} className="absolute top-1.5 text-xs text-muted-foreground tabular-nums" style={{ left: x(hour * 60) + 4 }}>
                 {formatTime(formatMinutes(hour * 60), language)}
-              </Text>
+              </span>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {areas
           .filter((area) => area.tables.length > 0)
           .map((area) => (
-            <Box key={area.id}>
-              <Box display="flex" h={28} bg="gray.0" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-                <Box bg="gray.0" px="xs" style={{ ...labelCell, display: 'flex', alignItems: 'center' }}>
-                  <Text size="sm" fw={600} truncate>
-                    {area.name}
-                  </Text>
-                </Box>
-              </Box>
-              {area.tables.map((table) => (
-                <Box key={table.id} display="flex" h={rowHeight} style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}>
-                  <Box
-                    bg="white"
-                    px="xs"
-                    aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
-                    style={{ ...labelCell, display: 'flex', alignItems: 'center' }}
-                  >
-                    <Text size="sm" fw={600} truncate>
-                      {t('common.tableLabel', { number: table.number, seats: table.seats })}
-                    </Text>
-                  </Box>
-                  <Box pos="relative" style={{ width, flexShrink: 0, backgroundImage: gridLines }}>
-                    {sorted
-                      .filter((reservation) => reservation.tableId === table.id)
-                      .map((reservation) => {
-                        const active = isActive(reservation)
-                        const color = statusColors[reservation.status]
-                        const left = x(toMinutes(reservation.time))
-                        // A guest who left ends at the time they left.
-                        const until = occupiedUntil(reservation)
-                        const party = t('tableOverview.party', { name: guestName(reservation, t), guests: reservation.guests })
-                        const times = t('common.timeRange', {
-                          start: formatTime(reservation.time, language),
-                          end: formatTime(until, language),
-                        })
-                        return (
-                          <ReservationPopover key={reservation.id} reservation={reservation}>
-                            <UnstyledButton
-                              aria-label={`${party}, ${times}, ${t(statusLabels[reservation.status])}`}
-                              px={6}
-                              style={{
-                                position: 'absolute',
-                                top: 4,
-                                bottom: 4,
-                                left: left + 1,
-                                width: Math.max(x(toMinutes(until)) - left - 2, 8),
-                                zIndex: 1,
-                                overflow: 'hidden',
-                                display: 'flex',
-                                alignItems: 'center',
-                                borderRadius: 'var(--mantine-radius-sm)',
-                                backgroundColor: `var(--mantine-color-${color}-1)`,
-                                border: `1px ${active ? 'solid' : 'dashed'} var(--mantine-color-${color}-6)`,
-                                borderLeftWidth: 4,
-                                opacity: active ? 1 : 0.5,
-                              }}
-                            >
-                              <Text size="sm" truncate td={active ? undefined : 'line-through'}>
-                                {party}
-                              </Text>
-                            </UnstyledButton>
-                          </ReservationPopover>
-                        )
-                      })}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
+            <div key={area.id}>
+              {groupHeader(area.name)}
+              {area.tables.map((table) =>
+                row(
+                  table.id,
+                  <span className="truncate text-sm font-semibold">{t('common.tableLabel', { number: table.number, seats: table.seats })}</span>,
+                  t('areas.tableMarker', { number: table.number, seats: table.seats }),
+                  sorted.filter((reservation) => reservation.tableId === table.id),
+                ),
+              )}
+            </div>
           ))}
 
+        {archivedTables.length > 0 && (
+          <div>
+            {groupHeader(t('tableOverview.timeline.archivedTables'))}
+            {archivedTables.map((table) =>
+              row(
+                table.tableId,
+                // The number, and below it the area the table belonged to.
+                <div className="min-w-0" title={`${table.tableNumber} · ${table.areaName}`}>
+                  <div className="truncate text-sm font-semibold">{table.tableNumber}</div>
+                  <div className="truncate text-xs text-muted-foreground">{table.areaName}</div>
+                </div>,
+                t('tableOverview.timeline.archivedTable', { number: table.tableNumber, area: table.areaName }),
+                sorted.filter((reservation) => reservation.tableId === table.tableId),
+              ),
+            )}
+          </div>
+        )}
+
         {nowMinutes !== null && nowMinutes >= start && nowMinutes <= end && (
-          <Box
-            bg="red.6"
-            style={{
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              left: labelWidth + x(nowMinutes) - 1,
-              width: 2,
-              zIndex: 2,
-              pointerEvents: 'none',
-            }}
+          <div
+            className="pointer-events-none absolute top-0 bottom-0 z-2 w-0.5 bg-destructive"
+            style={{ left: labelWidth + x(nowMinutes) - 1 }}
           />
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   )
 }

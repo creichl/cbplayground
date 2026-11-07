@@ -2,7 +2,7 @@ import { CalendarXIcon, TriangleAlertIcon } from 'lucide-react'
 import type { ParseKeys } from 'i18next'
 import { useTranslation } from 'react-i18next'
 import { type Availability, useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
-import { formatShortDate, formatTime } from '../../i18n/format.ts'
+import { formatShortDate, formatTime, periodLabel } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
 import { Stagger } from '../../ui/motion/reveal.tsx'
@@ -24,12 +24,6 @@ type TimeSlotGridProps = {
 
 /** The attribute of a time chip, by which the focus finds it again when the booking dialog closes. */
 export const timeChipAttribute = 'data-time-chip'
-
-/** Name of an opening window after the time it starts. */
-function periodLabel(start: string): ParseKeys {
-  const hour = Number(start.slice(0, 2))
-  return hour < 11 ? 'booking.time.morning' : hour < 16 ? 'booking.time.midday' : 'booking.time.evening'
-}
 
 /** The opening windows of a day with only their free start times; windows without one are left out. */
 function freePeriods(availability: Availability | undefined) {

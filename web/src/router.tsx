@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router'
 import { RequireRole } from './components/RequireRole.tsx'
+import { ToServiceScreen } from './components/ToServiceScreen.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 
 // Every page except the start page, and its layout, is loaded when its route is first visited, so the start page does not carry the code
@@ -61,8 +62,8 @@ export const router = createBrowserRouter([
           })),
         children: [
           { index: true, lazy: () => import('./pages/AdminOverviewPage.tsx').then(({ AdminOverviewPage }) => ({ Component: AdminOverviewPage })) },
-          { path: 'reservations', lazy: () => import('./pages/ReservationsPage.tsx').then(({ ReservationsPage }) => ({ Component: ReservationsPage })) },
-          { path: 'tables', lazy: () => import('./pages/TableOverviewPage.tsx').then(({ TableOverviewPage }) => ({ Component: TableOverviewPage })) },
+          { path: 'reservations', element: <ToServiceScreen /> },
+          { path: 'tables', element: <ToServiceScreen tableOverview /> },
           { path: 'profile', lazy: () => import('./pages/ProfilePage.tsx').then(({ ProfilePage }) => ({ Component: ProfilePage })) },
           { path: 'design', lazy: () => import('./pages/BrandingPage.tsx').then(({ BrandingPage }) => ({ Component: BrandingPage })) },
           { path: 'areas', lazy: () => import('./pages/AreasPage.tsx').then(({ AreasPage }) => ({ Component: AreasPage })) },
@@ -84,9 +85,9 @@ export const router = createBrowserRouter([
             ),
           })),
         children: [
-          { index: true, lazy: () => import('./pages/FrontdeskTodayPage.tsx').then(({ FrontdeskTodayPage }) => ({ Component: FrontdeskTodayPage })) },
-          { path: 'reservations', lazy: () => import('./pages/ReservationsPage.tsx').then(({ ReservationsPage }) => ({ Component: ReservationsPage })) },
-          { path: 'tables', lazy: () => import('./pages/TableOverviewPage.tsx').then(({ TableOverviewPage }) => ({ Component: TableOverviewPage })) },
+          { index: true, lazy: () => import('./pages/FrontdeskPage.tsx').then(({ FrontdeskPage }) => ({ Component: FrontdeskPage })) },
+          { path: 'reservations', element: <ToServiceScreen /> },
+          { path: 'tables', element: <ToServiceScreen tableOverview /> },
           { path: '*', lazy: () => import('./pages/NotFoundPage.tsx').then(({ NotFoundPage }) => ({ Component: NotFoundPage })) },
         ],
       },

@@ -243,7 +243,11 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
   const date = formatLongDate(reservation.date, language)
   const time = t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) })
   const guests = t('booking.guestsCount', { count: reservation.guests })
-  const tableInArea = t('booking.confirmation.tableInArea', { number: reservation.tableNumber, area: reservation.area })
+  const combined = reservation.tableNumbers.length > 1
+  const tableInArea = t(combined ? 'booking.confirmation.tablesInArea' : 'booking.confirmation.tableInArea', {
+    number: reservation.tableNumber,
+    area: reservation.area,
+  })
   const address = formatAddress(restaurant)
   const timeZoneId = restaurant.timeZoneId
 
@@ -252,7 +256,7 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
     { icon: <ClockIcon />, label: t('booking.confirmation.time'), value: time },
     { icon: <UsersIcon />, label: t('booking.confirmation.guests'), value: guests },
     { icon: <LayoutGridIcon />, label: t('booking.confirmation.area'), value: reservation.area },
-    { icon: <ArmchairIcon />, label: t('booking.confirmation.table'), value: reservation.tableNumber },
+    { icon: <ArmchairIcon />, label: t(combined ? 'booking.confirmation.tables' : 'booking.confirmation.table'), value: reservation.tableNumber },
     { icon: <UserIcon />, label: t('guestReservation.name'), value: reservation.name },
   ]
 

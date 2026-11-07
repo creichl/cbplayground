@@ -6,7 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Cbplayground.Api.Endpoints;
 
-/// <summary>Tables on the floor plans of the restaurant's areas. Only Tenant Admins may manage them.</summary>
+/// <summary>
+/// Tables on the floor plans of the restaurant's areas. Only Tenant Admins may manage them. Archived tables and areas
+/// (<see cref="Table.ArchivedAtUtc"/>) are not found here: they are neither listed nor changed, and their numbers are free again.
+/// </summary>
 public static class TableEndpoints
 {
     public const int MaxNumberLength = 20;
@@ -34,13 +37,13 @@ public static class TableEndpoints
         var group = app.MapGroup("/api/admin/tables").RequireAuthorization(Policies.RequireTenantAdmin);
 
         group.MapGet("/", async (AppDbContext db) =>
-            (await db.Tables.ToListAsync())
+            (await db.Tables.Where(t => t.ArchivedAtUtc == null).ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .Select(ToResponse));
 
         group.MapPost("/", async (CreateTableRequest request, AppDbContext db) =>
         {
-            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == request.AreaId);
+            var area = await db.Areas.SingleOrDefaultAsync(a => a.Id == request.AreaId && a.ArchivedAtUtc == null);
             if (area is null)
             {
                 return ErrorResponse.Result("area_not_found", StatusCodes.Status404NotFound);
@@ -65,7 +68,7 @@ public static class TableEndpoints
             };
             if (area.FloorPlanFileName is null)
             {
-                var existing = await db.Tables.Where(t => t.AreaId == area.Id).ToListAsync();
+                var existing = await db.Tables.Where(t => t.AreaId == area.Id && t.ArchivedAtUtc == null).ToListAsync();
                 (table.PosX, table.PosY) = TableLayout.FreePosition(existing, table, area.TableScale, await AreaEndpoints.ElementsForLayoutAsync(db, area));
             }
             db.Tables.Add(table);
@@ -75,7 +78,7 @@ public static class TableEndpoints
 
         group.MapPut("/{id:guid}", async (Guid id, UpdateTableRequest request, AppDbContext db) =>
         {
-            var table = await db.Tables.SingleOrDefaultAsync(t => t.Id == id);
+            var table = await db.Tables.SingleOrDefaultAsync(t => t.Id == id && t.ArchivedAtUtc == null);
             if (table is null)
             {
                 return Results.NotFound();
@@ -96,21 +99,22 @@ public static class TableEndpoints
             return Results.Ok(ToResponse(table));
         });
 
-        // A table with reservations that have not ended yet cannot be deleted; its past, cancelled and declined ones are deleted with it.
-        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability) =>
+        // A table with reservations that have not ended yet cannot be deleted. A table without reservations is deleted, one with
+        // reservations (past, cancelled, declined ones) is archived, so they keep their table. The combinations it
+        // is part of are deleted in both cases.
+        group.MapDelete("/{id:guid}", async (Guid id, AppDbContext db, IAvailabilityService availability, TimeProvider timeProvider) =>
         {
             await using var transaction = await db.Database.BeginTransactionAsync();
-            var table = await db.Tables.SingleOrDefaultAsync(t => t.Id == id);
+            var table = await db.Tables.SingleOrDefaultAsync(t => t.Id == id && t.ArchivedAtUtc == null);
             if (table is null)
             {
                 return Results.NotFound();
             }
-            if (!await TableDeletion.TryRemoveReservationsAsync(db, availability, [table.Id]))
+            if (await TableDeletion.TryDeleteAsync(db, availability, [table], timeProvider.GetUtcNow().UtcDateTime) == TableDeletionResult.Blocked)
             {
                 return ErrorResponse.Result("table_has_reservations", StatusCodes.Status409Conflict);
             }
 
-            db.Tables.Remove(table);
             await db.SaveChangesAsync();
             await transaction.CommitAsync();
             return Results.NoContent();
@@ -126,7 +130,7 @@ public static class TableEndpoints
             }
 
             var ids = positions.Select(p => p.Id).Distinct().ToList();
-            var tables = await db.Tables.Where(t => ids.Contains(t.Id)).ToListAsync();
+            var tables = await db.Tables.Where(t => ids.Contains(t.Id) && t.ArchivedAtUtc == null).ToListAsync();
             if (tables.Count != ids.Count)
             {
                 return ErrorResponse.Result("table_not_found", StatusCodes.Status404NotFound);
@@ -169,7 +173,8 @@ public static class TableEndpoints
         {
             return ErrorResponse.Result("rotation_invalid", StatusCodes.Status400BadRequest);
         }
-        if (await db.Tables.AnyAsync(t => t.Number == number && t.Id != id))
+        // Archived tables do not count: their numbers are free again (filtered unique index).
+        if (await db.Tables.AnyAsync(t => t.Number == number && t.Id != id && t.ArchivedAtUtc == null))
         {
             return ErrorResponse.Result("table_number_taken", StatusCodes.Status409Conflict);
         }

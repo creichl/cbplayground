@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { apiGet, apiPut } from './client.ts'
+import type { DayOfWeek } from './openingHours.ts'
 
 export type ConfirmationMode = 'Instant' | 'Request'
 export type TableSelectionMode = 'GuestChooses' | 'SystemAssigns'
@@ -9,6 +10,14 @@ export type DurationRule = {
   minGuests: number
   maxGuests: number
   durationMinutes: number
+}
+
+/** At most `maxCovers` guests may start per 15 minutes from `from` to `to` ("HH:mm", the end may be "24:00") on the days. */
+export type PacingRule = {
+  days: DayOfWeek[]
+  from: string
+  to: string
+  maxCovers: number
 }
 
 /** The restaurant's reservation settings, as returned by GET /api/admin/reservation-settings. */
@@ -25,6 +34,8 @@ export type ReservationSettings = {
   bufferMinutes: number
   /** The largest party that can book online; null: the largest table that can be booked online. */
   maxOnlinePartySize: number | null
+  /** Pacing rules; none: no limit. They do not overlap on the same day. */
+  pacingRules: PacingRule[]
 }
 
 /** Error codes of PUT /api/admin/reservation-settings. */
@@ -38,6 +49,8 @@ export type ReservationSettingsError =
   | 'invalid_booking_horizon'
   | 'invalid_buffer'
   | 'invalid_max_party_size'
+  | 'invalid_pacing_rule'
+  | 'overlapping_pacing_rules'
 
 /** Durations are 15 to 480 minutes in steps of 15, as on the server. */
 export const durationLimits = { min: 15, max: 480, step: 15 } as const
@@ -46,6 +59,7 @@ export const durationLimits = { min: 15, max: 480, step: 15 } as const
 export const leadTimeLimits = { min: 0, max: 1440 } as const
 export const bookingHorizonLimits = { min: 1, max: 365 } as const
 export const bufferLimits = { min: 0, max: 60, step: 5 } as const
+export const pacingCoversLimits = { min: 1, max: 500 } as const
 
 export function isValidDuration(minutes: number) {
   return Number.isInteger(minutes) && minutes >= durationLimits.min && minutes <= durationLimits.max && minutes % durationLimits.step === 0
@@ -65,7 +79,7 @@ export function useReservationSettings() {
   })
 }
 
-/** Saves the settings together with all duration rules. */
+/** Saves the settings together with all duration and pacing rules. */
 export function useSaveReservationSettings() {
   const queryClient = useQueryClient()
 

@@ -77,7 +77,7 @@ function TodayStats() {
         </Anchor>
       </Group>
       {reservations.data !== undefined ? (
-        <DayStats reservations={reservations.data} openRequests={openRequests.data?.length ?? 0} withArrived={false} requestsTo="/frontdesk" />
+        <DayStats reservations={reservations.data} openRequests={openRequests.data?.length ?? 0} withArrived={false} requestsTo="/frontdesk?tab=requests" />
       ) : reservations.isError ? (
         <ErrorAlert error={reservations.error} onRetry={() => void reservations.refetch()} />
       ) : (

@@ -278,6 +278,40 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
     }
 
     [Fact]
+    public async Task Every_demo_restaurant_gets_one_combination_of_two_tables_for_4_once()
+    {
+        await SeedAsync();
+        await SeedAsync();
+
+        foreach (var (slug, area, tables) in new[] { ("zur-linde", "Gaststube", "2 + 3"), ("kafana-dunav", "Sala", "2 + 3"), ("rooftop-belvedere", "Lounge", "L2 + L3") })
+        {
+            using var scope = factory.Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == slug, Ct)).Id;
+            var combination = await db.TableCombinations.Include(c => c.Tables).SingleAsync(Ct);
+            var combined = await db.Tables.Where(t => combination.Tables.Select(c => c.TableId).Contains(t.Id)).OrderBy(t => t.Number).ToListAsync(Ct);
+            Assert.Equal(tables, string.Join(" + ", combined.Select(t => t.Number)));
+            Assert.Equal(area, (await db.Areas.SingleAsync(a => a.Id == combination.AreaId, Ct)).Name);
+            Assert.All(combined, t => Assert.Equal(4, t.Seats));
+            Assert.Equal((8, 5, true), (combination.Seats, combination.MinGuests, combination.OnlineBookable));
+        }
+    }
+
+    [Fact]
+    public async Task Every_demo_reservation_has_its_table_as_its_only_table()
+    {
+        await SeedAsync();
+        await DevelopmentSeed.SeedReservationsAsync(factory.Services);
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == "zur-linde", Ct)).Id;
+        var reservations = await db.Reservations.Include(r => r.Tables).ToListAsync(Ct);
+        Assert.NotEmpty(reservations);
+        Assert.All(reservations, r => Assert.Equal(r.TableId, Assert.Single(r.Tables).TableId));
+    }
+
+    [Fact]
     public async Task The_demo_reservations_cover_Rooftop_Belvedere()
     {
         await SeedAsync();

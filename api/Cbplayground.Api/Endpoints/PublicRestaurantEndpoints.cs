@@ -54,7 +54,11 @@ public static class PublicRestaurantEndpoints
     /// <summary><see cref="Status"/>: "closed", "full" or "available".</summary>
     public record CalendarDay(DateOnly Date, string Status);
 
-    public record AvailabilityTime(string Time, bool Available);
+    /// <summary>
+    /// <see cref="Combined"/>: the time is available, but only for a combination of tables (no single table seats the party then),
+    /// which the system assigns; so where the guest chooses the table, the booking skips that step.
+    /// </summary>
+    public record AvailabilityTime(string Time, bool Available, bool Combined);
 
     public record AvailabilityPeriod(string Start, string End, IReadOnlyList<AvailabilityTime> Times);
 
@@ -66,7 +70,8 @@ public static class PublicRestaurantEndpoints
 
     /// <summary>
     /// An online booking. <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/> "HH:mm". <see cref="TableId"/> is required when
-    /// the guest chooses the table and ignored otherwise. Errors (400): "invalid_date", "invalid_time", "invalid_party_size",
+    /// the guest chooses the table, unless only a combination of tables is free for the party then (<see cref="AvailabilityTime.Combined"/>),
+    /// and ignored otherwise. Errors (400): "invalid_date", "invalid_time", "invalid_party_size",
     /// "invalid_name", "contact_required", "invalid_phone", "invalid_email", "invalid_notes", "invalid_language", "table_required",
     /// "outside_opening_hours", "too_short_notice", "too_far_ahead", "in_the_past"; (409): "slot_unavailable", "table_unavailable".
     /// </summary>
@@ -81,7 +86,10 @@ public static class PublicRestaurantEndpoints
         string? Notes,
         string? Language);
 
-    /// <summary>A booked table. <see cref="ManageToken"/> belongs in the guest's link to view and cancel the reservation; it is only returned here.</summary>
+    /// <summary>
+    /// A booked table or combination of tables. <see cref="TableNumber"/> is the joined label of <see cref="TableNumbers"/>, e.g. "4 + 5".
+    /// <see cref="ManageToken"/> belongs in the guest's link to view and cancel the reservation; it is only returned here.
+    /// </summary>
     public record BookingResponse(
         string ReferenceCode,
         ReservationStatus Status,
@@ -91,11 +99,13 @@ public static class PublicRestaurantEndpoints
         int DurationMinutes,
         string Area,
         string TableNumber,
+        IReadOnlyList<Guid> TableIds,
+        IReadOnlyList<string> TableNumbers,
         string ManageToken);
 
     /// <summary>
     /// A reservation as the guest sees it through the link. <see cref="CanCancel"/> tells whether the guest can still cancel it
-    /// (<see cref="ReservationRules.CanGuestCancel"/>).
+    /// (<see cref="ReservationRules.CanGuestCancel"/>). <see cref="TableNumber"/> is the joined label of <see cref="TableNumbers"/>, e.g. "4 + 5".
     /// </summary>
     public record GuestReservationResponse(
         string ReferenceCode,
@@ -107,6 +117,8 @@ public static class PublicRestaurantEndpoints
         int DurationMinutes,
         string Area,
         string TableNumber,
+        IReadOnlyList<Guid> TableIds,
+        IReadOnlyList<string> TableNumbers,
         string Name,
         bool CancelledByGuest,
         bool CanCancel);
@@ -141,7 +153,7 @@ public static class PublicRestaurantEndpoints
                 .Select(p => new PeriodDto(p.DayOfWeek, FormatTime(p.Start), FormatTime(p.End)))
                 .ToList();
             var maxOnlinePartySize = await availability.GetMaxOnlinePartySizeAsync();
-            var areas = (await db.Areas.Where(a => a.OnlineBookingEnabled).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync())
+            var areas = (await db.Areas.Where(a => a.OnlineBookingEnabled && a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync())
                 .Select(a => new RestaurantArea(a.Name, a.Description, AreaEndpoints.PhotoUrl(a)))
                 .ToList();
             return new RestaurantResponse(
@@ -230,7 +242,8 @@ public static class PublicRestaurantEndpoints
                 .Select(p => new AvailabilityPeriod(
                     FormatTime(p.Period.Start),
                     FormatTime(p.Period.End),
-                    p.Slots.Select(s => new AvailabilityTime(FormatTime(s.Time), s.FreeTables.Count > 0)).ToList()))
+                    p.Slots.Select(s => new AvailabilityTime(FormatTime(s.Time), s.FreeTables.Count > 0,
+                        s.FreeTables.Count > 0 && s.FreeTables.All(t => t.Kind == FreeTable.CombinationKind))).ToList()))
                 .ToList()));
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
@@ -254,10 +267,10 @@ public static class PublicRestaurantEndpoints
             var slot = (await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online))
                 .SelectMany(p => p.Slots)
                 .FirstOrDefault(s => s.Time == startTime);
-            var freeTableIds = slot?.FreeTables.Select(t => t.Id).ToHashSet() ?? [];
+            var freeTableIds = slot?.FreeTables.Where(t => t.Kind == FreeTable.TableKind).Select(t => t.Id).ToHashSet() ?? [];
 
-            var areas = await db.Areas.Where(a => a.OnlineBookingEnabled).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
-            var tables = (await db.Tables.ToListAsync())
+            var areas = await db.Areas.Where(a => a.OnlineBookingEnabled && a.ArchivedAtUtc == null).OrderBy(a => a.SortOrder).ThenBy(a => a.Name).ToListAsync();
+            var tables = (await db.Tables.Where(t => t.ArchivedAtUtc == null).ToListAsync())
                 .OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal)
                 .ToList();
             var elements = await db.RoomElements.OrderBy(e => e.SortOrder).ToListAsync();
@@ -305,16 +318,17 @@ public static class PublicRestaurantEndpoints
 
             var settings = await LoadSettingsAsync(db);
             var guestChooses = settings.TableSelectionMode == TableSelectionMode.GuestChooses;
-            if (guestChooses && request.TableId is null)
-            {
-                return Error("table_required");
-            }
             var duration = await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
 
             // Check and insert in one transaction (SQLite: BEGIN IMMEDIATE), so two bookings of the last table cannot both succeed.
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
             var check = await availability.CheckAsync(date, time, request.Guests, duration, ReservationSource.Online,
-                guestChooses ? request.TableId : null, cancellationToken: cancellationToken);
+                guestChooses && request.TableId is { } tableId ? [tableId] : null, cancellationToken: cancellationToken);
+            // Where the guest chooses, the system only assigns when no single table is free for the party, only a combination.
+            if (guestChooses && request.TableId is null && check.Table?.Kind != FreeTable.CombinationKind)
+            {
+                return Error("table_required");
+            }
             if (check.Table is not { } table)
             {
                 return CheckError(check.Error!);
@@ -324,7 +338,8 @@ public static class PublicRestaurantEndpoints
             var manageToken = ManageToken.Create();
             var reservation = new Reservation
             {
-                TableId = table.Id,
+                TableId = table.TableIds[0],
+                Tables = table.TableIds.Select(id => new ReservationTable { TableId = id }).ToList(),
                 StartLocal = date.ToDateTime(time),
                 EndLocal = date.ToDateTime(time).AddMinutes(duration),
                 DurationMinutes = duration,
@@ -334,6 +349,7 @@ public static class PublicRestaurantEndpoints
                 GuestEmail = guest.Email,
                 Notes = guest.Notes,
                 Status = settings.ConfirmationMode == ConfirmationMode.Request ? ReservationStatus.Requested : ReservationStatus.Confirmed,
+                WasRequested = settings.ConfirmationMode == ConfirmationMode.Request,
                 Source = ReservationSource.Online,
                 ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
                 Language = request.Language,
@@ -346,9 +362,10 @@ public static class PublicRestaurantEndpoints
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
+            var tables = StaffReservationEndpoints.InNumberOrder(await db.Tables.Where(t => table.TableIds.Contains(t.Id)).ToListAsync(cancellationToken));
             return Results.Json(
                 new BookingResponse(reservation.ReferenceCode, reservation.Status, date, FormatTime(time), reservation.PartySize, duration, table.AreaName,
-                    table.Number, manageToken.Token),
+                    table.Number, tables.Select(t => t.Id).ToList(), tables.Select(t => t.Number).ToList(), manageToken.Token),
                 statusCode: StatusCodes.Status201Created);
         }).RequireRateLimiting(BookingRateLimitPolicy);
 
@@ -400,10 +417,12 @@ public static class PublicRestaurantEndpoints
         return reservation is not null && ManageToken.Matches(reservation.ManageTokenHash, hash) ? reservation : null;
     }
 
+    /// <summary>The guest's view of the reservation, with its table and area also when they are archived.</summary>
     private static async Task<GuestReservationResponse> ToGuestResponseAsync(AppDbContext db, IAvailabilityService availability, Reservation reservation)
     {
-        var table = await db.Tables.SingleAsync(t => t.Id == reservation.TableId);
-        var area = await db.Areas.SingleAsync(a => a.Id == table.AreaId);
+        var tableIds = await db.ReservationTables.Where(t => t.ReservationId == reservation.Id).Select(t => t.TableId).ToListAsync();
+        var tables = StaffReservationEndpoints.InNumberOrder(await db.Tables.Where(t => tableIds.Contains(t.Id)).ToListAsync());
+        var area = await db.Areas.SingleAsync(a => a.Id == tables[0].AreaId);
         var now = await availability.GetLocalNowAsync();
         return new GuestReservationResponse(
             reservation.ReferenceCode,
@@ -415,7 +434,9 @@ public static class PublicRestaurantEndpoints
             reservation.PartySize,
             reservation.DurationMinutes,
             area.Name,
-            table.Number,
+            AvailabilityService.CombinedLabel(tables),
+            tables.Select(t => t.Id).ToList(),
+            tables.Select(t => t.Number).ToList(),
             reservation.GuestName,
             reservation.CancelledByGuest,
             now is not null && ReservationRules.CanGuestCancel(reservation, now.Value));

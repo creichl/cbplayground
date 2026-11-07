@@ -262,7 +262,9 @@
       "tableInArea": "Table {{number}} · {{area}}",
       "address": "Address",
       "copyLink": "Copy link",
-      "copy": "Copy"
+      "copy": "Copy",
+      "tables": "Tables",
+      "tablesInArea": "Tables {{number}} · {{area}}"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -901,11 +903,29 @@
   },
   "frontdesk": {
     "label": "Front desk",
-    "today": "Today",
-    "nav": {
-      "today": "Today",
-      "reservations": "Reservations",
-      "tables": "Table overview"
+    "keyFigures": "Key figures of the service",
+    "listPanel": "Reservations",
+    "panes": "Show",
+    "panesList": "List",
+    "hideList": "Hide the list",
+    "showList": "Show list",
+    "tabs": {
+      "upcoming": "Upcoming",
+      "seated": "Seated",
+      "finished": "Finished",
+      "requests": "Requests"
+    },
+    "empty": {
+      "upcoming": "No more guests are expected.",
+      "seated": "Nobody is seated right now.",
+      "finished": "No reservation is finished yet.",
+      "requests": "There are no open requests.",
+      "service": "There are no reservations in this service."
+    },
+    "service": {
+      "label": "Service",
+      "wholeDay": "Whole day",
+      "option": "{{name}} {{time}}"
     }
   },
   "notFound": {
@@ -957,7 +977,7 @@
       "moveRight": "Move right",
       "delete": "Delete area",
       "deleteTitle": "Delete “{{name}}”?",
-      "deleteText": "The area’s tables ({{tables}}) and its floor plan will be deleted as well. This cannot be undone.",
+      "deleteText": "The area and its tables ({{tables}}) will be removed and can no longer be booked. Past and cancelled reservations are kept. This cannot be undone.",
       "deleteConfirm": "Delete",
       "description": "Description",
       "descriptionHint": "A short text guests see when they choose the area.",
@@ -986,7 +1006,7 @@
       "saved": "The table has been saved.",
       "delete": "Delete table",
       "deleteTitle": "Delete table {{number}}?",
-      "deleteText": "The table will be deleted, together with its past, cancelled and declined reservations. This cannot be undone.",
+      "deleteText": "The table will be removed from the floor plan and can no longer be booked. Its past and cancelled reservations are kept. This cannot be undone.",
       "deleteConfirm": "Delete",
       "notDeleted": "The table was not deleted",
       "hasReservations": "This table still has upcoming reservations. Move them to another table or cancel them first."
@@ -1015,7 +1035,11 @@
       "roomElementLabelInvalid": "Please enter a label of at most 40 characters.",
       "tooManyRoomElements": "A room can have at most 60 elements.",
       "roomNotSaved": "The room could not be saved",
-      "widthInvalid": "Please enter a width from 5 to 80 m, or leave the field empty."
+      "widthInvalid": "Please enter a width from 5 to 80 m, or leave the field empty.",
+      "combinationTablesInvalid": "Please select two or more tables of this area.",
+      "combinationExists": "These tables are already combined.",
+      "combinationSeatsInvalid": "A combination needs at least one seat more than its largest table.",
+      "combinationMinGuestsInvalid": "Please enter a whole number from 1 to the combination's seats."
     },
     "roomDragHint": "Drag tables and room elements to move them; the arrow keys move a selected element. Click one to edit it.",
     "photo": {
@@ -1076,6 +1100,34 @@
       "labelHint": "Optional, shown in the plan, e.g. “Kitchen”.",
       "delete": "Delete element",
       "defaultLabel": "Text"
+    },
+    "combinations": {
+      "title": "Combinations",
+      "text": "Tables that can be pushed together for a larger group. The system only gives a combination when no single table fits the party.",
+      "select": "Select tables to combine",
+      "pickHint": "Click the tables on the plan that are pushed together.",
+      "pickedNone": "No table selected yet.",
+      "picked": "Selected tables: {{tables}}",
+      "combine": "Combine",
+      "created": "Tables {{label}} have been combined.",
+      "empty": "No combinations yet.",
+      "label": "Tables {{label}}",
+      "summary_one": "{{count}} seat · online from {{minGuests}} people",
+      "summary_other": "{{count}} seats · online from {{minGuests}} people",
+      "summaryOffline_one": "{{count}} seat · not bookable online",
+      "summaryOffline_other": "{{count}} seats · not bookable online",
+      "seats": "Seats",
+      "seatsHint": "At least one more than its largest table: {{min}}.",
+      "minGuests": "Online from (people)",
+      "minGuestsHint": "Online, the combination is only offered to parties of at least this size.",
+      "onlineBookable": "Bookable online",
+      "onlineBookableHint": "When off, only staff can give it, e.g. for a phone reservation.",
+      "saved": "The combination has been saved.",
+      "edit": "Edit",
+      "editLabel": "Edit tables {{label}}",
+      "delete": "Delete",
+      "deleteLabel": "Delete tables {{label}}",
+      "deleted": "The combination has been deleted."
     }
   },
   "floorPlan": {
@@ -1142,6 +1194,20 @@
       "maxOnlinePartySizeDescription": "Larger parties are asked to call. Empty: the largest table that can be booked online.",
       "maxOnlinePartySizePlaceholder": "Largest table"
     },
+    "pacing": {
+      "title": "Pacing",
+      "description": "Limits how many guests may start per 15 minutes in a time range, so the kitchen and the service are not flooded at once. All reservations that start in the quarter hour count, walk-ins included; cancelled ones do not. Online, a time is only offered while its quarter hour has room for the party; staff see a warning but can still book. Without a rule there is no limit.",
+      "example": "Example: Friday and Saturday 18:00–20:00, at most 20 guests per 15 minutes. With 16 guests at 19:00, a party of 4 can still book 19:00 online, a party of 5 cannot; 19:15 is counted on its own.",
+      "rule": "Pacing rule {{number}}",
+      "days": "Days",
+      "from": "From",
+      "to": "To",
+      "toDescription": "12:00 AM (00:00) = midnight",
+      "maxCovers": "Max. guests per 15 minutes",
+      "addRule": "+ Rule",
+      "deleteRule": "Delete rule",
+      "noRules": "No rules yet: there is no limit."
+    },
     "validation": {
       "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
       "minGuests": "Enter at least 1 guest.",
@@ -1150,7 +1216,12 @@
       "leadTime": "Enter {{min}} to {{max}} minutes.",
       "bookingHorizon": "Enter {{min}} to {{max}} days.",
       "buffer": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
-      "maxOnlinePartySize": "Enter at least 1 guest or leave the field empty."
+      "maxOnlinePartySize": "Enter at least 1 guest or leave the field empty.",
+      "pacingDays": "Choose at least one day.",
+      "pacingTime": "Enter a time.",
+      "pacingStartBeforeEnd": "“To” must be after “from”.",
+      "pacingOverlap": "This time range overlaps another pacing rule on the same day.",
+      "pacingMaxCovers": "Enter {{min}} to {{max}} guests."
     },
     "errors": {
       "title": "The settings were not saved",
@@ -1162,32 +1233,30 @@
       "invalidLeadTime": "The lead time must be between 0 and 1440 minutes.",
       "invalidBookingHorizon": "The booking horizon must be between 1 and 365 days.",
       "invalidBuffer": "The buffer must be between 0 and 60 minutes in steps of 5.",
-      "invalidMaxPartySize": "The largest online party must be at least 1 guest."
+      "invalidMaxPartySize": "The largest online party must be at least 1 guest.",
+      "invalidPacingRule": "Every pacing rule needs at least one day, a start before its end and 1 to 500 guests.",
+      "overlappingPacingRules": "Two pacing rules overlap on the same day."
     },
     "saved": "The reservation settings have been saved."
   },
   "reservations": {
-    "title": "Reservations",
-    "previousDay": "Previous day",
-    "nextDay": "Next day",
-    "date": "Date",
-    "today": "Today",
     "search": "Search",
     "searchPlaceholder": "Search by name, phone or reference",
-    "filter": "Filter by status",
-    "filterAll": "All statuses",
     "new": "New reservation",
     "stats": {
       "reservations": "Reservations",
-      "guests": "Guests",
-      "arrived": "Arrived",
-      "seated": "Guests seated",
+      "seated": "Seated now",
       "noShows": "No-shows",
-      "openRequests": "Open requests"
+      "openRequests": "Open requests",
+      "finished": "Finished",
+      "covers_one": "{{count}} cover",
+      "covers_other": "{{count}} covers",
+      "tables_one": "at {{count}} table",
+      "tables_other": "at {{count}} tables"
     },
     "list": {
       "empty": "There are no reservations on this day.",
-      "noMatches": "No reservation matches the search or filter.",
+      "noMatches": "No reservation matches the search.",
       "groupGuests_one": "{{count}} guest",
       "groupGuests_other": "{{count}} guests"
     },
@@ -1248,12 +1317,19 @@
     },
     "declineConfirm": {
       "title": "Decline the request?",
-      "text_one": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
-      "text_other": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed. This cannot be undone.",
+      "text_one": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed.",
+      "text_other": "The request of {{name}} at {{time}} (party of {{count}}) will be declined and its table freed.",
       "confirm": "Decline request"
     },
+    "removeWalkInConfirm": {
+      "title": "Remove the walk-in?",
+      "text_one": "{{name}} (party of {{count}}) at table {{table}} since {{time}} will be removed, as if never seated, and the table freed.",
+      "text_other": "{{name}} (party of {{count}}) at table {{table}} since {{time}} will be removed, as if never seated, and the table freed.",
+      "confirm": "Remove walk-in"
+    },
     "toast": {
-      "changed": "{{name}}: {{status}}"
+      "changed": "{{name}}: {{status}}",
+      "walkInRemoved": "{{name}} has been removed."
     },
     "walkIn": {
       "button": "Walk-in",
@@ -1273,7 +1349,6 @@
       "closed": "The restaurant is not open right now."
     },
     "pending": {
-      "title": "Open requests ({{number}})",
       "text": "These guests are waiting for your answer. Accept confirms the reservation, decline rejects it."
     },
     "form": {
@@ -1284,6 +1359,7 @@
       "time": "Time",
       "timeHint": "Enter the party size and the date to see the free times.",
       "closed": "The restaurant is closed on this day.",
+      "closedHint": "This reservation is closed ({{status}}): its date, time, party size, table and duration stay as they are. The guest's details and the note can still be changed.",
       "table": "Table",
       "tableDescriptionNew": "The suggested table is preselected; you can choose another free one.",
       "tableDescriptionEdit": "Only the tables that are free at the chosen time for the whole duration are offered, plus the current table.",
@@ -1294,10 +1370,13 @@
       "tableOptionSuggested_other": "Table {{number}} · {{area}} · {{count}} seats (suggested)",
       "tableOptionCurrent_one": "Table {{number}} · {{area}} · {{count}} seat (current)",
       "tableOptionCurrent_other": "Table {{number}} · {{area}} · {{count}} seats (current)",
+      "tableReadOnly": "Table {{number}} · {{area}}",
       "overrideDuration": "Override duration",
       "defaultDuration_one": "The restaurant's duration for this party size: {{count}} minute",
       "defaultDuration_other": "The restaurant's duration for this party size: {{count}} minutes",
       "duration": "Duration in minutes",
+      "pacingWarningTitle": "Above the pacing limit",
+      "pacingWarning": "{{booked}} guests already start at {{time}}; with this party it will be {{total}}, the limit is {{max}} per 15 minutes. You can still save the reservation.",
       "name": "Name",
       "phone": "Phone",
       "email": "Email",
@@ -1313,7 +1392,13 @@
         "time": "Please choose a time.",
         "duration": "Enter {{min}} to {{max}} minutes in steps of {{step}}.",
         "name": "Please enter the guest's name."
-      }
+      },
+      "combinationOption_one": "Tables {{number}} · {{area}} · {{count}} seat",
+      "combinationOption_other": "Tables {{number}} · {{area}} · {{count}} seats",
+      "combinationOptionSuggested_one": "Tables {{number}} · {{area}} · {{count}} seat (suggested)",
+      "combinationOptionSuggested_other": "Tables {{number}} · {{area}} · {{count}} seats (suggested)",
+      "combinationOptionCurrent_one": "Tables {{number}} · {{area}} · {{count}} seat (current)",
+      "combinationOptionCurrent_other": "Tables {{number}} · {{area}} · {{count}} seats (current)"
     },
     "history": {
       "title": "History",
@@ -1362,13 +1447,23 @@
       "invalidStatus": "This status is not known.",
       "invalidStatusTransition": "The status cannot be changed like this. Someone else may have changed the reservation; the list has been reloaded.",
       "notFound": "This reservation no longer exists. Please reload the page.",
-      "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time.",
+      "statusNotAllowedNow": "Not possible for this reservation now: “arrived” and “late” only on the day of the reservation, “no-show” only from its start time, undoing a cancellation only until the reservation's end.",
+      "reservationClosed": "This reservation is closed: only the guest's details and the note can be changed.",
+      "cannotDeleteReservation": "Only a seated walk-in can be removed. Someone else may have changed it; the list has been reloaded.",
       "tableTaken": "The table has been taken in the meantime, so this cannot be undone.",
-      "statusTitle": "The status could not be changed"
+      "statusTitle": "The status could not be changed",
+      "invalidTables": "Please choose one table or a combination of tables."
+    },
+    "chart": {
+      "title": "Covers per quarter hour",
+      "summary_one": "busiest at {{time}} with {{count}} cover",
+      "summary_other": "busiest at {{time}} with {{count}} covers",
+      "empty": "no covers",
+      "bar_one": "{{time}}: {{count}} cover",
+      "bar_other": "{{time}}: {{count}} covers"
     }
   },
   "tableOverview": {
-    "title": "Table overview",
     "views": {
       "timeline": "Timeline",
       "floor": "Floor plan"
@@ -1386,9 +1481,12 @@
     "freeTable_other": "Table {{number}} · {{count}} seats · free",
     "walkInHere": "Seat walk-in here",
     "legendInactive": "Cancelled, declined or no-show",
+    "legend": "Status colours",
     "party": "{{name}} ({{guests}})",
     "timeline": {
-      "tableColumn": "Table · seats"
+      "tableColumn": "Table · seats",
+      "archivedTables": "Archived tables",
+      "archivedTable": "Archived table {{number}} · {{area}}"
     },
     "floor": {
       "time": "Time",
@@ -1425,6 +1523,8 @@
     "dark": "Dark",
     "colors": "Colours",
     "primaryScale": "Shades of the accent colour",
+    "statusColors": "Reservation statuses",
+    "statusColorsHint": "The status colours of the front desk, light only: the colour for fills and outlines (at least 3:1 on white), the surface for badges and blocks, and the text colour on both (at least 4.5:1).",
     "typography": "Typography",
     "radii": "Radii",
     "radiusCard": "cards",

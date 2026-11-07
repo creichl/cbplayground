@@ -2,8 +2,11 @@ import { ArrowRightIcon, CircleAlertIcon, InfoIcon, MoonIcon, PhoneIcon, SunIcon
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import type { ReservationStatus } from '../api/reservations.ts'
 import type { BrandStyle } from '../brandTheme.ts'
 import { BrandTheme } from '../components/BrandTheme.tsx'
+import { StatusBadge } from '../components/reservations/StatusBadge.tsx'
+import { statuses } from '../components/reservations/status.ts'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
@@ -154,6 +157,16 @@ export function StyleguidePage() {
             <div className="grid grid-cols-5 gap-4 lg:grid-cols-10">
               {primarySteps.map((step) => (
                 <Swatch key={step} token={`primary-${step}`} />
+              ))}
+            </div>
+          </Section>
+
+          <Section title={t('styleguide.statusColors')}>
+            <p className="max-w-3xl text-sm text-muted-foreground">{t('styleguide.statusColorsHint')}</p>
+            {/* Light only, like the staff screens that use them. */}
+            <div className="grid grid-cols-1 gap-4 rounded-xl bg-white p-4 text-stone-900 sm:grid-cols-2 lg:grid-cols-4">
+              {statuses.map((status) => (
+                <StatusSwatch key={status} status={status} />
               ))}
             </div>
           </Section>
@@ -749,6 +762,38 @@ function Swatch({ token }: { token: string }) {
     <div className="flex flex-col gap-2">
       <div className="h-14 rounded-lg border border-border" style={{ background: `var(--${token})` }} />
       <Code>{`--${token}`}</Code>
+    </div>
+  )
+}
+
+/** The token names of the statuses (styles/app.css). */
+const statusTokens: Record<ReservationStatus, string> = {
+  Requested: 'requested',
+  Confirmed: 'confirmed',
+  Late: 'late',
+  Arrived: 'arrived',
+  Completed: 'completed',
+  NoShow: 'no-show',
+  Cancelled: 'cancelled',
+  Declined: 'declined',
+}
+
+/** A status of a reservation: its badge, its colour beside its surface with text, and the names of its three tokens. */
+function StatusSwatch({ status }: { status: ReservationStatus }) {
+  const token = statusTokens[status]
+  return (
+    <div className="flex flex-col gap-2">
+      <StatusBadge status={status} />
+      <div className="flex h-10 overflow-hidden rounded-lg border border-stone-200">
+        <div className="flex-1" style={{ background: `var(--status-${token})` }} />
+        <div
+          className="flex flex-1 items-center justify-center text-xs font-semibold"
+          style={{ background: `var(--status-${token}-surface)`, color: `var(--status-${token}-text)` }}
+        >
+          Aa
+        </div>
+      </div>
+      <Code>{`--status-${token}(-surface, -text)`}</Code>
     </div>
   )
 }

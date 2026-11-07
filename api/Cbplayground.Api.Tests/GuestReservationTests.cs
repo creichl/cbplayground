@@ -45,6 +45,7 @@ public class GuestReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
         var reservation = new Reservation
         {
             TableId = restaurant.Tables["1"],
+            Tables = [new ReservationTable { TableId = restaurant.Tables["1"] }],
             StartLocal = startLocal,
             EndLocal = startLocal.AddMinutes(120),
             DurationMinutes = 120,

@@ -14,11 +14,11 @@ import {
   useUpdateReservation,
 } from '../../api/reservations.ts'
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
-import { datePickerFormatter, formatTime } from '../../i18n/format.ts'
+import { datePickerFormatter, formatDate, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
 import { ReservationHistory } from './ReservationHistory.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
-import { sourceLabels } from './status.ts'
+import { blockingStatuses, closedStatuses, sourceLabels, statusLabels } from './status.ts'
 
 /** The longest note the server accepts. */
 const maxNotesLength = 500
@@ -98,13 +98,25 @@ type FormValues = {
   guests: NumberValue
   date: string | null
   time: string | null
-  tableId: string | null
+  /** The chosen table or combination: its tables' ids, joined by commas (tableKey). */
+  tables: string | null
   overrideDuration: boolean
   durationMinutes: NumberValue
   name: string
   phone: string
   email: string
   notes: string
+}
+
+/** The value of a table or combination in the table choice: its tables' ids. */
+function tableKey(tableIds: string[]) {
+  return tableIds.join(',')
+}
+
+/** The 15-minute start slot of a time, e.g. "19:00" for a walk-in at "19:07". */
+function slotOf(time: string) {
+  const [hours, minutes] = time.split(':').map(Number)
+  return `${String(hours).padStart(2, '0')}:${String(minutes - (minutes % 15)).padStart(2, '0')}`
 }
 
 function wholeNumber(value: NumberValue) {
@@ -115,6 +127,8 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const isNew = reservation === null
+  // A closed reservation keeps its booking (date, time, party size, table, duration); only the guest's details and the note change.
+  const closed = reservation !== null && closedStatuses.includes(reservation.status)
   const createReservation = useCreateReservation()
   const updateReservation = useUpdateReservation()
   const mutation = isNew ? createReservation : updateReservation
@@ -125,7 +139,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
       guests: reservation?.guests ?? 2,
       date: initialDate,
       time: reservation?.time ?? null,
-      tableId: reservation?.tableId ?? null,
+      tables: reservation === null ? null : tableKey(reservation.tableIds),
       overrideDuration: initialDuration !== null,
       durationMinutes: initialDuration ?? reservation?.durationMinutes ?? 120,
       name: reservation?.name ?? '',
@@ -147,7 +161,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
   const { values } = form
   const guests = wholeNumber(values.guests) !== null && Number(values.guests) >= 1 ? Number(values.guests) : null
   const overriddenDuration = values.overrideDuration && isValidDuration(Number(values.durationMinutes)) ? Number(values.durationMinutes) : null
-  const availability = useStaffAvailability(values.date, guests, overriddenDuration)
+  const availability = useStaffAvailability(closed ? null : values.date, guests, overriddenDuration)
   const times = availability.data?.periods.flatMap((period) => period.times) ?? []
 
   // A new reservation needs a time with a free table. A change may keep its time even when it is not offered
@@ -156,47 +170,78 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
   const freeTables = times.find((slot) => slot.time === time)?.tables ?? []
   const suggestion = freeTables.at(0) ?? null
 
-  // A change offers the tables that are free for the chosen time and duration, and always its current table
-  // (the reservation itself occupies it, so it is not among the free ones).
-  const currentArea = isNew ? undefined : floor.data?.find((area) => area.tables.some((table) => table.id === reservation.tableId))
-  const currentTable = currentArea?.tables.find((table) => table.id === reservation?.tableId)
-  const offeredTables = isNew ? freeTables : freeTables.filter((table) => table.id !== reservation.tableId)
+  // A change offers the tables and combinations that are free for the chosen time and duration, and always its current
+  // table or tables (the reservation itself occupies them, so they are not among the free ones). The seats of current tables
+  // that are not a free combination are their own seats added up.
+  const currentKey = isNew ? null : tableKey(reservation.tableIds)
+  const floorTables = floor.data?.flatMap((area) => area.tables) ?? []
+  const currentSeats = isNew
+    ? 0
+    : reservation.tableIds.reduce((sum, id) => sum + (floorTables.find((table) => table.id === id)?.seats ?? 0), 0)
+  const offeredTables = isNew ? freeTables : freeTables.filter((table) => tableKey(table.tableIds) !== currentKey)
+  const combined = (tableIds: string[]) => tableIds.length > 1
   const tableOptions = [
     ...(reservation !== null
       ? [
           {
-            value: reservation.tableId,
-            label: t('reservations.form.tableOptionCurrent', {
+            value: currentKey!,
+            label: t(combined(reservation.tableIds) ? 'reservations.form.combinationOptionCurrent' : 'reservations.form.tableOptionCurrent', {
               number: reservation.tableNumber,
               area: reservation.areaName,
-              count: currentTable?.seats ?? 0,
+              count: currentSeats,
             }),
           },
         ]
       : []),
-    ...offeredTables.map((table) => ({
-      value: table.id,
-      label: t(isNew && table.id === suggestion?.id ? 'reservations.form.tableOptionSuggested' : 'reservations.form.tableOption', {
-        number: table.number,
-        area: table.areaName,
-        count: table.seats,
-      }),
-    })),
+    ...offeredTables.map((table) => {
+      const suggested = isNew && table.id === suggestion?.id
+      const kind = table.kind === 'combination' ? 'combinationOption' : 'tableOption'
+      return {
+        value: tableKey(table.tableIds),
+        label: t(`reservations.form.${kind}${suggested ? 'Suggested' : ''}`, { number: table.label, area: table.areaName, count: table.seats }),
+      }
+    }),
   ]
-  const fallbackTableId = isNew ? (suggestion?.id ?? null) : reservation.tableId
-  const tableId = tableOptions.some((option) => option.value === values.tableId) ? values.tableId : fallbackTableId
+  // Pacing: staff can always book, but see when the party takes the start slot above the restaurant's limit. A change
+  // does not count its own guests twice: the server counts the reservation as it is stored, if it starts in that slot.
+  const pacing = times.find((slot) => slot.time === time)?.pacing ?? null
+  const ownGuests =
+    reservation !== null &&
+    time !== null &&
+    reservation.date === values.date &&
+    slotOf(reservation.time) === time &&
+    blockingStatuses.includes(reservation.status)
+      ? reservation.guests
+      : 0
+  const pacingTotal = pacing !== null && guests !== null ? pacing.booked - ownGuests + guests : null
+  const aboveLimit = pacing !== null && pacingTotal !== null && pacingTotal > pacing.max
+
+  const fallbackTables = isNew ? (suggestion === null ? null : tableKey(suggestion.tableIds)) : currentKey
+  const chosenTables = tableOptions.some((option) => option.value === values.tables) ? values.tables : fallbackTables
 
   const submit = form.onSubmit((submitted) => {
-    if (time === null || submitted.date === null) {
+    if (!closed && (time === null || submitted.date === null)) {
       form.setFieldError('time', t('reservations.form.validation.time'))
       return
     }
+    const booking =
+      reservation !== null && closed
+        ? {
+            date: reservation.date,
+            time: reservation.time,
+            guests: reservation.guests,
+            tableIds: reservation.tableIds,
+            durationMinutes: reservation.durationMinutes,
+          }
+        : {
+            date: submitted.date!,
+            time: time!,
+            guests: Number(submitted.guests),
+            tableIds: chosenTables === null ? null : chosenTables.split(','),
+            durationMinutes: submitted.overrideDuration ? Number(submitted.durationMinutes) : null,
+          }
     const input: ReservationInput = {
-      date: submitted.date,
-      time,
-      guests: Number(submitted.guests),
-      tableId,
-      durationMinutes: submitted.overrideDuration ? Number(submitted.durationMinutes) : null,
+      ...booking,
       name: submitted.name.trim(),
       phone: submitted.phone.trim() || null,
       email: submitted.email.trim() || null,
@@ -233,120 +278,159 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
           </Group>
         )}
 
-        <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
-          <NumberInput
-            label={t('reservations.form.guests')}
-            min={1}
-            allowDecimal={false}
-            allowNegative={false}
-            size="md"
-            {...form.getInputProps('guests')}
-          />
-          <DatePickerInput
-            label={t('reservations.form.date')}
-            minDate={today}
-            valueFormatter={datePickerFormatter(language)}
-            size="md"
-            {...form.getInputProps('date')}
-          />
-        </SimpleGrid>
-
-        <Stack gap={6}>
-          <Text size="md" fw={500}>
-            {t('reservations.form.time')}
-          </Text>
-          {guests === null || values.date === null ? (
-            <Text size="sm" c="dimmed">
-              {t('reservations.form.timeHint')}
-            </Text>
-          ) : availability.isPending ? (
-            <Skeleton h={72} radius="md" />
-          ) : availability.isError ? (
-            <Alert color="red" variant="light">
-              {reservationErrorMessage(availability.error, t)}
+        {reservation !== null && closed ? (
+          <Stack gap="sm">
+            <Alert color="gray" variant="light">
+              {t('reservations.form.closedHint', { status: t(statusLabels[reservation.status]) })}
             </Alert>
-          ) : availability.data.periods.length === 0 ? (
-            <Text size="sm" c="dimmed">
-              {t('reservations.form.closed')}
-            </Text>
-          ) : (
-            <Chip.Group multiple={false} value={time} onChange={(value) => form.setFieldValue('time', value)}>
-              <Stack gap="sm">
-                {!isNew && time !== null && !times.some((slot) => slot.time === time) && (
-                  <Group gap={6}>
-                    <Chip value={time} size="md">
-                      {formatTime(time, language)}
-                    </Chip>
-                  </Group>
-                )}
-                {availability.data.periods.map((period) => (
-                  <Stack key={period.start} gap={4}>
-                    <Text size="xs" c="dimmed">
-                      {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
-                    </Text>
-                    <Group gap={6}>
-                      {period.times.map((slot) => (
-                        <Chip key={slot.time} value={slot.time} size="md" disabled={isNew && slot.tables.length === 0}>
-                          {formatTime(slot.time, language)}
-                        </Chip>
-                      ))}
-                    </Group>
-                  </Stack>
-                ))}
-              </Stack>
-            </Chip.Group>
-          )}
-          {form.errors.time !== undefined && (
-            <Text size="sm" c="red">
-              {form.errors.time}
-            </Text>
-          )}
-        </Stack>
-
-        <Select
-          label={t('reservations.form.table')}
-          description={isNew ? t('reservations.form.tableDescriptionNew') : t('reservations.form.tableDescriptionEdit')}
-          placeholder={isNew && time === null ? t('reservations.form.tablePlaceholder') : undefined}
-          data={tableOptions}
-          value={tableId}
-          onChange={(value) => form.setFieldValue('tableId', value)}
-          disabled={isNew ? time === null : floor.isPending}
-          allowDeselect={false}
-          size="md"
-        />
-
-        <Stack gap="xs">
-          <Switch
-            label={t('reservations.form.overrideDuration')}
-            description={
-              availability.data !== undefined && !values.overrideDuration
-                ? t('reservations.form.defaultDuration', { count: availability.data.durationMinutes })
-                : undefined
-            }
-            size="md"
-            checked={values.overrideDuration}
-            onChange={(event) => {
-              const checked = event.currentTarget.checked
-              form.setFieldValue('overrideDuration', checked)
-              // Starts from the duration that applies now.
-              if (checked && availability.data !== undefined) {
-                form.setFieldValue('durationMinutes', availability.data.durationMinutes)
-              }
-            }}
-          />
-          {values.overrideDuration && (
-            <NumberInput
-              label={t('reservations.form.duration')}
-              min={durationLimits.min}
-              max={durationLimits.max}
-              step={durationLimits.step}
-              allowDecimal={false}
-              allowNegative={false}
+            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
+              <TextInput label={t('reservations.form.guests')} value={String(reservation.guests)} readOnly variant="filled" size="md" />
+              <TextInput label={t('reservations.form.date')} value={formatDate(reservation.date, language)} readOnly variant="filled" size="md" />
+              <TextInput label={t('reservations.form.time')} value={formatTime(reservation.time, language)} readOnly variant="filled" size="md" />
+              <TextInput
+                label={t('reservations.form.duration')}
+                value={String(reservation.durationMinutes)}
+                readOnly
+                variant="filled"
+                size="md"
+              />
+            </SimpleGrid>
+            <TextInput
+              label={t('reservations.form.table')}
+              value={t('reservations.form.tableReadOnly', { number: reservation.tableNumber, area: reservation.areaName })}
+              readOnly
+              variant="filled"
               size="md"
-              {...form.getInputProps('durationMinutes')}
             />
-          )}
-        </Stack>
+          </Stack>
+        ) : (
+          <>
+            <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
+              <NumberInput
+                label={t('reservations.form.guests')}
+                min={1}
+                allowDecimal={false}
+                allowNegative={false}
+                size="md"
+                {...form.getInputProps('guests')}
+              />
+              <DatePickerInput
+                label={t('reservations.form.date')}
+                minDate={today}
+                valueFormatter={datePickerFormatter(language)}
+                size="md"
+                {...form.getInputProps('date')}
+              />
+            </SimpleGrid>
+
+            <Stack gap={6}>
+              <Text size="md" fw={500}>
+                {t('reservations.form.time')}
+              </Text>
+              {guests === null || values.date === null ? (
+                <Text size="sm" c="dimmed">
+                  {t('reservations.form.timeHint')}
+                </Text>
+              ) : availability.isPending ? (
+                <Skeleton h={72} radius="md" />
+              ) : availability.isError ? (
+                <Alert color="red" variant="light">
+                  {reservationErrorMessage(availability.error, t)}
+                </Alert>
+              ) : availability.data.periods.length === 0 ? (
+                <Text size="sm" c="dimmed">
+                  {t('reservations.form.closed')}
+                </Text>
+              ) : (
+                <Chip.Group multiple={false} value={time} onChange={(value) => form.setFieldValue('time', value)}>
+                  <Stack gap="sm">
+                    {!isNew && time !== null && !times.some((slot) => slot.time === time) && (
+                      <Group gap={6}>
+                        <Chip value={time} size="md">
+                          {formatTime(time, language)}
+                        </Chip>
+                      </Group>
+                    )}
+                    {availability.data.periods.map((period) => (
+                      <Stack key={period.start} gap={4}>
+                        <Text size="xs" c="dimmed">
+                          {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
+                        </Text>
+                        <Group gap={6}>
+                          {period.times.map((slot) => (
+                            <Chip key={slot.time} value={slot.time} size="md" disabled={isNew && slot.tables.length === 0}>
+                              {formatTime(slot.time, language)}
+                            </Chip>
+                          ))}
+                        </Group>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Chip.Group>
+              )}
+              {aboveLimit && time !== null && (
+                <Alert color="yellow" variant="light" title={t('reservations.form.pacingWarningTitle')}>
+                  {t('reservations.form.pacingWarning', {
+                    time: formatTime(time, language),
+                    booked: pacing.booked - ownGuests,
+                    total: pacingTotal,
+                    max: pacing.max,
+                  })}
+                </Alert>
+              )}
+              {form.errors.time !== undefined && (
+                <Text size="sm" c="red">
+                  {form.errors.time}
+                </Text>
+              )}
+            </Stack>
+
+            <Select
+              label={t('reservations.form.table')}
+              description={isNew ? t('reservations.form.tableDescriptionNew') : t('reservations.form.tableDescriptionEdit')}
+              placeholder={isNew && time === null ? t('reservations.form.tablePlaceholder') : undefined}
+              data={tableOptions}
+              value={chosenTables}
+              onChange={(value) => form.setFieldValue('tables', value)}
+              disabled={isNew ? time === null : floor.isPending}
+              allowDeselect={false}
+              size="md"
+            />
+
+            <Stack gap="xs">
+              <Switch
+                label={t('reservations.form.overrideDuration')}
+                description={
+                  availability.data !== undefined && !values.overrideDuration
+                    ? t('reservations.form.defaultDuration', { count: availability.data.durationMinutes })
+                    : undefined
+                }
+                size="md"
+                checked={values.overrideDuration}
+                onChange={(event) => {
+                  const checked = event.currentTarget.checked
+                  form.setFieldValue('overrideDuration', checked)
+                  // Starts from the duration that applies now.
+                  if (checked && availability.data !== undefined) {
+                    form.setFieldValue('durationMinutes', availability.data.durationMinutes)
+                  }
+                }}
+              />
+              {values.overrideDuration && (
+                <NumberInput
+                  label={t('reservations.form.duration')}
+                  min={durationLimits.min}
+                  max={durationLimits.max}
+                  step={durationLimits.step}
+                  allowDecimal={false}
+                  allowNegative={false}
+                  size="md"
+                  {...form.getInputProps('durationMinutes')}
+                />
+              )}
+            </Stack>
+          </>
+        )}
 
         <TextInput label={t('reservations.form.name')} required maxLength={100} size="md" {...form.getInputProps('name')} />
         <SimpleGrid cols={{ base: 1, xs: 2 }} spacing="md">
