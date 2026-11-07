@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip.tsx'
 
 type Dish = PublicMenu['sections'][number]['items'][number]
 
-/** The first section shows this many dishes until the guest asks for the whole menu. */
+/** Each section shows this many dishes until the guest asks for the whole menu, which then shows every dish of every section. */
 const collapsedCount = 8
 
 /** The menu starts loading this far before it scrolls into view, so it is there when the guest arrives. */
@@ -38,7 +38,8 @@ const photoFallback = (
  * restaurant's. On top the recommendations of the house that have a photo, as 4:3 photo cards (a strip to swipe on phones, up
  * to 4 in a row from 1024 px on); below them the sections as tabs (chips to scroll on phones), each dish as a row with name,
  * description, marks, allergens and price, with an 80 px thumbnail when it has a photo, which opens the lightbox with the
- * photos of its section. The first section shows at most 8 dishes until "Show whole menu". Below them a legend of the marks
+ * photos of its section. Each section shows at most 8 dishes until "Show whole menu" below a longer one, which shows every
+ * dish of every section from then on. Below them a legend of the marks
  * and a note on the allergens.
  * The menu is loaded on its own, once the section comes near the view, so it never holds up the reservation card. While
  * it loads a skeleton stands in; without a menu, or when it cannot be loaded (it is not needed to book), the section is

@@ -400,10 +400,6 @@ public static class PublicRestaurantEndpoints
     }
 
     /// <summary>
-    /// The reservation of the current restaurant with this reference code, if the token matches its stored hash (compared in
-    /// constant time); otherwise null. Reservations without a token (entered by staff) are never found.
-    /// </summary>
-    /// <summary>
     /// The endpoint filter of the routes under <c>/api/public/restaurants/{slug}</c>: sets the restaurant of the slug as the
     /// tenant of the request; unknown and deactivated restaurants are both "not found" for guests.
     /// </summary>
@@ -423,6 +419,10 @@ public static class PublicRestaurantEndpoints
         return await next(context);
     }
 
+    /// <summary>
+    /// The reservation of the current restaurant with this reference code, if the token matches its stored hash (compared in
+    /// constant time); otherwise null. Reservations without a token (entered by staff) are never found.
+    /// </summary>
     private static async Task<Reservation?> FindForGuestAsync(AppDbContext db, string referenceCode, string? token)
     {
         var hash = ManageToken.Hash(token);
