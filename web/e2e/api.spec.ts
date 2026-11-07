@@ -41,6 +41,14 @@ test.describe('API smoke', () => {
     expect((await request.get(`${api}/api/auth/me`)).status()).toBe(200)
   })
 
+  test('forbids the staff management to the front desk', async ({ request }) => {
+    const login = await request.post(`${api}/api/auth/login`, {
+      data: { email: 'frontdesk@zur-linde.local', password: 'Demo1234!' },
+    })
+    expect(login.status()).toBe(200)
+    expect((await request.get(`${api}/api/admin/staff`)).status()).toBe(403)
+  })
+
   test('rejects a wrong password', async ({ request }) => {
     const response = await request.post(`${api}/api/auth/login`, {
       data: { email: 'admin@zur-linde.local', password: 'wrong' },

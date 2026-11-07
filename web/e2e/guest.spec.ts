@@ -1,21 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test'
+import { revealAll, settle } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
-
-/**
- * Scrolls through the page and back to the top, so the parts that rise in when they are scrolled into view (Reveal, Stagger)
- * are shown in a full-page screenshot.
- */
-async function revealAll(page: Page) {
-  // Expressions in the page as text: the tests are typed without the DOM (tsconfig.node.json).
-  const height = Number(await page.evaluate('document.body.scrollHeight'))
-  for (let y = 0; y < height; y += 400) {
-    await page.evaluate(`window.scrollTo(0, ${y})`)
-    await page.waitForTimeout(100)
-  }
-  await page.evaluate('window.scrollTo(0, 0)')
-  // The rise-in takes 600 ms.
-  await page.waitForTimeout(800)
-}
 
 test.describe('Start page', () => {
   test('lists the restaurants', async ({ page }) => {
@@ -148,17 +133,6 @@ async function setRooftopTableStyle(page: Page, tableStyle: string) {
     data: { brandColor: '#c9a96e', themeMode: 'Dark', fontStyle: 'Elegant', tableStyle },
   })
   expect(response.status()).toBe(200)
-}
-
-/**
- * Waits until the dialog's entrance and every other finite animation in time are over, so a screenshot shows the dialog as
- * it stays. Endless ones (the light of the table style Glow breathes on) and the cover image's parallax, which follows the
- * scrolling instead of the time, are left out.
- */
-async function settle(page: Page) {
-  await page.waitForFunction(
-    "document.getAnimations().every((animation) => animation.playState !== 'running' || animation.timeline !== document.timeline || animation.effect?.getComputedTiming().iterations === Infinity)",
-  )
 }
 
 /** The plan in the dialog is drawn: its image or room has a size (it once shrank to nothing with the list open). */
