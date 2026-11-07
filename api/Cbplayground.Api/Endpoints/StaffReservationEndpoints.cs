@@ -530,7 +530,7 @@ public static class StaffReservationEndpoints
         AvailabilityService.CombinedLabel(InNumberOrder(await db.Tables.Where(t => tableIds.Contains(t.Id)).ToListAsync(cancellationToken)));
 
     /// <summary>The reservations with their tables and area, archived ones included, sorted by start and (first) table number.</summary>
-    private static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
+    internal static async Task<List<ReservationResponse>> LoadResponsesAsync(AppDbContext db, IQueryable<Reservation> reservations)
     {
         var rows = await reservations
             .Include(r => r.Tables)

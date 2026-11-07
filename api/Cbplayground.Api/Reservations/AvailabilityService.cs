@@ -46,7 +46,8 @@ public record WalkInCheck(string? Error, DateTime Start, IReadOnlyList<FreeTable
 /// (<see cref="Table.MinGuests"/>, <see cref="TableCombination.MinGuests"/>) the party reaches, combinations only when they are
 /// <see cref="TableCombination.OnlineBookable"/>, and are bound to the restaurant's lead time, booking horizon and largest online
 /// party (<see cref="ReservationSettings"/>); staff bookings get every table and combination that seats the party. The opening
-/// hours and the buffer after every reservation apply to both.
+/// hours and the buffer after every reservation apply to both. A blocked table (<see cref="TableBlock"/>) is busy for every channel,
+/// walk-ins included, for exactly the time of the block (no buffer), and so is every combination with it.
 /// Online, a start slot whose pacing limit (<see cref="PacingRule"/>) the party would exceed is not available; staff are not bound to it.
 /// </summary>
 public interface IAvailabilityService
@@ -89,7 +90,8 @@ public interface IAvailabilityService
 
     /// <summary>
     /// Whether all the tables are free from <paramref name="startLocal"/> to <paramref name="endLocal"/> (plus the buffer around the
-    /// other reservations), apart from the reservation <paramref name="ignoreReservationId"/>. An archived table is never free.
+    /// other reservations), apart from the reservation <paramref name="ignoreReservationId"/>. An archived table is never free, nor a
+    /// blocked one (<see cref="TableBlock"/>).
     /// </summary>
     Task<bool> AreTablesFreeAsync(IReadOnlyCollection<Guid> tableIds, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId,
         CancellationToken cancellationToken = default);
@@ -110,6 +112,9 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     /// those of the combination when the tables are one, otherwise those of the tables.
     /// </summary>
     private record BusyReservation(IReadOnlyList<Guid> TableIds, Guid AreaId, int Seats, DateTime Start, DateTime End, ReservationSource Source);
+
+    /// <summary>A blocked table (<see cref="TableBlock"/>): busy from <see cref="Start"/> to <see cref="End"/>, without buffer.</summary>
+    private record BusyBlock(Guid TableId, DateTime Start, DateTime End);
 
     /// <summary>The pacing rules of a day and the guests already starting per 15-minute slot.</summary>
     private record DayPacing(List<PacingRule> Rules, Dictionary<DateTime, int> GuestsBySlot)
@@ -157,6 +162,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         // Online, the first possible start is now plus the lead time; staff can book any time after now.
         var earliestOnline = now.AddMinutes(online ? settings.MinLeadTimeMinutes : 0);
         var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
+        var blocks = await LoadBlocksAsync(DayStart(date), DayStart(date).AddDays(1), cancellationToken);
         var pacing = await LoadPacingAsync(date, ignoreReservationId, cancellationToken);
 
         var result = new List<PeriodSlots>();
@@ -167,7 +173,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             {
                 var free = start <= now || start < earliestOnline || notBookable || (online && pacing.IsExceeded(start, guests))
                     ? []
-                    : FreeTables(floor, busy, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
+                    : FreeTables(floor, busy, blocks, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
                 slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free, pacing.For(start)));
             }
             result.Add(new PeriodSlots(period, slots));
@@ -222,7 +228,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
 
         var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
-        var free = FreeTables(floor, busy, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
+        var blocks = await LoadBlocksAsync(start, start.AddMinutes(durationMinutes), cancellationToken);
+        var free = FreeTables(floor, busy, blocks, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
         if (tableIds is not null)
         {
             var table = free.FirstOrDefault(t => IsSameSet(t.TableIds, tableIds));
@@ -259,7 +266,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
 
         var end = start.AddMinutes(durationMinutes);
         var busy = await LoadBusyAsync(floor, start, end, settings.BufferMinutes, null, cancellationToken);
-        return new WalkInCheck(null, start, FreeTables(floor, busy, start, end, settings.BufferMinutes, guests, ReservationSource.Staff));
+        var blocks = await LoadBlocksAsync(start, end, cancellationToken);
+        return new WalkInCheck(null, start, FreeTables(floor, busy, blocks, start, end, settings.BufferMinutes, guests, ReservationSource.Staff));
     }
 
     public async Task<bool> AreTablesFreeAsync(IReadOnlyCollection<Guid> tableIds, DateTime startLocal, DateTime endLocal, Guid ignoreReservationId,
@@ -273,7 +281,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
         var busy = await LoadBusyAsync(await LoadFloorAsync(cancellationToken), startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
-        return busy.All(r => !r.TableIds.Any(tableIds.Contains));
+        var blocks = await LoadBlocksAsync(startLocal, endLocal, cancellationToken);
+        return busy.All(r => !r.TableIds.Any(tableIds.Contains)) && blocks.All(b => !tableIds.Contains(b.TableId));
     }
 
     private static BookingCheck Error(string error) => new(error, null);
@@ -406,18 +415,27 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             .ToList();
     }
 
+    /// <summary>The blocked tables (<see cref="TableBlock"/>) whose block overlaps <paramref name="from"/> to <paramref name="to"/>.</summary>
+    private async Task<List<BusyBlock>> LoadBlocksAsync(DateTime from, DateTime to, CancellationToken cancellationToken) =>
+        await db.TableBlocks
+            .Where(b => b.StartLocal < to && b.EndLocal > from)
+            .Select(b => new BusyBlock(b.TableId, b.StartLocal, b.EndLocal))
+            .ToListAsync(cancellationToken);
+
     /// <summary>
     /// The tables free from <paramref name="start"/> to <paramref name="end"/> that seat the party, smallest first, followed by the
     /// combinations whose tables are all free and that seat the party, smallest first. Online only those whose smallest party it
     /// reaches, so a small party never gets a large table online, also when no smaller one is free. Every reservation, the new one
-    /// as well, occupies its tables for <paramref name="bufferMinutes"/> after its end.
+    /// as well, occupies its tables for <paramref name="bufferMinutes"/> after its end. A block occupies its table only for its own
+    /// time, without buffer, and with it every combination of the table.
     /// </summary>
-    private static List<FreeTable> FreeTables(Floor floor, List<BusyReservation> busy, DateTime start, DateTime end, int bufferMinutes,
-        int guests, ReservationSource channel)
+    private static List<FreeTable> FreeTables(Floor floor, List<BusyReservation> busy, List<BusyBlock> blocks, DateTime start, DateTime end,
+        int bufferMinutes, int guests, ReservationSource channel)
     {
         var occupied = busy
             .Where(r => r.Start < end.AddMinutes(bufferMinutes) && r.End.AddMinutes(bufferMinutes) > start)
             .SelectMany(r => r.TableIds)
+            .Concat(blocks.Where(b => b.Start < end && b.End > start).Select(b => b.TableId))
             .ToHashSet();
         // The online quota counts the guests at the tables, so the buffer does not count for it.
         var overlapping = busy.Where(r => r.Start < end && r.End > start).ToList();

@@ -42,6 +42,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<ReservationEvent> ReservationEvents => Set<ReservationEvent>();
 
+    public DbSet<TableBlock> TableBlocks => Set<TableBlock>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -158,6 +160,16 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             combinationTable.HasOne<Tenant>().WithMany().HasForeignKey(t => t.TenantId).OnDelete(DeleteBehavior.Restrict);
             // The endpoints delete the combinations of a deleted table; the cascade keeps the database consistent all the same.
             combinationTable.HasOne<Table>().WithMany().HasForeignKey(t => t.TableId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<TableBlock>(block =>
+        {
+            block.HasIndex(b => new { b.TenantId, b.StartLocal });
+            block.Property(b => b.Reason).HasMaxLength(TableBlock.MaxReasonLength);
+            block.Property(b => b.CreatedByUserId).HasMaxLength(450);
+            block.HasOne<Tenant>().WithMany().HasForeignKey(b => b.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Deleting a table (one without reservations) deletes its blocks; an archived table keeps them, but is never offered.
+            block.HasOne<Table>().WithMany().HasForeignKey(b => b.TableId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<RoomElement>(element =>
