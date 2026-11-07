@@ -542,6 +542,35 @@ namespace Cbplayground.Api.Migrations
                     b.ToTable("ReservationTables");
                 });
 
+            modelBuilder.Entity("Cbplayground.Api.Data.RestaurantFaq", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId", "SortOrder");
+
+                    b.ToTable("RestaurantFaqs");
+                });
+
             modelBuilder.Entity("Cbplayground.Api.Data.RoomElement", b =>
                 {
                     b.Property<Guid>("Id")
@@ -815,16 +844,28 @@ namespace Cbplayground.Api.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
+                    b.PrimitiveCollection<string>("Cuisines")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Description")
-                        .HasMaxLength(500)
+                        .HasMaxLength(2000)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .HasMaxLength(254)
                         .HasColumnType("TEXT");
 
+                    b.PrimitiveCollection<string>("Features")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FontStyle")
                         .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("HouseRules")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
@@ -845,6 +886,9 @@ namespace Cbplayground.Api.Migrations
                     b.Property<string>("PostalCode")
                         .HasMaxLength(10)
                         .HasColumnType("TEXT");
+
+                    b.Property<int?>("PriceLevel")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("RegionCode")
                         .HasMaxLength(5)
@@ -1253,6 +1297,15 @@ namespace Cbplayground.Api.Migrations
                         .WithMany()
                         .HasForeignKey("TenantId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.RestaurantFaq", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
 

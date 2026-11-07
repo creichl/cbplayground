@@ -44,7 +44,14 @@ public class Tenant
     public const int MaxPhoneLength = 30;
     public const int MaxEmailLength = 254;
     public const int MaxWebsiteLength = 200;
-    public const int MaxDescriptionLength = 500;
+    public const int MaxDescriptionLength = 2000;
+    public const int MaxHouseRulesLength = 1000;
+
+    /// <summary>The most cuisines a restaurant can name.</summary>
+    public const int MaxCuisines = 3;
+
+    public const int MinPriceLevel = 1;
+    public const int MaxPriceLevel = 4;
 
     public const int MaxNameLength = 100;
     public const int MaxSlugLength = 50;
@@ -92,8 +99,22 @@ public class Tenant
     /// <summary>The restaurant's own website, an absolute http or https URL.</summary>
     public string? Website { get; set; }
 
-    /// <summary>A short description for guests.</summary>
+    /// <summary>The description for guests ("About us"), in the restaurant's language; line breaks are kept.</summary>
     public string? Description { get; set; }
+
+    // The restaurant's details, maintained by the Tenant Admin and shown to guests (RestaurantDetailsEndpoints).
+
+    /// <summary>Up to <see cref="MaxCuisines"/> cuisines in the order the admin chose them, the main one first; empty when none.</summary>
+    public List<Cuisine> Cuisines { get; set; } = [];
+
+    /// <summary>From 1 (€, inexpensive) to 4 (€€€€, fine dining); null when not set.</summary>
+    public int? PriceLevel { get; set; }
+
+    /// <summary>The restaurant's features in the order of <see cref="RestaurantFeature"/>; empty when none.</summary>
+    public List<RestaurantFeature> Features { get; set; } = [];
+
+    /// <summary>House rules for guests, e.g. a dress code, in the restaurant's language; line breaks are kept.</summary>
+    public string? HouseRules { get; set; }
 
     // The restaurant's branding, maintained by the Tenant Admin. Every field is optional (null: the platform's default).
 

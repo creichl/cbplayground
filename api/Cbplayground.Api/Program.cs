@@ -231,6 +231,7 @@ app.MapReservationSettingsEndpoints();
 app.MapProfileEndpoints();
 app.MapBrandingEndpoints();
 app.MapGalleryEndpoints();
+app.MapRestaurantDetailsEndpoints();
 app.MapPublicRestaurantEndpoints();
 app.MapStaffReservationEndpoints();
 app.MapGuestEndpoints();

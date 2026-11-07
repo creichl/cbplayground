@@ -12,7 +12,7 @@ import {
   StoreIcon,
   UtensilsCrossedIcon,
 } from 'lucide-react'
-import { type ReactNode, useId, useMemo, useRef, useState } from 'react'
+import { Fragment, type ReactNode, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useViewTransitionState } from 'react-router'
 import { homePath, useCurrentUser } from '../api/auth.ts'
@@ -21,6 +21,7 @@ import { type Tenant, useTenants } from '../api/tenants.ts'
 import { primaryVariables } from '../brandTheme.ts'
 import { BrandLogo } from '../components/BrandLogo.tsx'
 import { headerHeight } from '../components/booking/layout.ts'
+import { PriceLevel } from '../components/booking/PriceLevel.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
@@ -325,7 +326,8 @@ function PageState({ icon, tone = 'neutral', title, text, action }: { icon: Reac
 /**
  * A restaurant as a card that is one link to its booking page, in the style of large marketplaces: the photo in 4:3 with
  * rounded corners, the card lifting a little and the photo zooming in softly under the pointer, with the logo as a badge on
- * a light surface in its lower left corner; below it the name, the city, the description cut to two lines and "Reserve a
+ * a light surface in its lower left corner; below it the name, a line with the cuisines, the price level and the city
+ * (e.g. "Bavarian · €€ · München"), the description cut to two lines and "Reserve a
  * table" with an arrow in the restaurant's accent colour. Without photo, or when it cannot be loaded, a calm surface in a
  * light tint of the accent colour (the platform's without one) with the logo or the name. Opening it, the photo moves into
  * the cover image of the booking page (view transition, app.css).
@@ -339,6 +341,12 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
   const to = `/r/${encodeURIComponent(tenant.slug)}`
   // Only the card being opened carries the name of the shared element: a name may only be on one element at a time.
   const opening = useViewTransitionState(to)
+  // Below the name, e.g. "Bavarian · €€ · München".
+  const facts = [
+    ...(tenant.cuisines.length > 0 ? [tenant.cuisines.map((cuisine) => t(`restaurantDetails.cuisines.${cuisine}`)).join(', ')] : []),
+    ...(tenant.priceLevel !== null ? [<PriceLevel key="price" level={tenant.priceLevel} />] : []),
+    ...(tenant.city !== null ? [tenant.city] : []),
+  ]
 
   const name = (
     <span aria-hidden="true" className="line-clamp-2 text-center font-display text-2xl wrap-anywhere">
@@ -376,7 +384,16 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
 
       <div className="flex flex-1 flex-col gap-1">
         <h2 className="font-display text-xl wrap-anywhere">{tenant.name}</h2>
-        {tenant.city !== null && <p className="text-sm text-muted-foreground">{tenant.city}</p>}
+        {facts.length > 0 && (
+          <p className="text-sm text-muted-foreground">
+            {facts.map((fact, index) => (
+              <Fragment key={index}>
+                {index > 0 && ' · '}
+                {fact}
+              </Fragment>
+            ))}
+          </p>
+        )}
         {tenant.description !== null && <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{tenant.description}</p>}
         <span className="mt-auto inline-flex items-center gap-1 pt-2 text-sm font-semibold text-primary-text">
           {t('home.reserve')}
