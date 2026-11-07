@@ -254,13 +254,13 @@ public static class PublicRestaurantEndpoints
             }
 
             var duration = await durationPolicy.GetDurationAsync(guests);
-            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online);
+            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online, countRemaining: true);
             return Results.Ok(new AvailabilityResponse(date, guests, duration, periods
                 .Select(p => new AvailabilityPeriod(
                     FormatTime(p.Period.Start),
                     FormatTime(p.Period.End),
                     p.Slots.Select(s => new AvailabilityTime(FormatTime(s.Time), s.FreeTables.Count > 0,
-                        s.FreeTables.Count > 0 && s.FreeTables.All(t => t.Kind == FreeTable.CombinationKind), s.Remaining)).ToList()))
+                        s.FreeTables.Count > 0 && s.FreeTables.All(t => t.Kind == FreeTable.CombinationKind), s.Remaining ?? 0)).ToList()))
                 .ToList()));
         }).RequireRateLimiting(ReadRateLimitPolicy);
 

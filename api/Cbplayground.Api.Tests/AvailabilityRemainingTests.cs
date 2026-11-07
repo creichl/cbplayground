@@ -1,5 +1,9 @@
 using System.Net;
 using System.Net.Http.Json;
+using Cbplayground.Api.Auth;
+using Cbplayground.Api.Data;
+using Cbplayground.Api.Reservations;
+using Microsoft.Extensions.DependencyInjection;
 using static Cbplayground.Api.Endpoints.PublicRestaurantEndpoints;
 using static Cbplayground.Api.Endpoints.ReservationSettingsEndpoints;
 
@@ -57,6 +61,25 @@ public class AvailabilityRemainingTests(ApiFactory factory) : IClassFixture<ApiF
         Assert.Equal(new AvailabilityTime("19:00", false, false, 0), await TimeAsync(anonymous, restaurant, date, "19:00", 2));
         // A reservation from 17:00 ends when they begin.
         Assert.Equal(3, (await TimeAsync(anonymous, restaurant, date, "17:00", 2)).Remaining);
+    }
+
+    [Fact]
+    public async Task Remaining_is_only_counted_for_the_guests_availability()
+    {
+        var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 2), ("2", 2), ("3", 2), ("4", 2))]);
+        var date = TestRestaurants.NextOpenDay(factory);
+        using var scope = factory.Services.CreateScope();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = restaurant.Id;
+        var service = scope.ServiceProvider.GetRequiredService<IAvailabilityService>();
+
+        // The calendar, the staff and the waitlist ask without it: nothing is counted.
+        var slots = (await service.GetSlotsAsync(date, 2, 120, ReservationSource.Online, cancellationToken: Token)).SelectMany(p => p.Slots).ToList();
+        Assert.NotEmpty(slots);
+        Assert.All(slots, slot => Assert.Null(slot.Remaining));
+
+        var counted = (await service.GetSlotsAsync(date, 2, 120, ReservationSource.Online, countRemaining: true, cancellationToken: Token))
+            .SelectMany(p => p.Slots);
+        Assert.All(counted, slot => Assert.Equal(3, slot.Remaining));
     }
 
     [Fact]

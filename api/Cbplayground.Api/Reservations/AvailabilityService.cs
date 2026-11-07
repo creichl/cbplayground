@@ -27,9 +27,9 @@ public record SlotPacing(int Max, int Booked);
 /// A possible start time and the tables free from it for the whole duration, in the order the system assigns them;
 /// <see cref="Pacing"/> is null when no pacing rule applies to it. <see cref="Remaining"/> is how many more parties of the
 /// same size could still get a table then, one after the other, at most <see cref="AvailabilityService.MaxRemaining"/>
-/// (0 when none is free).
+/// (0 when none is free); null unless it was asked for (countRemaining of <see cref="IAvailabilityService.GetSlotsAsync"/>).
 /// </summary>
-public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables, SlotPacing? Pacing, int Remaining);
+public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables, SlotPacing? Pacing, int? Remaining);
 
 /// <summary>The possible start times within one opening window of a day.</summary>
 public record PeriodSlots(OpenPeriod Period, IReadOnlyList<TimeSlot> Slots);
@@ -61,10 +61,12 @@ public interface IAvailabilityService
     /// The start times of <paramref name="date"/> in 15-minute steps, grouped by opening window, with the free tables
     /// for <paramref name="guests"/>. Times in the past (and, online, within the lead time, days beyond the booking horizon
     /// and parties larger than the largest online party) have no free tables.
-    /// Empty when the restaurant is closed or has no location.
+    /// Empty when the restaurant is closed or has no location. With <paramref name="countRemaining"/> each time also counts
+    /// how many more parties could still get a table (<see cref="TimeSlot.Remaining"/>), which costs a few more passes over
+    /// the tables per free time; only the guest's availability shows it.
     /// </summary>
     Task<IReadOnlyList<PeriodSlots>> GetSlotsAsync(DateOnly date, int guests, int durationMinutes, ReservationSource channel,
-        Guid? ignoreReservationId = null, CancellationToken cancellationToken = default);
+        Guid? ignoreReservationId = null, bool countRemaining = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks a reservation and picks its tables: <paramref name="tableIds"/> if given and free (one table, or exactly the tables of
@@ -156,7 +158,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     }
 
     public async Task<IReadOnlyList<PeriodSlots>> GetSlotsAsync(DateOnly date, int guests, int durationMinutes, ReservationSource channel,
-        Guid? ignoreReservationId = null, CancellationToken cancellationToken = default)
+        Guid? ignoreReservationId = null, bool countRemaining = false, CancellationToken cancellationToken = default)
     {
         if (await GetLocalNowAsync(cancellationToken) is not { } now)
         {
@@ -189,7 +191,9 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
                     ? []
                     : FreeTables(floor, busy, blocks, start, end, settings.BufferMinutes, guests, channel);
                 var slotPacing = pacing.For(start);
-                var remaining = Remaining(floor, busy, blocks, start, end, settings.BufferMinutes, guests, channel, online ? slotPacing : null, free);
+                int? remaining = countRemaining
+                    ? Remaining(floor, busy, blocks, start, end, settings.BufferMinutes, guests, channel, online ? slotPacing : null, free)
+                    : null;
                 slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free, slotPacing, remaining));
             }
             result.Add(new PeriodSlots(period, slots));
