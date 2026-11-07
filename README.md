@@ -152,7 +152,7 @@ This README describes the full product vision.
 │   │   ├── Auth/                 # roles, policies, tenant claim
 │   │   ├── Backups/              # daily backup of the database and the uploaded images
 │   │   ├── Data/                 # AppDbContext, entities, development seed
-│   │   │   └── SeedAssets/       # floor plans, logos, cover images, area photos and gallery photos of the demo restaurants (development seed), CREDITS.md
+│   │   │   └── SeedAssets/       # floor plans, logos, cover images, area photos, gallery and dish photos of the demo restaurants (development seed), CREDITS.md
 │   │   ├── Endpoints/            # endpoint groups, one file per area
 │   │   ├── FloorPlans/           # schematic floor plan: table sizes, automatic arrangement, suggested rooms
 │   │   ├── Migrations/           # EF Core migrations
@@ -205,6 +205,7 @@ In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo res
 | Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes | Instant confirmation, the guest picks the table, 120 minutes |
 | Branding | Light, `Rustic`, warm green `#5a7d3a`, logo and cover image | Light, `Classic`, Danube blue `#1f5f8b`, logo and cover image | Dark, `Elegant`, champagne gold `#c9a96e`, logo and cover image |
 | Photo gallery | 7 photos with German captions: Schweinsbraten, Dunkles vom Holzfass, the Stube with the tiled stove, beer garden under old trees, Weißwurst with Brezn, a Helles in the garden, Kaiserschmarrn | 6 photos with Serbian (Latin) captions: riblja čorba, mixed grill, red wine at sunset, evening on the Danube, tamburaši, a laid table | 7 photos with German captions: signature cocktails, sharing plates, the bar in the evening, Vienna at sunset, the lounge corner, champagne, the view over the roofs of Vienna |
+| Menu | German, in EUR: 5 sections (Brotzeit & Vorspeisen, Suppen, Hauptgerichte, Nachspeisen, Getränke), 22 dishes, 4 recommendations, 7 dish photos | Serbian (Latin), in RSD: 5 sections (Predjela, Čorbe i kuvana jela, Sa roštilja i iz Dunava, Dezerti, Pića), 25 dishes, 4 recommendations, 10 dish photos | German, in EUR: 5 sections (Zum Teilen, Hauptgerichte, Desserts, Signature-Cocktails, Champagner & Wein), 23 dishes, 4 recommendations, 10 dish photos |
 
 So both confirmation modes and both table selection modes can be shown, and the guest's table choice on floor plan images (Kafana Dunav's "Sala", both areas of Rooftop Belvedere) and on a drawn room (Kafana Dunav's "Bašta", the example of an area without image).
 
@@ -226,6 +227,8 @@ The logos (`*-logo.png`, 800 pixels wide, about 3 : 1) are wordmarks with a smal
 
 The gallery photos (`*-gallery-*.jpg`, 20 files) are real photos under CC0 1.0 as well, found on Wikimedia Commons, many of them originally published on Unsplash, Pixabay, PIXNIO or Flickr under CC0. They are JPEG files of 1600 × 1067 pixels (cropped to 3:2) and at most 350 KB each; visible logos and labels (a brewery's name on a plate and on a glass, a bottle label) are blurred, and no face can be recognised. The motifs fit the restaurants but were not all taken there: the beer garden is Munich's Hirschgarten, the fish soup comes from Madeira, the lounge is a hotel lobby in Budapest.
 
+The dish photos of the menus (`*-menu-*.jpg`, 27 files) are real photos under CC0 1.0 as well, from Wikimedia Commons (one originally published on Pixabay, one on Unsplash under CC0). They are JPEG files of 1200 × 900 pixels (cropped to 4:3) and at most 250 KB each, without visible logos, brands or recognisable faces (a maker's mark on cutlery, a name on a plate rim and a branded jar were cropped off). Dishes for which no photo with a clear CC0 licence was found have no photo; the demo menus are written to fit the photos (e.g. Kafana Dunav's trout and Rooftop Belvedere's lobster risotto). The seed copies them into `Uploads:Path` under a new file name, like the gallery photos.
+
 Image sources: `SeedAssets/CREDITS.md` lists source, author, licence, retrieval date and changes of every file in the folder, and for the floor plans the materials (ambientCG), models (Poly Haven) and the font they use, all under CC0 1.0 or the SIL Open Font License. No file without a clear licence, no material from Freepik, Shutterstock or Envato and no logos or brands of others; a test checks that every file in the folder has its complete entry.
 
 The seed is idempotent and never overwrites what an admin maintained. For each restaurant it only adds a part the restaurant has nothing of yet:
@@ -246,7 +249,7 @@ Because areas are only added to a restaurant without areas, an existing developm
 
 The photo cover images replaced generated ones: an existing development database keeps the old cover images, because its branding is already set, while its demo areas get their photos and descriptions on the next start. The new images (floor plans, logos, cover images) are certain to appear only after resetting the demo data; then all three restaurants, their branding, floor plans, area photos and galleries are complete. An existing development database gets the galleries on the next start, because its restaurants have no gallery photos yet.
 
-A demo image whose file is no longer in the uploads folder (e.g. after a reset while an API was still running, see [Run the API](#run-the-api)) is copied again from its seed asset on the next start: the logo and cover image of a demo restaurant, the floor plan and photo of a demo area (by its name) and a gallery photo with a demo caption; a lost image the seed cannot assign, such as a gallery photo with an own caption, stays missing. To start from scratch, stop the API and start it with `dotnet run -- --reset-demo-data`.
+A demo image whose file is no longer in the uploads folder (e.g. after a reset while an API was still running, see [Run the API](#run-the-api)) is copied again from its seed asset on the next start: the logo and cover image of a demo restaurant, the floor plan and photo of a demo area (by its name), a gallery photo with a demo caption and the photo of a demo dish (by its name); a lost image the seed cannot assign, such as a gallery photo with an own caption, stays missing. To start from scratch, stop the API and start it with `dotnet run -- --reset-demo-data`.
 
 Outside Development nothing of this is created; there the Superadmin creates the restaurants and their first admins under `/superadmin` (see [Superadmin](#superadmin)). The migrations do not create a Superadmin user: outside Development it has to be added to the database once by hand.
 
