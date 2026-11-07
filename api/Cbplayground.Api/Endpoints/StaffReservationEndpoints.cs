@@ -336,7 +336,8 @@ public static class StaffReservationEndpoints
         });
 
         // The undo of a walk-in's arrival: a walk-in was never expected, so it is removed instead of becoming a confirmed
-        // reservation. Only an arrived walk-in can be deleted; every other reservation keeps its history (409).
+        // reservation; a party seated from the waitlist is back on it. Only an arrived walk-in can be deleted; every other
+        // reservation keeps its history (409).
         group.MapDelete("/reservations/{id:guid}", async (Guid id, AppDbContext db, CancellationToken cancellationToken) =>
         {
             var reservation = await db.Reservations.SingleOrDefaultAsync(r => r.Id == id, cancellationToken);
@@ -349,6 +350,14 @@ public static class StaffReservationEndpoints
                 return ErrorResponse.Result("cannot_delete_reservation", StatusCodes.Status409Conflict);
             }
 
+            // A party seated from the waitlist waits again.
+            var waitlistEntry = await db.WaitlistEntries.SingleOrDefaultAsync(e => e.SeatedReservationId == id, cancellationToken);
+            if (waitlistEntry is not null)
+            {
+                waitlistEntry.Status = WaitlistStatus.Waiting;
+                waitlistEntry.SeatedReservationId = null;
+                waitlistEntry.UpdatedAtUtc = DateTime.UtcNow;
+            }
             db.Reservations.Remove(reservation);
             await db.SaveChangesAsync(cancellationToken);
             return Results.NoContent();
@@ -411,61 +420,77 @@ public static class StaffReservationEndpoints
         group.MapPost("/walk-ins", async (WalkInRequest request, ClaimsPrincipal user, ITenantContext tenantContext, AppDbContext db,
             IAvailabilityService availability, IReservationDurationPolicy durationPolicy, CancellationToken cancellationToken) =>
         {
-            if (request.Guests < 1)
-            {
-                return BadRequest("invalid_party_size");
-            }
-            if (request.DurationMinutes is { } minutes && !ReservationSettingsEndpoints.IsValidDuration(minutes))
-            {
-                return BadRequest("invalid_duration");
-            }
-            var name = string.IsNullOrWhiteSpace(request.Name) ? Reservation.WalkInName : request.Name;
-            var (guest, guestError) = GuestDetails.Parse(name, request.Phone, null, request.Notes, contactRequired: false);
-            if (guest is null)
-            {
-                return BadRequest(guestError!);
-            }
-            var duration = request.DurationMinutes ?? await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
-            var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
-
             await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-            var check = await availability.CheckWalkInAsync(request.Guests, duration, cancellationToken);
-            if (check.Error is not null)
+            var (walkIn, error) = await AddWalkInAsync(request, user, tenantContext, db, availability, durationPolicy, cancellationToken);
+            if (walkIn is null)
             {
-                return BadRequest(check.Error);
+                return error!;
             }
-            var table = request.TableId is null ? check.FreeTables.FirstOrDefault() : check.FreeTables.FirstOrDefault(t => t.Id == request.TableId);
-            if (table is null)
-            {
-                return CheckError(request.TableId is null ? "slot_unavailable" : "table_unavailable");
-            }
-
-            var now = DateTime.UtcNow;
-            var reservation = new Reservation
-            {
-                GuestName = guest.Name,
-                Status = ReservationStatus.Arrived,
-                Source = ReservationSource.WalkIn,
-                ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
-                Language = DefaultLanguage(countryCode),
-                CreatedAtUtc = now,
-                TableId = table.Id,
-                Tables = [new ReservationTable { TableId = table.Id }],
-                StartLocal = check.Start,
-                EndLocal = check.Start.AddMinutes(duration),
-                DurationMinutes = duration,
-                PartySize = request.Guests,
-                GuestPhone = guest.Phone,
-                Notes = guest.Notes,
-                UpdatedAtUtc = now,
-            };
-            db.Reservations.Add(reservation);
-            ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
             await db.SaveChangesAsync(cancellationToken);
             await transaction.CommitAsync(cancellationToken);
 
-            return Results.Created($"/api/staff/reservations/{reservation.Id}", await LoadResponseAsync(db, reservation.Id));
+            return Results.Created($"/api/staff/reservations/{walkIn.Id}", await LoadResponseAsync(db, walkIn.Id));
         });
+    }
+
+    /// <summary>
+    /// Checks a walk-in (see <see cref="WalkInRequest"/>) and adds it with its history to <paramref name="db"/>, not saved yet, so
+    /// the caller saves it in its transaction together with its own changes (e.g. the waitlist). Returns the error otherwise.
+    /// </summary>
+    internal static async Task<(Reservation? WalkIn, IResult? Error)> AddWalkInAsync(WalkInRequest request, ClaimsPrincipal user,
+        ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy,
+        CancellationToken cancellationToken)
+    {
+        if (request.Guests < 1)
+        {
+            return (null, BadRequest("invalid_party_size"));
+        }
+        if (request.DurationMinutes is { } minutes && !ReservationSettingsEndpoints.IsValidDuration(minutes))
+        {
+            return (null, BadRequest("invalid_duration"));
+        }
+        var name = string.IsNullOrWhiteSpace(request.Name) ? Reservation.WalkInName : request.Name;
+        var (guest, guestError) = GuestDetails.Parse(name, request.Phone, null, request.Notes, contactRequired: false);
+        if (guest is null)
+        {
+            return (null, BadRequest(guestError!));
+        }
+        var duration = request.DurationMinutes ?? await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
+        var countryCode = await db.Tenants.Where(t => t.Id == tenantContext.TenantId).Select(t => t.CountryCode).SingleAsync(cancellationToken);
+
+        var check = await availability.CheckWalkInAsync(request.Guests, duration, cancellationToken);
+        if (check.Error is not null)
+        {
+            return (null, BadRequest(check.Error));
+        }
+        var table = request.TableId is null ? check.FreeTables.FirstOrDefault() : check.FreeTables.FirstOrDefault(t => t.Id == request.TableId);
+        if (table is null)
+        {
+            return (null, CheckError(request.TableId is null ? "slot_unavailable" : "table_unavailable"));
+        }
+
+        var now = DateTime.UtcNow;
+        var reservation = new Reservation
+        {
+            GuestName = guest.Name,
+            Status = ReservationStatus.Arrived,
+            Source = ReservationSource.WalkIn,
+            ReferenceCode = await ReferenceCode.GenerateUniqueAsync(db, cancellationToken),
+            Language = DefaultLanguage(countryCode),
+            CreatedAtUtc = now,
+            TableId = table.Id,
+            Tables = [new ReservationTable { TableId = table.Id }],
+            StartLocal = check.Start,
+            EndLocal = check.Start.AddMinutes(duration),
+            DurationMinutes = duration,
+            PartySize = request.Guests,
+            GuestPhone = guest.Phone,
+            Notes = guest.Notes,
+            UpdatedAtUtc = now,
+        };
+        db.Reservations.Add(reservation);
+        ReservationHistory.Record(db, reservation, ReservationEventKind.Created, await ReservationEditor.StaffAsync(user, db, cancellationToken), now);
+        return (reservation, null);
     }
 
     /// <summary>The checked input of a request; <see cref="Error"/> is set when it is invalid.</summary>
@@ -563,7 +588,7 @@ public static class StaffReservationEndpoints
     internal static List<Table> InNumberOrder(IEnumerable<Table> tables) =>
         tables.OrderBy(t => t.Number.Length).ThenBy(t => t.Number, StringComparer.Ordinal).ToList();
 
-    private static async Task<ReservationResponse> LoadResponseAsync(AppDbContext db, Guid id) =>
+    internal static async Task<ReservationResponse> LoadResponseAsync(AppDbContext db, Guid id) =>
         (await LoadResponsesAsync(db, db.Reservations.Where(r => r.Id == id))).Single();
 
     /// <summary><paramref name="tables"/> are all tables of the reservation in number order; the table number is their joined label, e.g. "4 + 5".</summary>

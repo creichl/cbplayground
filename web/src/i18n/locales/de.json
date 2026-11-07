@@ -913,7 +913,8 @@
       "upcoming": "Erwartet",
       "seated": "Am Tisch",
       "finished": "Erledigt",
-      "requests": "Anfragen"
+      "requests": "Anfragen",
+      "waitlist": "Warteliste"
     },
     "empty": {
       "upcoming": "Es werden keine Gäste mehr erwartet.",
@@ -944,6 +945,62 @@
         "closed": "Geschlossen",
         "past": "Vorbei"
       }
+    }
+  },
+  "waitlist": {
+    "add": "Auf die Warteliste",
+    "titleNew": "Auf die Warteliste setzen",
+    "titleEdit": "Eintrag der Warteliste ändern",
+    "seatTitle": "{{name}} setzen",
+    "seat": "Setzen",
+    "seatParty": "Gäste setzen",
+    "left": "Gegangen",
+    "save": "Speichern",
+    "notSaved": "Der Eintrag wurde nicht gespeichert",
+    "quotedWait": "Genannte Wartezeit",
+    "quotedNone": "Keine",
+    "quotedOwn": "Eigener Wert",
+    "quotedOwnLabel": "Minuten",
+    "minutes_one": "{{count}} Min.",
+    "minutes_other": "{{count}} Min.",
+    "hours": "{{hours}} Std.",
+    "hoursMinutes": "{{hours}} Std. {{minutes}} Min.",
+    "party_one": "{{count}} Person",
+    "party_other": "{{count}} Personen",
+    "waited": "Wartet seit {{duration}}",
+    "quoted": "genannt {{duration}}",
+    "quotedExceeded": "genannt {{duration}}, überschritten",
+    "nextFreeAt": "Nächster Tisch frei um {{time}}",
+    "tableFreeNow": "Ein Tisch ist jetzt frei",
+    "noTableToday": "Heute wird kein Tisch mehr frei",
+    "open": "Eintrag von {{name}} ändern, auf der Liste seit {{time}}",
+    "noMatches": "Niemand auf der Warteliste passt zur Suche.",
+    "groupWaiting": "Wartend",
+    "groupDone": "Gesetzt oder gegangen",
+    "status": {
+      "waiting": "Wartet",
+      "seated": "Gesetzt",
+      "left": "Gegangen"
+    },
+    "empty": {
+      "today": "Niemand wartet.",
+      "past": "An diesem Tag stand niemand auf der Warteliste.",
+      "future": "Die Warteliste wird am Tag selbst geführt."
+    },
+    "validation": {
+      "name": "Bitte geben Sie einen Namen ein."
+    },
+    "toast": {
+      "added": "{{name}} steht auf der Warteliste.",
+      "left": "{{name}} ist gegangen.",
+      "waitingAgain": "{{name}} wartet wieder."
+    },
+    "errors": {
+      "title": "Die Warteliste wurde nicht geändert",
+      "invalidQuotedWait": "Bitte geben Sie eine Wartezeit von 1 bis 240 Minuten ein.",
+      "notWaiting": "Diese Gäste warten nicht mehr.",
+      "notLeft": "Diese Gäste sind nicht gegangen.",
+      "notToday": "Nur die Warteliste von heute kann geändert werden."
     }
   },
   "notFound": {
@@ -1265,6 +1322,7 @@
       "reservations": "Reservierungen",
       "seated": "Jetzt am Tisch",
       "noShows": "Nicht erschienen",
+      "waiting": "Wartend",
       "openRequests": "Offene Anfragen",
       "finished": "Erledigt",
       "covers_one": "{{count}} Gast",

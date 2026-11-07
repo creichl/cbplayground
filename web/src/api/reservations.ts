@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import { useCurrentUser } from './auth.ts'
 import { apiDelete, apiGet, apiPost, apiPut } from './client.ts'
+import { seatWaitlistEntry, updateWaitlistEntry, type WaitlistInput, waitlistKey } from './waitlist.ts'
 
 export type ReservationStatus = 'Requested' | 'Confirmed' | 'Arrived' | 'Late' | 'Cancelled' | 'Declined' | 'NoShow' | 'Completed'
 
@@ -368,7 +369,8 @@ export function useSetReservationStatus() {
 
 /**
  * Removes an arrived walk-in, the undo of its arrival (a walk-in was never expected, so it does not become a confirmed
- * reservation), and updates the lists. Also usable outside a component, e.g. from the notification after seating it.
+ * reservation), and updates the lists; a party seated from the waitlist is back on it. Also usable outside a component, e.g.
+ * from the notification after seating it.
  */
 export async function deleteWalkIn(queryClient: QueryClient, id: string) {
   try {
@@ -385,6 +387,8 @@ export async function deleteWalkIn(queryClient: QueryClient, id: string) {
     queryClient.invalidateQueries({ queryKey: reservationsKey }),
     queryClient.invalidateQueries({ queryKey: availabilityKey }),
     queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
+    // A party seated from the waitlist waits again.
+    queryClient.invalidateQueries({ queryKey: waitlistKey }),
   ])
 }
 
@@ -395,6 +399,24 @@ export function useCreateWalkIn() {
     mutationFn: (walkIn: WalkInInput) => apiPost<Reservation>('/staff/walk-ins', walkIn),
     onSuccess: (reservation) => applyChange(queryClient, reservation),
     // Usually the table has been taken in the meantime: show the tables that are free now.
+    onError: () => queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
+  })
+}
+
+/**
+ * Seats a party of the waitlist now as a walk-in, like useCreateWalkIn; `changes` (e.g. the party size changed at the door) are
+ * saved to the entry first. Returns the walk-in.
+ */
+export function useSeatFromWaitlist() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ entryId, changes, tableId }: { entryId: string; changes: WaitlistInput | null; tableId: string | null }) => {
+      if (changes !== null) {
+        await updateWaitlistEntry(queryClient, entryId, changes)
+      }
+      return (await seatWaitlistEntry(queryClient, entryId, tableId)).reservation
+    },
+    onSuccess: (reservation) => applyChange(queryClient, reservation),
     onError: () => queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
   })
 }

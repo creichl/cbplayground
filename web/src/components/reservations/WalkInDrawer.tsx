@@ -7,7 +7,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../../api/client.ts'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
-import { defaultWalkInGuests, type Reservation, useCreateWalkIn, useWalkInTables } from '../../api/reservations.ts'
+import { defaultWalkInGuests, type Reservation, useCreateWalkIn, useSeatFromWaitlist, useWalkInTables } from '../../api/reservations.ts'
+import type { WaitlistEntry, WaitlistInput } from '../../api/waitlist.ts'
 import { formatTime } from '../../i18n/format.ts'
 import { guestName } from './status.ts'
 import { removeWalkIn, removeWalkInQuestion } from './walkInRemoval.ts'
@@ -18,6 +19,10 @@ const maxNotesLength = 500
 type WalkInDrawerProps = {
   /** The table the walk-in should get, e.g. after a tap on a free table of the floor plan; otherwise the suggested one. */
   tableId?: string
+  /** The waiting party to seat: the drawer starts with its details, and seating it takes it off the waitlist. */
+  waitlistEntry?: WaitlistEntry
+  /** Puts the party on the waitlist instead, offered when no table is free for it; the drawer closes. */
+  onAddToWaitlist?: (initial: Partial<WaitlistInput>) => void
   onClose: () => void
 }
 
@@ -95,17 +100,20 @@ function SeatedNotice({ walkIn, notificationId }: { walkIn: Reservation; notific
 /**
  * Seats a guest without a reservation now: party size, then a table free now (the suggestion is preselected and can be
  * changed), then optionally name, phone and a note. The reservation starts as arrived. A chosen table that is not free (any
- * more) is never swapped for another one: the drawer says so and the user picks a table.
+ * more) is never swapped for another one: the drawer says so and the user picks a table. A party from the waitlist starts with
+ * its details; when no table is free for a new party, the drawer offers to put it on the waitlist.
  */
-export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerProps) {
+export function WalkInDrawer({ tableId: wantedTableId, waitlistEntry, onAddToWaitlist, onClose }: WalkInDrawerProps) {
   const { t } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
   const createWalkIn = useCreateWalkIn()
-  const [guestsValue, setGuestsValue] = useState<number | string>(defaultWalkInGuests)
+  const seatFromWaitlist = useSeatFromWaitlist()
+  const seating = waitlistEntry === undefined ? createWalkIn : seatFromWaitlist
+  const [guestsValue, setGuestsValue] = useState<number | string>(waitlistEntry?.guests ?? defaultWalkInGuests)
   const [chosenTableId, setChosenTableId] = useState<string | null>(wantedTableId ?? null)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [notes, setNotes] = useState('')
+  const [name, setName] = useState(waitlistEntry?.name ?? '')
+  const [phone, setPhone] = useState(waitlistEntry?.phone ?? '')
+  const [notes, setNotes] = useState(waitlistEntry?.notes ?? '')
 
   const guests = typeof guestsValue === 'number' && Number.isInteger(guestsValue) && guestsValue >= 1 ? guestsValue : null
   const freeTables = useWalkInTables(guests)
@@ -114,20 +122,29 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
   const chosenTableTaken = chosenTableId !== null && freeTables.data !== undefined && !tables.some((table) => table.id === chosenTableId)
   const tableId = chosenTableId === null ? (tables.at(0)?.id ?? null) : chosenTableTaken ? null : chosenTableId
 
+  const onSeated = (walkIn: Reservation) => {
+    const id = randomId('walk-in-')
+    notifications.show({ id, color: 'green', autoClose: seatedNoticeMs, message: <SeatedNotice walkIn={walkIn} notificationId={id} /> })
+    onClose()
+  }
+
   const submit = () => {
     if (guests === null || tableId === null) {
       return
     }
-    createWalkIn.mutate(
-      { guests, tableId, name: name.trim() || null, phone: phone.trim() || null, notes: notes.trim() || null },
-      {
-        onSuccess: (walkIn) => {
-          const id = randomId('walk-in-')
-          notifications.show({ id, color: 'green', autoClose: seatedNoticeMs, message: <SeatedNotice walkIn={walkIn} notificationId={id} /> })
-          onClose()
-        },
-      },
-    )
+    const details = { name: name.trim() || null, phone: phone.trim() || null, notes: notes.trim() || null }
+    if (waitlistEntry === undefined) {
+      createWalkIn.mutate({ guests, tableId, ...details }, { onSuccess: onSeated })
+      return
+    }
+    // The party waits under its name, so an emptied name keeps it; changes made at the door are saved to the entry first.
+    const changes = { ...details, name: details.name ?? waitlistEntry.name, guests, quotedWaitMinutes: waitlistEntry.quotedWaitMinutes }
+    const changed =
+      changes.guests !== waitlistEntry.guests ||
+      changes.name !== waitlistEntry.name ||
+      changes.phone !== waitlistEntry.phone ||
+      changes.notes !== waitlistEntry.notes
+    seatFromWaitlist.mutate({ entryId: waitlistEntry.id, changes: changed ? changes : null, tableId }, { onSuccess: onSeated })
   }
 
   return (
@@ -138,7 +155,7 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
       size={isMobile ? '100%' : 'md'}
       title={
         <Text fw={650} size="lg">
-          {t('reservations.walkIn.title')}
+          {waitlistEntry === undefined ? t('reservations.walkIn.title') : t('waitlist.seatTitle', { name: waitlistEntry.name })}
         </Text>
       }
     >
@@ -169,7 +186,18 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
             </Alert>
           ) : tables.length === 0 ? (
             <Alert color="orange" variant="light">
-              {t('reservations.walkIn.noTable', { count: guests })}
+              <Stack gap="xs" align="flex-start">
+                <Text size="sm">{t('reservations.walkIn.noTable', { count: guests })}</Text>
+                {waitlistEntry === undefined && onAddToWaitlist !== undefined && (
+                  <Button
+                    variant="light"
+                    color="orange"
+                    onClick={() => onAddToWaitlist({ guests, name: name.trim(), phone: phone.trim() || null, notes: notes.trim() || null })}
+                  >
+                    {t('waitlist.add')}
+                  </Button>
+                )}
+              </Stack>
             </Alert>
           ) : (
             <Stack gap={4}>
@@ -187,7 +215,7 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
                 value={tableId}
                 onChange={(id) => {
                   setChosenTableId(id)
-                  createWalkIn.reset()
+                  seating.reset()
                 }}
                 placeholder={t('reservations.walkIn.chooseTable')}
                 error={chosenTableTaken}
@@ -204,7 +232,7 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
 
           <TextInput
             label={t('reservations.form.name')}
-            description={t('reservations.walkIn.nameDescription')}
+            description={waitlistEntry === undefined ? t('reservations.walkIn.nameDescription') : undefined}
             maxLength={100}
             size="md"
             value={name}
@@ -228,9 +256,9 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
             onChange={(event) => setNotes(event.currentTarget.value)}
           />
 
-          {createWalkIn.error !== null && (
+          {seating.error !== null && (
             <Alert color="red" variant="light" title={t('reservations.walkIn.notSeated')}>
-              {walkInErrorMessage(createWalkIn.error, t)}
+              {walkInErrorMessage(seating.error, t)}
             </Alert>
           )}
 
@@ -238,8 +266,8 @@ export function WalkInDrawer({ tableId: wantedTableId, onClose }: WalkInDrawerPr
             <Button variant="default" size="md" onClick={onClose}>
               {t('common.cancel')}
             </Button>
-            <Button type="submit" size="md" loading={createWalkIn.isPending} disabled={guests === null || tableId === null}>
-              {t('reservations.walkIn.seat')}
+            <Button type="submit" size="md" loading={seating.isPending} disabled={guests === null || tableId === null}>
+              {t(waitlistEntry === undefined ? 'reservations.walkIn.seat' : 'waitlist.seatParty')}
             </Button>
           </Group>
         </Stack>
