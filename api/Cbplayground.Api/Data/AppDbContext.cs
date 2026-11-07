@@ -42,6 +42,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<ReservationEvent> ReservationEvents => Set<ReservationEvent>();
 
+    public DbSet<Guest> Guests => Set<Guest>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -219,6 +221,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             reservation.Property(r => r.GuestPhone).HasMaxLength(Reservation.MaxPhoneLength);
             reservation.Property(r => r.GuestEmail).HasMaxLength(Reservation.MaxEmailLength);
             reservation.Property(r => r.Notes).HasMaxLength(Reservation.MaxNotesLength);
+            reservation.Property(r => r.Occasion).HasConversion<string>().HasMaxLength(20);
+            // Deleting a guest anonymises their reservations first (GuestEndpoints); the reservations stay.
+            reservation.HasOne<Guest>().WithMany().HasForeignKey(r => r.GuestId).OnDelete(DeleteBehavior.SetNull);
             reservation.Property(r => r.ReferenceCode).HasMaxLength(Reservation.ReferenceCodeLength);
             reservation.Property(r => r.Language).HasMaxLength(10);
             reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
@@ -249,6 +254,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 change.ToJson();
                 change.Property(c => c.Field).HasConversion<string>();
             });
+        });
+
+        modelBuilder.Entity<Guest>(guest =>
+        {
+            guest.HasOne<Tenant>().WithMany().HasForeignKey(g => g.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // A phone number or email address belongs to at most one guest of a restaurant.
+            guest.HasIndex(g => new { g.TenantId, g.Phone }).IsUnique().HasFilter("\"Phone\" IS NOT NULL");
+            guest.HasIndex(g => new { g.TenantId, g.Email }).IsUnique().HasFilter("\"Email\" IS NOT NULL");
+            guest.HasIndex(g => new { g.TenantId, g.Name });
+            guest.Property(g => g.Name).HasMaxLength(Guest.MaxNameLength);
+            guest.Property(g => g.Phone).HasMaxLength(Guest.MaxPhoneLength);
+            guest.Property(g => g.Email).HasMaxLength(Guest.MaxEmailLength);
+            guest.Property(g => g.Notes).HasMaxLength(Guest.MaxNotesLength);
+            guest.Property(g => g.AllergyNotes).HasMaxLength(Guest.MaxAllergyNotesLength);
+            // Stored as a JSON array of the names, e.g. ["Vip","Regular"].
+            guest.PrimitiveCollection(g => g.Tags).ElementType().HasConversion<string>();
         });
 
         // The roles are fixed, so the migrations create them in every environment.

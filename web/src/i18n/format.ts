@@ -17,6 +17,17 @@ export function formatShortDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { weekday: 'short', day: 'numeric', month: 'short' }).format(toDate(date))
 }
 
+/** A date as day and month in figures, e.g. "31.10." or "10/31", for the axis of a chart. */
+export function formatDayMonth(date: string, language: string) {
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'numeric' }).format(toDate(date))
+}
+
+/** The short name of a weekday, 1 (Monday) to 7 (Sunday) as in ISO 8601, e.g. "Mo" or "Mon". */
+export function formatWeekday(weekday: number, language: string) {
+  // 1 January 2024 was a Monday.
+  return new Intl.DateTimeFormat(language, { weekday: 'short' }).format(new Date(2024, 0, weekday))
+}
+
 /** A date with weekday and year, e.g. "Sa., 31. Okt. 2026" or "Sat, Oct 31, 2026". Also the format of the date pickers. */
 export function formatDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(toDate(date))

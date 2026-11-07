@@ -5,7 +5,7 @@ import { screenshot } from './screenshot.ts'
 test.describe('Admin structure', () => {
   /** The sidebar's groups with their entries, in their order. */
   const groups = {
-    Service: ['Overview', 'Service screen'],
+    Service: ['Overview', 'Service screen', 'Reports'],
     Restaurant: ['Profile', 'Appearance', 'Areas & tables', 'Opening hours'],
     Bookings: ['Reservation settings', 'Website embed'],
     Team: ['Staff'],

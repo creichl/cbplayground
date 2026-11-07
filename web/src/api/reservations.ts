@@ -4,11 +4,26 @@ import { useEffect, useState } from 'react'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import { useCurrentUser } from './auth.ts'
 import { apiDelete, apiGet, apiPost, apiPut } from './client.ts'
+import { guestsKey } from './guests.ts'
 
 export type ReservationStatus = 'Requested' | 'Confirmed' | 'Arrived' | 'Late' | 'Cancelled' | 'Declined' | 'NoShow' | 'Completed'
 
 /** Online: booked by the guest; Staff: entered by the restaurant, e.g. on the phone; WalkIn: a guest without a reservation. */
 export type ReservationSource = 'Online' | 'Staff' | 'WalkIn'
+
+/** What the guests celebrate or why they come; "None" when nothing is given. The list is fixed, as on the server (Data/Reservation.cs). */
+export type Occasion = 'None' | 'Birthday' | 'Anniversary' | 'Business' | 'Date' | 'Celebration' | 'Other'
+
+/** A label the staff give a guest, from a fixed set (Data/Guest.cs). */
+export type GuestTag = 'Vip' | 'Regular' | 'Press' | 'Staff' | 'Difficult'
+
+/** What the front desk sees of the guest at a reservation; `visits` (arrived or left) includes this reservation. */
+export type GuestSummary = {
+  tags: GuestTag[]
+  hasAllergies: boolean
+  visits: number
+  noShows: number
+}
 
 /** A reservation, as returned by /api/staff/reservations. Dates are "YYYY-MM-DD", times "HH:mm" in the restaurant's local time; the end may be "24:00". */
 export type Reservation = {
@@ -36,6 +51,10 @@ export type Reservation = {
   phone: string | null
   email: string | null
   notes: string | null
+  occasion: Occasion
+  /** The guest's profile, found by the phone number or email address; null without either, e.g. for a walk-in without contact. */
+  guestId: string | null
+  guest: GuestSummary | null
   language: string
   /** When the guest left ("HH:mm", status Completed); null otherwise. */
   completedTime: string | null
@@ -50,11 +69,11 @@ export type ReservationActor = 'Guest' | 'Staff' | 'System'
 
 export type ReservationEventKind = 'Created' | 'Updated' | 'StatusChanged' | 'CancelledByGuest'
 
-export type ReservationField = 'Date' | 'Time' | 'PartySize' | 'Table' | 'Duration' | 'Name' | 'Phone' | 'Email' | 'Notes' | 'Status'
+export type ReservationField = 'Date' | 'Time' | 'PartySize' | 'Table' | 'Duration' | 'Name' | 'Phone' | 'Email' | 'Notes' | 'Occasion' | 'Status'
 
 /**
  * A changed field. The values are text: date "YYYY-MM-DD", time "HH:mm", party size and duration (minutes) as numbers, the table's
- * number, the status; null when empty.
+ * number, the occasion, the status; null when empty (also for no occasion).
  */
 export type ReservationChange = { field: ReservationField; from: string | null; to: string | null }
 
@@ -159,6 +178,7 @@ export type ReservationInput = {
   phone: string | null
   email: string | null
   notes: string | null
+  occasion: Occasion
 }
 
 /**
@@ -170,7 +190,7 @@ const maxRequestDaysAhead = 365
 /** The front desk sees new online bookings without reloading the page. */
 const refreshIntervalMs = 60_000
 
-const reservationsKey = ['staff', 'reservations'] as const
+export const reservationsKey = ['staff', 'reservations'] as const
 const availabilityKey = ['staff', 'availability'] as const
 const walkInTablesKey = ['staff', 'walk-in-tables'] as const
 const historyKey = ['staff', 'reservation-history'] as const
@@ -199,15 +219,32 @@ export function useOpenRequests(today: string | null) {
   })
 }
 
-/** The free start times and tables of a day. Without `durationMinutes` the restaurant's duration for the party size applies. */
-export function useStaffAvailability(date: string | null, guests: number | null, durationMinutes: number | null) {
+/**
+ * The free start times and tables of a day. Without `durationMinutes` the restaurant's duration for the party size applies. With
+ * `reservationId` that reservation does not count, e.g. the one being moved on the timeline.
+ */
+export function useStaffAvailability(date: string | null, guests: number | null, durationMinutes: number | null, reservationId: string | null = null) {
   return useQuery({
-    queryKey: [...availabilityKey, date, guests, durationMinutes],
+    queryKey: [...availabilityKey, date, guests, durationMinutes, reservationId],
     queryFn: () =>
       apiGet<StaffAvailability>(
-        `/staff/availability?date=${date}&guests=${guests}${durationMinutes === null ? '' : `&durationMinutes=${durationMinutes}`}`,
+        `/staff/availability?date=${date}&guests=${guests}${durationMinutes === null ? '' : `&durationMinutes=${durationMinutes}`}${
+          reservationId === null ? '' : `&reservationId=${encodeURIComponent(reservationId)}`
+        }`,
       ),
     enabled: date !== null && guests !== null && guests >= 1,
+  })
+}
+
+/**
+ * The tables and combinations the reservation can change to at its booked time, its own included (GET
+ * /api/staff/reservations/{id}/free-tables): those a change of only its tables gets, also once it has started.
+ */
+export function useReservationFreeTables(id: string | null) {
+  return useQuery({
+    queryKey: [...availabilityKey, 'reservation', id],
+    queryFn: () => apiGet<FreeTable[]>(`/staff/reservations/${encodeURIComponent(id ?? '')}/free-tables`),
+    enabled: id !== null,
   })
 }
 
@@ -322,6 +359,8 @@ async function applyChange(queryClient: QueryClient, changed: Reservation) {
     queryClient.invalidateQueries({ queryKey: availabilityKey }),
     queryClient.invalidateQueries({ queryKey: walkInTablesKey }),
     queryClient.invalidateQueries({ queryKey: [...historyKey, changed.id] }),
+    // The guest's figures, and the profile a change of the phone number or email address links it to.
+    queryClient.invalidateQueries({ queryKey: guestsKey }),
   ])
 }
 
@@ -398,6 +437,36 @@ export function useUpdateReservation() {
       apiPut<Reservation>(`/staff/reservations/${encodeURIComponent(id)}`, reservation),
     onSuccess: (reservation) => applyChange(queryClient, reservation),
   })
+}
+
+/**
+ * Moves the reservation to `time` at `tableIds` on its day and updates the lists; party size, duration and the guest's details stay.
+ * Also usable outside a component, e.g. from the "Undo" button of a notification that outlives the component that showed it.
+ */
+export async function moveReservation(queryClient: QueryClient, reservation: Reservation, { time, tableIds }: { time: string; tableIds: string[] }) {
+  const input: ReservationInput = {
+    date: reservation.date,
+    time,
+    guests: reservation.guests,
+    tableIds,
+    durationMinutes: reservation.durationMinutes,
+    name: reservation.name,
+    phone: reservation.phone,
+    email: reservation.email,
+    notes: reservation.notes,
+    occasion: reservation.occasion,
+  }
+  let changed: Reservation
+  try {
+    changed = await apiPut<Reservation>(`/staff/reservations/${encodeURIComponent(reservation.id)}`, input)
+  } catch (error) {
+    // Usually someone else changed the reservation or took the table in the meantime: show the current state.
+    void queryClient.invalidateQueries({ queryKey: reservationsKey })
+    void queryClient.invalidateQueries({ queryKey: availabilityKey })
+    throw error
+  }
+  await applyChange(queryClient, changed)
+  return changed
 }
 
 /** Minutes since midnight of "HH:mm"; "24:00" is 1440. */

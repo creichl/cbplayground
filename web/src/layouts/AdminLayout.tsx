@@ -6,13 +6,14 @@ import { Brand } from '../components/Brand.tsx'
 import { LanguageSwitcher } from '../components/LanguageSwitcher.tsx'
 import { UserMenu } from '../components/UserMenu.tsx'
 
-/** The sidebar, grouped by task. "Service screen" leads to the front desk. */
+/** The sidebar, grouped by task. "Service screen" leads to the front desk, "Reports" shows the figures over a period. */
 const navGroups = [
   {
     label: 'admin.groups.service',
     items: [
       { to: '/admin', label: 'admin.nav.overview', end: true },
       { to: '/frontdesk', label: 'admin.nav.serviceScreen', end: false },
+      { to: '/admin/reports', label: 'admin.nav.reports', end: false },
     ],
   },
   {

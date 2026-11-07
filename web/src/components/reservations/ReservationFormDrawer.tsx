@@ -6,6 +6,7 @@ import { notifications } from '@mantine/notifications'
 import { useTranslation } from 'react-i18next'
 import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import {
+  type Occasion,
   type Reservation,
   type ReservationInput,
   useCreateReservation,
@@ -16,6 +17,8 @@ import {
 import { durationLimits, isValidDuration } from '../../api/reservationSettings.ts'
 import { datePickerFormatter, formatDate, formatTime } from '../../i18n/format.ts'
 import { ErrorAlert } from '../ErrorAlert.tsx'
+import { GuestCard } from '../guests/GuestCard.tsx'
+import { occasionLabels, occasions } from '../guests/labels.ts'
 import { ReservationHistory } from './ReservationHistory.tsx'
 import { StatusBadge } from './StatusBadge.tsx'
 import { blockingStatuses, closedStatuses, sourceLabels, statusLabels } from './status.ts'
@@ -30,11 +33,13 @@ type ReservationFormDrawerProps = {
   defaultDate: string
   /** Today in the restaurant's time zone; earlier days cannot be chosen. */
   today: string
+  /** The time ("HH:mm") and tables a new reservation starts with, e.g. of the free cell tapped on the timeline. */
+  initial?: { time: string; tableIds: string[] }
   onClose: () => void
 }
 
 /** Drawer to enter a new reservation, e.g. a phone booking, or to change an existing one. */
-export function ReservationFormDrawer({ reservation, defaultDate, today, onClose }: ReservationFormDrawerProps) {
+export function ReservationFormDrawer({ reservation, defaultDate, today, initial, onClose }: ReservationFormDrawerProps) {
   const { t } = useTranslation()
   const isMobile = useMediaQuery('(max-width: 48em)')
 
@@ -47,7 +52,7 @@ export function ReservationFormDrawer({ reservation, defaultDate, today, onClose
       title={<Text fw={650} size="lg">{t(reservation === null ? 'reservations.form.createTitle' : 'reservations.form.editTitle')}</Text>}
     >
       {reservation === null ? (
-        <ReservationForm reservation={null} initialDate={defaultDate} initialDuration={null} today={today} onClose={onClose} />
+        <ReservationForm reservation={null} initialDate={defaultDate} initialDuration={null} initial={initial} today={today} onClose={onClose} />
       ) : (
         <EditForm reservation={reservation} today={today} onClose={onClose} />
       )}
@@ -70,6 +75,7 @@ function EditForm({ reservation, today, onClose }: { reservation: Reservation; t
   }
   return (
     <Stack gap="xl">
+      <GuestCard reservation={reservation} />
       <ReservationForm
         reservation={reservation}
         initialDate={reservation.date}
@@ -87,6 +93,8 @@ type ReservationFormProps = {
   initialDate: string
   /** The overridden duration; null when the restaurant's duration applies. */
   initialDuration: number | null
+  /** The time and tables of a new reservation; they apply while they are free for the party. */
+  initial?: { time: string; tableIds: string[] }
   today: string
   onClose: () => void
 }
@@ -106,6 +114,7 @@ type FormValues = {
   phone: string
   email: string
   notes: string
+  occasion: Occasion
 }
 
 /** The value of a table or combination in the table choice: its tables' ids. */
@@ -123,7 +132,7 @@ function wholeNumber(value: NumberValue) {
   return typeof value === 'number' && Number.isInteger(value) ? value : null
 }
 
-function ReservationForm({ reservation, initialDate, initialDuration, today, onClose }: ReservationFormProps) {
+function ReservationForm({ reservation, initialDate, initialDuration, initial, today, onClose }: ReservationFormProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const isNew = reservation === null
@@ -138,14 +147,15 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
     initialValues: {
       guests: reservation?.guests ?? 2,
       date: initialDate,
-      time: reservation?.time ?? null,
-      tables: reservation === null ? null : tableKey(reservation.tableIds),
+      time: reservation?.time ?? initial?.time ?? null,
+      tables: reservation === null ? (initial === undefined ? null : tableKey(initial.tableIds)) : tableKey(reservation.tableIds),
       overrideDuration: initialDuration !== null,
       durationMinutes: initialDuration ?? reservation?.durationMinutes ?? 120,
       name: reservation?.name ?? '',
       phone: reservation?.phone ?? '',
       email: reservation?.email ?? '',
       notes: reservation?.notes ?? '',
+      occasion: reservation?.occasion ?? 'None',
     },
     validate: {
       guests: (value) => (wholeNumber(value) !== null && Number(value) >= 1 ? null : t('reservations.form.validation.guests')),
@@ -246,6 +256,7 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
       phone: submitted.phone.trim() || null,
       email: submitted.email.trim() || null,
       notes: submitted.notes.trim() || null,
+      occasion: submitted.occasion,
     }
     const onSuccess = (saved: Reservation) => {
       notifications.show({
@@ -438,6 +449,14 @@ function ReservationForm({ reservation, initialDate, initialDuration, today, onC
           <TextInput label={t('reservations.form.email')} type="email" maxLength={254} size="md" {...form.getInputProps('email')} />
         </SimpleGrid>
         <Textarea label={t('reservations.form.notes')} autosize minRows={2} maxLength={maxNotesLength} size="md" {...form.getInputProps('notes')} />
+        <Select
+          label={t('reservations.form.occasion')}
+          data={occasions.map((occasion) => ({ value: occasion, label: t(occasionLabels[occasion]) }))}
+          value={values.occasion}
+          onChange={(value) => form.setFieldValue('occasion', (value ?? 'None') as Occasion)}
+          allowDeselect={false}
+          size="md"
+        />
 
         {mutation.error !== null && (
           <Alert color="red" variant="light" title={t('reservations.form.notSaved')}>
