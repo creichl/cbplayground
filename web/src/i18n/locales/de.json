@@ -1635,6 +1635,39 @@
       "next": "Danach an diesem Tisch: {{time}}, {{name}} ({{guests}})"
     }
   },
+  "tableBlocks": {
+    "block": "Tisch sperren…",
+    "blocked": "Gesperrt",
+    "floorUntil": "Gesperrt bis {{time}}",
+    "legend": "Gesperrt",
+    "created": "Tisch {{number}} ist von {{start}} bis {{end}} gesperrt.",
+    "removed": "Tisch {{number}} ist nicht mehr gesperrt.",
+    "remove": "Sperre aufheben",
+    "dialog": {
+      "title": "Tisch {{number}} sperren",
+      "description": "In dieser Zeit kann niemand den Tisch buchen: weder online noch telefonisch noch als Walk-in.",
+      "from": "Von",
+      "to": "Bis",
+      "reason": "Grund (optional)",
+      "reasonPlaceholder": "z. B. wackelt, wird repariert",
+      "submit": "Tisch sperren",
+      "conflicts": "Reservierungen an diesem Tisch in dieser Zeit:"
+    },
+    "details": {
+      "title": "Tisch {{number}} gesperrt",
+      "createdBy": "Gesperrt von {{name}}"
+    },
+    "errors": {
+      "createTitle": "Der Tisch konnte nicht gesperrt werden",
+      "removeTitle": "Die Sperre konnte nicht aufgehoben werden",
+      "invalidDate": "Das Datum ist ungültig.",
+      "invalidTime": "Wählen Sie die Zeiten auf die Viertelstunde.",
+      "startNotBeforeEnd": "Das Ende muss nach dem Beginn liegen.",
+      "invalidReason": "Der Grund darf höchstens 100 Zeichen lang sein.",
+      "tableHasReservations": "Der Tisch hat in dieser Zeit Reservierungen. Verschieben oder stornieren Sie sie zuerst oder wählen Sie eine andere Zeit.",
+      "notFound": "Den Tisch oder die Sperre gibt es nicht mehr."
+    }
+  },
   "styleguide": {
     "title": "Styleguide",
     "intro": "Tokens und Bausteine des Design-Systems für die Gastseiten. Nur in der Entwicklung.",

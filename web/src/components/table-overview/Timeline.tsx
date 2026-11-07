@@ -1,10 +1,15 @@
 import { type CSSProperties, type ReactNode, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type FloorArea, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
+import { type FloorArea, type FloorTable, formatMinutes, type OpenPeriod, type Reservation, toMinutes } from '../../api/reservations.ts'
+import type { TableBlock } from '../../api/tableBlocks.ts'
 import { formatTime } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
+import { Button } from '../../ui/button.tsx'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
 import { guestName, isActive, occupiedUntil, statusColors, statusLabels } from '../reservations/status.ts'
 import { ReservationPopover } from './ReservationPopover.tsx'
+import { blockHatch } from './blocks.ts'
+import { BlockPopover } from './TableBlocks.tsx'
 
 type TimelineProps = {
   areas: FloorArea[]
@@ -22,6 +27,10 @@ type TimelineProps = {
   selectedId: string | null
   /** Called when a block is clicked: it becomes the selected reservation. */
   onSelect: (reservation: Reservation) => void
+  /** The blocked tables of the day. */
+  blocks: TableBlock[]
+  /** Opens the dialog that blocks the table, from now or the start of the shown service. */
+  onBlock: (table: FloorTable, start: number) => void
 }
 
 const hourWidth = 96
@@ -52,12 +61,13 @@ function closedRanges(openPeriods: OpenPeriod[], start: number, end: number) {
 }
 
 /**
- * Tables (grouped by area) × time of day: one row per table with its reservations as blocks in their status colour,
- * an hour grid and a line at the current time. Archived tables with reservations on the day follow in a group of their own.
- * Scrolls horizontally; the table column stays in place. A click on a block selects the reservation and shows its details
- * with the status actions.
+ * Tables (grouped by area) × time of day: one row per table with its reservations as blocks in their status colour, its blocked
+ * times hatched with their reason, an hour grid and a line at the current time. Archived tables with reservations on the day
+ * follow in a group of their own. Scrolls horizontally; the table column stays in place. A click on a block selects the
+ * reservation and shows its details with the status actions; a click on a blocked time offers to remove the block, and a click
+ * on a table offers to block it.
  */
-export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes, initialTime, selectedId, onSelect }: TimelineProps) {
+export function Timeline({ areas, reservations, openPeriods, start, end, nowMinutes, initialTime, selectedId, onSelect, blocks, onBlock }: TimelineProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -109,13 +119,33 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
     </div>
   )
 
-  /** The row of a table with its label and its reservations as blocks. */
-  const row = (key: string, label: ReactNode, ariaLabel: string, rowReservations: Reservation[]) => (
+  // A block proposed from the timeline starts now, when now lies in the shown time, otherwise where the timeline opened.
+  const blockStart = nowMinutes !== null && nowMinutes >= start && nowMinutes < end ? Math.floor(nowMinutes / 15) * 15 : initialTime
+
+  /** The row of a table with its label, its blocked times and its reservations as blocks. */
+  const row = (key: string, label: ReactNode, ariaLabel: string, rowReservations: Reservation[], rowBlocks: TableBlock[] = []) => (
     <div key={key} className="flex border-b border-border/60" style={{ height: rowHeight }}>
       <div className={cn(labelCell, 'bg-card')} style={{ width: labelWidth }} aria-label={ariaLabel}>
         {label}
       </div>
       <div className="relative shrink-0" style={{ width, backgroundImage: gridLines }}>
+        {rowBlocks.map((block) => {
+          const left = x(toMinutes(block.start))
+          const times = t('common.timeRange', { start: formatTime(block.start, language), end: formatTime(block.end, language) })
+          return (
+            <BlockPopover key={block.id} block={block}>
+              <button
+                type="button"
+                data-table-block={block.id}
+                aria-label={[t('tableBlocks.blocked'), times, block.reason].filter((part) => part !== null).join(', ')}
+                className="absolute top-1 bottom-1 z-1 flex cursor-pointer items-center overflow-hidden rounded-md border border-dashed px-1.5 text-left text-foreground focus-ring"
+                style={{ ...blockHatch, left: left + 1, width: Math.max(x(toMinutes(block.end)) - left - 2, 8) }}
+              >
+                <span className="truncate rounded-sm bg-card/85 px-1 text-sm">{block.reason ?? t('tableBlocks.blocked')}</span>
+              </button>
+            </BlockPopover>
+          )
+        })}
         {rowReservations.map((reservation) => {
           const active = isActive(reservation)
           const selected = reservation.id === selectedId
@@ -193,9 +223,10 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
               {area.tables.map((table) =>
                 row(
                   table.id,
-                  <span className="truncate text-sm font-semibold">{t('common.tableLabel', { number: table.number, seats: table.seats })}</span>,
+                  <TableMenu table={table} onBlock={() => onBlock(table, blockStart)} />,
                   t('areas.tableMarker', { number: table.number, seats: table.seats }),
                   sorted.filter((reservation) => reservation.tableId === table.id),
+                  blocks.filter((block) => block.tableId === table.id),
                 ),
               )}
             </div>
@@ -227,5 +258,36 @@ export function Timeline({ areas, reservations, openPeriods, start, end, nowMinu
         )}
       </div>
     </div>
+  )
+}
+
+/** The label of a table's row; a click opens its menu, which offers to block the table. */
+function TableMenu({ table, onBlock }: { table: FloorTable; onBlock: () => void }) {
+  const { t } = useTranslation()
+  const [open, setOpen] = useState(false)
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          aria-label={t('areas.tableMarker', { number: table.number, seats: table.seats })}
+          className="-mx-1 min-w-0 cursor-pointer truncate rounded-md px-1 py-0.5 text-left text-sm font-semibold hover:bg-accent focus-ring"
+        >
+          {t('common.tableLabel', { number: table.number, seats: table.seats })}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="bottom" align="start" className="flex w-60 flex-col gap-3 font-sans">
+        <p className="font-semibold">{t('areas.tableMarker', { number: table.number, seats: table.seats })}</p>
+        <Button
+          variant="outline"
+          onClick={() => {
+            setOpen(false)
+            onBlock()
+          }}
+        >
+          {t('tableBlocks.block')}
+        </Button>
+      </PopoverContent>
+    </Popover>
   )
 }
