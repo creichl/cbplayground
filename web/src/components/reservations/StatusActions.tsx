@@ -1,12 +1,14 @@
 import { useQueryClient } from '@tanstack/react-query'
-import { LoaderCircleIcon } from 'lucide-react'
+import { ChevronDownIcon, LoaderCircleIcon } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { reservationErrorMessage } from '../../api/reservationErrors.ts'
 import {
   type Reservation,
   type ReservationStatus,
   setReservationStatus,
+  useReservationFreeTables,
   useRestaurantNow,
   useSetReservationStatus,
 } from '../../api/reservations.ts'
@@ -14,7 +16,11 @@ import { formatTime } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../../ui/dialog.tsx'
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
+import { Skeleton } from '../../ui/skeleton.tsx'
+import { sameTables } from '../table-overview/dropTargets.ts'
 import { availableActions, guestName, type StatusAction, statusColors, statusLabels, undoStatus } from './status.ts'
+import { useReservationMoves } from './useReservationMoves.ts'
 import { removeWalkIn, removeWalkInQuestion, statusErrorMessage } from './walkInRemoval.ts'
 
 type StatusActionsProps = {
@@ -23,7 +29,10 @@ type StatusActionsProps = {
   compact?: boolean
   /** Called after a successful change, e.g. to close the popover. */
   onDone?: () => void
-  /** Called when the question before cancelling, a no-show, declining or removing a walk-in opens or closes. */
+  /**
+   * Called when the question before cancelling, a no-show, declining or removing a walk-in opens or closes, and with the choice of
+   * "Arrived at another table…".
+   */
   onConfirmingChange?: (confirming: boolean) => void
   className?: string
 }
@@ -38,6 +47,8 @@ const questions = {
 /**
  * The quick status changes of a reservation as buttons, the same in the lists and on the plans (see status.ts). Cancelling,
  * no-show, declining and removing a walk-in ask first. After every change a toast offers to undo it where the server allows it.
+ * "Arrived" has a second choice, "Arrived at another table…", with the tables and combinations free until the end of the
+ * reservation: it changes the table and marks the guest as arrived, with one "Undo" for both.
  */
 export function StatusActions({ reservation, compact = false, onDone, onConfirmingChange, className }: StatusActionsProps) {
   const { t, i18n } = useTranslation()
@@ -46,16 +57,39 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
   const setStatus = useSetReservationStatus()
   const [confirming, setConfirming] = useState<StatusAction | null>(null)
   const [removing, setRemoving] = useState(false)
+  const [choosingTable, setChoosingTable] = useState(false)
+  const [seating, setSeating] = useState(false)
+  const moves = useReservationMoves()
+  const freeTables = useReservationFreeTables(choosingTable ? reservation.id : null)
+  const otherTables = freeTables.data?.filter((free) => !sameTables(free.tableIds, reservation.tableIds))
   const actions = availableActions(reservation, now)
   const question =
     confirming?.status === null
       ? removeWalkInQuestion
       : questions[confirming?.status === 'NoShow' ? 'NoShow' : confirming?.status === 'Declined' ? 'Declined' : 'Cancelled']
-  const pending = setStatus.isPending || removing
+  const pending = setStatus.isPending || removing || seating
 
   const confirm = (action: StatusAction | null) => {
     setConfirming(action)
     onConfirmingChange?.(action !== null)
+  }
+
+  const chooseTable = (open: boolean) => {
+    setChoosingTable(open)
+    onConfirmingChange?.(open)
+  }
+
+  const seatAt = (tableIds: string[]) => {
+    chooseTable(false)
+    setSeating(true)
+    // Arrived, the reservation moves to the tab "Seated", and this row or popover may be gone.
+    moves.seat(reservation, tableIds).then(
+      () => {
+        setSeating(false)
+        onDone?.()
+      },
+      () => setSeating(false),
+    )
   }
 
   const showError = (error: unknown) => toast.error(t('reservations.errors.statusTitle'), { description: statusErrorMessage(error, t) })
@@ -118,12 +152,13 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
       <div className={cn('flex flex-wrap gap-2', className)}>
         {actions.map((action) => {
           const primary = action.status === 'Confirmed' && reservation.status === 'Requested'
-          return (
+          const arrival = action.label === 'reservations.actions.arrived'
+          const button = (
             <Button
               key={action.label}
               size="sm"
               variant={primary ? 'primary' : 'outline'}
-              className={compact ? 'px-2.5' : undefined}
+              className={cn(compact && 'px-2.5', arrival && 'rounded-r-none')}
               disabled={pending}
               onClick={() => (action.confirm ? confirm(action) : change(action.status))}
             >
@@ -141,6 +176,54 @@ export function StatusActions({ reservation, compact = false, onDone, onConfirmi
                 </>
               )}
             </Button>
+          )
+          if (!arrival) {
+            return button
+          }
+          return (
+            <div key={action.label} className="flex">
+              {button}
+              <Popover open={choosingTable} onOpenChange={chooseTable}>
+                <PopoverTrigger asChild>
+                  <Button size="sm" variant="outline" className="rounded-l-none border-l-0 px-1.5" disabled={pending} aria-label={t('frontdesk.moves.arrivedElsewhere')}>
+                    {seating ? <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" /> : <ChevronDownIcon aria-hidden="true" />}
+                  </Button>
+                </PopoverTrigger>
+                {/* Above the details popover of the plans (Mantine), in which these actions are shown too. */}
+                <PopoverContent align="start" className="z-[400] flex w-80 flex-col gap-2 p-3 font-sans">
+                  <div>
+                    <p className="text-sm font-semibold">{t('frontdesk.moves.arrivedElsewhere')}</p>
+                    <p className="text-xs text-muted-foreground">{t('frontdesk.moves.arrivedElsewhereHint')}</p>
+                  </div>
+                  {otherTables === undefined ? (
+                    freeTables.isError ? (
+                      <p className="text-sm text-destructive">{reservationErrorMessage(freeTables.error, t)}</p>
+                    ) : (
+                      <div className="flex flex-col gap-1" aria-hidden="true">
+                        <Skeleton className="h-8" />
+                        <Skeleton className="h-8" />
+                      </div>
+                    )
+                  ) : otherTables.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">{t('frontdesk.moves.noFreeTables')}</p>
+                  ) : (
+                    <ul className="-mx-1 flex max-h-64 flex-col overflow-y-auto">
+                      {otherTables.map((free) => (
+                        <li key={free.id}>
+                          <Button variant="ghost" size="sm" className="w-full justify-start text-left font-normal" onClick={() => seatAt(free.tableIds)}>
+                            {t(free.kind === 'combination' ? 'reservations.form.combinationOption' : 'reservations.form.tableOption', {
+                              number: free.label,
+                              area: free.areaName,
+                              count: free.seats,
+                            })}
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </PopoverContent>
+              </Popover>
+            </div>
           )
         })}
       </div>

@@ -224,12 +224,14 @@
       "notes": "Anmerkung (optional)",
       "notesDescription_one": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
       "notesDescription_other": "Z. B. Kinderstuhl oder Allergien. Höchstens {{count}} Zeichen.",
+      "occasion": "Anlass (optional)",
       "contactHint": "Telefon oder E-Mail – eines von beiden genügt.",
       "contactRequired": "Bitte geben Sie eine Telefonnummer oder eine E-Mail-Adresse an.",
       "nameRequired": "Bitte geben Sie Ihren Namen an.",
       "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer an (mindestens 6 Ziffern).",
       "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse an.",
       "invalidNotes": "Die Anmerkung ist zu lang.",
+      "invalidOccasion": "Bitte einen Anlass aus der Liste wählen.",
       "submit": "Jetzt reservieren",
       "submitRequest": "Anfrage senden",
       "contactTitle": "Wie erreicht Sie das Restaurant?",
@@ -373,6 +375,7 @@
     "nav": {
       "overview": "Übersicht",
       "serviceScreen": "Service-Bildschirm",
+      "reports": "Berichte",
       "profile": "Profil",
       "design": "Erscheinungsbild",
       "areas": "Bereiche & Tische",
@@ -755,6 +758,50 @@
       "actionFailed": "Die Änderung konnte nicht gespeichert werden. Bitte versuchen Sie es erneut."
     }
   },
+  "reports": {
+    "description": "Wie es dem Restaurant in einem Zeitraum geht: Reservierungen und Gäste, Buchungswege, No-Shows und Stornierungen, starke Tage und Stunden.",
+    "period": {
+      "label": "Zeitraum",
+      "options": {
+        "7": "Letzte 7 Tage",
+        "30": "Letzte 30 Tage",
+        "90": "Letzte 90 Tage",
+        "custom": "Eigener"
+      },
+      "range": "Von – bis",
+      "tooLong": "Wählen Sie einen Zeitraum von höchstens 366 Tagen."
+    },
+    "figures": {
+      "reservations": "Reservierungen",
+      "covers": "Gäste",
+      "averageParty": "Ø Personen",
+      "noShows": "Nicht erschienen",
+      "noShowRate": "{{rate}} der Reservierungen",
+      "cancellations": "Stornierungen",
+      "cancelledBy": "{{guest}} von Gästen · {{restaurant}} vom Restaurant",
+      "declined": "Abgelehnte Anfragen",
+      "hint": "Reservierungen und Gäste zählen jede Reservierung außer stornierten, abgelehnten Anfragen und nicht erschienenen; die No-Show-Quote ist der Anteil der nicht Erschienenen an diesen und den nicht Erschienenen."
+    },
+    "reservationCount_one": "{{count}} Reservierung",
+    "reservationCount_other": "{{count}} Reservierungen",
+    "charts": {
+      "bySource": "Nach Buchungsweg",
+      "sourceValue": "{{reservations}} · {{covers}}",
+      "byWeekday": "Gäste nach Wochentag",
+      "byHour": "Gäste nach Beginn",
+      "byDay": "Gäste pro Tag",
+      "bar_one": "{{label}}: {{count}} Gast",
+      "bar_other": "{{label}}: {{count}} Gäste",
+      "busiest_one": "am stärksten {{label}} mit {{count}} Gast",
+      "busiest_other": "am stärksten {{label}} mit {{count}} Gästen",
+      "none": "keine Gäste"
+    },
+    "empty": "In diesem Zeitraum gibt es keine Reservierungen.",
+    "days": {
+      "title": "Pro Tag",
+      "date": "Datum"
+    }
+  },
   "openingHours": {
     "subtitle": "Wann Gäste buchen können: Wochenzeiten, Schließtage und Sonderöffnungszeiten, Standort und Feiertage.",
     "save": "Speichern",
@@ -927,6 +974,143 @@
       "label": "Service",
       "wholeDay": "Ganzer Tag",
       "option": "{{name}} {{time}}"
+    },
+    "print": {
+      "button": "Tagesliste drucken",
+      "print": "Drucken",
+      "title": "Tagesliste",
+      "totals": "Summen je Service",
+      "reservations_one": "{{count}} Reservierung",
+      "reservations_other": "{{count}} Reservierungen",
+      "columns": {
+        "time": "Zeit",
+        "name": "Name",
+        "party": "Personen",
+        "table": "Tisch",
+        "phone": "Telefon",
+        "status": "Status",
+        "notes": "Notizen"
+      },
+      "tableValue": "{{table}} ({{area}})",
+      "empty": "An diesem Tag gibt es keine Reservierungen."
+    },
+    "moves": {
+      "moved": "{{name}} an Tisch {{table}} um {{time}} verschoben",
+      "seated": "{{name}} an Tisch {{table}} angekommen",
+      "tableChanged": "{{name}} an Tisch {{table}} umgesetzt",
+      "undone": "{{name}} wieder an Tisch {{table}} um {{time}}",
+      "notMoved": "Die Reservierung konnte nicht verschoben werden",
+      "dragHandle": "Auf einen Tisch im Grundriss ziehen, um den Gast dort zu platzieren",
+      "arrivedElsewhere": "An anderem Tisch angekommen…",
+      "arrivedElsewhereHint": "Frei bis zum Ende der Reservierung",
+      "noFreeTables": "Bis zum Ende der Reservierung ist kein anderer Tisch frei.",
+      "combined": "Tische {{tables}}",
+      "unfit": {
+        "taken": "Belegt",
+        "tooSmall": "Zu klein",
+        "closed": "Geschlossen",
+        "past": "Vorbei"
+      }
+    }
+  },
+  "guests": {
+    "title": "Gäste",
+    "listLabel": "Gästeliste",
+    "count_one": "{{count}} Gast",
+    "count_other": "{{count}} Gäste",
+    "search": "Gäste suchen",
+    "searchPlaceholder": "Name, Telefon oder E-Mail",
+    "empty": "Noch keine Gäste. Jede Reservierung mit Telefonnummer oder E-Mail-Adresse legt ihren Gast an.",
+    "noMatches": "Kein Gast passt zur Suche.",
+    "chooseHint": "Einen Gast wählen, um Profil und Besuche zu sehen.",
+    "backToService": "Zurück zum Service",
+    "backToList": "Alle Gäste",
+    "previousPage": "Vorherige Seite",
+    "nextPage": "Nächste Seite",
+    "page": "Seite {{page}} von {{pages}}",
+    "noContact": "Keine Telefonnummer oder E-Mail-Adresse",
+    "edit": "Profil bearbeiten",
+    "saved": "Das Profil von {{name}} wurde gespeichert.",
+    "notSaved": "Das Profil wurde nicht gespeichert",
+    "deletedName": "Gelöschter Gast",
+    "row": {
+      "visits_one": "{{count}} Besuch",
+      "visits_other": "{{count}} Besuche",
+      "noShows_one": "{{count}}× nicht erschienen",
+      "noShows_other": "{{count}}× nicht erschienen",
+      "lastVisit": "zuletzt {{date}}"
+    },
+    "figures": {
+      "visits": "Besuche",
+      "noShows": "Nicht erschienen",
+      "cancellations": "Stornierungen",
+      "lastVisit": "Letzter Besuch",
+      "nextVisit": "Nächste Reservierung",
+      "never": "Noch nie",
+      "none": "Keine"
+    },
+    "fields": {
+      "name": "Name",
+      "phone": "Telefon",
+      "email": "E-Mail",
+      "tags": "Merkmale",
+      "notes": "Notizen zum Gast",
+      "allergyNotes": "Allergien"
+    },
+    "tags": {
+      "Vip": "VIP",
+      "Regular": "Stammgast",
+      "Press": "Presse",
+      "Staff": "Personal",
+      "Difficult": "Schwierig"
+    },
+    "occasions": {
+      "None": "Kein Anlass",
+      "Birthday": "Geburtstag",
+      "Anniversary": "Jahrestag",
+      "Business": "Geschäftlich",
+      "Date": "Date",
+      "Celebration": "Feier",
+      "Other": "Anderer Anlass"
+    },
+    "markers": {
+      "vip": "VIP",
+      "allergies": "Allergien",
+      "firstVisit": "Erster Besuch"
+    },
+    "card": {
+      "title": "Gästeprofil",
+      "openInDirectory": "{{name}} in der Gästeliste öffnen",
+      "noProfile": "Kein Gästeprofil: Die Reservierung hat weder Telefonnummer noch E-Mail-Adresse.",
+      "edit": "Profil bearbeiten",
+      "save": "Profil speichern"
+    },
+    "reservations": {
+      "title": "Reservierungen",
+      "empty": "Keine Reservierungen.",
+      "when": "{{date}}, {{time}}",
+      "summary_one": "{{count}} Pers. · Tisch {{table}} ({{area}})",
+      "summary_other": "{{count}} Pers. · Tisch {{table}} ({{area}})"
+    },
+    "delete": {
+      "button": "Gästedaten löschen",
+      "title": "Daten des Gastes löschen?",
+      "text_one": "Das Profil von {{name}} wird gelöscht. Seine {{count}} Reservierung behält nur Datum, Uhrzeit, Personen, Tisch und Status; Name, Telefonnummer, E-Mail-Adresse und Notizen werden entfernt. Das lässt sich nicht rückgängig machen.",
+      "text_other": "Das Profil von {{name}} wird gelöscht. Seine {{count}} Reservierungen behalten nur Datum, Uhrzeit, Personen, Tisch und Status; Name, Telefonnummer, E-Mail-Adresse und Notizen werden entfernt. Das lässt sich nicht rückgängig machen.",
+      "back": "Zurück",
+      "confirm": "Daten löschen",
+      "done": "Die Daten von {{name}} wurden gelöscht."
+    },
+    "errors": {
+      "invalidName": "Bitte einen Namen angeben.",
+      "invalidPhone": "Bitte eine gültige Telefonnummer angeben (mindestens 6 Ziffern, höchstens 30 Zeichen).",
+      "invalidEmail": "Bitte eine gültige E-Mail-Adresse angeben.",
+      "invalidNotes": "Die Notizen sind zu lang (höchstens 1000 Zeichen).",
+      "invalidAllergyNotes": "Die Allergien sind zu lang (höchstens 500 Zeichen).",
+      "invalidTags": "Eines der Merkmale ist unbekannt.",
+      "contactTaken": "Ein anderer Gast hat diese Telefonnummer oder E-Mail-Adresse bereits.",
+      "notFound": "Diesen Gast gibt es nicht (mehr).",
+      "forbidden": "Das dürfen nur Admins."
     }
   },
   "waitlist": {
@@ -1439,6 +1623,7 @@
       "phone": "Telefon",
       "email": "E-Mail",
       "notes": "Notiz",
+      "occasion": "Anlass",
       "notSaved": "Die Reservierung wurde nicht gespeichert",
       "create": "Reservierung anlegen",
       "created": "Die Reservierung für {{name}} wurde angelegt (Referenz {{code}}).",
@@ -1485,6 +1670,7 @@
         "phone": "Telefon",
         "email": "E-Mail",
         "notes": "Notiz",
+        "occasion": "Anlass",
         "status": "Status"
       }
     },
@@ -1498,6 +1684,7 @@
       "invalidEmail": "Bitte eine gültige E-Mail-Adresse angeben.",
       "invalidNotes": "Die Notiz darf höchstens 500 Zeichen lang sein.",
       "invalidLanguage": "Die Sprache des Gastes wird nicht unterstützt.",
+      "invalidOccasion": "Der Anlass ist unbekannt.",
       "outsideOpeningHours": "Zu dieser Zeit hat das Restaurant nicht geöffnet, oder die Reservierung würde nach Ladenschluss enden.",
       "inThePast": "Diese Zeit liegt in der Vergangenheit.",
       "slotUnavailable": "Zu dieser Zeit ist kein Tisch mehr frei.",
