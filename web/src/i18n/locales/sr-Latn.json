@@ -387,6 +387,7 @@
     "nav": {
       "overview": "Pregled",
       "serviceScreen": "Ekran za servis",
+      "reports": "Izveštaji",
       "profile": "Profil",
       "design": "Izgled",
       "areas": "Prostori i stolovi",
@@ -770,6 +771,53 @@
       "actionFailed": "Izmena nije sačuvana. Pokušajte ponovo."
     }
   },
+  "reports": {
+    "description": "Kako restoran posluje u nekom periodu: rezervacije i gosti, kanali rezervacije, nedolasci i otkazivanja, najjači dani i sati.",
+    "period": {
+      "label": "Period",
+      "options": {
+        "7": "Poslednjih 7 dana",
+        "30": "Poslednjih 30 dana",
+        "90": "Poslednjih 90 dana",
+        "custom": "Proizvoljno"
+      },
+      "range": "Od – do",
+      "tooLong": "Izaberite period od najviše 366 dana."
+    },
+    "figures": {
+      "reservations": "Rezervacije",
+      "covers": "Gosti",
+      "averageParty": "Prosečno osoba",
+      "noShows": "Nisu došli",
+      "noShowRate": "{{rate}} rezervacija",
+      "cancellations": "Otkazivanja",
+      "cancelledBy": "{{guest}} od gostiju · {{restaurant}} od restorana",
+      "declined": "Odbijeni zahtevi",
+      "hint": "Rezervacije i gosti broje svaku rezervaciju osim otkazanih, odbijenih zahteva i nedolazaka; stopa nedolazaka je udeo nedolazaka u njima i nedolascima."
+    },
+    "reservationCount_one": "{{count}} rezervacija",
+    "reservationCount_few": "{{count}} rezervacije",
+    "reservationCount_other": "{{count}} rezervacija",
+    "charts": {
+      "bySource": "Po kanalu rezervacije",
+      "sourceValue": "{{reservations}} · {{covers}}",
+      "byWeekday": "Gosti po danu u nedelji",
+      "byHour": "Gosti po početku",
+      "byDay": "Gosti po danu",
+      "bar_one": "{{label}}: {{count}} gost",
+      "bar_few": "{{label}}: {{count}} gosta",
+      "bar_other": "{{label}}: {{count}} gostiju",
+      "busiest_one": "najviše {{label}} sa {{count}} gostom",
+      "busiest_few": "najviše {{label}} sa {{count}} gosta",
+      "busiest_other": "najviše {{label}} sa {{count}} gostiju",
+      "none": "nema gostiju"
+    },
+    "empty": "U ovom periodu nema rezervacija.",
+    "days": {
+      "title": "Po danu",
+      "date": "Datum"
+    }
+  },
   "openingHours": {
     "subtitle": "Kada gosti mogu da rezervišu: nedeljno radno vreme, neradni dani i posebno radno vreme, lokacija i državni praznici.",
     "save": "Sačuvaj",
@@ -944,6 +992,26 @@
       "label": "Smena",
       "wholeDay": "Ceo dan",
       "option": "{{name}} {{time}}"
+    },
+    "print": {
+      "button": "Odštampaj dnevni spisak",
+      "print": "Štampaj",
+      "title": "Dnevni spisak",
+      "totals": "Zbir po smeni",
+      "reservations_one": "{{count}} rezervacija",
+      "reservations_few": "{{count}} rezervacije",
+      "reservations_other": "{{count}} rezervacija",
+      "columns": {
+        "time": "Vreme",
+        "name": "Ime",
+        "party": "Osoba",
+        "table": "Sto",
+        "phone": "Telefon",
+        "status": "Status",
+        "notes": "Napomene"
+      },
+      "tableValue": "{{table}} ({{area}})",
+      "empty": "Ovog dana nema rezervacija."
     },
     "moves": {
       "moved": "{{name}} – premešteno za sto {{table}} u {{time}}",

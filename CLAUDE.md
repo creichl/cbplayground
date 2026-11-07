@@ -21,14 +21,16 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   the guest's reservation link, the embed's booking and height), `table-choice.spec.ts` (the guest's table choice).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
   with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
-  width, tables, archived tables), `pacing.spec.ts`, `superadmin.spec.ts`, `styleguide.spec.ts`.
+  width, tables, archived tables), `pacing.spec.ts`, `reports.spec.ts` (reports page), `superadmin.spec.ts`,
+  `styleguide.spec.ts`.
 - Front desk: `service-screen.spec.ts` (layout, views, selection, services, sizes, old addresses),
   `front-desk-flow.spec.ts` (accepting, status with undo, phone reservation, walk-in, table overview, access),
   `front-desk-requests.spec.ts` (declining and undoing an accepted request), `walk-in.spec.ts` (walk-in on the floor
   plans and its undo), `closed-reservations.spec.ts`, `reservation-history.spec.ts`, `table-blocks.spec.ts` (blocking a
   table on the timeline and the floor plan, and removing the block), `waitlist.spec.ts` (the waitlist of walk-ins:
   adding, waiting, seating, leaving, the exceeded mark, the walk-in drawer's offer), `front-desk-moves.spec.ts` (drag and
-  drop on the timeline and the floor plans, tapping a free cell, arrival at another table, combined reservations).
+  drop on the timeline and the floor plans, tapping a free cell, arrival at another table, combined reservations),
+  `day-sheet.spec.ts` (the printable day sheet).
 - Both sides: `combinations.spec.ts` (table combinations online, in the area editor and by phone).
 - API: `api.spec.ts`.
 

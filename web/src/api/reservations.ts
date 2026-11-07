@@ -462,7 +462,8 @@ export function useUpdateReservation() {
 }
 
 /**
- * Moves the reservation to `time` at `tableIds` on its day and updates the lists; party size, duration and the guest's details stay.
+ * Moves the reservation to `time` at `tableIds` on its day and updates the lists; party size, duration, the guest's details and the
+ * occasion stay.
  * Also usable outside a component, e.g. from the "Undo" button of a notification that outlives the component that showed it.
  */
 export async function moveReservation(queryClient: QueryClient, reservation: Reservation, { time, tableIds }: { time: string; tableIds: string[] }) {
@@ -476,6 +477,7 @@ export async function moveReservation(queryClient: QueryClient, reservation: Res
     phone: reservation.phone,
     email: reservation.email,
     notes: reservation.notes,
+    occasion: reservation.occasion,
   }
   let changed: Reservation
   try {

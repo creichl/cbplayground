@@ -83,6 +83,11 @@ This README describes the full product vision.
 - Staff see at the reservation how often the guest came, their no-shows, tags (VIP, regular, …), notes and allergies, and the occasion (birthday, anniversary, …).
 - A guest directory lists all guests with their visits; Tenant Admins delete a guest's data on request (GDPR).
 
+### Day sheet & reports
+
+- The front desk prints the day's reservations, or those of one service, on one A4 sheet for the service briefing.
+- The Tenant Admin sees how the restaurant is doing over a period: reservations and covers, booking channels, no-show and cancellation figures, busy weekdays and hours, and the covers per day.
+
 ### Embedding
 
 - Restaurants embed the guest booking UI into their own website with an **iframe** snippet.
@@ -275,6 +280,14 @@ Endpoints:
   - `floorPlan`: at least one area with a floor plan (archived areas do not count);
   - `tables`: at least one table (archived tables do not count);
   - `reservationSettings`: the reservation settings have been saved once.
+- `GET /api/admin/reports?from=YYYY-MM-DD&to=YYYY-MM-DD`: the figures of the restaurant over the days `from` to `to` (both inclusive; without `to`: today in the restaurant's time zone, without `from`: the last 30 days up to `to`; at most 366 days, otherwise 400 `invalid_range`). A reservation counts on the day and in the hour it starts in the restaurant's time zone. Returns `from`, `to` and:
+  - `totals`: `reservations` and `covers` (their guests) count every reservation except cancelled ones, declined requests and no-shows, as the key figures of the front desk; `averagePartySize` (covers per reservation), `noShows` and `noShowRate` (0–1, the share of the no-shows among the counted reservations and the no-shows), `cancellations` with `cancelledByGuest` (through the guest's link) and `cancelledByRestaurant`, `declinedRequests`; every figure is 0 without reservations.
+  - `bySource`: per channel (`Online`, `Staff`, `WalkIn`) its `reservations` and `covers`;
+  - `byWeekday`: the `covers` per `weekday`, 1 (Monday) to 7 (Sunday);
+  - `byHour`: the `covers` per `hour` of the start, 0–23;
+  - `days`: per day of the period its `date`, `reservations` and `covers`.
+
+  Every channel, weekday, hour and day is listed, also without reservations. Front desk users get 403.
 - Staff management, Tenant Admins only, always for the signed-in admin's own restaurant (users of other restaurants get 404):
   - `GET /api/admin/staff`: the restaurant's users: `id`, `email`, `displayName`, `role`, `isActive`, sorted by name.
   - `POST /api/admin/staff`: body `{ "email", "displayName", "role", "password" }` with the role `TenantAdmin` or `FrontDesk` and the start password. Returns 201 with the new user.
@@ -675,7 +688,7 @@ Every admin page starts with the same header: the title, one sentence of what th
 
 `/frontdesk` is the front desk (Tenant Admins and Front desk users). The front desk `/frontdesk` is one service screen for Tenant Admins and Front desk users, built with the design system (see [Design system](#design-system)) in the platform's look (no restaurant branding) and light, on the level of OpenTable GuestCenter, SevenRooms or Resy OS: no switching between pages.
 
-**Top bar:** the restaurant's name; the day with previous, "Today", a date picker and next; the service, "Whole day" or one of the day's opening windows named as in the guest's booking (e.g. "Lunch 11:30–14:30", morning before 11:00, lunch before 16:00, evening after); the search by name, phone or reference; "Walk-in" (today only) and "New reservation"; and the account menu with name and role, the language, "Go to management" for Tenant Admins and "Sign out".
+**Top bar:** the restaurant's name; the day with previous, "Today", a date picker and next; the service, "Whole day" or one of the day's opening windows named as in the guest's booking (e.g. "Lunch 11:30–14:30", morning before 11:00, lunch before 16:00, evening after); the search by name, phone or reference; "Print" (the day sheet of the day and service, see [Day sheet](#day-sheet)), "Walk-in" (today only) and "New reservation"; and the account menu with name and role, the language, "Go to management" for Tenant Admins and "Sign out".
 
 Day, service and view are kept in the address (`?date=YYYY-MM-DD`, `?service=HH:mm` with the start of the opening window, `?view=timeline`; today, the whole day and the floor plan are left out), so a reload or a shared link shows the same; a service the chosen day does not have shows the whole day.
 
@@ -717,6 +730,10 @@ The status labels, colours and actions are defined once in `web/src/components/r
 
 **Waitlist at the front desk:** when no table is free, the front desk puts walk-in parties on today's waitlist. "Add to waitlist" in the top bar (today only) and in the walk-in drawer, when no table is free for the party, opens a drawer with name (required), party size, phone, the quoted waiting time as chips (none, 15, 30, 45, 60 min or an own value up to 240 min) and a note; the walk-in drawer passes on what was entered. The list panel's fifth tab "Waitlist" (with the number of parties waiting) lists the day's waiting parties in the order of arrival: when they were added, name, party, phone, a note marker, how long they have waited (running, minute by minute), the quoted time (in red and marked "exceeded" once it is over) and "Next table free at 19:45", "A table is free now" or "No table frees up today" (`nextFreeAt`); below them the parties seated or gone ("Seated or left"). A click on a waiting party changes it in the same drawer. "Seat" opens the walk-in drawer with the party's details and the suggested table; seating it takes it off the waitlist, and the "Undo" of the notification after seating removes the walk-in and puts the party back. "Left" marks it as gone, with "Undo" in the toast. The key figures show the parties waiting and their guests. Past days show their waitlist read-only, days ahead have none. The search also filters the waitlist by name and phone. The list panel's five tabs are as wide as their labels, so the longer German and Serbian labels still fit the 400 px panel.
 
+##### Day sheet
+
+"Print" in the top bar of the service screen opens the day sheet of the shown day and service in a new tab, `/frontdesk/print?date=YYYY-MM-DD&service=HH:mm` (`FrontdeskPrintPage`; without `date` today in the restaurant's time zone, without `service` the whole day). It is a page of its own in the design system, without the front desk's top bar and navigation, laid out for A4 portrait (`@page` in `app.css`, `print:` classes): the restaurant, the date and the service on top, then the totals per service (reservations and covers; for the whole day every service and the day), then the expected reservations (without cancelled, declined and no-show ones) in a table grouped by start time, each with name, party, table and area, phone, status and notes, and below the name the occasion, the guest's tags and "Allergies" when the guest profile has allergy notes. Once the reservations are loaded, the browser's print dialog opens on its own (`window.print()`); on screen the sheet stands on a grey background with a "Print" button, which is not printed.
+
 ##### Admin settings pages
 
 The settings forms of Profile, Appearance (colour, mode, fonts, table style), Reservation settings and the weekly opening hours behave the same: as soon as the form differs from the saved state, a bar fixed at the bottom of the window shows "Unsaved changes" with "Discard" (back to the saved values) and "Save" (with a spinner while saving); invalid input is shown at its field, a notification confirms the saving, and the bar disappears. While there are unsaved changes, leaving the page within the app (sidebar, back button) asks first ("Stay" keeps the input, "Leave" drops it), and closing or reloading the tab lets the browser warn. Uploads and lists that save at once (logo, cover image, gallery, closing days and special hours, holidays, the area editor) and the location on the opening hours page, which has its own Save button, keep their way of saving.
@@ -742,6 +759,10 @@ Elements lie in the plan together with the tables and are moved like them with m
 The area's panel also has the description (at most 200 characters, with a counter, saved with Save) and the photo (upload, replace and remove with preview, like logo and cover image on `/admin/design`; PNG, JPEG or WebP, at most 10 MB, saved as soon as it is uploaded or removed).
 
 New tables appear in the middle of an image, on a free place of the schematic plan. The table's panel sets number, seats, "Online from (people)" (the smallest party online, with a short explanation), shape (round, square, rectangular) and "Turn by 90°" (rectangular tables only); the area's panel sets the table size (slider 50–200 %) and offers "Arrange automatically" (`arrange-tables`, also with an image), which asks first because it replaces the positions and is only available once the table size is saved. Instead of the table size, the area's panel can take the real width of the plan in metres (see [Real size](#real-size)): then the tables are drawn at their real size, the slider gives way to the derived size, and the plan shows a scale bar. Shape, rotation, table size and width show in the plan right away and are kept with the panel's Save button. Deleting a table or an area asks first and says that past and cancelled reservations are kept.
+
+##### Reports
+
+`/admin/reports` ("Reports" in the sidebar group "Service", Tenant Admins only) shows `GET /api/admin/reports` (see above): a period to choose (the last 7, 30 or 90 days up to today in the restaurant's time zone, or a custom range of at most 366 days, the last 30 days at first), the figures as cards (reservations, covers, average party, no-shows with their rate, cancellations by guests and by the restaurant, declined requests), bar charts of the booking channels, the covers by weekday, by start hour (from the first to the last hour with covers) and per day, and a table per day. The bars are plain HTML in the tokens (`bg-primary`, `bg-border`), without a chart library; each carries its value as a tooltip, and the chart names its busiest bar for screen readers.
 
 ##### Booking page and embed
 

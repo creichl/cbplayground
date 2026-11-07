@@ -220,6 +220,7 @@ app.MapTenantEndpoints();
 app.MapAuthEndpoints();
 app.MapSuperadminEndpoints();
 app.MapAdminEndpoints();
+app.MapReportEndpoints();
 app.MapStaffEndpoints();
 app.MapAreaEndpoints();
 app.MapTableEndpoints();

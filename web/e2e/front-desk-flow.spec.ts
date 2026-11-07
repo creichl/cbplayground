@@ -180,8 +180,9 @@ test.describe('Front desk: table overview', () => {
     await expect(page.getByText('Table · seats')).toBeVisible()
     await screenshot(page, 'table-overview', 'timeline')
 
-    // The reservations are blocks named by guest, party size, time and status; the demo data has some every day.
-    const block = page.getByRole('button', { name: /^.+ \(\d+\), .+, [A-Za-z-]+$/ }).first()
+    // The reservations are blocks named by guest, party size, time and status; the demo data has some every day. An open one, as a
+    // cancelled or finished block can lie under the guests now seated at its table.
+    const block = page.getByRole('button', { name: /^.+ \(\d+\), .+, (Requested|Confirmed|Arrived|Late)$/ }).first()
     const label = (await block.getAttribute('aria-label'))!
     await block.click()
     const details = page.getByRole('dialog')
