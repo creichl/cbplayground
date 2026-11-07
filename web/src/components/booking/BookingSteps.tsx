@@ -268,7 +268,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
             </li>
           ))}
         </ol>
-        {step === 'details' && flow.hold !== null && <HoldNotice key={flow.hold.holdToken} hold={flow.hold} />}
+        {step === 'details' && flow.hold !== null && flow.unavailable === null && <HoldNotice key={flow.hold.holdToken} hold={flow.hold} />}
       </header>
 
       {/* While a step slides out it lies over the new one and is cut to the new one's size. */}

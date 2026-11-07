@@ -142,7 +142,6 @@ function Booking({ slug, restaurant, timeZoneId, inline, className }: Required<O
             aria-describedby={undefined}
             onOpenAutoFocus={focusHeading}
             onCloseAutoFocus={returnFocus}
-            data-motion-frame=""
             className="h-dvh data-[vaul-drawer-direction=bottom]:max-h-dvh data-[vaul-drawer-direction=bottom]:rounded-t-none"
           >
             <div data-motion-frame-content="" className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
