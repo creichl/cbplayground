@@ -1,4 +1,4 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Language } from '../i18n/index.ts'
 import { ApiError, apiGet, apiPost } from './client.ts'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
@@ -25,6 +25,8 @@ export type PublicRestaurant = {
   maxOnlinePartySize: number
   /** Online bookings reach at most this many days after today. */
   bookingHorizonDays: number
+  /** Online, a time has to be at least this many minutes from now. */
+  minLeadTimeMinutes: number
   openingHours: OpeningPeriod[]
   /** False without location, opening hours or tables that can be booked online. */
   bookable: boolean
@@ -61,10 +63,13 @@ export type Availability = {
   durationMinutes: number
   /**
    * `combined`: available, but only for a combination of tables (no single table seats the party then), which the system
-   * assigns; where the guest chooses the table, the booking then skips that step.
+   * assigns; where the guest chooses the table, the booking then skips that step. `remaining`: how many more parties of this
+   * size could still get a table then, 0 to 3 (3 meaning 3 or more).
    */
-  periods: { start: string; end: string; times: { time: string; available: boolean; combined: boolean }[] }[]
+  periods: { start: string; end: string; times: AvailabilityTime[] }[]
 }
+
+export type AvailabilityTime = { time: string; available: boolean; combined: boolean; remaining: number }
 
 /** A table on an area's floor plan; the position is relative to the plan (image or schematic plan), 0–1. */
 export type PublicTable = {
@@ -178,6 +183,17 @@ export function nowIn(timeZoneId: string) {
   return new Intl.DateTimeFormat('en-GB', { timeZone: timeZoneId, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date())
 }
 
+/**
+ * The earliest start an online booking takes now, "YYYY-MM-DD HH:mm" in the restaurant's time: now plus the lead time.
+ * Times up to it are in the past or within the lead time; compare "date time" strings with it.
+ */
+export function earliestStartIn(timeZoneId: string, minLeadTimeMinutes: number) {
+  const [hours, minutes] = nowIn(timeZoneId).split(':').map(Number)
+  const [year, month, day] = todayIn(timeZoneId).split('-').map(Number)
+  const start = new Date(Date.UTC(year, month - 1, day, hours, minutes + minLeadTimeMinutes))
+  return start.toISOString().slice(0, 16).replace('T', ' ')
+}
+
 /** Whether a request was refused because the restaurant does not exist. */
 export function isNotFound(error: unknown) {
   return error instanceof ApiError && error.status === 404
@@ -201,13 +217,28 @@ export function usePublicRestaurant(slug: string) {
   })
 }
 
-/** The days of a month ("YYYY-MM") for a party size. */
-export function useBookingCalendar(slug: string, month: string, guests: number) {
-  return useQuery(calendarQuery(slug, month, guests))
+/** The days of a month ("YYYY-MM") for a party size; only loads while `enabled` (e.g. to load the next month ahead). */
+export function useBookingCalendar(slug: string, month: string, guests: number, enabled = true) {
+  return useQuery({ ...calendarQuery(slug, month, guests), enabled })
+}
+
+/**
+ * The days of several months ("YYYY-MM") for a party size, loaded together; `days` holds those loaded so far, and those
+ * of the previous party size while the new ones load.
+ */
+export function useBookingCalendarMonths(slug: string, months: string[], guests: number) {
+  // Another party size keeps the days of the previous one until its own are loaded.
+  const results = useQueries({ queries: months.map((month) => ({ ...calendarQuery(slug, month, guests), placeholderData: keepPreviousData })) })
+  return {
+    days: results.flatMap((result) => result.data ?? []),
+    isError: results.some((result) => result.isError),
+    error: results.find((result) => result.isError)?.error ?? null,
+    refetch: () => results.forEach((result) => result.isError && void result.refetch()),
+  }
 }
 
 /** The months "YYYY-MM" from the month of `date` to the month of `lastDate`. */
-function monthsBetween(date: string, lastDate: string) {
+export function monthsBetween(date: string, lastDate: string) {
   const months: string[] = []
   let [year, month] = date.split('-').map(Number)
   const [lastYear, lastMonth] = lastDate.split('-').map(Number)
@@ -237,18 +268,19 @@ export function useNextFreeDays(slug: string, date: string, lastDate: string, gu
 }
 
 /**
- * The first available day from `today` to `lastDate`, the booking's preset day; null when there is none. The months are
- * loaded one after the other, only as far as needed. `isPending` until the day is known.
+ * The first available day from `today` to `lastDate`, the booking's preset day; null when there is none. The current and
+ * the next month are loaded together (the date strip shows them), later ones one after the other, only as far as needed.
+ * `isPending` until the day is known.
  */
 export function useFirstFreeDay(slug: string, today: string, lastDate: string, guests: number, enabled: boolean) {
   const queryClient = useQueryClient()
   const isFree = (day: CalendarDay) => day.status === 'available' && day.date >= today && day.date <= lastDate
-  // A month is only loaded once the months before it are loaded and have no available day.
+  // A later month is only loaded once the months before it are loaded and have no available day.
   const queries = []
   let load = true
-  for (const month of enabled ? monthsBetween(today, lastDate) : []) {
+  for (const [index, month] of (enabled ? monthsBetween(today, lastDate) : []).entries()) {
     const query = calendarQuery(slug, month, guests)
-    queries.push({ ...query, enabled: load })
+    queries.push({ ...query, enabled: load || index < 2 })
     const days = queryClient.getQueryData<CalendarDay[]>(query.queryKey)
     load = load && days !== undefined && !days.some(isFree)
   }
@@ -266,13 +298,28 @@ export function useFirstFreeDay(slug: string, today: string, lastDate: string, g
   return { day: null, isPending: false }
 }
 
-/** The start times of a day; only loads while `enabled`. */
-export function useAvailability(slug: string, date: string, guests: number, enabled = true) {
-  return useQuery({
+function availabilityQuery(slug: string, date: string, guests: number) {
+  return {
     queryKey: [...publicKey(slug), 'availability', date, guests],
     queryFn: () => apiGet<Availability>(`/public/restaurants/${encodeURIComponent(slug)}/availability?date=${date}&guests=${guests}`),
+  }
+}
+
+/**
+ * The start times of a day; only loads while `enabled`. With `keepPrevious`, the times of the previous day or party size
+ * stay (`isPlaceholderData`) until the new ones arrive, for the time chips of the card.
+ */
+export function useAvailability(slug: string, date: string, guests: number, enabled = true, keepPrevious = false) {
+  return useQuery({
+    ...availabilityQuery(slug, date, guests),
     enabled,
+    placeholderData: keepPrevious ? keepPreviousData : undefined,
   })
+}
+
+/** The start times of several days, or of several party sizes, for the alternatives of a fully booked day. */
+export function useAvailabilities(slug: string, requests: { date: string; guests: number }[]) {
+  return useQueries({ queries: requests.map(({ date, guests }) => availabilityQuery(slug, date, guests)) })
 }
 
 /** The areas with their tables for a time; only for restaurants in which the guest chooses the table. Only loads while `enabled`. */

@@ -175,15 +175,25 @@
       "closed": "geschlossen",
       "previousMonth": "Vorheriger Monat",
       "nextMonth": "Nächster Monat",
-      "legend": "Ausgegraute Tage sind geschlossen oder nicht buchbar, durchgestrichene ausgebucht."
+      "legend": "Ausgegraute Tage sind geschlossen oder nicht buchbar, durchgestrichene ausgebucht.",
+      "available": "frei",
+      "earlierDays": "Frühere Tage",
+      "laterDays": "Spätere Tage",
+      "moreDates": "Weitere Daten"
     },
     "time": {
       "morning": "Vormittag",
       "midday": "Mittag",
       "evening": "Abend",
-      "noTables": "Keine freien Tische – nächste freie Tage:",
+      "noTables": "An diesem Tag sind keine Tische mehr frei.",
       "noFreeDays": "In den nächsten Wochen ist leider kein Tag mehr frei. Bitte wählen Sie ein anderes Datum oder rufen Sie uns an.",
-      "freeTimes": "Freie Zeiten"
+      "freeTimes": "Freie Zeiten",
+      "nextFreeDays": "Nächste freie Tage",
+      "taken": "{{time}}, ausgebucht",
+      "tablesLeft_one": "Nur noch {{count}} Tisch",
+      "tablesLeft_other": "Nur noch {{count}} Tische",
+      "smallerParty_one": "Für {{count}} Person gibt es Zeiten um {{times}}",
+      "smallerParty_other": "Für {{count}} Personen gibt es Zeiten um {{times}}"
     },
     "table": {
       "listLabel": "Freie Tische – {{area}}",

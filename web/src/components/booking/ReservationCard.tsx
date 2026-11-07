@@ -1,7 +1,7 @@
 import { BadgeCheckIcon, MailQuestionIcon, RotateCcwIcon } from 'lucide-react'
-import type { Ref } from 'react'
+import { type Ref, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { PublicRestaurant } from '../../api/publicBooking.ts'
+import { earliestStartIn, type PublicRestaurant } from '../../api/publicBooking.ts'
 import { cn } from '../../lib/utils.ts'
 import { Card } from '../../ui/card.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
@@ -20,12 +20,19 @@ type ReservationCardProps = {
 }
 
 /**
- * The reservation card: party size and date side by side, below them the free times of the day as chips right away (or the
- * hint to call for a party too large to book online), and at the bottom how the restaurant confirms and that the
- * reservation can be cancelled through the link. A click on a time opens the booking dialog.
+ * The reservation card: the party size as chips, below it the next days as a strip, below them the times of the day as chips
+ * right away (or the hint to call for a party too large to book online), and at the bottom how the restaurant confirms and
+ * that the reservation can be cancelled through the link. A click on a time opens the booking dialog.
  */
 export function ReservationCard({ slug, restaurant, flow, ref, className }: ReservationCardProps) {
   const { t } = useTranslation()
+  // The day and party size of the times shown last. While the first free day for another party size is looked up, their
+  // times stay (dimmed) instead of a skeleton, so the card does not jump.
+  const [shown, setShown] = useState<{ day: string; guests: number } | null>(null)
+  if (flow.day !== null && (shown?.day !== flow.day || shown.guests !== flow.partySize)) {
+    setShown({ day: flow.day, guests: flow.partySize })
+  }
+  const times = flow.day !== null ? { day: flow.day, guests: flow.partySize } : shown
 
   return (
     <Card ref={ref} className={cn('gap-0 py-0', className)}>
@@ -39,40 +46,38 @@ export function ReservationCard({ slug, restaurant, flow, ref, className }: Rese
           {t('booking.steps.time')}
         </h2>
 
-        <div className="grid grid-cols-2 gap-3">
-          <PartySizePicker value={flow.partySize} maxOnlinePartySize={restaurant.maxOnlinePartySize} onChange={flow.chooseGuests} />
-          <BookingCalendar
-            slug={slug}
-            guests={flow.partySize}
-            value={flow.tooLarge ? null : flow.day}
-            minDate={flow.today}
-            maxDate={flow.lastDay}
-            onChange={flow.chooseDate}
-          />
-        </div>
+        <PartySizePicker value={flow.partySize} maxOnlinePartySize={restaurant.maxOnlinePartySize} onChange={flow.chooseGuests} />
 
         {flow.tooLarge ? (
           <PartySizeCallHint maxOnlinePartySize={restaurant.maxOnlinePartySize} phone={restaurant.phone} />
-        ) : flow.day === null ? (
-          <div className="flex flex-col gap-3" aria-hidden="true">
-            <Skeleton className="h-5 w-40" />
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-              {Array.from({ length: 8 }, (_, i) => (
-                <Skeleton key={i} className="h-11 rounded-full" />
-              ))}
-            </div>
-          </div>
         ) : (
-          <TimeSlotGrid
-            slug={slug}
-            date={flow.day}
-            guests={flow.partySize}
-            value={flow.time}
-            maxDate={flow.lastDay}
-            notice={flow.timeNotice}
-            onChange={flow.chooseTime}
-            onChangeDate={flow.chooseDate}
-          />
+          <>
+            <BookingCalendar
+              slug={slug}
+              guests={flow.partySize}
+              value={times?.day ?? null}
+              minDate={flow.today}
+              maxDate={flow.lastDay}
+              onChange={flow.chooseDate}
+            />
+            {times === null ? (
+              <TimesSkeleton />
+            ) : (
+              <TimeSlotGrid
+                slug={slug}
+                date={times.day}
+                guests={times.guests}
+                waiting={flow.day === null}
+                value={flow.time}
+                maxDate={flow.lastDay}
+                earliestStart={earliestStartIn(restaurant.timeZoneId ?? 'UTC', restaurant.minLeadTimeMinutes)}
+                notice={flow.timeNotice}
+                onChange={flow.chooseTime}
+                onChangeGuests={flow.chooseGuests}
+                onChooseDayAndTime={flow.chooseDayAndTime}
+              />
+            )}
+          </>
         )}
       </div>
 
@@ -94,21 +99,42 @@ export function ReservationCard({ slug, restaurant, flow, ref, className }: Rese
   )
 }
 
-/** The reservation card while the restaurant loads, in its shape. */
-export function ReservationCardSkeleton({ className }: { className?: string }) {
+/** The times while the first free day is not known yet, in the shape of TimeSlotGrid's skeleton. */
+function TimesSkeleton() {
   return (
-    <Card className={cn('gap-5 p-5 sm:p-6', className)} aria-hidden="true">
-      <Skeleton className="h-8 w-48" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-16" />
-        <Skeleton className="h-16" />
-      </div>
+    <div className="flex flex-col gap-3" aria-hidden="true">
       <Skeleton className="h-5 w-40" />
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
         {Array.from({ length: 8 }, (_, i) => (
           <Skeleton key={i} className="h-11 rounded-full" />
         ))}
       </div>
+    </div>
+  )
+}
+
+/** The reservation card while the restaurant loads, in its shape: heading, party size, date strip, times. */
+export function ReservationCardSkeleton({ className }: { className?: string }) {
+  return (
+    <Card className={cn('gap-5 p-5 sm:p-6', className)} aria-hidden="true">
+      <Skeleton className="h-8 w-48" />
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-4 w-16" />
+        <div className="flex gap-1.5 overflow-hidden">
+          {Array.from({ length: 9 }, (_, i) => (
+            <Skeleton key={i} className="size-11 shrink-0 rounded-full" />
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-4 w-12" />
+        <div className="flex gap-1.5 overflow-hidden">
+          {Array.from({ length: 14 }, (_, i) => (
+            <Skeleton key={i} className="h-16 w-12 shrink-0 rounded-xl" />
+          ))}
+        </div>
+      </div>
+      <TimesSkeleton />
     </Card>
   )
 }
