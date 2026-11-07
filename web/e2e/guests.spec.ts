@@ -73,7 +73,10 @@ test.describe('Guests: returning guest', () => {
     for (let days = 1; days <= 7 && returning === undefined; days++) {
       const date = dateFromToday(days)
       const reservations = (await (await page.request.get(`/api/staff/reservations?from=${date}&to=${date}`)).json()) as StaffReservation[]
-      returning = reservations.find((reservation) => reservation.status === 'Confirmed' && (reservation.guest?.visits ?? 0) >= 2)
+      // Kafana Dunav takes requests, so an open reservation is requested or confirmed; both are in the tab "Upcoming".
+      returning = reservations.find(
+        (reservation) => ['Requested', 'Confirmed'].includes(reservation.status) && (reservation.guest?.visits ?? 0) >= 1,
+      )
     }
     expect(returning, 'a demo reservation of a returning guest').toBeDefined()
 
