@@ -76,7 +76,9 @@ builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 // Limits per client IP (with forwarded headers the real client's), answered with 429 { "error": "too_many_requests" }:
 // - online bookings: "RateLimiting:PublicBookings:PermitLimit" (default 10) in 10 minutes;
 // - sign-in attempts: "RateLimiting:Login:PermitLimit" (default 10) per minute, so nobody can lock out accounts at scale;
-// - the public calendar, availability and tables: "RateLimiting:PublicReads:PermitLimit" (default 120) per minute.
+// - the public calendar, availability, tables and holds: "RateLimiting:PublicReads:PermitLimit" (default 120) per minute.
+// Active holds of tables per client IP are limited apart from these, by "RateLimiting:PublicHolds:PermitLimit" (default 3, see
+// PublicRestaurantEndpoints), answered with 429 { "error": "too_many_holds" }.
 var publicBookingLimit = builder.Configuration.GetValue("RateLimiting:PublicBookings:PermitLimit", 10);
 var loginLimit = builder.Configuration.GetValue("RateLimiting:Login:PermitLimit", 10);
 var publicReadLimit = builder.Configuration.GetValue("RateLimiting:PublicReads:PermitLimit", 120);

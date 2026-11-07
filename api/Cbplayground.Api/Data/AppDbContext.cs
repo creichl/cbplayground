@@ -50,6 +50,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<TableBlock> TableBlocks => Set<TableBlock>();
 
+    public DbSet<ReservationHold> ReservationHolds => Set<ReservationHold>();
+
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
     /// so it must stay a member of the context (EF Core evaluates context members per instance).
@@ -182,6 +184,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             block.HasOne<Table>().WithMany().HasForeignKey(b => b.TableId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<ReservationHold>(hold =>
+        {
+            hold.HasIndex(h => new { h.TenantId, h.StartLocal });
+            // One hold per token; the limit per client counts the active holds of an IP address.
+            hold.HasIndex(h => h.TokenHash).IsUnique();
+            hold.HasIndex(h => new { h.ClientIp, h.ExpiresAtUtc });
+            hold.Property(h => h.ClientIp).HasMaxLength(ReservationHold.MaxClientIpLength);
+            hold.HasOne<Tenant>().WithMany().HasForeignKey(h => h.TenantId).OnDelete(DeleteBehavior.Cascade);
+            // Stored as a JSON array of the table ids; a hold lasts minutes, so a deleted table's id simply matches no table.
+            hold.PrimitiveCollection(h => h.TableIds);
+        });
+
         modelBuilder.Entity<RoomElement>(element =>
         {
             element.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
@@ -253,6 +267,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             // Deleting a guest anonymises their reservations first (GuestEndpoints); the reservations stay.
             reservation.HasOne<Guest>().WithMany().HasForeignKey(r => r.GuestId).OnDelete(DeleteBehavior.SetNull);
             reservation.Property(r => r.ReferenceCode).HasMaxLength(Reservation.ReferenceCodeLength);
+            reservation.Property(r => r.IdempotencyKey).HasMaxLength(Reservation.MaxIdempotencyKeyLength);
+            reservation.HasIndex(r => new { r.TenantId, r.IdempotencyKey }).HasFilter("\"IdempotencyKey\" IS NOT NULL");
             reservation.Property(r => r.Language).HasMaxLength(10);
             reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             reservation.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);

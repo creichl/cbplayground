@@ -29,6 +29,12 @@ public static class ReservationRules
     /// </summary>
     public static readonly TimeSpan GuestCancellationDeadlineBeforeStart = TimeSpan.Zero;
 
+    /// <summary>How long the online booking holds a table for the guest while they enter their contact details (<see cref="ReservationHold"/>).</summary>
+    public static readonly TimeSpan HoldDuration = TimeSpan.FromMinutes(5);
+
+    /// <summary>How long a repeated online booking with the same <c>Idempotency-Key</c> returns the reservation of the first one.</summary>
+    public static readonly TimeSpan IdempotencyKeyLifetime = TimeSpan.FromHours(24);
+
     /// <summary>The statuses from which the guest can cancel through the link.</summary>
     public static readonly ReservationStatus[] GuestCancellableStatuses =
         [ReservationStatus.Requested, ReservationStatus.Confirmed, ReservationStatus.Late];
