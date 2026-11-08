@@ -63,14 +63,22 @@ test('books, finds the booking on the restaurant page, changes it at 1440 px and
   // Book the first free time of a later day through the card: a time of today can slip within the lead time while the test runs,
   // and then the change no longer offers it.
   await page.goto('/r/zur-linde')
-  await page.getByRole('group', { name: 'Date' }).getByRole('button', { name: /, available$/ }).nth(1).click()
-  // The times of the day before stay, dimmed and busy, until those of the chosen day are there.
+  const laterDay = page.getByRole('group', { name: 'Date' }).getByRole('button', { name: /, available$/ }).nth(1)
+  const day = (await laterDay.getAttribute('data-day'))!
+  expect(day > dateFromToday(0)).toBe(true)
+  await page.locator(`[data-day="${day}"]`).click()
+  // The day is chosen once its button is pressed and it is in the address; in the same render the times of the day before turn
+  // dimmed and busy, until those of the chosen day are there.
+  await expect(page.locator(`[data-day="${day}"]`)).toHaveAttribute('aria-pressed', 'true')
+  await expect(page).toHaveURL(new RegExp(`[?&]date=${day}(&|$)`))
   await expect(page.locator('[data-layout-part="booking-times"] [aria-busy="true"]')).toHaveCount(0)
   await page.locator('[data-time-chip]').first().click()
   const details = page.getByRole('dialog', { name: 'Your contact details' })
   await expect(details).toBeVisible()
   const params = new URL(page.url()).searchParams
   const date = params.get('date')!
+  // Booked on the later day, not today.
+  expect(date).toBe(day)
   const time = params.get('time')!
   await details.getByLabel('Name').fill('Clara Change')
   await details.getByLabel('Email').fill('clara.change@example.com')
