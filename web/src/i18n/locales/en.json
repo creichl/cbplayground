@@ -101,6 +101,23 @@
     "restaurants": "Restaurants",
     "restaurantsCount_one": "{{count}} restaurant",
     "restaurantsCount_other": "{{count}} restaurants",
+    "filters": {
+      "label": "Filters",
+      "city": "City",
+      "allCities": "All cities",
+      "cuisine": "Cuisine",
+      "price": "Price",
+      "openToday": "Open today",
+      "more": "More filters",
+      "moreHint": "Only restaurants with all the chosen features.",
+      "selected_one": "{{count}} selected",
+      "selected_other": "{{count}} selected",
+      "show_one": "Show {{count}} restaurant",
+      "show_other": "Show {{count}} restaurants",
+      "reset": "Reset filters",
+      "noMatchTitle": "No restaurant matches your filters",
+      "noMatch": "Remove a filter or reset the filters to see more restaurants."
+    },
     "howItWorks": {
       "heading": "How it works",
       "restaurantTitle": "Choose a restaurant",
@@ -147,6 +164,7 @@
       "details": "Your contact details"
     },
     "restaurant": {
+      "sections": "On this page",
       "openingHours": "Opening hours",
       "website": "Website",
       "route": "Directions",

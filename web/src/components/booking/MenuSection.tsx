@@ -11,6 +11,7 @@ import { Photo } from '../../ui/photo.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../ui/tabs.tsx'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../ui/tooltip.tsx'
+import { sectionIds } from './layout.ts'
 
 type Dish = PublicMenu['sections'][number]['items'][number]
 
@@ -61,13 +62,16 @@ export function MenuSection({ slug, restaurantName }: { slug: string; restaurant
     return () => observer.disconnect()
   }, [near])
 
-  if (!near) {
+  // Loaded already, e.g. for the page's section navigation: shown right away.
+  if (!near && menu.data === undefined) {
     return <div ref={anchor} aria-hidden="true" />
   }
   if (menu.isPending) {
     return (
-      <section aria-busy="true" aria-label={t('booking.menu.title')} className="flex flex-col gap-4">
-        <h2 className="font-display text-2xl sm:text-3xl">{t('booking.menu.title')}</h2>
+      <section id={sectionIds.menu} aria-busy="true" aria-label={t('booking.menu.title')} className="flex scroll-mt-36 flex-col gap-4">
+        <h2 tabIndex={-1} className="font-display text-2xl outline-none sm:text-3xl">
+          {t('booking.menu.title')}
+        </h2>
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           {[0, 1, 2, 3].map((key) => (
             <Skeleton key={key} className={cn('aspect-4/3 rounded-xl', key > 1 && 'max-lg:hidden')} />
@@ -116,8 +120,8 @@ function MenuContent({ menu, restaurantName }: { menu: PublicMenu; restaurantNam
 
   return (
     <Reveal>
-      <section aria-labelledby="menu-heading" className="flex flex-col gap-6">
-        <h2 id="menu-heading" className="font-display text-2xl sm:text-3xl">
+      <section id={sectionIds.menu} aria-labelledby="menu-heading" className="flex scroll-mt-36 flex-col gap-6">
+        <h2 id="menu-heading" tabIndex={-1} className="font-display text-2xl outline-none sm:text-3xl">
           {t('booking.menu.title')}
         </h2>
 

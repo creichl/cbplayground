@@ -5,7 +5,7 @@ import { homePath, useCurrentUser } from '../api/auth.ts'
 import { usePublicRestaurant } from '../api/publicBooking.ts'
 import { BrandLogo } from '../components/BrandLogo.tsx'
 import { BrandTheme } from '../components/BrandTheme.tsx'
-import { HeroContext, headerHeight, scrollToBooking } from '../components/booking/layout.ts'
+import { HeroContext, headerHeight, PastHeroContext, scrollToBooking } from '../components/booking/layout.ts'
 import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { LanguageMenu } from '../ui/language-menu.tsx'
@@ -42,7 +42,8 @@ export function GuestLayout() {
  * compact menu on the right. While a page's cover image (RestaurantHeader, through HeroContext) is behind it, the header is
  * transparent with white text and the logo has a soft shadow; once the page scrolls past the image it is fixed, opaque with
  * a blur (a layer that fades in, so the change is smooth), and on the booking page it adds "Reserve a table", which brings
- * the reservation card into view. Links between the guest pages change the page with a view transition. The platform
+ * the reservation card into view; the page learns of it through PastHeroContext (the booking page then shows its section
+ * navigation below the header). Links between the guest pages change the page with a view transition. The platform
  * steps back into a plain footer with the staff sign-in and "powered by". An unknown restaurant gets the platform's look.
  */
 function RestaurantLayout({ slug }: { slug: string }) {
@@ -85,6 +86,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
 
   return (
     <HeroContext value={setHero}>
+      <PastHeroContext value={hero !== null && !heroInView}>
       <div className="flex min-h-dvh flex-col bg-background font-sans text-foreground">
         <header
           className={cn(
@@ -156,6 +158,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
           </div>
         </footer>
       </div>
+      </PastHeroContext>
     </HeroContext>
   )
 }

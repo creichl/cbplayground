@@ -16,7 +16,8 @@ Every ticket that changes behaviour adds or updates automated tests, with screen
 One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealAll`, `dateFromToday`, `bookRequest`) in
 `helpers.ts`.
 
-- Guest side: `start-page.spec.ts` (start page), `not-found.spec.ts` (not found pages), `booking.spec.ts` (booking page,
+- Guest side: `start-page.spec.ts` (start page), `start-page-filters.spec.ts` (the start page's filters),
+  `restaurant-navigation.spec.ts` (the section navigation of the restaurant page), `not-found.spec.ts` (not found pages), `booking.spec.ts` (booking page,
   booking dialog, embedded booking, unknown restaurant), `booking-flow.spec.ts` (bookings from start to confirmation,
   the guest's reservation link, the embed's booking and height), `table-choice.spec.ts` (the guest's table choice).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
