@@ -15,7 +15,7 @@ or Envato, nothing of unclear licence, no logos or brands of others.
 
 ## Materials, models and fonts used in the floor plans and logos
 
-All retrieved on 2026-11-01.
+All retrieved on 2026-11-01; the fonts of the logos of Trattoria Il Faro, Café Morgenrot and Izakaya Kaze (Playfair Display, Source Sans 3, Inter, Montserrat) on 2026-11-08.
 
 Materials from ambientCG (https://ambientcg.com), author ambientCG (Lennart Demes), licence CC0 1.0
 (https://docs.ambientcg.com/license/), each the 1K JPG set (colour, normal and roughness maps), page `https://ambientcg.com/view?id=<name>`:
@@ -47,10 +47,11 @@ Models from Poly Haven (https://polyhaven.com), licence CC0 1.0 (https://polyhav
 
 Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font License 1.1 (https://openfontlicense.org):
 
-- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop (set with Pillow), logo of Rooftop Belvedere
+- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop (set with Pillow), logos of Rooftop Belvedere and Izakaya Kaze
 - Cormorant Garamond (Christian Thalmann): logo of Rooftop Belvedere
 - Merriweather (Sorkin Type): logo of Gasthaus zur Linde
-- Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logo of Kafana Dunav
+- Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logos of Kafana Dunav and Trattoria Il Faro
+- Inter (Rasmus Andersson): logo of Café Morgenrot
 
 ## `gaststube.webp`
 
@@ -626,4 +627,670 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 - Photographer: Alex Munsell (alexmunsell on Unsplash)
 - Licence: CC0 1.0
 - Retrieved: 2026-11-07
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-gallery-maibaum.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: blue-and-white Bavarian maypole with carved guild figures against a blue sky with clouds (Gelting, Upper Bavaria)
+- Source: https://commons.wikimedia.org/wiki/File:Maibaum_Gelting.jpg
+- Photographer: Edelmauswaldgeist
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `zur-linde-gallery-frauenkirche.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: the twin towers of the Frauenkirche in Munich with their green onion domes, seen from Marienplatz on a bright overcast day
+- Source: https://commons.wikimedia.org/wiki/File:2019-11-16,_T%C3%BCrme,_M%C3%BCnchner_Frauenkirche,_IMG_7470_edit_Christoph_Braun.JPG
+- Photographer: Christoph Braun
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `zur-linde-gallery-laugensemmeln.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: freshly baked pretzel rolls (Laugensemmeln) with coarse salt on a dark baking tray
+- Source: https://commons.wikimedia.org/wiki/File:%D0%91%D0%B0%D0%B2%D0%B0%D1%80%D1%81%D0%BA%D0%B8_%D0%BB%D0%B5%D0%BF%D1%87%D0%B8%D1%9A%D0%B0.jpg ("Баварски лепчиња")
+- Photographer: Gordana Adzieva
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-novi-sad.jpg`
+
+- Motif: Gallery of Kafana Dunav: view from Petrovaradin Fortress over the Danube, the Varadin Bridge and Novi Sad on a sunny spring day
+- Source: https://commons.wikimedia.org/wiki/File:Varadinski_most_u_Novom_Sadu_2022.jpg
+- Photographer: Imeao
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-kafa.jpg`
+
+- Motif: Gallery of Kafana Dunav: copper džezva with freshly brewed coffee and a white cup on a blue plate, seen from above
+- Source: https://commons.wikimedia.org/wiki/File:Caf%C3%A9_grec_%C3%A0_Almyrida_(1).jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, label of a sugar sachet blurred, saved as JPEG
+
+## `kafana-dunav-gallery-baklava.jpg`
+
+- Motif: Gallery of Kafana Dunav: rows of baklava rolls with sour cherries, glazed with syrup, in the tray
+- Source: https://commons.wikimedia.org/wiki/File:%D0%91%D0%B0%D0%BA%D0%BB%D0%B0%D0%B2%D0%B0_%D1%81%D0%BE_%D0%B2%D0%B8%D1%88%D0%BD%D0%B0.jpg ("Баклава со вишна")
+- Photographer: Lili Arsova
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-gibanica.jpg`
+
+- Motif: Gallery of Kafana Dunav: a whole golden-baked gibanica (cheese pie of filo pastry) in a round baking dish, seen from above
+- Source: https://commons.wikimedia.org/wiki/File:Gibanica_februar_26.jpg
+- Photographer: Biljana Milenković SD
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-stephansdom.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: the patterned tiled roof and the south tower of St. Stephen's Cathedral in Vienna, lit at night against a black sky
+- Source: https://commons.wikimedia.org/wiki/File:Stephansdom_Wien_at_night_2022-08-08_01.jpg
+- Photographer: Leonhard Lenz
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-belvedere.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: the Upper Belvedere in Vienna lit at night with festive star lights, mirrored in the pond, no people
+- Source: https://commons.wikimedia.org/wiki/File:Belvedere_Palace_1.jpg
+- Photographer: Dimitry Anikin
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-dessert.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: plated dessert of fresh berries, chocolate quenelle, crumble, a caramel flower and lemon basil on a dark stoneware plate
+- Source: https://commons.wikimedia.org/wiki/File:Dessert_for_Chef%27s_table,_Mainz.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-dj.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: close-up of a DJ deck with jog wheel and glowing buttons in the dark, no people
+- Source: https://commons.wikimedia.org/wiki/File:DJ_turntable_in_close-up_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/JiSNvVs3keU (under CC0 at the time)
+- Photographer: Dan Stark dan_stark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-cover.jpg`
+
+- Motif: Cover image of Café Morgenrot: brunch table from above: porridge and yoghurt bowls with berries, waffles with honeycomb, a cup of tea, milk jugs and honey on white marble
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_on_the_Veranda_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/HlNcigvUi4Q (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 2000 × 1125, saved as JPEG
+
+## `cafe-morgenrot-cafe-photo.jpg`
+
+- Motif: Area "Café" of Café Morgenrot: bright café room with tall arched windows onto green trees, a leather bench, wooden tables with small succulents and copper pendant lamps
+- Source: https://commons.wikimedia.org/wiki/File:Arched_café_windows_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/ACtEE_FcaRU (under CC0 at the time)
+- Photographer: The Anchor anchorcoffee
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, window decals (logo and lettering) blurred, saved as JPEG
+
+## `cafe-morgenrot-gastgarten-photo.jpg`
+
+- Motif: Area "Gastgarten" of Café Morgenrot: garden café courtyard with wooden folding chairs and round tables under a large tree
+- Source: https://commons.wikimedia.org/wiki/File:Schillerhaus_Rudolstadt,_Garten_04.jpg
+- Photographer: Catatine
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, saved as JPEG
+
+## `cafe-morgenrot-gallery-cappuccino.jpg`
+
+- Motif: Gallery of Café Morgenrot: cappuccino with latte art in a white cup on a saucer
+- Source: https://commons.wikimedia.org/wiki/File:Latte_art_on_cappuccino_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/tZKwLRO904E (under CC0 at the time)
+- Photographer: Drew Coffman drewcoffman
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-pancakes.jpg`
+
+- Motif: Gallery of Café Morgenrot: stack of pancakes with strawberries, blueberries and syrup on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Pancakes_with_Berries_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/odouHPr0Lqw (under CC0 at the time)
+- Photographer: Herson Rodriguez hero
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-brunch.jpg`
+
+- Motif: Gallery of Café Morgenrot: friends sharing brunch at a round table, seen from above (hands only)
+- Source: https://commons.wikimedia.org/wiki/File:Brunching_with_Friends_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/y3aP9oo9Pjc (under CC0 at the time)
+- Photographer: Ali Inay inayali
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-avocado-toast.jpg`
+
+- Motif: Gallery of Café Morgenrot: avocado toasts with avocado roses, rosemary and sesame on a blue stone surface
+- Source: https://commons.wikimedia.org/wiki/File:Avocado_Rose_Toast_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/k4116JZ07S0 (under CC0 at the time)
+- Photographer: Brenda Godinez cravethebenefits
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-bakery.jpg`
+
+- Motif: Gallery of Café Morgenrot: rustic breads in baskets behind a bakery counter window with handwritten price cards
+- Source: https://commons.wikimedia.org/wiki/File:Fresh_Bread_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/Mvz8Xfy3TPU (under CC0 at the time)
+- Photographer: Roman Kraft romankraft
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-uhrturm.jpg`
+
+- Motif: Gallery of Café Morgenrot: the Uhrturm (clock tower) on the Schlossberg in Graz in morning sun, with the rooftops of Graz behind
+- Source: https://commons.wikimedia.org/wiki/File:Uhrturm_in_Graz.jpg
+- Photographer: DJ3tausend
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-garden-morning.jpg`
+
+- Motif: Gallery of Café Morgenrot: long wooden table and stools in a garden in dappled morning light
+- Source: https://commons.wikimedia.org/wiki/File:Restaurant_Patio_Furniture_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/yEuEHQdLLEc (under CC0 at the time)
+- Photographer: rawpixel.com rawpixel
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-breakfast-table.jpg`
+
+- Motif: Gallery of Café Morgenrot: breakfast table with orange juice, a plate of sliced fruit and cherries, small toasts and a teapot
+- Source: https://commons.wikimedia.org/wiki/File:Brooke_Lark_2016_(Unsplash).jpg; originally published on Unsplash, http://unsplash.com/photos/IDTEXXXfS44 (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-apricot-jam.jpg`
+
+- Motif: Gallery of Café Morgenrot: jars of apricot jam with fresh apricots, redcurrants and a wooden spoon
+- Source: https://commons.wikimedia.org/wiki/File:Apricot_jam.jpg; originally published on Pixabay, https://pixabay.com/photo-2444752/ (under CC0 at the time)
+- Photographer: Rita
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-menu-eggs-benedict.jpg`
+
+- Motif: Menu of Café Morgenrot: eggs Benedict with hollandaise, side salad and cherry tomatoes
+- Source: https://commons.wikimedia.org/wiki/File:Eggs_Benedict_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/dKxGVeb3F2w (under CC0 at the time)
+- Photographer: Constance Chen theskyandthesea
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-shakshuka.jpg`
+
+- Motif: Menu of Café Morgenrot: shakshuka: eggs baked in tomato sauce in a pan, with bread
+- Source: https://commons.wikimedia.org/wiki/File:Shakshuka_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/2IHVVbT08f8 (under CC0 at the time)
+- Photographer: Jarosław Ceborski jarson
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-waffles.jpg`
+
+- Motif: Menu of Café Morgenrot: waffle with yoghurt, blueberries, strawberries and granola
+- Source: https://commons.wikimedia.org/wiki/File:Fruit_waffles_and_coffee_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/Wns3U-oVoLA (under CC0 at the time)
+- Photographer: Joseph Gonzalez miracletwentyone
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, side plate cut off, saved as JPEG
+
+## `cafe-morgenrot-menu-french-toast.jpg`
+
+- Motif: Menu of Café Morgenrot: French toast with cream, fresh berries and edible flowers
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_at_Dawn_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/aGjP08-HbYY (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-sandwich.jpg`
+
+- Motif: Menu of Café Morgenrot: toasted sandwich with ham, cheese, egg, tomato and lettuce
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/ya5oLwJff4g (under CC0 at the time)
+- Photographer: Sofiya Levchenko sofelini
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-croissant.jpg`
+
+- Motif: Menu of Café Morgenrot: butter croissant on a plate with a knife
+- Source: https://commons.wikimedia.org/wiki/File:Croissant_-_GAIL's_2024-08-18.jpg
+- Photographer: Andy Li
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-chia-bowl.jpg`
+
+- Motif: Menu of Café Morgenrot: chia and yoghurt bowl with kiwi, blackberries, banana and strawberries, with orange juice and bread
+- Source: https://commons.wikimedia.org/wiki/File:Healthy_Trendy_Brunch_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/8manzosDSGM (under CC0 at the time)
+- Photographer: Jannis Brandt _jannis
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-chocolate-cake.jpg`
+
+- Motif: Menu of Café Morgenrot: slice of chocolate layer cake on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Chocolate_Cake_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/1Hh57OhkdCc (under CC0 at the time)
+- Photographer: Toa Heftiba heftiba
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-logo.png`
+
+- Motif: Logo of Trattoria Il Faro: a lighthouse with its light over the waves in a terracotta circle, "Trattoria" and "Il Faro" in two lines in terracotta
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; fonts Source Sans 3, Playfair Display (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide
+
+## `cafe-morgenrot-logo.png`
+
+- Motif: Logo of Café Morgenrot: the morning sun rising out of a coffee cup in an apricot circle, "Café" and "Morgenrot" in two lines in apricot and a darker orange
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; font Inter (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide
+
+## `izakaya-kaze-logo.png`
+
+- Motif: Logo of Izakaya Kaze: three lines of wind in a deep red circle, "Izakaya" in red and "Kaze" in warm white in two lines, for a dark background
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; font Montserrat (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide
+
+## `il-faro-cover.jpg`
+
+- Motif: Cover image of Trattoria Il Faro: outdoor tables under cream parasols in front of a terracotta façade with planters, cobblestones and lanterns (Rome)
+- Source: https://commons.wikimedia.org/wiki/File:Restaurant_-_Piazza_del_Biscione_-_Rome,_Italy_-_DSC09741.jpg
+- Photographer: Daderot
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 2000 × 1125, a notice sign, the sign above the door and the menu board blurred, a poster on the right cut off, saved as JPEG
+
+## `il-faro-sala-photo.jpg`
+
+- Motif: Area "Sala" of Trattoria Il Faro: rustic dining room with sandstone wall, wooden beams, rush-seat chairs, white tablecloths and tall plants
+- Source: https://commons.wikimedia.org/wiki/File:Restaurant_Thal%C3%A1mi_(Almyrida)_-_vue_int%C3%A9rieure.jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, the restaurant name carved into the chair backs blurred, saved as JPEG
+
+## `il-faro-terrazza-photo.jpg`
+
+- Motif: Area "Terrazza" of Trattoria Il Faro: terrace under a wooden pergola with blooming wisteria, white-clothed tables, terracotta planters and tiled roofs behind
+- Source: https://commons.wikimedia.org/wiki/File:Terrace_-_Ristorante_Sibilla_-_Tivoli,_Italy_-_DSC03832.jpg
+- Photographer: Daderot
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, a waiter and a guest on the left cut off, saved as JPEG
+
+## `il-faro-gallery-fresh-pasta.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: floury hands pulling fresh tagliatelle from a pasta machine
+- Source: https://commons.wikimedia.org/wiki/File:Making_Pasta_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/4nXkhLCrkLo (under CC0 at the time)
+- Photographer: Jorge Zapata jorgezapatag
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, the brand name on the pasta machine and a logo on the sleeve blurred, saved as JPEG
+
+## `il-faro-gallery-pizza.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: Neapolitan pizza margherita with charred crust and basil on a wooden table in sunlight
+- Source: https://commons.wikimedia.org/wiki/File:L'Oro_di_Napoli_-_January_2025_-_Sarah_Stierch_18.jpg
+- Photographer: Missvain
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-antipasti.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: antipasti plate with prosciutto, salami, grilled courgette and aubergine, a tomato bruschetta, a basil pot and a glass of water
+- Source: https://commons.wikimedia.org/wiki/File:Antipasti,_Niederselters.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, a printed name on the glass blurred, saved as JPEG
+
+## `il-faro-gallery-aperitivo.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: orange-red aperitivo in a coupe glass with an orange slice
+- Source: https://commons.wikimedia.org/wiki/File:Cocktail_orange_drink_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/shhT37a3ScY (under CC0 at the time)
+- Photographer: Adam Jaime arobj
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-espresso.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: espresso running from a portafilter into two brown cups
+- Source: https://commons.wikimedia.org/wiki/File:Close-up_of_espresso_machine_with_two_brown_coffee_cups.jpg; originally published on Pexels, https://www.pexels.com/photo/close-up-of-coffee-cup-324028/ (under CC0 at the time)
+- Photographer: Chevanon Photography
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-speicherstadt.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: Hamburg Speicherstadt at blue hour, lit warehouses along the canal and the Wasserschlösschen
+- Source: https://commons.wikimedia.org/wiki/File:Hafen_City_(Unsplash).jpg; originally published on Unsplash, http://unsplash.com/photos/qpemSW6_1Z0 (under CC0 at the time)
+- Photographer: Claudio Testa claudiotesta
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-pizza-oven.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: wood fire burning in a brick pizza oven
+- Source: https://commons.wikimedia.org/wiki/File:Brick-oven-thumbnail.jpg; originally published on Pixabay, https://pixabay.com/photos/wood-fired-oven-oven-pizza-fire-1230408/ (under CC0 at the time)
+- Photographer: Beboplu
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-lemons.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: ripe lemons on a lemon tree against a blue sky
+- Source: https://commons.wikimedia.org/wiki/File:Citrus_x_limon,_lemon_on_tree,_Co%C3%ADn,_Spain.jpg
+- Photographer: Bj.schoenmakers
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-gallery-olive-oil.jpg`
+
+- Motif: Gallery of Trattoria Il Faro: glass jug of olive oil with green and dark olives and an olive sprig
+- Source: https://commons.wikimedia.org/wiki/File:Olive_Oil_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/uOBApnN_K7w (under CC0 at the time)
+- Photographer: Roberta Sorge robertina
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `il-faro-menu-bruschetta.jpg`
+
+- Motif: Menu of Trattoria Il Faro: grilled bread with cherry tomatoes and rocket
+- Source: https://commons.wikimedia.org/wiki/File:Bonvicino_(restaurant)_-_bruschetta.jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-carpaccio.jpg`
+
+- Motif: Menu of Trattoria Il Faro: beef carpaccio with rocket, shaved parmesan and a lemon half
+- Source: https://commons.wikimedia.org/wiki/File:Carpaccio_de_b%C5%93uf,_restaurant_Danieli_(Vienne,_Autriche).jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-caprese.jpg`
+
+- Motif: Menu of Trattoria Il Faro: insalata caprese, tomato and mozzarella slices with basil and balsamic glaze
+- Source: https://commons.wikimedia.org/wiki/File:The_Plaza_Bistro_-_July_2024_-_Sarah_Stierch_02.jpg
+- Photographer: Missvain
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-vongole.jpg`
+
+- Motif: Menu of Trattoria Il Faro: thick hand-rolled pasta with clams and parsley (pasta alle vongole)
+- Source: https://commons.wikimedia.org/wiki/File:Pasta_alle_Vongole_-_Wiki_Loves_Sicilia.jpg
+- Photographer: 8w9d
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-risotto.jpg`
+
+- Motif: Menu of Trattoria Il Faro: risotto with king prawns, a roasted red pepper and cress
+- Source: https://commons.wikimedia.org/wiki/File:Risotto_de_gambas,_restaurant_Danieli_(Vienne,_Autriche).jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-lasagne.jpg`
+
+- Motif: Menu of Trattoria Il Faro: slice of lasagne with beef ragù, tomato sauce and ricotta
+- Source: https://commons.wikimedia.org/wiki/File:Slice_of_Lasagna.jpg
+- Photographer: Roundhere44
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-menu-octopus.jpg`
+
+- Motif: Menu of Trattoria Il Faro: grilled octopus with roast potato slices, mint, rocket and lemon
+- Source: https://commons.wikimedia.org/wiki/File:Purpo_arrustuto_-_Naples.jpg
+- Photographer: Ruthven
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, a labelled bottle at the top cut off, saved as JPEG
+
+## `il-faro-menu-tiramisu.jpg`
+
+- Motif: Menu of Trattoria Il Faro: slice of tiramisu dusted with cocoa
+- Source: https://commons.wikimedia.org/wiki/File:Luna_Trattoria_-_January_2025_-_Sarah_Stierch_05.jpg
+- Photographer: Missvain
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-cover.jpg`
+
+- Motif: Cover image of Izakaya Kaze: dim Japanese dining room with dark wooden slat screens, tall red glass vases with orchids and monstera leaves on a lit sideboard, white pendant lamps, tables laid with red cups
+- Source: https://commons.wikimedia.org/wiki/File:Open_Tables_in_Ton_Sushi_20100808.JPG
+- Photographer: 玄史生
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 2000 × 1125, saved as JPEG
+
+## `izakaya-kaze-bar-photo.jpg`
+
+- Motif: Area "Bar" of Izakaya Kaze: empty sushi counter of light hinoki wood with leather seat cushions and a glass fish case, warm indirect light
+- Source: https://commons.wikimedia.org/wiki/File:Hitoshi_006.jpg
+- Photographer: Syuhei.h
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, the restaurant's name on the two door curtains blurred, saved as JPEG
+
+## `izakaya-kaze-sala-photo.jpg`
+
+- Motif: Area "Sala" of Izakaya Kaze: wooden dining room with exposed beams, woven paper lanterns and a lit Japanese garden behind the windows in the evening
+- Source: https://commons.wikimedia.org/wiki/File:JP_日本_Japan_京都_Kyoto_Nagatsuji_Street_嵐山喜重郎餐廳_Kijurou_Wagyu_Beef_Restaurant_interior_furniture_June_2026_N13P_13.jpg
+- Photographer: HAGAT hOMSZE
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped (the camera's date stamp cut off), scaled to 1200 × 800, saved as JPEG
+
+## `izakaya-kaze-gallery-nigiri.jpg`
+
+- Motif: Gallery of Izakaya Kaze: nigiri platter on a black tray with tuna, salmon, a whole prawn, tamago, silver-skinned fish, white fish with lime, a whole glazed sea eel (anago) and pickled ginger
+- Source: https://commons.wikimedia.org/wiki/File:Sushi_at_Midori,_Shibuya.jpg
+- Photographer: さえぼー
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-yakitori.jpg`
+
+- Motif: Gallery of Izakaya Kaze: two negima yakitori skewers (chicken and leek) glazed with tare on a ceramic plate
+- Source: https://commons.wikimedia.org/wiki/File:Yakitori_001.jpg
+- Photographer: Ocdp
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-gyoza.jpg`
+
+- Motif: Gallery of Izakaya Kaze: six pan-fried gyoza with a crisp golden side on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Gyōza_001.jpg
+- Photographer: Ocdp
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-tempura.jpg`
+
+- Motif: Gallery of Izakaya Kaze: tempura of prawn, fish, shiso leaf and nori on a black tray with dipping sauce, rice, pickles and red miso soup
+- Source: https://commons.wikimedia.org/wiki/File:Tempura_002.jpg
+- Photographer: Ocdp
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-lanterns.jpg`
+
+- Motif: Gallery of Izakaya Kaze: a row of lit red and white paper lanterns at night
+- Source: https://commons.wikimedia.org/wiki/File:Line_of_lanterns_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/bEO3lLrNmDA (under CC0 at the time)
+- Photographer: kazuend
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-belgrade.jpg`
+
+- Motif: Gallery of Izakaya Kaze: Branko's Bridge in Belgrade lit in red, blue and white at night, reflected in the Sava, city lights behind
+- Source: https://commons.wikimedia.org/wiki/File:Ymvivqkousat.jpg
+- Photographer: Imeao
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-cocktail.jpg`
+
+- Motif: Gallery of Izakaya Kaze: amber cocktail strained over a large ice cube in a tumbler with an orange peel, dark background
+- Source: https://commons.wikimedia.org/wiki/File:Adam_Jaime_2016-08-04_(Unsplash_dmkmrNptMpw).jpg; originally published on Unsplash, https://unsplash.com/photos/dmkmrNptMpw (under CC0 at the time)
+- Photographer: Adam Jaime
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-gallery-shochu.jpg`
+
+- Motif: Gallery of Izakaya Kaze: a glass of shochu on the rocks on a dark purple tablecloth
+- Source: https://commons.wikimedia.org/wiki/File:Shochu_001.jpg; originally published on publicdomainq.net, https://publicdomainq.net/shochu-japanese-liquor-0014762/
+- Photographer: publicdomainq.net (no photographer named)
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, the labels of the bottles in the background blurred, saved as JPEG
+
+## `izakaya-kaze-gallery-hands.jpg`
+
+- Motif: Gallery of Izakaya Kaze: hands shaping a Japanese wagashi sweet with a modelling tool over a red work mat
+- Source: https://commons.wikimedia.org/wiki/File:Making_of_wisteria_wagashi_by_Noriko_Jazayeri_2025-05-18.jpg
+- Photographer: Andy Li
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `izakaya-kaze-menu-edamame.jpg`
+
+- Motif: Menu of Izakaya Kaze: steamed edamame pods on a dark blue ribbed ceramic plate
+- Source: https://commons.wikimedia.org/wiki/File:Edamame_-_Massachusetts.jpg
+- Photographer: Daderot
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-miso-soup.jpg`
+
+- Motif: Menu of Izakaya Kaze: miso soup with tofu, wakame and mitsuba leaves in a red lacquer bowl, seen from above
+- Source: https://commons.wikimedia.org/wiki/File:Miso_soup_overhead.jpg
+- Photographer: Douglas Perkins
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-sashimi.jpg`
+
+- Motif: Menu of Izakaya Kaze: sashimi platter with yellowtail, tuna and sea bream on shiso leaves, with wasabi and edible flowers on a glass plate
+- Source: https://commons.wikimedia.org/wiki/File:Quality_izakaya_in_Ebisu_7.jpg
+- Photographer: Syced
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-maki.jpg`
+
+- Motif: Menu of Izakaya Kaze: maki rolls with salmon and cucumber next to frisée lettuce on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Makizushi2.jpg; originally published on Pixabay, https://pixabay.com/photos/2363418/ (under CC0 at the time)
+- Photographer: pasqualeschiavoneph
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-tonkotsu-ramen.jpg`
+
+- Motif: Menu of Izakaya Kaze: tonkotsu ramen with pork chashu, seasoned egg, spring onion, pickled ginger, takana and black garlic oil in a pale ceramic bowl
+- Source: https://commons.wikimedia.org/wiki/File:Tonkotsu_Ramen_-_Goemon_Ramen_Bar_2023-06-06.jpg
+- Photographer: Andy Li
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-karaage.jpg`
+
+- Motif: Menu of Izakaya Kaze: Japanese fried chicken (karaage) with shredded cabbage on a pale ceramic plate
+- Source: https://commons.wikimedia.org/wiki/File:Karaage_001.jpg
+- Photographer: Ocdp
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-beef-tataki.jpg`
+
+- Motif: Menu of Izakaya Kaze: seared rare beef tataki with garlic slices, spring onion and a soy dressing on an oval plate
+- Source: https://commons.wikimedia.org/wiki/File:Beef_tataki_-_Napier,_New_Zealand.jpg
+- Photographer: Daderot
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `izakaya-kaze-menu-sakura-mochi.jpg`
+
+- Motif: Menu of Izakaya Kaze: two pink sakura mochi wrapped in pickled cherry leaves on a wooden dish
+- Source: https://commons.wikimedia.org/wiki/File:Sakura-mochi_001.jpg
+- Photographer: Ocdp
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
 - Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG

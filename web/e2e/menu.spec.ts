@@ -1,25 +1,10 @@
 import { join } from 'node:path'
-import { expect, type Page, test } from '@playwright/test'
-import { revealAll, settle, signIn } from './helpers.ts'
+import { expect, test } from '@playwright/test'
+import { menuSection, revealAll, settle, signIn } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 /** A photo of a dish for the upload: one of the seed assets. */
 const dishPhoto = join(import.meta.dirname, '../../api/Cbplayground.Api/Data/SeedAssets/zur-linde-gallery-kaiserschmarrn.jpg')
-
-/**
- * The loaded menu section of the restaurant page, scrolled into view: it loads once it comes near the view, and while it
- * loads a skeleton with the same heading stands in.
- */
-async function menuSection(page: Page) {
-  const menu = page.locator('section[aria-labelledby="menu-heading"]')
-  for (let y = 0; (await menu.count()) === 0 && y < 8000; y += 500) {
-    await page.evaluate(`window.scrollTo(0, ${y})`)
-    await page.waitForTimeout(100)
-  }
-  await expect(menu.getByRole('heading', { name: 'Menu', level: 2, exact: true })).toBeAttached()
-  await menu.scrollIntoViewIfNeeded()
-  return menu
-}
 
 test.describe('Menu', () => {
   test('adds a section and a dish with a photo on the admin page', async ({ page }) => {

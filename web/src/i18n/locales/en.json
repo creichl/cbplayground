@@ -574,7 +574,7 @@
       },
       "floorPlan": {
         "title": "Area with floor plan",
-        "description": "An area, e.g. the dining room, with its floor plan uploaded."
+        "description": "An area, e.g. the dining room, with its floor plan uploaded or as a drawn room with tables."
       },
       "tables": {
         "title": "Tables",

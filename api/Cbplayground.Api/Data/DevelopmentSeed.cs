@@ -10,7 +10,7 @@ using static Cbplayground.Api.Data.TableShape;
 namespace Cbplayground.Api.Data;
 
 /// <summary>
-/// Demo data for local development: the three demo restaurants with their setup (<see cref="SeedRestaurantsAsync"/>),
+/// Demo data for local development: the six demo restaurants with their setup (<see cref="SeedRestaurantsAsync"/>),
 /// the demo staff users from the "Seed:Users" section of appsettings.Development.json (<see cref="SeedUsersAsync"/>)
 /// and demo reservations for the past 7 days, today and the next 7 days (<see cref="SeedReservationsAsync(IServiceProvider)"/>).
 /// </summary>
@@ -25,7 +25,11 @@ public static class DevelopmentSeed
     private const double PlanWidth = 1800;
     private const double PlanHeight = 1200;
 
-    /// <summary>A demo table; in an area without floor plan the position is ignored and the tables are arranged (<see cref="TableLayout"/>).</summary>
+    /// <summary>
+    /// A demo table, its position in pixels of a <see cref="PlanWidth"/> × <see cref="PlanHeight"/> plan. In an area without floor plan
+    /// image (whose drawn room has the same aspect ratio) the tables are arranged (<see cref="TableLayout"/>) unless all of them have a
+    /// position: then they are placed by hand, e.g. the seats along a counter.
+    /// </summary>
     private record DemoTable(string Number, int Seats, TableShape Shape, double X = 0, double Y = 0, int Rotation = 0);
 
     /// <summary>
@@ -46,8 +50,12 @@ public static class DevelopmentSeed
     /// <summary>A demo branding; <see cref="LogoFile"/> and <see cref="CoverFile"/> are files in <see cref="SeedAssetsPath"/>.</summary>
     private record DemoBranding(string BrandColor, ThemeMode ThemeMode, FontStyle FontStyle, string LogoFile, string CoverFile);
 
-    /// <summary>A photo of the demo gallery: a file in <see cref="SeedAssetsPath"/> and its caption in the restaurant's language.</summary>
-    private record DemoGalleryPhoto(string File, string Caption);
+    /// <summary>
+    /// A photo of the demo gallery: a file in <see cref="SeedAssetsPath"/> and its caption in the restaurant's language.
+    /// <see cref="AddedLater"/> photos came to the demo gallery after the others; a gallery that still holds exactly the others
+    /// gets them as well.
+    /// </summary>
+    private record DemoGalleryPhoto(string File, string Caption, bool AddedLater = false);
 
     private record DemoRestaurant(
         string Name,
@@ -65,6 +73,9 @@ public static class DevelopmentSeed
 
     private static readonly DayOfWeek[] TuesdayToSunday =
         [DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
+
+    private static readonly DayOfWeek[] MondayToSaturday =
+        [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday];
 
     private static readonly DayOfWeek[] WednesdayToSunday =
         [DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday];
@@ -136,6 +147,9 @@ public static class DevelopmentSeed
                 new("zur-linde-gallery-weisswurst-brezn.jpg", "Weißwurst mit Brezn und süßem Senf"),
                 new("zur-linde-gallery-helles.jpg", "Ein frisches Helles im Garten"),
                 new("zur-linde-gallery-kaiserschmarrn.jpg", "Kaiserschmarrn mit Apfelmus"),
+                new("zur-linde-gallery-laugensemmeln.jpg", "Laugensemmeln frisch aus dem Ofen", AddedLater: true),
+                new("zur-linde-gallery-maibaum.jpg", "Der Maibaum im Dorf", AddedLater: true),
+                new("zur-linde-gallery-frauenkirche.jpg", "Die Türme der Frauenkirche, zehn Minuten zu Fuß", AddedLater: true),
             ],
             // Two tables for 4 pushed together for a group of up to 8.
             Combinations: [new("Gaststube", ["2", "3"])]),
@@ -199,6 +213,10 @@ public static class DevelopmentSeed
                 new("kafana-dunav-gallery-dunav.jpg", "Veče na Dunavu"),
                 new("kafana-dunav-gallery-tamburasi.jpg", "Tamburaši petkom i subotom"),
                 new("kafana-dunav-gallery-sto.jpg", "Postavljen sto čeka goste"),
+                new("kafana-dunav-gallery-gibanica.jpg", "Gibanica iz rerne", AddedLater: true),
+                new("kafana-dunav-gallery-kafa.jpg", "Domaća kafa iz džezve", AddedLater: true),
+                new("kafana-dunav-gallery-baklava.jpg", "Baklava sa višnjama", AddedLater: true),
+                new("kafana-dunav-gallery-novi-sad.jpg", "Pogled sa Petrovaradina na Dunav i Novi Sad", AddedLater: true),
             ],
             // Two tables for 4 pushed together for a group of up to 8.
             Combinations: [new("Sala", ["2", "3"])]),
@@ -261,9 +279,215 @@ public static class DevelopmentSeed
                 new("rooftop-belvedere-gallery-lounge.jpg", "Die Lounge-Ecke"),
                 new("rooftop-belvedere-gallery-champagner.jpg", "Champagner zum Anstoßen"),
                 new("rooftop-belvedere-gallery-blick.jpg", "Blick über die Dächer Wiens"),
+                new("rooftop-belvedere-gallery-stephansdom.jpg", "Der Stephansdom bei Nacht", AddedLater: true),
+                new("rooftop-belvedere-gallery-dessert.jpg", "Beeren mit Schokolade zum Dessert", AddedLater: true),
+                new("rooftop-belvedere-gallery-dj.jpg", "Ab Sonnenuntergang legt ein DJ auf", AddedLater: true),
+                new("rooftop-belvedere-gallery-belvedere.jpg", "Das Obere Belvedere, festlich beleuchtet", AddedLater: true),
             ],
             // Two tables for 4 pushed together for a group of up to 8.
             Combinations: [new("Lounge", ["L2", "L3"])]),
+        new(
+            Name: "Trattoria Il Faro",
+            Slug: "il-faro",
+            CountryCode: Locations.Germany,
+            RegionCode: "DE-HH",
+            Profile: new(
+                Street: "Elbpromenade 14",
+                PostalCode: "20459",
+                City: "Hamburg",
+                Phone: "+49 40 3178245",
+                Email: "info@il-faro.example",
+                Website: "https://www.il-faro.example",
+                Description: "Trattoria am Hamburger Hafen mit italienischer Küche, Pasta aus eigener Herstellung und einer Terrazza mit Blick auf die Elbe.\n\n"
+                    + "Unsere Pasta rollen wir jeden Morgen von Hand, die Saucen kochen wir nach den Rezepten aus Apulien und Ligurien, wo unsere Familie herkommt. Fisch holen wir frühmorgens vom Großmarkt, Olivenöl, Käse und Wein bringen befreundete Erzeuger aus Italien.\n\n"
+                    + "In der Sala sitzen Sie zwischen Terrakotta und offener Küche, im Sommer auf der Terrazza unter Sonnensegeln, während die Schiffe vorbeiziehen. Der Name erinnert an den kleinen Leuchtturm im Hafen von Bari.\n\n"
+                    + "Reservierungen nehmen wir als Anfrage entgegen: Sie wählen Ihren Tisch auf dem Plan, wir bestätigen ihn persönlich."),
+            // Monday to Saturday 12:00–15:00 and 18:00–23:00, Sunday 12:00–22:00 without a break.
+            OpeningHours:
+            [
+                .. MondayToSaturday.Select(day => new DemoPeriod(day, new TimeOnly(12, 0), new TimeOnly(15, 0))),
+                .. MondayToSaturday.Select(day => new DemoPeriod(day, new TimeOnly(18, 0), new TimeOnly(23, 0))),
+                new DemoPeriod(DayOfWeek.Sunday, new TimeOnly(12, 0), new TimeOnly(22, 0)),
+            ],
+            // Both areas without floor plan image: drawn rooms with the suggested elements, the tables arranged among them.
+            Areas:
+            [
+                new("Sala", null, 100, 13,
+                [
+                    new("1", 2, Square), new("2", 4, Square), new("3", 4, Square), new("4", 2, Round),
+                    new("5", 4, Square), new("6", 6, Rectangle), new("7", 4, Round), new("8", 8, Rectangle),
+                    new("9", 2, Square), new("10", 4, Square), new("11", 6, Rectangle), new("12", 2, Round),
+                ],
+                Description: "Die Sala mit Terrakottaboden und offener Küche, abends bei Kerzenlicht.",
+                PhotoFile: "il-faro-sala-photo.jpg",
+                RoomStyle.Indoor,
+                () => RoomSuggestion.Suggest(RoomStyle.Indoor, 12)),
+                // The terrace with the river at its front edge, the bottom of the plan.
+                new("Terrazza", null, 70, 12,
+                [
+                    new("T1", 2, Round), new("T2", 4, Round), new("T3", 4, Square), new("T4", 2, Round),
+                    new("T5", 6, Rectangle), new("T6", 4, Round), new("T7", 2, Round), new("T8", 4, Square),
+                ],
+                Description: "Terrazza unter Sonnensegeln mit Blick über die Elbe, im Sommer bis spät am Abend.",
+                PhotoFile: "il-faro-terrazza-photo.jpg",
+                RoomStyle.Terrace,
+                () => [.. RoomSuggestion.Suggest(RoomStyle.Terrace, 8), Label("Elbe", 0.5, top: false)]),
+            ],
+            Settings: new ReservationSettings
+            {
+                ConfirmationMode = ConfirmationMode.Request,
+                TableSelectionMode = TableSelectionMode.GuestChooses,
+                DefaultDurationMinutes = 120,
+            },
+            DurationRules: [],
+            // Terracotta.
+            Branding: new("#b5532f", ThemeMode.Light, FontStyle.Classic, "il-faro-logo.png", "il-faro-cover.jpg"),
+            Gallery:
+            [
+                new("il-faro-gallery-fresh-pasta.jpg", "Tagliatelle, jeden Morgen frisch von Hand"),
+                new("il-faro-gallery-pizza.jpg", "Pizza Margherita aus dem Holzofen"),
+                new("il-faro-gallery-antipasti.jpg", "Antipasti und Bruschetta zum Start"),
+                new("il-faro-gallery-speicherstadt.jpg", "Die Speicherstadt zur blauen Stunde, ein paar Minuten entfernt"),
+                new("il-faro-gallery-aperitivo.jpg", "Aperitivo mit Orange"),
+                new("il-faro-gallery-pizza-oven.jpg", "Unser Holzofen"),
+                new("il-faro-gallery-lemons.jpg", "Zitronen, wie sie in Apulien wachsen"),
+                new("il-faro-gallery-espresso.jpg", "Ein Espresso zum Schluss"),
+                new("il-faro-gallery-olive-oil.jpg", "Olivenöl von befreundeten Erzeugern"),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Sala", ["2", "3"])]),
+        new(
+            Name: "Café Morgenrot",
+            Slug: "cafe-morgenrot",
+            CountryCode: Locations.Austria,
+            RegionCode: null,
+            Profile: new(
+                Street: "Sackstraße 21",
+                PostalCode: "8010",
+                City: "Graz",
+                Phone: "+43 316 824517",
+                Email: "hallo@cafe-morgenrot.example",
+                Website: "https://www.cafe-morgenrot.example",
+                Description: "Café und Frühstückslokal in der Grazer Altstadt: Frühstück den ganzen Tag, Brunch und Kuchen aus der eigenen Backstube.\n\n"
+                    + "Wir öffnen um 8 Uhr mit frischem Gebäck, Eierspeisen und Porridge, ab Mittag kommen Brunch-Klassiker und Torten dazu. Der Kaffee kommt von einer kleinen Rösterei aus der Steiermark, Milch und Eier von Höfen aus der Umgebung.\n\n"
+                    + "Im hellen Café sitzen Sie an großen Fenstern, von April bis Oktober im Gastgarten unter dem alten Nussbaum im Innenhof.\n\n"
+                    + "Ein Tisch ist bei uns für eine Stunde reserviert, für größere Runden ab fünf Personen für eineinhalb Stunden."),
+            // Every day 08:00–17:00, so the front desk has a morning service.
+            OpeningHours: [.. Enum.GetValues<DayOfWeek>().Select(day => new DemoPeriod(day, new TimeOnly(8, 0), new TimeOnly(17, 0)))],
+            Areas:
+            [
+                new("Café", null, 100, 11,
+                [
+                    new("1", 2, Round), new("2", 2, Round), new("3", 4, Square), new("4", 2, Square), new("5", 4, Square),
+                    new("6", 4, Round), new("7", 2, Round), new("8", 6, Rectangle), new("9", 4, Square), new("10", 2, Square),
+                ],
+                Description: "Helles Café mit großen Fenstern, Vitrine voller Kuchen und Platz für den Kinderwagen.",
+                PhotoFile: "cafe-morgenrot-cafe-photo.jpg",
+                RoomStyle.Indoor,
+                () => RoomSuggestion.Suggest(RoomStyle.Indoor, 10)),
+                new("Gastgarten", null, 100, 12,
+                [
+                    new("G1", 2, Round), new("G2", 4, Round), new("G3", 2, Round), new("G4", 4, Square),
+                    new("G5", 6, Rectangle), new("G6", 2, Round), new("G7", 4, Round), new("G8", 4, Square),
+                ],
+                Description: "Ruhiger Gastgarten im Innenhof unter dem alten Nussbaum, von April bis Oktober.",
+                PhotoFile: "cafe-morgenrot-gastgarten-photo.jpg",
+                RoomStyle.Garden,
+                () => RoomSuggestion.Suggest(RoomStyle.Garden, 8)),
+            ],
+            Settings: new ReservationSettings
+            {
+                ConfirmationMode = ConfirmationMode.Instant,
+                TableSelectionMode = TableSelectionMode.SystemAssigns,
+                DefaultDurationMinutes = 60,
+            },
+            DurationRules: [new DurationRule { MinGuests = 5, MaxGuests = 20, DurationMinutes = 90 }],
+            // A warm apricot, like the morning sky.
+            Branding: new("#e0864a", ThemeMode.Light, FontStyle.Modern, "cafe-morgenrot-logo.png", "cafe-morgenrot-cover.jpg"),
+            Gallery:
+            [
+                new("cafe-morgenrot-gallery-cappuccino.jpg", "Cappuccino mit Milchschaum-Rosette"),
+                new("cafe-morgenrot-gallery-pancakes.jpg", "Pancakes mit Beeren und Ahornsirup"),
+                new("cafe-morgenrot-gallery-brunch.jpg", "Brunch für den ganzen Tisch"),
+                new("cafe-morgenrot-gallery-uhrturm.jpg", "Der Uhrturm im Morgenlicht, gleich ums Eck"),
+                new("cafe-morgenrot-gallery-avocado-toast.jpg", "Avocado-Brot mit Rosmarin"),
+                new("cafe-morgenrot-gallery-garden-morning.jpg", "Morgensonne im Gastgarten"),
+                new("cafe-morgenrot-gallery-apricot-jam.jpg", "Hausgemachte Marillenmarmelade"),
+                new("cafe-morgenrot-gallery-bakery.jpg", "Fladenbrote aus der Backstube"),
+                new("cafe-morgenrot-gallery-breakfast-table.jpg", "Frühstück mit frisch gepresstem Orangensaft"),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Café", ["3", "5"])]),
+        new(
+            Name: "Izakaya Kaze",
+            Slug: "izakaya-kaze",
+            CountryCode: Locations.Serbia,
+            RegionCode: null,
+            Profile: new(
+                Street: "Strahinjića Bana 22",
+                PostalCode: "11000",
+                City: "Beograd",
+                Phone: "+381 11 3287415",
+                Email: "rezervacije@izakaya-kaze.example",
+                Website: "https://www.izakaya-kaze.example",
+                Description: "Izakaja na Dorćolu: japanska kuhinja sa roštilja na drvenom uglju, suši za šankom i izbor sakea, svake večeri osim ponedeljkom.\n\n"
+                    + "Naši kuvari peku jakitori na drvenom uglju, spremaju suši i sašimi od ribe koja stiže dva puta nedeljno i ramen sa čorbom koja se kuva dvanaest sati. Jela su mala i dele se, kao u pravoj izakaji u Tokiju.\n\n"
+                    + "Za šankom sedite u paru i gledate kuvare dok rade, a u sali za većim stolovima pod papirnim lampama. Uz jela preporučujemo sake, japanski viski ili neki od naših koktela.\n\n"
+                    + "Rezervacija se odmah potvrđuje, a mesto za šankom ili sto u sali birate sami na planu."),
+            // Tuesday to Sunday 18:00–24:00, closed on Mondays.
+            OpeningHours: [.. TuesdayToSunday.Select(day => new DemoPeriod(day, new TimeOnly(18, 0), OpeningPeriod.EndOfDay))],
+            Areas:
+            [
+                // A room of 10 m with a counter along the back wall; its eight seats are tables for 2, placed in a row in front of it,
+                // two high tables for 4 by the windows.
+                new("Bar", null, 100, 10,
+                [
+                    .. Enumerable.Range(0, 8).Select(i => new DemoTable($"B{i + 1}", 2, Square, 243 + i * 187, 290)),
+                    new("H1", 4, Round, 560, 780), new("H2", 4, Round, 1060, 780),
+                ],
+                Description: "Šank od tamnog drveta sa osam mesta za dvoje, pogled na kuvare dok spremaju suši i jakitori.",
+                PhotoFile: "izakaya-kaze-bar-photo.jpg",
+                RoomStyle.Indoor,
+                () =>
+                [
+                    RoomSuggestion.AtWall(RoomElementKind.Bar, 180, 0.5, length: 0.84),
+                    RoomSuggestion.AtWall(RoomElementKind.Entrance, 0, 0.82),
+                    RoomSuggestion.AtWall(RoomElementKind.Window, 0, 0.32),
+                    RoomSuggestion.AtWall(RoomElementKind.Plant, 90, 0.85),
+                ]),
+                new("Sala", null, 100, 12,
+                [
+                    new("1", 2, Square), new("2", 4, Square), new("3", 4, Square), new("4", 2, Square), new("5", 4, Round),
+                    new("6", 6, Rectangle), new("7", 2, Square), new("8", 4, Square), new("9", 8, Rectangle), new("10", 2, Round),
+                ],
+                Description: "Sala pod papirnim lampama, sa stolovima od tamnog drveta za društva i duže večeri.",
+                PhotoFile: "izakaya-kaze-sala-photo.jpg",
+                RoomStyle.Indoor,
+                () => RoomSuggestion.Suggest(RoomStyle.Indoor, 10)),
+            ],
+            Settings: new ReservationSettings
+            {
+                ConfirmationMode = ConfirmationMode.Instant,
+                TableSelectionMode = TableSelectionMode.GuestChooses,
+                DefaultDurationMinutes = 120,
+            },
+            DurationRules: [],
+            // Dark with a deep red accent.
+            Branding: new("#c0313a", ThemeMode.Dark, FontStyle.Urban, "izakaya-kaze-logo.png", "izakaya-kaze-cover.jpg"),
+            Gallery:
+            [
+                new("izakaya-kaze-gallery-nigiri.jpg", "Nigiri od ribe koja stiže dva puta nedeljno"),
+                new("izakaya-kaze-gallery-yakitori.jpg", "Jakitori sa piletinom i prazilukom"),
+                new("izakaya-kaze-gallery-lanterns.jpg", "Papirne lampe uveče"),
+                new("izakaya-kaze-gallery-tempura.jpg", "Tempura sa škampima i šisoom"),
+                new("izakaya-kaze-gallery-gyoza.jpg", "Gjoze iz tiganja"),
+                new("izakaya-kaze-gallery-belgrade.jpg", "Brankov most noću, deset minuta od nas"),
+                new("izakaya-kaze-gallery-cocktail.jpg", "Koktel sa japanskim viskijem"),
+                new("izakaya-kaze-gallery-hands.jpg", "Vagaši, japanski slatkiši oblikovani rukom"),
+                new("izakaya-kaze-gallery-shochu.jpg", "Šoču sa ledom"),
+            ],
+            // Two tables for 4 pushed together for a group of up to 8.
+            Combinations: [new("Sala", ["2", "3"])]),
     ];
 
     /// <summary>A label of its default size at the top or bottom edge of the plan, centred at <paramref name="x"/>, readable (rotation 0).</summary>
@@ -280,7 +504,8 @@ public static class DevelopmentSeed
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
     /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
-    /// rules (never saved), the photo gallery with its captions (no photos), the menu with its dish photos (no menu sections, see DemoMenus). An existing demo area gets its photo and description when it has neither.
+    /// rules (never saved), the photo gallery with its captions (no photos; the photos added to the demo later when the gallery still holds
+    /// exactly the earlier demo photos), the menu with its dish photos (no menu sections, see DemoMenus). An existing demo area gets its photo and description when it has neither.
     /// A demo image whose file is no longer in the uploads folder (logo, cover image, floor plan and photo of a demo area, gallery photo
     /// with a demo caption) gets a new copy of its seed asset, so the restaurants show all their images again after the files were lost.
     /// </summary>
@@ -399,7 +624,7 @@ public static class DevelopmentSeed
                             PosX = t.X / PlanWidth,
                             PosY = t.Y / PlanHeight,
                         }).ToList();
-                        if (fileName is null)
+                        if (fileName is null && demoArea.Tables.Any(t => t is { X: 0, Y: 0 }))
                         {
                             TableLayout.Arrange(tables, area.TableScale, elements);
                         }
@@ -482,7 +707,8 @@ public static class DevelopmentSeed
 
                 await DemoDetails.SeedAsync(db, demo.Slug);
 
-                if (!await db.GalleryPhotos.AnyAsync())
+                var gallery = await db.GalleryPhotos.OrderBy(p => p.SortOrder).ToListAsync();
+                if (gallery.Count == 0)
                 {
                     db.GalleryPhotos.AddRange(demo.Gallery.Select((photo, i) => new GalleryPhoto
                     {
@@ -495,12 +721,27 @@ public static class DevelopmentSeed
                 else
                 {
                     // Gallery photos with a demo caption whose file was lost.
-                    foreach (var photo in (await db.GalleryPhotos.ToListAsync()).Where(p => IsLost(p.FileName)))
+                    foreach (var photo in gallery.Where(p => IsLost(p.FileName)))
                     {
                         if (demo.Gallery.FirstOrDefault(d => d.Caption == photo.Caption) is { } demoPhoto)
                         {
                             photo.FileName = CopySeedAsset(demoPhoto.File);
                         }
+                    }
+
+                    // A gallery that still holds exactly the earlier demo photos, with their captions in their order, gets the photos
+                    // added to the demo later, after them; a gallery the admin changed in any way stays as it is.
+                    var addedLater = demo.Gallery.Where(p => p.AddedLater).ToList();
+                    if (addedLater.Count > 0 && gallery.Select(p => p.Caption).SequenceEqual(demo.Gallery.Where(p => !p.AddedLater).Select(p => p.Caption)))
+                    {
+                        var sortOrder = gallery[^1].SortOrder;
+                        db.GalleryPhotos.AddRange(addedLater.Select((photo, i) => new GalleryPhoto
+                        {
+                            FileName = CopySeedAsset(photo.File),
+                            Caption = photo.Caption,
+                            SortOrder = sortOrder + 1 + i,
+                            CreatedAt = DateTime.UtcNow,
+                        }));
                     }
                 }
 

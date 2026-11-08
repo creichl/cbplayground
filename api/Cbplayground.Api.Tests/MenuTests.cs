@@ -617,7 +617,11 @@ public class DemoMenuSeedTests(ApiFactory factory) : IClassFixture<ApiFactory>
         await SeedAsync();
 
         using var guest = factory.CreateHttpsClient();
-        foreach (var (slug, currency) in new[] { ("zur-linde", "EUR"), ("kafana-dunav", "RSD"), ("rooftop-belvedere", "EUR") })
+        foreach (var (slug, currency) in new[]
+        {
+            ("zur-linde", "EUR"), ("kafana-dunav", "RSD"), ("rooftop-belvedere", "EUR"),
+            ("il-faro", "EUR"), ("cafe-morgenrot", "EUR"), ("izakaya-kaze", "RSD"),
+        })
         {
             var menu = (await guest.GetFromJsonAsync<PublicMenuResponse>($"/api/public/restaurants/{slug}/menu", Ct))!;
             var items = menu.Sections.SelectMany(s => s.Items).ToList();

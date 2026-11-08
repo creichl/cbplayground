@@ -316,9 +316,12 @@ public static partial class SuperadminEndpoints
         // IgnoreQueryFilters: which restaurants have opening hours, for their setup steps (read only, see above).
         var withOpeningHours = (await db.OpeningPeriods.IgnoreQueryFilters()
             .Where(p => ids.Contains(p.TenantId)).Select(p => p.TenantId).Distinct().ToListAsync()).ToHashSet();
-        // IgnoreQueryFilters: which restaurants have an area with a floor plan, for their setup steps (read only, see above).
+        // IgnoreQueryFilters: which restaurants have an area with a floor plan image, or a drawn room with a table, for their setup
+        // steps (read only, see above).
         var withFloorPlan = (await db.Areas.IgnoreQueryFilters()
-            .Where(a => ids.Contains(a.TenantId) && a.FloorPlanFileName != null && a.ArchivedAtUtc == null).Select(a => a.TenantId).Distinct().ToListAsync()).ToHashSet();
+            .Where(a => ids.Contains(a.TenantId) && a.ArchivedAtUtc == null
+                && (a.FloorPlanFileName != null || db.Tables.IgnoreQueryFilters().Any(t => t.AreaId == a.Id && t.ArchivedAtUtc == null)))
+            .Select(a => a.TenantId).Distinct().ToListAsync()).ToHashSet();
         // IgnoreQueryFilters: which restaurants have saved their reservation settings, for their setup steps (read only, see above).
         var withReservationSettings = (await db.ReservationSettings.IgnoreQueryFilters()
             .Where(r => ids.Contains(r.TenantId)).Select(r => r.TenantId).Distinct().ToListAsync()).ToHashSet();
