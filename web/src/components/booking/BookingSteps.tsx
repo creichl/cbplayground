@@ -181,6 +181,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
           restaurant={restaurant}
           timeZoneId={timeZoneId}
           photoBand={frame !== 'inline'}
+          onDone={flow.closeDialog}
           title={heading(result.status === 'Requested' ? t('booking.confirmation.requestTitle') : t('booking.confirmation.confirmedTitle'), active)}
         />
       )

@@ -1,4 +1,4 @@
-import { ArmchairIcon, CalendarIcon, CalendarPlusIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, MapPinIcon, RouteIcon, UsersIcon } from 'lucide-react'
+import { ArmchairIcon, CalendarIcon, CheckIcon, ClockIcon, CopyIcon, ExternalLinkIcon, MapPinIcon, RouteIcon, UsersIcon } from 'lucide-react'
 import { type ReactNode, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type BookingResult, managePath, type PublicRestaurant } from '../../api/publicBooking.ts'
@@ -6,8 +6,8 @@ import { formatLongDate, formatTime } from '../../i18n/format.ts'
 import { Button } from '../../ui/button.tsx'
 import { SuccessMark } from '../../ui/motion/success-mark.tsx'
 import { Photo } from '../../ui/photo.tsx'
-import { calendarFile, downloadCalendarFile } from './calendarFile.ts'
 import { formatAddress, mapSearchUrl } from './format.ts'
+import { CalendarMenu, ShareMenu } from './ReservationShare.tsx'
 
 type BookingConfirmationProps = {
   result: BookingResult
@@ -16,17 +16,19 @@ type BookingConfirmationProps = {
   timeZoneId: string
   /** A narrow band with a photo of the restaurant on top of the ticket; not in the embed, whose page shows its own photos. */
   photoBand?: boolean
+  /** "Done": closes the dialog, or in the embed returns to the reservation card. */
+  onDone: () => void
 }
 
 /**
  * The end of the booking: a clear success state (a check that draws itself with a few particles in the accent colour,
  * SuccessMark, unless the guest asked for less motion; for a request, which the restaurant still has to confirm, a clock and
  * "Request sent" with what happens next), then a card like a ticket that slides up, with the reference code and what was booked (date, time, people, table and area, address), and the actions: "Add to
- * calendar" (.ics), "Copy link" (the link to view and cancel the reservation, with the hint to save it), "Manage
- * reservation" and "Directions". On top of the ticket, outside the embed, a narrow band with the cover image, otherwise the
+ * calendar" (a menu: Google Calendar, Outlook.com, .ics), "Share" (a menu: without or with the link), "Copy link" (the link to
+ * view, change and cancel the reservation, with the hint to save it), "Manage reservation", "Directions" and a clear "Done". On top of the ticket, outside the embed, a narrow band with the cover image, otherwise the
  * first photo of the gallery, otherwise the accent colour. The heading (`title`) is the dialog's.
  */
-export function BookingConfirmation({ result, slug, restaurant, timeZoneId, photoBand = false, title }: BookingConfirmationProps & { title: ReactNode }) {
+export function BookingConfirmation({ result, slug, restaurant, timeZoneId, photoBand = false, onDone, title }: BookingConfirmationProps & { title: ReactNode }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const requested = result.status === 'Requested'
@@ -57,26 +59,6 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
     },
     ...(address !== '' ? [{ icon: <MapPinIcon />, label: t('booking.confirmation.address'), value: address }] : []),
   ]
-
-  const addToCalendar = () =>
-    downloadCalendarFile(
-      `${t('booking.calendarEvent.fileName')}-${result.referenceCode}.ics`,
-      calendarFile({
-        uid: `${result.referenceCode}@cbplayground`,
-        title: t('booking.calendarEvent.title', { restaurant: restaurant.name }),
-        date: result.date,
-        time: result.time,
-        durationMinutes: result.durationMinutes,
-        timeZoneId,
-        location: [restaurant.name, address].filter((part) => part !== '').join(', '),
-        description: t('booking.calendarEvent.description', {
-          guests: t('booking.guestsCount', { count: result.guests }),
-          code: result.referenceCode,
-          link: manageUrl,
-        }),
-        url: manageUrl,
-      }),
-    )
 
   const copyLink = () =>
     void navigator.clipboard
@@ -136,10 +118,8 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
 
       <div className="flex w-full flex-col gap-3">
         <div className="grid gap-2 sm:grid-cols-2">
-          <Button size="lg" onClick={addToCalendar}>
-            <CalendarPlusIcon aria-hidden="true" />
-            {t('booking.confirmation.addToCalendar')}
-          </Button>
+          <CalendarMenu reservation={result} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
+          <ShareMenu reservation={result} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
           <Button size="lg" variant="outline" onClick={copyLink}>
             {copied ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
             {copied ? t('booking.confirmation.copied') : t('booking.confirmation.copyLink')}
@@ -165,6 +145,10 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
         <p role="status" className="sr-only">
           {copied ? t('booking.confirmation.copied') : ''}
         </p>
+        <Button size="lg" variant="secondary" onClick={onDone} className="mt-2">
+          <CheckIcon aria-hidden="true" />
+          {t('booking.confirmation.done')}
+        </Button>
       </div>
     </div>
   )

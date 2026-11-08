@@ -20,6 +20,7 @@ import {
 } from '../../api/publicBooking.ts'
 import type { Language } from '../../i18n/index.ts'
 import { type GuestDetailsValues, initialDetails } from './guestDetails.ts'
+import { rememberBooking } from './rememberedBookings.ts'
 
 // The logic of the booking, without its views: the booking so far in the address, its checks, the hold of the table while the
 // guest enters the contact details, the booking itself and its errors. The reservation card, the booking dialog and the embed
@@ -459,7 +460,17 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
         idempotencyKey: idempotency.key,
       },
       {
-        onSuccess: () => {
+        onSuccess: (result) => {
+          // So the guest finds it again on the restaurant's page, also without the link (where the browser allows storing it).
+          rememberBooking({
+            slug,
+            code: result.referenceCode,
+            token: result.manageToken,
+            date: result.date,
+            time: result.time,
+            guests: result.guests,
+            restaurantName: restaurant.name,
+          })
           // The next booking starts with the remembered details, or empty.
           setDetails(initialDetails(restaurant.countryCode))
           // A reload after the booking starts a new one instead of showing the booked choices again.

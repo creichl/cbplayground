@@ -23,7 +23,10 @@ public enum ReservationEventKind
     /// <summary>The reservation was entered: booked online, by the staff, as a walk-in or by the seed. Without changes.</summary>
     Created,
 
-    /// <summary>The staff changed the booking or the guest's details (<c>PUT</c>).</summary>
+    /// <summary>
+    /// The staff changed the booking or the guest's details (<c>PUT</c>), or the guest changed the day, time or party size
+    /// through the link (<see cref="ReservationEvent.Actor"/> <see cref="ReservationActor.Guest"/>).
+    /// </summary>
     Updated,
 
     /// <summary>The staff set a status.</summary>

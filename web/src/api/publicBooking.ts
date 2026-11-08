@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useCallback } from 'react'
 import type { Language } from '../i18n/index.ts'
-import { ApiError, apiDelete, apiGet, apiPost } from './client.ts'
+import { ApiError, apiDelete, apiGet, apiPost, apiPut } from './client.ts'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import type { Branding } from './branding.ts'
 import type { Cuisine, PriceLevel, RestaurantFeature } from './restaurantDetails.ts'
@@ -193,6 +193,24 @@ export type GuestReservation = {
   cancelledByGuest: boolean
   /** Whether the guest can still cancel online: an open reservation before its start. */
   canCancel: boolean
+  /** Whether the guest can still change day, time and party size online: a request or a confirmed reservation before its start. */
+  canChange: boolean
+}
+
+/**
+ * The guest's own reservation, which the free days and times of a change leave out (`exclude` and `token` of the calendar and
+ * the availability), so its own time counts as free.
+ */
+export type ExcludedReservation = { referenceCode: string; token: string }
+
+/** The query of a calendar or an availability that leaves out the guest's own reservation; empty without one. */
+function excludeQuery(exclude: ExcludedReservation | undefined) {
+  return exclude === undefined ? '' : `&exclude=${encodeURIComponent(exclude.referenceCode)}&token=${encodeURIComponent(exclude.token)}`
+}
+
+/** The part of a query key that tells the free days and times without the guest's own reservation apart. */
+function excludeKey(exclude: ExcludedReservation | undefined) {
+  return exclude === undefined ? [] : ['exclude', exclude.referenceCode]
 }
 
 /** The path of the guest's page to view and cancel a reservation; the token stays in the link only. */
@@ -253,10 +271,11 @@ export function isNotFound(error: unknown) {
 
 const publicKey = (slug: string) => ['public', slug] as const
 
-function calendarQuery(slug: string, month: string, guests: number) {
+function calendarQuery(slug: string, month: string, guests: number, exclude?: ExcludedReservation) {
   return {
-    queryKey: [...publicKey(slug), 'calendar', month, guests],
-    queryFn: () => apiGet<CalendarDay[]>(`/public/restaurants/${encodeURIComponent(slug)}/calendar?month=${month}&guests=${guests}`),
+    queryKey: [...publicKey(slug), 'calendar', month, guests, ...excludeKey(exclude)],
+    queryFn: () =>
+      apiGet<CalendarDay[]>(`/public/restaurants/${encodeURIComponent(slug)}/calendar?month=${month}&guests=${guests}${excludeQuery(exclude)}`),
   }
 }
 
@@ -269,18 +288,23 @@ export function usePublicRestaurant(slug: string) {
   })
 }
 
-/** The days of a month ("YYYY-MM") for a party size; only loads while `enabled` (e.g. to load the next month ahead). */
-export function useBookingCalendar(slug: string, month: string, guests: number, enabled = true) {
-  return useQuery({ ...calendarQuery(slug, month, guests), enabled })
+/**
+ * The days of a month ("YYYY-MM") for a party size; only loads while `enabled` (e.g. to load the next month ahead). With
+ * `exclude` without the guest's own reservation (for a change), as all the hooks of the free days and times.
+ */
+export function useBookingCalendar(slug: string, month: string, guests: number, enabled = true, exclude?: ExcludedReservation) {
+  return useQuery({ ...calendarQuery(slug, month, guests, exclude), enabled })
 }
 
 /**
  * The days of several months ("YYYY-MM") for a party size, loaded together; `days` holds those loaded so far, and those
  * of the previous party size while the new ones load.
  */
-export function useBookingCalendarMonths(slug: string, months: string[], guests: number) {
+export function useBookingCalendarMonths(slug: string, months: string[], guests: number, exclude?: ExcludedReservation) {
   // Another party size keeps the days of the previous one until its own are loaded.
-  const results = useQueries({ queries: months.map((month) => ({ ...calendarQuery(slug, month, guests), placeholderData: keepPreviousData })) })
+  const results = useQueries({
+    queries: months.map((month) => ({ ...calendarQuery(slug, month, guests, exclude), placeholderData: keepPreviousData })),
+  })
   return {
     days: results.flatMap((result) => result.data ?? []),
     isError: results.some((result) => result.isError),
@@ -306,9 +330,9 @@ export function monthsBetween(date: string, lastDate: string) {
  * Up to three available days after `date`, up to the month of `lastDate`, for "next free days".
  * Only loads while `enabled`; `isPending` until all months are loaded.
  */
-export function useNextFreeDays(slug: string, date: string, lastDate: string, guests: number, enabled: boolean) {
+export function useNextFreeDays(slug: string, date: string, lastDate: string, guests: number, enabled: boolean, exclude?: ExcludedReservation) {
   const months = enabled ? monthsBetween(date, lastDate) : []
-  const results = useQueries({ queries: months.map((month) => calendarQuery(slug, month, guests)) })
+  const results = useQueries({ queries: months.map((month) => calendarQuery(slug, month, guests, exclude)) })
   return {
     days: results
       .flatMap((result) => result.data ?? [])
@@ -350,10 +374,11 @@ export function useFirstFreeDay(slug: string, today: string, lastDate: string, g
   return { day: null, isPending: false }
 }
 
-function availabilityQuery(slug: string, date: string, guests: number) {
+function availabilityQuery(slug: string, date: string, guests: number, exclude?: ExcludedReservation) {
   return {
-    queryKey: [...publicKey(slug), 'availability', date, guests],
-    queryFn: () => apiGet<Availability>(`/public/restaurants/${encodeURIComponent(slug)}/availability?date=${date}&guests=${guests}`),
+    queryKey: [...publicKey(slug), 'availability', date, guests, ...excludeKey(exclude)],
+    queryFn: () =>
+      apiGet<Availability>(`/public/restaurants/${encodeURIComponent(slug)}/availability?date=${date}&guests=${guests}${excludeQuery(exclude)}`),
   }
 }
 
@@ -361,17 +386,17 @@ function availabilityQuery(slug: string, date: string, guests: number) {
  * The start times of a day; only loads while `enabled`. With `keepPrevious`, the times of the previous day or party size
  * stay (`isPlaceholderData`) until the new ones arrive, for the time chips of the card.
  */
-export function useAvailability(slug: string, date: string, guests: number, enabled = true, keepPrevious = false) {
+export function useAvailability(slug: string, date: string, guests: number, enabled = true, keepPrevious = false, exclude?: ExcludedReservation) {
   return useQuery({
-    ...availabilityQuery(slug, date, guests),
+    ...availabilityQuery(slug, date, guests, exclude),
     enabled,
     placeholderData: keepPrevious ? keepPreviousData : undefined,
   })
 }
 
 /** The start times of several days, or of several party sizes, for the alternatives of a fully booked day. */
-export function useAvailabilities(slug: string, requests: { date: string; guests: number }[]) {
-  return useQueries({ queries: requests.map(({ date, guests }) => availabilityQuery(slug, date, guests)) })
+export function useAvailabilities(slug: string, requests: { date: string; guests: number }[], exclude?: ExcludedReservation) {
+  return useQueries({ queries: requests.map(({ date, guests }) => availabilityQuery(slug, date, guests, exclude)) })
 }
 
 /** The areas with their tables for a time; only for restaurants in which the guest chooses the table. Only loads while `enabled`. */
@@ -409,6 +434,25 @@ export function useCancelGuestReservation(slug: string, referenceCode: string, t
     onSuccess: (reservation) => queryClient.setQueryData(guestReservationKey(slug, referenceCode, token), reservation),
     // The free times of the restaurant change with the cancellation.
     onSettled: () => queryClient.invalidateQueries({ queryKey: publicKey(slug) }),
+  })
+}
+
+/** A change of the guest's reservation: the new day "YYYY-MM-DD", time "HH:mm" and party size. */
+export type GuestReservationChange = { date: string; time: string; guests: number }
+
+/**
+ * Changes day, time and party size of the guest's reservation (PUT …/reservations/{code}); the answer is the reservation as the
+ * link shows it. Errors as the booking's ("slot_unavailable", "too_short_notice", "invalid_party_size", …), 409
+ * "change_not_possible", 404 for a wrong code or token.
+ */
+export function useChangeGuestReservation(slug: string, referenceCode: string, token: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (change: GuestReservationChange) => apiPut<GuestReservation>(guestReservationPath(slug, referenceCode), { token, ...change }),
+    onSuccess: (reservation) => queryClient.setQueryData(guestReservationKey(slug, referenceCode, token), reservation),
+    // The free times of the restaurant change with it, the reservation itself is set already.
+    onSettled: () =>
+      queryClient.invalidateQueries({ queryKey: publicKey(slug), predicate: (query) => query.queryKey[2] !== 'reservation' }),
   })
 }
 

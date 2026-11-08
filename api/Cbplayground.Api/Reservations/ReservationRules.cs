@@ -44,6 +44,17 @@ public static class ReservationRules
         GuestCancellableStatuses.Contains(reservation.Status)
         && localNow < reservation.StartLocal - GuestCancellationDeadlineBeforeStart;
 
+    /// <summary>The statuses from which the guest can change the day, time and party size through the link.</summary>
+    public static readonly ReservationStatus[] GuestChangeableStatuses = [ReservationStatus.Requested, ReservationStatus.Confirmed];
+
+    /// <summary>
+    /// Whether the guest can still change the reservation: from <see cref="GuestChangeableStatuses"/>, until the deadline of
+    /// the cancellation (<see cref="GuestCancellationDeadlineBeforeStart"/>); <paramref name="localNow"/> is the restaurant's local time.
+    /// </summary>
+    public static bool CanGuestChange(Reservation reservation, DateTime localNow) =>
+        GuestChangeableStatuses.Contains(reservation.Status)
+        && localNow < reservation.StartLocal - GuestCancellationDeadlineBeforeStart;
+
     /// <summary>The statuses in which a reservation occupies its table.</summary>
     public static readonly ReservationStatus[] BlockingStatuses = RequestsBlockTables
         ? [ReservationStatus.Requested, ReservationStatus.Confirmed, ReservationStatus.Arrived, ReservationStatus.Late]

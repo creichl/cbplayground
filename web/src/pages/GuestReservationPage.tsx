@@ -3,8 +3,8 @@ import {
   ArmchairIcon,
   ArrowRightIcon,
   BanIcon,
+  CalendarClockIcon,
   CalendarIcon,
-  CalendarPlusIcon,
   CalendarX2Icon,
   CheckIcon,
   CircleAlertIcon,
@@ -39,8 +39,11 @@ import {
   useGuestReservation,
   usePublicRestaurant,
 } from '../api/publicBooking.ts'
-import { calendarFile, downloadCalendarFile, restaurantTimeToUtc } from '../components/booking/calendarFile.ts'
+import { restaurantTimeToUtc } from '../components/booking/calendarFile.ts'
+import { ChangeReservation } from '../components/booking/ChangeReservation.tsx'
 import { addressLines, formatAddress, mapSearchUrl } from '../components/booking/format.ts'
+import { forgetBooking } from '../components/booking/rememberedBookings.ts'
+import { CalendarMenu, ShareMenu } from '../components/booking/ReservationShare.tsx'
 import { formatLongDate, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
@@ -49,6 +52,7 @@ import { Button } from '../ui/button.tsx'
 import { Card } from '../ui/card.tsx'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog.tsx'
 import { Reveal } from '../ui/motion/reveal.tsx'
+import { SuccessMark } from '../ui/motion/success-mark.tsx'
 import { Photo } from '../ui/photo.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
@@ -98,6 +102,21 @@ const justCancelledLook: StatusLook = {
   text: 'guestReservation.cancelledText',
 }
 
+/** Right after the guest changed it: the change succeeded; in the request mode the restaurant still confirms it. */
+const justChangedLook: StatusLook = {
+  icon: <CircleCheckIcon />,
+  tone: 'success',
+  title: 'guestReservation.changedTitle',
+  text: 'guestReservation.changedText',
+}
+
+const justChangedRequestLook: StatusLook = {
+  icon: <CircleCheckIcon />,
+  tone: 'success',
+  title: 'guestReservation.changeRequestedTitle',
+  text: 'guestReservation.changeRequestedText',
+}
+
 /** Whether the reservation is over: its start in the restaurant's time zone plus its duration lies in the past. */
 function hasEnded(reservation: GuestReservation, timeZoneId: string | null) {
   if (timeZoneId === null) {
@@ -136,9 +155,11 @@ function phoneHref(phone: string) {
  * The guest's page of a reservation, opened through the link from the booking (/r/:slug/reservation/:code?t=token), branded
  * like the booking page: below the header a narrow band of the cover image (otherwise the first photo of the gallery), on it a large status card (symbol, colour and
  * title per status), below it the details card as in the confirmation (reference code to copy, what was booked, the
- * restaurant's address with directions and its contact) and the actions: "Add to calendar" and, until the start, a quiet
- * "Cancel" that asks first; afterwards the hint to call. After cancelling, the status card confirms it and offers
- * "Book again". A wrong restaurant, code or token all show the same "not found".
+ * restaurant's address with directions and its contact) and the actions: "Add to calendar" (a menu: Google Calendar,
+ * Outlook.com, .ics), "Share", while possible "Change reservation" (ChangeReservation: inline below the details card, a sheet on
+ * phones) and, until the start, a quiet "Cancel" that asks first; afterwards the hint to call. After a change the status card
+ * says so with a small success mark, after cancelling it confirms it and offers "Book again"; the heading takes the focus.
+ * A cancelled reservation is forgotten by the browser (rememberedBookings). A wrong restaurant, code or token all show the same "not found".
  */
 export function GuestReservationPage() {
   const { t } = useTranslation()
@@ -227,13 +248,41 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
   const language = i18n.resolvedLanguage ?? 'en'
   const cancel = useCancelGuestReservation(slug, code, token)
   const [confirming, setConfirming] = useState(false)
+  const [changing, setChanging] = useState(false)
+  // How many changes the guest made on this page: each one moves the focus to the result, also a second one.
+  const [changes, setChanges] = useState(0)
+  const changed = changes > 0
   const statusHeading = useRef<HTMLHeadingElement>(null)
+  const changeButton = useRef<HTMLButtonElement>(null)
+
+  // A cancelled reservation is no longer one to find again on the restaurant's page.
+  useEffect(() => {
+    if (reservation.status === 'Cancelled') {
+      forgetBooking(slug, reservation.referenceCode)
+    }
+  }, [slug, reservation.status, reservation.referenceCode])
+
+  // After a change the result takes the focus, so screen reader and keyboard users hear it.
+  useEffect(() => {
+    if (changes > 0) {
+      statusHeading.current?.focus()
+    }
+  }, [changes])
 
   const cancelled = reservation.status === 'Cancelled'
   const closed = cancelled || reservation.status === 'Declined'
   const past = !closed && hasEnded(reservation, restaurant.timeZoneId)
   const upcoming = !closed && !past
-  const look = cancel.isSuccess ? justCancelledLook : past ? pastLook : statusLooks[reservation.status]
+  const justChanged = changed && !cancel.isSuccess && !closed
+  const look = cancel.isSuccess
+    ? justCancelledLook
+    : justChanged
+      ? reservation.status === 'Requested'
+        ? justChangedRequestLook
+        : justChangedLook
+      : past
+        ? pastLook
+        : statusLooks[reservation.status]
   const statusText = cancelled && !cancel.isSuccess
     ? t(reservation.cancelledByGuest ? 'guestReservation.cancelledByGuest' : 'guestReservation.cancelledByRestaurant')
     : look.text !== null
@@ -248,8 +297,8 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
     number: reservation.tableNumber,
     area: reservation.area,
   })
-  const address = formatAddress(restaurant)
   const timeZoneId = restaurant.timeZoneId
+  const manageUrl = `${window.location.origin}${managePath(slug, reservation.referenceCode, token)}`
 
   const details = [
     { icon: <CalendarIcon />, label: t('booking.confirmation.date'), value: date },
@@ -260,35 +309,22 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
     { icon: <UserIcon />, label: t('guestReservation.name'), value: reservation.name },
   ]
 
-  function addToCalendar(zone: string) {
-    const manageUrl = `${window.location.origin}${managePath(slug, code, token)}`
-    downloadCalendarFile(
-      `${t('booking.calendarEvent.fileName')}-${reservation.referenceCode}.ics`,
-      calendarFile({
-        uid: `${reservation.referenceCode}@cbplayground`,
-        title: t('booking.calendarEvent.title', { restaurant: restaurant.name }),
-        date: reservation.date,
-        time: reservation.time,
-        durationMinutes: reservation.durationMinutes,
-        timeZoneId: zone,
-        location: [restaurant.name, address].filter((part) => part !== '').join(', '),
-        description: t('booking.calendarEvent.description', { guests, code: reservation.referenceCode, link: manageUrl }),
-        url: manageUrl,
-      }),
-    )
-  }
-
   // The dialog's root holds the whole view: its trigger, the cancel button, is gone after cancelling, while the dialog closes.
   return (
     <Dialog open={confirming} onOpenChange={(open) => !cancel.isPending && setConfirming(open)}>
       <Card className={cn('gap-0 border-t-4 px-6 py-6 sm:px-8 sm:py-8', tones[look.tone].card)}>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
-          <span
-            aria-hidden="true"
-            className={cn('flex size-14 shrink-0 items-center justify-center rounded-full sm:size-16 [&_svg]:size-7 sm:[&_svg]:size-8', tones[look.tone].icon)}
-          >
-            {look.icon}
-          </span>
+          {justChanged ? (
+            // The success mark of the booking's confirmation, in the size of the status symbols.
+            <SuccessMark key={`${reservation.date} ${reservation.time} ${reservation.guests}`} className="size-14 shrink-0 scale-[0.875] sm:size-16 sm:scale-100" />
+          ) : (
+            <span
+              aria-hidden="true"
+              className={cn('flex size-14 shrink-0 items-center justify-center rounded-full sm:size-16 [&_svg]:size-7 sm:[&_svg]:size-8', tones[look.tone].icon)}
+            >
+              {look.icon}
+            </span>
+          )}
           <div className="flex min-w-0 flex-col gap-2">
             <p className="text-sm font-medium text-muted-foreground">{t('guestReservation.title')}</p>
             {/* Focused after cancelling, so screen reader and keyboard users hear the result. */}
@@ -340,14 +376,46 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
         </Card>
       </Reveal>
 
+      {upcoming && reservation.canChange && timeZoneId !== null && (
+        <ChangeReservation
+          slug={slug}
+          token={token}
+          restaurant={restaurant}
+          timeZoneId={timeZoneId}
+          reservation={reservation}
+          open={changing}
+          onClose={() => {
+            setChanging(false)
+            changeButton.current?.focus()
+          }}
+          onChanged={() => {
+            setChanging(false)
+            setChanges((count) => count + 1)
+          }}
+          onCloseAutoFocus={(event) => {
+            // After a change the result takes the focus instead of the button.
+            if (changed) {
+              event.preventDefault()
+              statusHeading.current?.focus()
+            }
+          }}
+        />
+      )}
+
       {upcoming && (
         <Reveal>
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {timeZoneId !== null && (
-                <Button size="lg" onClick={() => addToCalendar(timeZoneId)}>
-                  <CalendarPlusIcon aria-hidden="true" />
-                  {t('booking.confirmation.addToCalendar')}
+                <>
+                  <CalendarMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
+                  <ShareMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
+                </>
+              )}
+              {reservation.canChange && timeZoneId !== null && (
+                <Button ref={changeButton} variant="outline" size="lg" aria-expanded={changing} onClick={() => setChanging(!changing)}>
+                  <CalendarClockIcon aria-hidden="true" />
+                  {t('guestReservation.change.open')}
                 </Button>
               )}
               {reservation.canCancel && (
