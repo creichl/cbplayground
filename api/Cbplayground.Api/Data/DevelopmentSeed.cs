@@ -280,7 +280,7 @@ public static class DevelopmentSeed
     /// when the restaurant has nothing of it yet, so a second run adds nothing and nothing the admin maintained is overwritten:
     /// location (no country), profile (all profile fields empty), branding with logo and cover image (all branding fields empty),
     /// opening hours (none), areas with floor plans, rooms, tables, photo and description (no areas), reservation settings with duration
-    /// rules (never saved), the photo gallery with its captions (no photos). An existing demo area gets its photo and description when it has neither.
+    /// rules (never saved), the photo gallery with its captions (no photos), the menu with its dish photos (no menu sections, see DemoMenus). An existing demo area gets its photo and description when it has neither.
     /// A demo image whose file is no longer in the uploads folder (logo, cover image, floor plan and photo of a demo area, gallery photo
     /// with a demo caption) gets a new copy of its seed asset, so the restaurants show all their images again after the files were lost.
     /// </summary>
@@ -504,6 +504,7 @@ public static class DevelopmentSeed
                     }
                 }
 
+                await DemoMenus.SeedAsync(db, demo.Slug, CopySeedAsset, IsLost);
                 await db.SaveChangesAsync();
             }
         }

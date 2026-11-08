@@ -20,6 +20,7 @@ const navGroups = [
     label: 'admin.groups.restaurant',
     items: [
       { to: '/admin/profile', label: 'admin.nav.profile', end: false },
+      { to: '/admin/menu', label: 'admin.nav.menu', end: false },
       { to: '/admin/design', label: 'admin.nav.design', end: false },
       { to: '/admin/areas', label: 'admin.nav.areas', end: false },
       { to: '/admin/opening-hours', label: 'admin.nav.openingHours', end: false },

@@ -136,22 +136,7 @@ public static class PublicRestaurantEndpoints
 
     public static void MapPublicRestaurantEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/public/restaurants/{slug}").AddEndpointFilter(async (context, next) =>
-        {
-            var services = context.HttpContext.RequestServices;
-            var slug = context.HttpContext.GetRouteValue("slug") as string;
-            var tenantId = await services.GetRequiredService<AppDbContext>().Tenants
-                .Where(t => t.Slug == slug && t.IsActive)
-                .Select(t => (Guid?)t.Id)
-                .SingleOrDefaultAsync();
-            // Unknown and deactivated restaurants are both "not found" for guests.
-            if (tenantId is null)
-            {
-                return Results.NotFound();
-            }
-            services.GetRequiredService<TenantScope>().TenantId = tenantId;
-            return await next(context);
-        });
+        var group = app.MapGroup("/api/public/restaurants/{slug}").AddEndpointFilter(RestaurantFromSlug);
 
         group.MapGet("/", async (ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability) =>
         {
@@ -423,6 +408,26 @@ public static class PublicRestaurantEndpoints
             await db.SaveChangesAsync();
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
         }).RequireRateLimiting(ManageRateLimitPolicy);
+    }
+
+    /// <summary>
+    /// The endpoint filter of the routes under <c>/api/public/restaurants/{slug}</c>: sets the restaurant of the slug as the
+    /// tenant of the request; unknown and deactivated restaurants are both "not found" for guests.
+    /// </summary>
+    internal static async ValueTask<object?> RestaurantFromSlug(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        var services = context.HttpContext.RequestServices;
+        var slug = context.HttpContext.GetRouteValue("slug") as string;
+        var tenantId = await services.GetRequiredService<AppDbContext>().Tenants
+            .Where(t => t.Slug == slug && t.IsActive)
+            .Select(t => (Guid?)t.Id)
+            .SingleOrDefaultAsync();
+        if (tenantId is null)
+        {
+            return Results.NotFound();
+        }
+        services.GetRequiredService<TenantScope>().TenantId = tenantId;
+        return await next(context);
     }
 
     /// <summary>
