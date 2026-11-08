@@ -1,8 +1,11 @@
 import { expect, type Page, test } from '@playwright/test'
 import { screenshot } from './screenshot.ts'
 
-/** The sections of Gasthaus zur Linde's page in page order, as the navigation names them: the demo restaurant has all of them. */
-const sections = ['Photos', 'About us', 'Menu', 'Areas', 'Good to know', 'Opening hours', 'Directions & contact']
+/**
+ * The sections of Gasthaus zur Linde's page in page order, as the navigation names them: the demo restaurant has all of them.
+ * The card "Hours & location" (named "Opening hours") is the first block of the information on every layout.
+ */
+const sections = ['Opening hours', 'Photos', 'About us', 'Menu', 'Areas', 'Good to know', 'Contact']
 
 /** Header (64 px) and section navigation (56 px): a section brought into view starts below them. */
 const covered = 120
@@ -78,8 +81,9 @@ for (const width of [1440, 390]) {
     test('marks the section in view as the page scrolls', async ({ page }) => {
       await openScrolled(page)
       for (const [id, name] of [
+        ['opening-hours', 'Opening hours'],
         ['areas', 'Areas'],
-        ['good-to-know', 'Good to know'],
+        ['menu', 'Menu'],
         ['about', 'About us'],
       ]) {
         await page.evaluate(`document.getElementById('${id}').scrollIntoView({ block: 'start' })`)
@@ -89,8 +93,9 @@ for (const width of [1440, 390]) {
         // On phones the row keeps the marked item in view.
         await expect(link).toBeInViewport()
       }
-      await page.evaluate(`document.getElementById('good-to-know').scrollIntoView({ block: 'start' })`)
-      await expect(navigation(page).getByRole('link', { name: 'Good to know' })).toHaveAttribute('aria-current', 'location')
+      // "Good to know" and "Contact" are the last two sections: at the end of the page, the last one is marked.
+      await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
+      await expect(navigation(page).getByRole('link', { name: 'Contact' })).toHaveAttribute('aria-current', 'location')
       await page.waitForTimeout(700)
       await screenshot(page, 'restaurant-navigation', `marked-${width}`, { fullPage: false })
     })

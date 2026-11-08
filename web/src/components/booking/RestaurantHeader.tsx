@@ -6,6 +6,7 @@ import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Photo } from '../../ui/photo.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { HeroContext } from './layout.ts'
+import type { StatusTone } from './openingStatus.ts'
 import { PriceLevel } from './PriceLevel.tsx'
 
 type RestaurantHeaderProps = {
@@ -16,8 +17,8 @@ type RestaurantHeaderProps = {
   facts?: string[]
   /** The price level after the facts, as € to €€€€ (PriceLevel); null when not set. */
   priceLevel?: Level | null
-  /** Whether the restaurant is open today, as a chip below the city (openingStatus.ts); only on the booking page. */
-  status?: { open: boolean; text: string } | null
+  /** The live status, short ("Open now · until 10:00 PM"), as a chip below the city (openingStatus.ts); only on the booking page. */
+  status?: { tone: StatusTone; text: string } | null
   /** "page": the booking page, about 60 % of the screen high (45 % on phones); "preview": a fixed height (/admin/design). */
   size?: 'page' | 'preview'
 }
@@ -35,7 +36,8 @@ const heights = {
  * The top of the restaurant's guest pages, in the full width and behind the transparent header: the cover image (cropped to
  * fit, loaded first, fading in) with a gradient towards the bottom, on it at the bottom left the name large in the display
  * font, a line with the city, the facts (on the booking page the cuisines) and the price level, e.g. "München · Bavarian · €€",
- * and, on the booking page, a chip whether it is open today. Without cover image a calm band in the accent
+ * and, on the booking page, a chip with the live status (open now and until when, when it opens, closing soon), updated every
+ * minute. Without cover image a calm band in the accent
  * colour; a cover image that cannot be loaded shows the band in the cover image's height, so nothing jumps. The logo is not
  * repeated here: it is in the header.
  *
@@ -68,13 +70,19 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], priceLevel 
       )}
       {status !== null && (
         <p
+          data-testid="opening-chip"
           className={cn(
             'mt-4 inline-flex items-center gap-2 rounded-full px-3 py-1 text-sm font-medium backdrop-blur-sm',
             withCover ? 'bg-black/35 text-white ring-1 ring-white/25' : 'bg-primary-foreground/15 ring-1 ring-primary-foreground/25',
+            // Closing soon in the warning colour, light enough on the darkened photo.
+            withCover && status.tone === 'soon' && 'text-amber-300',
           )}
         >
           {/* The text says it; the dot only repeats it. */}
-          <span aria-hidden="true" className={cn('size-2 rounded-full', status.open ? 'bg-green-400' : 'bg-red-400')} />
+          <span
+            aria-hidden="true"
+            className={cn('size-2 rounded-full', status.tone === 'open' ? 'bg-green-400' : status.tone === 'soon' ? 'bg-amber-400' : 'bg-red-400')}
+          />
           {status.text}
         </p>
       )}
