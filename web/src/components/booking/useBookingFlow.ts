@@ -386,6 +386,10 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     void go(next, onlyCombined ? 'details' : afterTime)
   }
 
+  /** A time on another day in one step, e.g. one offered for a fully booked day; `onlyCombined` as the time's `combined`. */
+  const chooseDayAndTime = (dayValue: string, value: string, onlyCombined: boolean) =>
+    void go({ guests: partySize, date: dayValue, time: value, tableId: null }, guestChooses && onlyCombined ? 'details' : afterTime)
+
   const chooseTable = (value: string) => void go({ guests, date, time, tableId: value }, 'table')
 
   /** Moves to a step of the booking (e.g. from the summary in the dialog's head), keeping what is chosen. */
@@ -516,6 +520,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     chooseGuests,
     chooseDate,
     chooseTime,
+    chooseDayAndTime,
     chooseTable,
     goToStep,
     goBack,

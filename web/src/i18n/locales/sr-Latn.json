@@ -200,15 +200,27 @@
       "closed": "zatvoreno",
       "previousMonth": "Prethodni mesec",
       "nextMonth": "Sledeći mesec",
-      "legend": "Posivljeni dani su neradni ili se ne mogu rezervisati, precrtani su popunjeni."
+      "legend": "Posivljeni dani su neradni ili se ne mogu rezervisati, precrtani su popunjeni.",
+      "available": "slobodno",
+      "earlierDays": "Raniji dani",
+      "laterDays": "Kasniji dani",
+      "moreDates": "Drugi datumi"
     },
     "time": {
       "morning": "Pre podne",
       "midday": "Ručak",
       "evening": "Veče",
-      "noTables": "Nema slobodnih stolova – sledeći slobodni dani:",
+      "noTables": "Ovog dana nema slobodnih stolova.",
       "noFreeDays": "Nažalost, u narednim nedeljama nema slobodnog dana. Izaberite drugi datum ili nas pozovite.",
-      "freeTimes": "Slobodni termini"
+      "freeTimes": "Slobodni termini",
+      "nextFreeDays": "Sledeći slobodni dani",
+      "taken": "{{time}}, popunjeno",
+      "tablesLeft_one": "Još {{count}} sto",
+      "tablesLeft_few": "Još {{count}} stola",
+      "tablesLeft_other": "Još {{count}} stolova",
+      "smallerParty_one": "Za {{count}} osobu ima termina u {{times}}",
+      "smallerParty_few": "Za {{count}} osobe ima termina u {{times}}",
+      "smallerParty_other": "Za {{count}} osoba ima termina u {{times}}"
     },
     "table": {
       "listLabel": "Slobodni stolovi – {{area}}",

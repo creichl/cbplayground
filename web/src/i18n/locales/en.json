@@ -193,15 +193,25 @@
       "closed": "closed",
       "previousMonth": "Previous month",
       "nextMonth": "Next month",
-      "legend": "Greyed-out days are closed or cannot be booked; struck-through days are fully booked."
+      "legend": "Greyed-out days are closed or cannot be booked; struck-through days are fully booked.",
+      "available": "available",
+      "earlierDays": "Earlier days",
+      "laterDays": "Later days",
+      "moreDates": "More dates"
     },
     "time": {
       "morning": "Morning",
       "midday": "Lunch",
       "evening": "Evening",
-      "noTables": "No free tables – next free days:",
+      "noTables": "No free tables on this day.",
       "noFreeDays": "Unfortunately, no day is free in the coming weeks. Please choose another date or call us.",
-      "freeTimes": "Free times"
+      "freeTimes": "Free times",
+      "nextFreeDays": "Next free days",
+      "taken": "{{time}}, fully booked",
+      "tablesLeft_one": "{{count}} table left",
+      "tablesLeft_other": "{{count}} tables left",
+      "smallerParty_one": "For {{count}} person there are times at {{times}}",
+      "smallerParty_other": "For {{count}} people there are times at {{times}}"
     },
     "table": {
       "listLabel": "Free tables – {{area}}",

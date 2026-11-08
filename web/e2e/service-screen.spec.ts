@@ -17,10 +17,19 @@ async function openPeriodsOf(page: Page, date: string) {
   return availability.periods
 }
 
-/** The first day from `from` days ahead on which `wanted` holds, "YYYY-MM-DD". */
+/**
+ * The date `days` after Gasthaus zur Linde's today (Europe/Berlin), "YYYY-MM-DD". Not the device's today: shortly before
+ * midnight UTC the restaurant is already on the next day, and the front desk leaves its today out of the address.
+ */
+function dateFromZurLindeToday(days: number) {
+  const [year, month, day] = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Berlin' }).format(new Date()).split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+/** The first day at Gasthaus zur Linde from `from` days after its today on which `wanted` holds, "YYYY-MM-DD". */
 async function findDay(from: number, wanted: (date: string) => Promise<boolean>) {
   for (let days = from; days < from + 60; days++) {
-    const date = dateFromToday(days)
+    const date = dateFromZurLindeToday(days)
     if (await wanted(date)) return date
   }
   throw new Error(`No such day in the 60 days from ${from} days ahead.`)
