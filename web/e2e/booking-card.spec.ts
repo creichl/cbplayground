@@ -114,6 +114,41 @@ test.describe('Booking card', () => {
     }
     expect(inView).toBeGreaterThanOrEqual(8)
     await shoot(page, 'date-strip', strip)
+
+    // On a phone (shoot ends at 390 px) the focused and the chosen day come fully into view.
+    const isInside = async (day: Locator) => {
+      const frame = (await stripDays.first().locator('..').boundingBox())!
+      const box = (await day.boundingBox())!
+      return box.x >= frame.x - 1 && box.x + box.width <= frame.x + frame.width + 1
+    }
+    await chosen.focus()
+    await page.keyboard.press('End')
+    await expect(stripDays.last()).toBeFocused()
+    await expect.poll(() => isInside(stripDays.last())).toBe(true)
+
+    // A free day that sticks out 10 px on the right, tapped where it shows (without Playwright scrolling it into view).
+    // Snapping is turned off for this, or the strip would snap away from that position.
+    // From the 8th day on (beyond the first screen of the strip), not the last ones, so it can stick out at the edge.
+    let index = 7
+    while ((await stripDays.nth(index).getAttribute('aria-disabled')) !== 'false' || (await stripDays.nth(index).getAttribute('aria-pressed')) === 'true') {
+      index++
+    }
+    expect(index).toBeLessThan(12)
+    const target = stripDays.nth(index)
+    const day = (await target.getAttribute('data-day'))!
+    await page.evaluate(`(() => {
+      const button = document.querySelector('[data-day="${day}"]')
+      const scroller = button.parentElement
+      scroller.style.scrollSnapType = 'none'
+      scroller.scrollTo({ left: 0, behavior: 'instant' })
+      const offset = button.getBoundingClientRect().right - scroller.getBoundingClientRect().right
+      scroller.scrollTo({ left: offset - 10, behavior: 'instant' })
+    })()`)
+    expect(await isInside(target)).toBe(false)
+    const box = (await target.boundingBox())!
+    await page.mouse.click(box.x + 8, box.y + box.height / 2)
+    await expect(page).toHaveURL(new RegExp(`date=${day}`))
+    await expect.poll(() => isInside(target)).toBe(true)
   })
 
   test('keeps the previous times in place while the new ones load', async ({ page }) => {

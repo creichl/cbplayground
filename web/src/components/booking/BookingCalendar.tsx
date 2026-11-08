@@ -84,10 +84,13 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
     if (scroller === null || button === null) {
       return
     }
-    const left = button.offsetLeft - scroller.offsetLeft
-    const right = left + button.offsetWidth
-    if (left < scroller.scrollLeft || right > scroller.scrollLeft + scroller.clientWidth) {
-      scroller.scrollTo({ left: left - (scroller.clientWidth - button.offsetWidth) / 2, behavior })
+    // Measured on the screen, so the scroller's own position and its scrolling are already in it.
+    const box = button.getBoundingClientRect()
+    const frame = scroller.getBoundingClientRect()
+    if (box.left < frame.left || box.right > frame.right) {
+      // Centred in the strip: its position within the strip's content, less half of what is left beside it.
+      const left = box.left - frame.left + scroller.scrollLeft
+      scroller.scrollTo({ left: left - (scroller.clientWidth - box.width) / 2, behavior })
     }
   }
 
