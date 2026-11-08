@@ -78,15 +78,19 @@ test('books, finds the booking on the restaurant page, changes it at 1440 px and
 
   // The confirmation has the calendar and share menus and a clear "Done", which closes it.
   const confirmation = page.getByRole('dialog', { name: 'Your table is reserved' })
+  const done = confirmation.getByRole('button', { name: 'Done' })
   await expect(confirmation.getByRole('button', { name: 'Add to calendar' })).toBeVisible()
-  await expect(confirmation.getByRole('button', { name: 'Share' })).toBeVisible()
-  await settle(page)
-  await screenshot(page, 'guest-change', 'confirmation-1440', { fullPage: false })
-  await resize(page, 390)
-  await expect(confirmation.getByRole('button', { name: 'Done' })).toBeVisible()
-  await screenshot(page, 'guest-change', 'confirmation-390', { fullPage: false })
+  // The end of the confirmation, scrolled into view in the dialog (the sheet on phones): the menus and "Done".
+  for (const width of [1440, 390]) {
+    await resize(page, width)
+    await done.scrollIntoViewIfNeeded()
+    await settle(page)
+    await expect(done).toBeInViewport()
+    await expect(confirmation.getByRole('button', { name: 'Share' })).toBeInViewport()
+    await screenshot(page, 'guest-change', `confirmation-${width}`, { fullPage: false })
+  }
   await resize(page, 1440)
-  await confirmation.getByRole('button', { name: 'Done' }).click()
+  await done.click()
   await expect(confirmation).toBeHidden()
 
   // Above the card the calm notice of the remembered booking.
@@ -141,6 +145,7 @@ test('books, finds the booking on the restaurant page, changes it at 1440 px and
 
 test('the calendar menu, sharing without a share sheet, and forgetting a cancelled booking', async ({ page, context }) => {
   await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.setViewportSize({ width: 1440, height: 1000 })
   const booking = await bookByApi(page, 'Carl Calendar')
   const { timeZoneId } = (await (await page.request.get(restaurant)).json()) as { timeZoneId: string }
   await page.goto(booking.path)
@@ -164,7 +169,15 @@ test('the calendar menu, sharing without a share sheet, and forgetting a cancell
   const outlook = new URL((await menu.getByRole('menuitem', { name: 'Outlook.com' }).getAttribute('href'))!)
   expect(outlook.searchParams.get('startdt')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z$/)
   await settle(page)
-  await screenshot(page, 'guest-change', 'calendar-menu', { fullPage: false })
+  await screenshot(page, 'guest-change', 'calendar-menu-1440', { fullPage: false })
+  // The same menu on a phone.
+  await page.keyboard.press('Escape')
+  await expect(menu).toBeHidden()
+  await resize(page, 390)
+  await page.getByRole('button', { name: 'Add to calendar' }).click()
+  await expect(menu.getByRole('menuitem', { name: 'Google Calendar' })).toBeInViewport()
+  await settle(page)
+  await screenshot(page, 'guest-change', 'calendar-menu-390', { fullPage: false })
   // The file has the reminder 2 hours before.
   const download = page.waitForEvent('download')
   await menu.getByRole('menuitem', { name: /Apple Calendar or other/ }).click()
@@ -180,10 +193,19 @@ test('the calendar menu, sharing without a share sheet, and forgetting a cancell
   await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
   const text = String(await page.evaluate('navigator.clipboard.readText()'))
   expect(text).toBe(`Table at Gasthaus zur Linde on ${longDate(booking.date)} at ${timeOfDay(booking.time)} for 2 people`)
-  await page.getByRole('button', { name: 'Copied' }).click()
-  await expect(page.getByRole('menuitem', { name: /Share with link/ })).toBeVisible()
-  await settle(page)
-  await screenshot(page, 'guest-change', 'share-menu', { fullPage: false })
+  // The open menu on a phone and on a large screen; the button says "Copied" for a moment after copying.
+  const shareButton = page.getByRole('button', { name: /^(Share|Copied)$/ })
+  for (const width of [390, 1440]) {
+    await resize(page, width)
+    await shareButton.click()
+    await expect(page.getByRole('menuitem', { name: /Share with link/ })).toBeInViewport()
+    await settle(page)
+    await screenshot(page, 'guest-change', `share-menu-${width}`, { fullPage: false })
+    if (width === 390) {
+      await page.keyboard.press('Escape')
+      await expect(page.getByRole('menu')).toBeHidden()
+    }
+  }
   await page.getByRole('menuitem', { name: /Share with link/ }).click()
   expect(String(await page.evaluate('navigator.clipboard.readText()'))).toBe(`${text}\nhttp://localhost:5173${booking.path}`)
 
