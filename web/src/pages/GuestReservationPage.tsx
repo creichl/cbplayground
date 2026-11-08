@@ -249,7 +249,9 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
   const cancel = useCancelGuestReservation(slug, code, token)
   const [confirming, setConfirming] = useState(false)
   const [changing, setChanging] = useState(false)
-  const [changed, setChanged] = useState(false)
+  // How many changes the guest made on this page: each one moves the focus to the result, also a second one.
+  const [changes, setChanges] = useState(0)
+  const changed = changes > 0
   const statusHeading = useRef<HTMLHeadingElement>(null)
   const changeButton = useRef<HTMLButtonElement>(null)
 
@@ -262,10 +264,10 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
 
   // After a change the result takes the focus, so screen reader and keyboard users hear it.
   useEffect(() => {
-    if (changed) {
+    if (changes > 0) {
       statusHeading.current?.focus()
     }
-  }, [changed])
+  }, [changes])
 
   const cancelled = reservation.status === 'Cancelled'
   const closed = cancelled || reservation.status === 'Declined'
@@ -388,7 +390,7 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
           }}
           onChanged={() => {
             setChanging(false)
-            setChanged(true)
+            setChanges((count) => count + 1)
           }}
           onCloseAutoFocus={(event) => {
             // After a change the result takes the focus instead of the button.

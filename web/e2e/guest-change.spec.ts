@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises'
 import { expect, type Page, test } from '@playwright/test'
-import { dateFromToday, settle, timeOfDay } from './helpers.ts'
+import { dateFromToday, settle, signIn, timeOfDay } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 // After booking: the guest changes the time on "Your reservation", finds the booking again on the restaurant's page (remembered
@@ -214,4 +214,77 @@ test('the calendar menu, sharing without a share sheet, and forgetting a cancell
   await page.getByRole('dialog').getByRole('button', { name: 'Cancel reservation' }).click()
   await expect(page.getByRole('heading', { name: 'Your reservation has been cancelled' })).toBeVisible()
   await expect.poll(() => page.evaluate("localStorage.getItem('cbplayground.bookings')")).toBe('[]')
+})
+
+/**
+ * Sends an online request to Kafana Dunav (request mode, the guest chooses the table) through the API, on the first day from twelve
+ * days ahead with a free time and table, after the demo reservations; returns the guest's link.
+ */
+async function requestByApi(page: Page, name: string) {
+  const kafana = '/api/public/restaurants/kafana-dunav'
+  for (let days = 12; days < 45; days++) {
+    const date = dateFromToday(days)
+    const availability = (await (await page.request.get(`${kafana}/availability?date=${date}&guests=2`)).json()) as {
+      periods: { times: { time: string; available: boolean }[] }[]
+    }
+    const time = availability.periods.flatMap((period) => period.times).find((slot) => slot.available)?.time
+    if (time === undefined) continue
+    const areas = (await (await page.request.get(`${kafana}/tables?date=${date}&time=${time}&guests=2`)).json()) as {
+      tables: { id: string; available: boolean }[]
+    }[]
+    const table = areas.flatMap((area) => area.tables).find((candidate) => candidate.available)
+    if (table === undefined) continue
+    const booking = await page.request.post(`${kafana}/reservations`, {
+      data: { date, time, guests: 2, tableId: table.id, name, phone: '+381 64 1234567', language: 'en' },
+    })
+    expect(booking.status()).toBe(201)
+    const { referenceCode, manageToken, status } = (await booking.json()) as { referenceCode: string; manageToken: string; status: string }
+    expect(status).toBe('Requested')
+    return { time, path: `/r/kafana-dunav/reservation/${referenceCode}?t=${encodeURIComponent(manageToken)}` }
+  }
+  throw new Error('No free time at Kafana Dunav in the next 45 days.')
+}
+
+test('in request mode a change is sent for the restaurant to confirm, and the front desk sees it in the history', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  const name = 'Ognjen Izmena'
+  const request = await requestByApi(page, name)
+  await page.goto(request.path)
+  await expect(page.getByRole('heading', { name: 'Request sent', level: 1 })).toBeVisible()
+
+  /** Changes to the first other free time inline; every change moves the focus to the result, a second one as well. */
+  async function changeTime(from: string) {
+    await page.getByRole('button', { name: 'Change reservation' }).click()
+    const panel = page.getByRole('region', { name: 'Change reservation' })
+    await expect(panel.locator(`[data-time-chip="${from}"]`)).toBeVisible()
+    const other = panel.locator(`[data-time-chip]:not([data-time-chip="${from}"])`).first()
+    const to = (await other.getAttribute('data-time-chip'))!
+    await other.click()
+    await panel.getByRole('button', { name: 'Change', exact: true }).click()
+    await expect(panel).toBeHidden()
+    await expect(page.getByRole('heading', { name: 'Change sent', level: 1 })).toBeFocused()
+    await expect(page.getByText(new RegExp(`^${timeOfDay(to)}–`))).toBeVisible()
+    return to
+  }
+  const first = await changeTime(request.time)
+  const second = await changeTime(first)
+  await expect(page.getByText('The restaurant will confirm the change and get back to you.')).toBeVisible()
+  await settle(page)
+  await screenshot(page, 'guest-change', 'changed-request-1440')
+
+  // The front desk finds it among the open requests; its history names the guest as the one who changed it.
+  await signIn(page, 'frontdesk@kafana-dunav.local')
+  await expect(page).toHaveURL(/\/frontdesk$/)
+  await page.getByRole('tab', { name: /^Requests/ }).click()
+  await page.getByRole('button', { name: new RegExp(`^Open the reservation of ${name} `) }).click()
+  const drawer = page.getByRole('dialog', { name: 'Edit reservation' })
+  await drawer.getByRole('button', { name: 'History' }).click()
+  const entries = drawer.getByRole('listitem')
+  await expect(entries).toHaveCount(3)
+  await expect(entries.nth(0)).toContainText(`The guest: Time ${timeOfDay(first)} → ${timeOfDay(second)}`)
+  await expect(entries.nth(1)).toContainText(`The guest: Time ${timeOfDay(request.time)} → ${timeOfDay(first)}`)
+  await expect(entries.nth(2)).toContainText('Booked online by the guest')
+  await drawer.getByText('Booked online by the guest').scrollIntoViewIfNeeded()
+  await settle(page)
+  await screenshot(page, 'guest-change', 'history-guest-change', { fullPage: false })
 })
