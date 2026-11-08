@@ -215,11 +215,14 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const state = readState(searchParams, restaurant, today, lastDay)
   const { step, guests, date, time, tableId } = state
 
+  // While the confirmation is shown, the card keeps the booked party and day: the address already starts a new booking (so a
+  // reload does), and the presets behind the open dialog would change the card's times under it. Closing it shows the presets.
+  const booked = booking.isSuccess ? booking.data : null
   // The presets: 2 people (or fewer, if the restaurant takes no more online) and the first day with a free time.
-  const partySize = guests ?? Math.min(presetGuests, restaurant.maxOnlinePartySize)
+  const partySize = guests ?? booked?.guests ?? Math.min(presetGuests, restaurant.maxOnlinePartySize)
   const tooLarge = partySize > restaurant.maxOnlinePartySize
-  const firstFreeDay = useFirstFreeDay(slug, today, lastDay, partySize, date === null && !tooLarge)
-  const day = date ?? firstFreeDay.day ?? (firstFreeDay.isPending ? null : today)
+  const firstFreeDay = useFirstFreeDay(slug, today, lastDay, partySize, date === null && booked === null && !tooLarge)
+  const day = date ?? booked?.date ?? firstFreeDay.day ?? (firstFreeDay.isPending ? null : today)
   // The times of the card (the same request as its grid), to know which ones only a combination of tables has free.
   const dayAvailability = useAvailability(slug, day ?? '', partySize, guestChooses && day !== null && !tooLarge)
 

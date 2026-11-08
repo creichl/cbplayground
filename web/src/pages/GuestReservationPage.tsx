@@ -68,7 +68,7 @@ const pageClassName = '-mb-12 min-h-[calc(100dvh-4rem)] bg-background pb-16 font
  * The narrow band of the cover image below the header, and the column of the cards, which overlaps it a little. In page
  * transitions the band is the element the cover image of the booking page moves into, and back (app.css).
  */
-const bandClassName = 'h-28 sm:h-44 [view-transition-name:restaurant-cover]'
+const bandClassName = 'h-28 sm:h-44'
 const columnClassName = 'relative mx-auto -mt-12 flex max-w-3xl flex-col gap-6 px-4 sm:-mt-20 sm:px-6'
 
 /** The colours of a state: the surface of its symbol and the line on top of its card. Never by colour alone: each has its icon and title. */
@@ -176,7 +176,7 @@ export function GuestReservationPage() {
   if (restaurant.isPending || reservation.isPending) {
     return (
       <div className={pageClassName} aria-hidden="true">
-        <Skeleton className={cn(bandClassName, 'rounded-none')} />
+        <Skeleton data-page-part="restaurant-cover" className={cn(bandClassName, 'rounded-none')} />
         <div className={columnClassName}>
           <Skeleton className="h-44 rounded-xl border border-border bg-card" />
           <Skeleton className="h-96 rounded-xl border border-border bg-card" />
@@ -221,7 +221,7 @@ export function GuestReservationPage() {
 
   return (
     <div className={pageClassName}>
-      <div className={cn(bandClassName, 'bg-primary dark:bg-stone-900')}>
+      <div data-page-part="restaurant-cover" className={cn(bandClassName, 'bg-primary dark:bg-stone-900')}>
         {/*
           Only a picture of the place: the cover image, otherwise the first photo of the gallery. The first thing on the page,
           so not lazy; on the band's colour while it loads or when it fails.
