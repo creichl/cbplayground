@@ -239,7 +239,14 @@
       "submitRequest": "Send request",
       "contactTitle": "How can the restaurant reach you?",
       "requestHint": "This is a request: the restaurant reviews it and gets back to you.",
-      "cancelHint": "After booking you get a link to view your reservation and to cancel it until it starts."
+      "cancelHint": "After booking you get a link to view your reservation and to cancel it until it starts.",
+      "phoneCode": "Country code",
+      "phoneCodeOther": "Other",
+      "remember": "Remember my details on this device",
+      "notYou": "Not you?",
+      "clearRemembered": "Clear",
+      "submitting": "Booking…",
+      "submittingRequest": "Sending request…"
     },
     "errors": {
       "slotTaken": "Sorry, this time has just been booked by someone else. Please choose another time – the free times have been updated.",
@@ -294,7 +301,16 @@
       "stepTable": "Table",
       "stepDetails": "Contact details",
       "stepDone": "Confirmation",
-      "stepOf": "Step {{step}} of {{total}}"
+      "stepOf": "Step {{step}} of {{total}}",
+      "back": "Back"
+    },
+    "hold": {
+      "holding": "We're holding table {{table}} for you · {{left}}",
+      "holdingTables": "We're holding tables {{table}} for you · {{left}}",
+      "expired": "Your hold has expired. The table may still be free – you can still book.",
+      "nearbyTimes": "Free times nearby",
+      "noNearbyTimes": "There are no other free times on this day.",
+      "otherDay": "Choose another day or time"
     },
     "gallery": {
       "title": "Photos",

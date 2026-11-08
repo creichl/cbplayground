@@ -17,7 +17,8 @@ function DialogClose(props: ComponentProps<typeof DialogPrimitive.Close>) {
   return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
 }
 
-function DialogContent({ className, children, ...props }: ComponentProps<typeof DialogPrimitive.Content>) {
+/** `closeButton` false leaves out the "Close" in the top right corner, for a dialog that has its own in its head. */
+function DialogContent({ className, children, closeButton = true, ...props }: ComponentProps<typeof DialogPrimitive.Content> & { closeButton?: boolean }) {
   const { t } = useTranslation()
   return (
     <DialogPrimitive.Portal container={useContext(ThemeRootContext)}>
@@ -36,10 +37,12 @@ function DialogContent({ className, children, ...props }: ComponentProps<typeof 
           {...props}
         >
           {children}
-          <DialogPrimitive.Close className="absolute top-3 right-3 z-30 inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-ring touch:size-11">
-            <XIcon aria-hidden="true" className="size-4" />
-            <span className="sr-only">{t('common.close')}</span>
-          </DialogPrimitive.Close>
+          {closeButton && (
+            <DialogPrimitive.Close className="absolute top-3 right-3 z-30 inline-flex size-10 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-accent hover:text-foreground focus-ring touch:size-11">
+              <XIcon aria-hidden="true" className="size-4" />
+              <span className="sr-only">{t('common.close')}</span>
+            </DialogPrimitive.Close>
+          )}
         </DialogPrimitive.Content>
       </DialogPrimitive.Overlay>
     </DialogPrimitive.Portal>

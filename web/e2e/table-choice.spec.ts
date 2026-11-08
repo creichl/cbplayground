@@ -12,11 +12,14 @@ async function setRooftopTableStyle(page: Page, tableStyle: string) {
   expect(response.status()).toBe(200)
 }
 
-/** The plan in the dialog is drawn: its image or room has a size (it once shrank to nothing with the list open). */
+/**
+ * The plan in the dialog is drawn: its image or room has a size (it once shrank to nothing with the list open). Waits while the
+ * plan changes, e.g. while a table chosen in another area cross-fades to that area's plan and is zoomed to.
+ */
 async function expectPlanDrawn(dialog: Locator) {
-  const plan = (await dialog.locator('[data-vaul-no-drag]').boundingBox())!
-  expect(plan.width).toBeGreaterThan(300)
-  expect(plan.height).toBeGreaterThan(200)
+  const plan = dialog.locator('[data-vaul-no-drag]')
+  await expect.poll(async () => (await plan.boundingBox())?.width ?? 0).toBeGreaterThan(300)
+  await expect.poll(async () => (await plan.boundingBox())?.height ?? 0).toBeGreaterThan(200)
 }
 
 /** Opens the booking dialog of Rooftop Belvedere at its first free time, at the table step. */

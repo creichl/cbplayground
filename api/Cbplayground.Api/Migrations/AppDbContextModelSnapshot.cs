@@ -464,6 +464,10 @@ namespace Cbplayground.Api.Migrations
                         .HasMaxLength(30)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Language")
                         .IsRequired()
                         .HasMaxLength(10)
@@ -523,6 +527,9 @@ namespace Cbplayground.Api.Migrations
 
                     b.HasIndex("TableId");
 
+                    b.HasIndex("TenantId", "IdempotencyKey")
+                        .HasFilter("\"IdempotencyKey\" IS NOT NULL");
+
                     b.HasIndex("TenantId", "StartLocal");
 
                     b.ToTable("Reservations");
@@ -567,6 +574,55 @@ namespace Cbplayground.Api.Migrations
                     b.HasIndex("ReservationId", "AtUtc");
 
                     b.ToTable("ReservationEvents");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationHold", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ClientIp")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("EndLocal")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ExpiresAtUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("PartySize")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("StartLocal")
+                        .HasColumnType("TEXT");
+
+                    b.PrimitiveCollection<string>("TableIds")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<byte[]>("TokenHash")
+                        .IsRequired()
+                        .HasColumnType("BLOB");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TokenHash")
+                        .IsUnique();
+
+                    b.HasIndex("ClientIp", "ExpiresAtUtc");
+
+                    b.HasIndex("TenantId", "StartLocal");
+
+                    b.ToTable("ReservationHolds");
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>
@@ -1379,6 +1435,15 @@ namespace Cbplayground.Api.Migrations
                         });
 
                     b.Navigation("Changes");
+                });
+
+            modelBuilder.Entity("Cbplayground.Api.Data.ReservationHold", b =>
+                {
+                    b.HasOne("Cbplayground.Api.Data.Tenant", null)
+                        .WithMany()
+                        .HasForeignKey("TenantId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Cbplayground.Api.Data.ReservationSettings", b =>
