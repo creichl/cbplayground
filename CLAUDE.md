@@ -19,6 +19,7 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
 - Guest side: `start-page.spec.ts` (start page), `not-found.spec.ts` (not found pages), `booking.spec.ts` (booking page,
   booking dialog, embedded booking, unknown restaurant), `booking-flow.spec.ts` (bookings from start to confirmation,
   the guest's reservation link, the embed's booking and height), `table-choice.spec.ts` (the guest's table choice),
+  `table-choice-ux.spec.ts` (choosing a table: feedback on tap, zoom, areas, "No preference", keyboard, less motion),
   `booking-dialog.spec.ts` (the booking dialog's frame and its change of size, Back, the hold and its countdown, a table
   taken meanwhile, the contact form, the embed's inline steps).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving

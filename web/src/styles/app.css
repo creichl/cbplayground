@@ -306,6 +306,10 @@
   /* The circle of a successful booking pops in with a spring; the particles fly out once around it. */
   --animate-success-pop: success-pop var(--motion-slow) var(--ease-spring) backwards;
   --animate-particle: particle var(--motion-long) var(--ease-out) 250ms both;
+  /* A table just chosen on the guest's plan gives way a little and springs back to its size. */
+  --animate-table-settle: table-settle var(--motion-slow) var(--ease-spring);
+  /* A table that cannot be chosen, tapped: it dims for a moment while the reason shows. */
+  --animate-table-dip: table-dip var(--motion-long) var(--ease-out);
 }
 
 @theme {
@@ -402,6 +406,16 @@
     from {
       opacity: 0;
       scale: 0.5;
+    }
+  }
+  @keyframes table-settle {
+    from {
+      scale: 0.86;
+    }
+  }
+  @keyframes table-dip {
+    35% {
+      opacity: 0.5;
     }
   }
   /* From the edge of the circle outwards; --angle is the particle's direction. */
@@ -524,7 +538,12 @@
     border-radius: inherit;
     pointer-events: none;
     opacity: 0;
-    animation: pulse-ring var(--motion-long) var(--ease-out);
+  }
+  /* Only with motion, so with less motion no animation runs at all, not one of no length. */
+  @variant motion-safe {
+    &::after {
+      animation: pulse-ring var(--motion-long) var(--ease-out);
+    }
   }
 }
 
@@ -625,6 +644,26 @@
 }
 ::view-transition-group(site-header) {
   z-index: 1;
+}
+/*
+ * Another area in the guest's table choice (TablePicker, view-transition-name table-plan): the plan shown fades out, the
+ * new one fades in from a little smaller. With less motion the view transitions above have no animation.
+ */
+::view-transition-group(table-plan) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(table-plan) {
+  animation: fade-out var(--motion-slow) var(--ease-out) both;
+}
+::view-transition-new(table-plan) {
+  animation: plan-in var(--motion-slow) var(--ease-out) both;
+}
+@keyframes plan-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
 }
 
 /* The light around the chosen table in the table style "Glow" breathes softly; with less motion it stays still. */

@@ -224,6 +224,10 @@
       "tooltipTooLarge_one": "Sto {{number}} · prevelik za {{count}} osobu",
       "tooltipTooLarge_few": "Sto {{number}} · prevelik za {{count}} osobe",
       "tooltipTooLarge_other": "Sto {{number}} · prevelik za {{count}} osoba",
+      "reasonTaken": "Zauzet u {{time}}",
+      "reasonTooLarge_one": "Za {{count}} osobu ili više",
+      "reasonTooLarge_few": "Za {{count}} osobe ili više",
+      "reasonTooLarge_other": "Za {{count}} osoba ili više",
       "largeTablesNote": "Veći stolovi ostaju slobodni za veće grupe.",
       "showList": "Prikaži stolove kao listu",
       "toScale": "Plan i stolovi u razmeri"
@@ -325,6 +329,38 @@
       "title": "Fotografije",
       "showAll": "Sve fotografije ({{total}})",
       "more": "+{{number}}"
+    },
+    "menu": {
+      "title": "Jelovnik",
+      "recommendations": "Preporuke kuće",
+      "sections": "Odeljci jelovnika",
+      "showAll": "Prikaži ceo jelovnik",
+      "legend": "Legenda",
+      "allergenNote": "Podatke o alergenima daje restoran. Ako imate alergiju, recite to osoblju.",
+      "showPhoto": "Prikaži fotografiju: {{name}}",
+      "allergens": "Alergeni: {{list}}",
+      "marks": {
+        "vegetarian": "Vegetarijansko",
+        "vegan": "Vegansko",
+        "glutenFree": "Bez glutena",
+        "spicy": "Ljuto"
+      },
+      "allergenNames": {
+        "Gluten": "gluten",
+        "Crustaceans": "rakovi",
+        "Eggs": "jaja",
+        "Fish": "riba",
+        "Peanuts": "kikiriki",
+        "Soy": "soja",
+        "Milk": "mleko",
+        "Nuts": "orašasti plodovi",
+        "Celery": "celer",
+        "Mustard": "slačica",
+        "Sesame": "susam",
+        "Sulphites": "sulfiti",
+        "Lupin": "lupina",
+        "Molluscs": "mekušci"
+      }
     }
   },
   "lightbox": {
@@ -405,6 +441,7 @@
       "serviceScreen": "Ekran za servis",
       "reports": "Izveštaji",
       "profile": "Profil",
+      "menu": "Jelovnik",
       "design": "Izgled",
       "areas": "Prostori i stolovi",
       "openingHours": "Radno vreme",
@@ -816,6 +853,115 @@
         "Minimal": "Ravni oblici kao plan sedenja, mesta kao tačke; mirno i vrlo jasno.",
         "Glow": "Tamno staklo sa svetlim linijama; slobodni stolovi blago svetle u vašoj boji naglaska. Za tamne stranice."
       }
+    }
+  },
+  "menu": {
+    "title": "Jelovnik",
+    "description": "Vaša jela i pića po odeljcima, sa cenama, oznakama, alergenima i fotografijama. Gosti vide jelovnik na vašoj stranici za rezervacije; svaka izmena se odmah čuva.",
+    "empty": {
+      "title": "Još nema jelovnika",
+      "text": "Počnite sa odeljkom kao što su Predjela, Glavna jela, Dezerti ili Pića, pa dodajte njegova jela. Preporučena jela sa fotografijom pojavljuju se na vrhu jelovnika na vašoj stranici za rezervacije.",
+      "action": "Dodaj prvi odeljak"
+    },
+    "section": {
+      "add": "Dodaj odeljak",
+      "full": "Jelovnik ima najveći broj odeljaka ({{max}}).",
+      "moveUp": "Pomeri odeljak gore",
+      "moveDown": "Pomeri odeljak dole",
+      "edit": "Preimenuj odeljak",
+      "delete": "Obriši odeljak",
+      "noItems": "U ovom odeljku još nema jela. Gosti vide samo odeljke sa jelima.",
+      "addTitle": "Novi odeljak",
+      "editTitle": "Izmeni odeljak",
+      "name": "Naziv",
+      "namePlaceholder": "npr. Predjela",
+      "descriptionLabel": "Opis",
+      "descriptionPlaceholder": "Opciono, npr. Sva glavna jela uz prilog",
+      "addConfirm": "Dodaj odeljak",
+      "save": "Sačuvaj",
+      "deleteTitle": "Obrisati odeljak?",
+      "deleteEmpty": "Odeljak „{{name}}“ biće obrisan.",
+      "deleteText_one": "Odeljak „{{name}}“ i njegovo {{count}} jelo biće obrisani, sa fotografijom.",
+      "deleteText_few": "Odeljak „{{name}}“ i njegova {{count}} jela biće obrisani, sa fotografijama.",
+      "deleteText_other": "Odeljak „{{name}}“ i njegovih {{count}} jela biće obrisani, sa fotografijama.",
+      "deleteConfirm": "Obriši odeljak"
+    },
+    "item": {
+      "open": "Izmeni: {{name}}",
+      "moveUp": "Pomeri jelo gore",
+      "moveDown": "Pomeri jelo dole",
+      "moveToSection": "Premesti u odeljak",
+      "add": "Dodaj jelo",
+      "addTitle": "Novo jelo",
+      "editTitle": "Izmeni jelo",
+      "name": "Naziv",
+      "namePlaceholder": "npr. Ćevapi sa lukom",
+      "description": "Opis",
+      "descriptionPlaceholder": "Opciono, npr. sa kajmakom i lepinjom",
+      "price": "Cena ({{currency}})",
+      "priceHint": "Ostavite prazno ako nema cene.",
+      "marks": "Oznake",
+      "allergens": "Alergeni",
+      "photo": "Fotografija",
+      "photoAlt": "Fotografija: {{name}}",
+      "noPhoto": "Još nema fotografije.",
+      "choosePhoto": "Izaberi fotografiju",
+      "replacePhoto": "Zameni fotografiju",
+      "removePhoto": "Ukloni fotografiju",
+      "photoHint": "PNG, JPEG ili WebP, najviše 10 MB. Prikazuje se u formatu 4:3 i kao kvadratna sličica.",
+      "delete": "Obriši jelo",
+      "save": "Sačuvaj jelo",
+      "deleteTitle": "Obrisati jelo?",
+      "deleteText": "„{{name}}“ biće obrisano iz jelovnika, sa fotografijom.",
+      "deleteConfirm": "Obriši jelo"
+    },
+    "marks": {
+      "recommended": "Preporuka",
+      "recommendedLong": "Preporuka kuće",
+      "vegetarian": "Vegetarijansko",
+      "vegan": "Vegansko",
+      "glutenFree": "Bez glutena",
+      "spicy": "Ljuto"
+    },
+    "allergens": {
+      "Gluten": "Gluten",
+      "Crustaceans": "Rakovi",
+      "Eggs": "Jaja",
+      "Fish": "Riba",
+      "Peanuts": "Kikiriki",
+      "Soy": "Soja",
+      "Milk": "Mleko",
+      "Nuts": "Orašasti plodovi",
+      "Celery": "Celer",
+      "Mustard": "Slačica",
+      "Sesame": "Susam",
+      "Sulphites": "Sulfiti",
+      "Lupin": "Lupina",
+      "Molluscs": "Mekušci"
+    },
+    "toast": {
+      "orderSaved": "Redosled je sačuvan.",
+      "itemMoved": "„{{name}}“ premešteno u {{section}}.",
+      "sectionAdded": "Odeljak je dodat.",
+      "sectionSaved": "Odeljak je sačuvan.",
+      "sectionDeleted": "Odeljak „{{name}}“ je obrisan.",
+      "photoSaved": "Fotografija je sačuvana.",
+      "photoRemoved": "Fotografija je uklonjena.",
+      "itemSaved": "„{{name}}“ je sačuvano.",
+      "itemAdded": "„{{name}}“ je dodato.",
+      "itemDeleted": "„{{name}}“ je obrisano."
+    },
+    "errors": {
+      "invalidName": "Unesite naziv (odeljci do 60, jela do 100 znakova).",
+      "invalidDescription": "Opis je predugačak (odeljci do 200, jela do 300 znakova).",
+      "invalidPrice": "Unesite cenu od 0 do 100.000 sa najviše dve decimale ili ostavite prazno.",
+      "invalidAllergen": "Jedan alergen nije poznat. Osvežite stranicu i pokušajte ponovo.",
+      "invalidOrder": "Jelovnik je u međuvremenu izmenjen. Osvežite stranicu i pokušajte ponovo.",
+      "menuFull": "Jelovnik je pun: najviše 20 odeljaka i 300 jela.",
+      "sectionNotFound": "Odeljak više ne postoji. Osvežite stranicu.",
+      "photoTooLarge": "Fotografija je veća od 10 MB.",
+      "photoTypeInvalid": "Izaberite PNG, JPEG ili WebP sliku.",
+      "notFound": "Ovo je u međuvremenu obrisano. Osvežite stranicu."
     }
   },
   "staff": {

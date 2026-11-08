@@ -8,6 +8,7 @@ import { AboutUs } from '../components/booking/AboutUs.tsx'
 import { BookingFlow } from '../components/booking/BookingFlow.tsx'
 import { Gallery } from '../components/booking/Gallery.tsx'
 import { GoodToKnow } from '../components/booking/GoodToKnow.tsx'
+import { MenuSection } from '../components/booking/MenuSection.tsx'
 import { bookingSectionId, scrollToBooking } from '../components/booking/layout.ts'
 import { OpeningHoursList } from '../components/booking/OpeningHoursList.tsx'
 import { useOpeningStatus } from '../components/booking/openingStatus.ts'
@@ -119,6 +120,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
               <AboutUs description={description} features={features} />
             </Section>
           )}
+          <MenuSection slug={slug} restaurantName={name} />
           {restaurant.areas.length > 0 && (
             <Section title={t('booking.restaurant.areas')}>
               <AreaCards areas={restaurant.areas} />
