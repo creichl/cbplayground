@@ -24,6 +24,9 @@ import { Photo } from '../ui/photo.tsx'
 import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
 
+/** What the guest does to move on their own: it ends keeping a section from the address in place. */
+const guestInput = ['wheel', 'touchstart', 'pointerdown', 'keydown'] as const
+
 /** The content: 12 columns, at most 1200 px; from 1024 px on the information in 7 of them, the reservation card in 5. */
 const gridClassName = 'mx-auto max-w-page px-4 sm:px-6 lg:grid lg:grid-cols-12 lg:gap-x-12'
 const cardColumnClassName = 'pt-4 sm:pt-6 lg:col-span-5 lg:col-start-8 lg:row-start-1 lg:pt-12'
@@ -115,15 +118,39 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
     ...(contact ? [{ id: sectionIds.directions, title: t('booking.restaurant.directions') }] : []),
   ]
 
-  // A section in the address (`#menu`) is brought into view once, as soon as the menu above it has loaded (or failed).
+  // A section in the address (`#menu`) is brought into view once, as soon as the menu above it has loaded (or failed). Two
+  // frames later, so the sections that rise in when they come into view (Reveal) have started watching for it and the jump
+  // is a scroll like any other. Content above it may still grow (on phones the reservation card's times), and the browser's
+  // scroll anchoring pauses while the section rises in: so the section is kept in place whenever the page changes its size,
+  // until the guest scrolls, taps or types.
   const scrolledTo = useRef<string | null>(null)
   const menuPending = menu.isPending
   useEffect(() => {
     if (!wantsSection || menuPending || scrolledTo.current === target) {
       return
     }
-    scrolledTo.current = target
-    document.getElementById(target)?.scrollIntoView({ block: 'start' })
+    let observer: ResizeObserver | undefined
+    const release = () => {
+      observer?.disconnect()
+      for (const type of guestInput) window.removeEventListener(type, release)
+    }
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        const section = document.getElementById(target)
+        if (section === null) {
+          return
+        }
+        scrolledTo.current = target
+        section.scrollIntoView({ block: 'start' })
+        observer = new ResizeObserver(() => section.scrollIntoView({ block: 'start' }))
+        observer.observe(document.body)
+        for (const type of guestInput) window.addEventListener(type, release, { passive: true })
+      })
+    })
+    return () => {
+      cancelAnimationFrame(frame)
+      release()
+    }
   }, [target, wantsSection, menuPending])
 
   return (

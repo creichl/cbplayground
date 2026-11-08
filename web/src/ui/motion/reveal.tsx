@@ -21,7 +21,10 @@ function useRevealOnce() {
     element.dataset.reveal = 'hidden'
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        // The report can stem from before a jump in the same frame (e.g. to a section in the address), and the browser then
+        // sends no new one: where the element is now counts as well, with the same 10 % above the bottom edge.
+        const { top, bottom } = element.getBoundingClientRect()
+        if (entry.isIntersecting || (top < window.innerHeight * 0.9 && bottom > 0)) {
           element.dataset.reveal = 'shown'
           observer.disconnect()
         }
