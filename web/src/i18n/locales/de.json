@@ -297,19 +297,38 @@
       "table": "Tisch",
       "addToCalendar": "Zum Kalender hinzufügen",
       "manageLink": "Reservierung verwalten",
-      "manageLinkHint": "Link speichern, um später zu stornieren.",
+      "manageLinkHint": "Link speichern, um später zu ändern oder zu stornieren.",
       "copied": "Kopiert",
       "tableInArea": "Tisch {{number}} · {{area}}",
       "address": "Adresse",
       "copyLink": "Link kopieren",
       "copy": "Kopieren",
       "tables": "Tische",
-      "tablesInArea": "Tische {{number}} · {{area}}"
+      "tablesInArea": "Tische {{number}} · {{area}}",
+      "done": "Fertig"
     },
     "calendarEvent": {
       "title": "Tischreservierung – {{restaurant}}",
-      "description": "{{guests}}\nReferenzcode: {{code}}\nReservierung ansehen oder stornieren: {{link}}",
+      "description": "{{guests}}\nReferenzcode: {{code}}\nReservierung ansehen, ändern oder stornieren: {{link}}",
       "fileName": "reservierung"
+    },
+    "share": {
+      "share": "Teilen",
+      "withoutLink": "Details teilen",
+      "withoutLinkHint": "Tag, Uhrzeit und Restaurant",
+      "withLink": "Mit Link teilen",
+      "withLinkHint": "Wer den Link hat, kann die Reservierung ändern oder stornieren",
+      "text": "Tisch bei {{restaurant}} am {{date}} um {{time}} für {{guests}}",
+      "google": "Google Kalender",
+      "outlook": "Outlook.com",
+      "ics": "Apple Kalender oder andere",
+      "icsHint": "Kalenderdatei (.ics) mit Erinnerung 2 Stunden vorher"
+    },
+    "remembered": {
+      "label": "Ihre Reservierung",
+      "text": "Sie haben eine Reservierung am {{date}} um {{time}} für {{guests}}",
+      "view": "Ansehen",
+      "forget": "Diese Reservierung auf diesem Gerät vergessen"
     },
     "notBookable": {
       "title": "Online-Reservierung nicht möglich",
@@ -412,6 +431,10 @@
     "cancel": "Stornieren",
     "cancelledTitle": "Ihre Reservierung wurde storniert",
     "cancelledText": "Der Tisch ist wieder für andere Gäste frei. Wir freuen uns, Sie ein andermal begrüßen zu dürfen.",
+    "changedTitle": "Ihre Reservierung wurde geändert",
+    "changedText": "Wir freuen uns auf Ihren Besuch.",
+    "changeRequestedTitle": "Änderung gesendet",
+    "changeRequestedText": "Das Restaurant bestätigt die Änderung und meldet sich bei Ihnen.",
     "bookAgain": "Erneut buchen",
     "cancelledByGuest": "Sie haben diese Reservierung storniert.",
     "cancelledByRestaurant": "Das Restaurant hat diese Reservierung storniert.",
@@ -423,6 +446,16 @@
       "text": "Der Tisch wird für andere Gäste freigegeben. Das lässt sich nicht rückgängig machen.",
       "back": "Zurück",
       "confirm": "Stornieren"
+    },
+    "change": {
+      "open": "Reservierung ändern",
+      "title": "Reservierung ändern",
+      "text": "Wählen Sie einen anderen Tag, eine andere Uhrzeit oder Personenzahl.",
+      "summary": "Ihre Änderung",
+      "to": "auf",
+      "confirm": "Ändern",
+      "notPossible": "Diese Reservierung lässt sich online nicht mehr ändern. Bitte rufen Sie das Restaurant an.",
+      "invalidPartySize": "Diese Personenzahl lässt sich online nicht buchen. Bitte wählen Sie weniger oder rufen Sie das Restaurant an."
     },
     "errors": {
       "notPossible": "Diese Reservierung lässt sich online nicht mehr stornieren. Bitte rufen Sie das Restaurant an.",
@@ -1934,6 +1967,7 @@
       "cancelledByGuest": "Vom Gast über den Link storniert",
       "changedBy": "{{name}}: {{changes}}",
       "unknownStaff": "Ein Teammitglied",
+      "guest": "Der Gast",
       "change": "{{field}} {{from}} → {{to}}",
       "statusChange": "{{from}} → {{to}}",
       "none": "—",

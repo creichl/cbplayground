@@ -314,19 +314,38 @@
       "table": "Sto",
       "addToCalendar": "Dodaj u kalendar",
       "manageLink": "Upravljaj rezervacijom",
-      "manageLinkHint": "Sačuvajte link da biste kasnije mogli da otkažete.",
+      "manageLinkHint": "Sačuvajte link da biste kasnije mogli da izmenite ili otkažete.",
       "copied": "Kopirano",
       "tableInArea": "Sto {{number}} · {{area}}",
       "address": "Adresa",
       "copyLink": "Kopiraj link",
       "copy": "Kopiraj",
       "tables": "Stolovi",
-      "tablesInArea": "Stolovi {{number}} · {{area}}"
+      "tablesInArea": "Stolovi {{number}} · {{area}}",
+      "done": "Gotovo"
     },
     "calendarEvent": {
       "title": "Rezervacija stola – {{restaurant}}",
-      "description": "{{guests}}\nReferentni kod: {{code}}\nPregled ili otkazivanje rezervacije: {{link}}",
+      "description": "{{guests}}\nReferentni kod: {{code}}\nPregled, izmena ili otkazivanje rezervacije: {{link}}",
       "fileName": "rezervacija"
+    },
+    "share": {
+      "share": "Podeli",
+      "withoutLink": "Podeli detalje",
+      "withoutLinkHint": "Dan, vreme i restoran",
+      "withLink": "Podeli sa linkom",
+      "withLinkHint": "Svako ko ima link može da izmeni ili otkaže rezervaciju",
+      "text": "Sto u restoranu {{restaurant}}, {{date}} u {{time}}, {{guests}}",
+      "google": "Google kalendar",
+      "outlook": "Outlook.com",
+      "ics": "Apple kalendar ili drugi",
+      "icsHint": "Datoteka kalendara (.ics) sa podsetnikom 2 sata ranije"
+    },
+    "remembered": {
+      "label": "Vaša rezervacija",
+      "text": "Imate rezervaciju {{date}} u {{time}} za {{guests}}",
+      "view": "Pogledaj",
+      "forget": "Zaboravi ovu rezervaciju na ovom uređaju"
     },
     "notBookable": {
       "title": "Onlajn rezervacija nije moguća",
@@ -429,6 +448,10 @@
     "cancel": "Otkaži rezervaciju",
     "cancelledTitle": "Vaša rezervacija je otkazana",
     "cancelledText": "Sto je ponovo slobodan za druge goste. Nadamo se da ćemo vas videti neki drugi put.",
+    "changedTitle": "Vaša rezervacija je izmenjena",
+    "changedText": "Radujemo se vašoj poseti.",
+    "changeRequestedTitle": "Izmena je poslata",
+    "changeRequestedText": "Restoran će potvrditi izmenu i javiće vam se.",
     "bookAgain": "Rezerviši ponovo",
     "cancelledByGuest": "Otkazali ste ovu rezervaciju.",
     "cancelledByRestaurant": "Restoran je otkazao ovu rezervaciju.",
@@ -440,6 +463,16 @@
       "text": "Sto će biti oslobođen za druge goste. Ovo se ne može poništiti.",
       "back": "Nazad",
       "confirm": "Otkaži rezervaciju"
+    },
+    "change": {
+      "open": "Izmeni rezervaciju",
+      "title": "Izmeni rezervaciju",
+      "text": "Izaberite drugi dan, vreme ili broj osoba.",
+      "summary": "Vaša izmena",
+      "to": "na",
+      "confirm": "Izmeni",
+      "notPossible": "Ovu rezervaciju više nije moguće izmeniti onlajn. Pozovite restoran.",
+      "invalidPartySize": "Ovaj broj osoba nije moguće rezervisati onlajn. Izaberite manje ili pozovite restoran."
     },
     "errors": {
       "notPossible": "Ovu rezervaciju više nije moguće otkazati onlajn. Pozovite restoran.",
@@ -1986,6 +2019,7 @@
       "cancelledByGuest": "Gost je otkazao preko linka",
       "changedBy": "{{name}}: {{changes}}",
       "unknownStaff": "Član osoblja",
+      "guest": "Gost",
       "change": "{{field}} {{from}} → {{to}}",
       "statusChange": "{{from}} → {{to}}",
       "none": "—",

@@ -50,7 +50,8 @@ function describe(event: ReservationEvent, t: TFunction, language: string) {
   if (event.kind === 'CancelledByGuest') {
     return t('reservations.history.cancelledByGuest')
   }
-  const name = event.userName ?? t('reservations.history.unknownStaff')
+  // A change through the guest's link, e.g. "The guest: Time 7:00 PM → 7:30 PM".
+  const name = event.actor === 'Guest' ? t('reservations.history.guest') : (event.userName ?? t('reservations.history.unknownStaff'))
   if (event.kind === 'Created') {
     if (event.actor === 'Guest') return t('reservations.history.createdByGuest')
     if (event.actor === 'System') return t('reservations.history.createdBySystem')

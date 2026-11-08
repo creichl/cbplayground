@@ -70,13 +70,18 @@ export type CalendarEvent = {
   url: string
 }
 
+/** Start and end of the event in UTC. */
+function eventTimes(event: CalendarEvent) {
+  const start = restaurantTimeToUtc(event.date, event.time, event.timeZoneId)
+  return { start, end: new Date(start.getTime() + event.durationMinutes * 60_000) }
+}
+
 /**
- * An iCalendar file (.ics) with one event. Start and end are given in UTC, converted from the restaurant's time zone,
- * so every calendar shows the right time without needing a time zone definition.
+ * An iCalendar file (.ics) with one event and a reminder 2 hours before it. Start and end are given in UTC, converted from
+ * the restaurant's time zone, so every calendar shows the right time without needing a time zone definition.
  */
 export function calendarFile(event: CalendarEvent) {
-  const start = restaurantTimeToUtc(event.date, event.time, event.timeZoneId)
-  const end = new Date(start.getTime() + event.durationMinutes * 60_000)
+  const { start, end } = eventTimes(event)
   const lines = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
@@ -92,10 +97,47 @@ export function calendarFile(event: CalendarEvent) {
     ...(event.location !== '' ? [`LOCATION:${icsText(event.location)}`] : []),
     `DESCRIPTION:${icsText(event.description)}`,
     `URL:${event.url}`,
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    `DESCRIPTION:${icsText(event.title)}`,
+    'TRIGGER:-PT2H',
+    'END:VALARM',
     'END:VEVENT',
     'END:VCALENDAR',
   ]
   return lines.map(fold).join('\r\n') + '\r\n'
+}
+
+/**
+ * The event in Google Calendar: its page to add an event, filled in; start and end in UTC as in the file, e.g.
+ * "20261114T170000Z/20261114T190000Z".
+ */
+export function googleCalendarUrl(event: CalendarEvent) {
+  const { start, end } = eventTimes(event)
+  const params = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: event.title,
+    dates: `${icsTime(start)}/${icsTime(end)}`,
+    details: event.description,
+    location: event.location,
+  })
+  return `https://calendar.google.com/calendar/render?${params}`
+}
+
+/** The event in Outlook.com: its page to add an event, filled in; start and end in UTC, e.g. "2026-11-14T17:00:00Z". */
+export function outlookCalendarUrl(event: CalendarEvent) {
+  const { start, end } = eventTimes(event)
+  const iso = (instant: Date) => instant.toISOString().replace(/\.\d{3}/, '')
+  const params = new URLSearchParams({
+    path: '/calendar/action/compose',
+    rru: 'addevent',
+    subject: event.title,
+    startdt: iso(start),
+    enddt: iso(end),
+    body: event.description,
+    location: event.location,
+  })
+  return `https://outlook.live.com/calendar/0/deeplink/compose?${params}`
 }
 
 /** Lets the browser save the file, which the calendar app then opens. */

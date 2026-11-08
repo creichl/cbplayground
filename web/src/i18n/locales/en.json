@@ -297,19 +297,38 @@
       "table": "Table",
       "addToCalendar": "Add to calendar",
       "manageLink": "Manage reservation",
-      "manageLinkHint": "Save this link to cancel later.",
+      "manageLinkHint": "Save this link to change or cancel later.",
       "copied": "Copied",
       "tableInArea": "Table {{number}} · {{area}}",
       "address": "Address",
       "copyLink": "Copy link",
       "copy": "Copy",
       "tables": "Tables",
-      "tablesInArea": "Tables {{number}} · {{area}}"
+      "tablesInArea": "Tables {{number}} · {{area}}",
+      "done": "Done"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
-      "description": "{{guests}}\nReference code: {{code}}\nView or cancel the reservation: {{link}}",
+      "description": "{{guests}}\nReference code: {{code}}\nView, change or cancel the reservation: {{link}}",
       "fileName": "reservation"
+    },
+    "share": {
+      "share": "Share",
+      "withoutLink": "Share the details",
+      "withoutLinkHint": "Day, time and restaurant",
+      "withLink": "Share with link",
+      "withLinkHint": "Anyone with the link can change or cancel the reservation",
+      "text": "Table at {{restaurant}} on {{date}} at {{time}} for {{guests}}",
+      "google": "Google Calendar",
+      "outlook": "Outlook.com",
+      "ics": "Apple Calendar or other",
+      "icsHint": "Calendar file (.ics) with a reminder 2 hours before"
+    },
+    "remembered": {
+      "label": "Your reservation",
+      "text": "You have a reservation on {{date}} at {{time}} for {{guests}}",
+      "view": "View",
+      "forget": "Forget this reservation on this device"
     },
     "notBookable": {
       "title": "Online booking unavailable",
@@ -412,6 +431,10 @@
     "cancel": "Cancel reservation",
     "cancelledTitle": "Your reservation has been cancelled",
     "cancelledText": "The table is free again for other guests. We hope to see you another time.",
+    "changedTitle": "Your reservation has been changed",
+    "changedText": "We look forward to your visit.",
+    "changeRequestedTitle": "Change sent",
+    "changeRequestedText": "The restaurant will confirm the change and get back to you.",
     "bookAgain": "Book again",
     "cancelledByGuest": "You cancelled this reservation.",
     "cancelledByRestaurant": "The restaurant cancelled this reservation.",
@@ -423,6 +446,16 @@
       "text": "The table will be released for other guests. This cannot be undone.",
       "back": "Back",
       "confirm": "Cancel reservation"
+    },
+    "change": {
+      "open": "Change reservation",
+      "title": "Change reservation",
+      "text": "Choose another day, time or number of people.",
+      "summary": "Your change",
+      "to": "to",
+      "confirm": "Change",
+      "notPossible": "This reservation can no longer be changed online. Please call the restaurant.",
+      "invalidPartySize": "This number of people cannot be booked online. Please choose fewer or call the restaurant."
     },
     "errors": {
       "notPossible": "This reservation can no longer be cancelled online. Please call the restaurant.",
@@ -1934,6 +1967,7 @@
       "cancelledByGuest": "Cancelled by the guest through the link",
       "changedBy": "{{name}}: {{changes}}",
       "unknownStaff": "A staff member",
+      "guest": "The guest",
       "change": "{{field}} {{from}} → {{to}}",
       "statusChange": "{{from}} → {{to}}",
       "none": "—",

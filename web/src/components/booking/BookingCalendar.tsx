@@ -1,7 +1,7 @@
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type CalendarDay, monthsBetween, useBookingCalendar, useBookingCalendarMonths } from '../../api/publicBooking.ts'
+import { type CalendarDay, type ExcludedReservation, monthsBetween, useBookingCalendar, useBookingCalendarMonths } from '../../api/publicBooking.ts'
 import { formatLongDate, formatShortDate, formatWeekday } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Button } from '../../ui/button.tsx'
@@ -20,6 +20,8 @@ type BookingCalendarProps = {
   minDate: string
   maxDate: string
   onChange: (date: string) => void
+  /** The guest's own reservation, which a change leaves out of the free days. */
+  exclude?: ExcludedReservation
 }
 
 /** How many days the strip shows, from today on. */
@@ -57,7 +59,7 @@ function scrollBehavior(): ScrollBehavior {
  * the arrow keys move between the days (one tab stop for the whole strip). The current and the next month are loaded
  * together.
  */
-export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChange }: BookingCalendarProps) {
+export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChange, exclude }: BookingCalendarProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const labelId = useId()
@@ -67,7 +69,7 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
 
   const days = Array.from({ length: stripDays }, (_, i) => addDays(minDate, i)).filter((day) => day <= maxDate)
   const months = monthsBetween(minDate, nextMonth(minDate) + '-01').filter((month) => month <= maxDate.slice(0, 7))
-  const calendar = useBookingCalendarMonths(slug, months, guests)
+  const calendar = useBookingCalendarMonths(slug, months, guests, exclude)
   const status = new Map<string, CalendarDay['status']>(calendar.days.map((day) => [day.date, day.status]))
   const valueInStrip = value !== null && days.includes(value)
 
@@ -199,6 +201,7 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
                   value={value}
                   minDate={minDate}
                   maxDate={maxDate}
+                  exclude={exclude}
                   onChange={(date) => {
                     setOpen(false)
                     onChange(date)
@@ -266,13 +269,13 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
  * and fully booked ones are disabled, fully booked ones also struck through. The month after the shown one is loaded
  * ahead, so turning the page finds its days ready.
  */
-function CalendarMonth({ slug, guests, value, minDate, maxDate, onChange }: BookingCalendarProps & { value: string }) {
+function CalendarMonth({ slug, guests, value, minDate, maxDate, onChange, exclude }: BookingCalendarProps & { value: string }) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const [displayed, setDisplayed] = useState(() => toDate(value))
   const month = toIso(displayed).slice(0, 7)
-  const calendar = useBookingCalendar(slug, month, guests)
-  useBookingCalendar(slug, nextMonth(month), guests, nextMonth(month) <= maxDate.slice(0, 7))
+  const calendar = useBookingCalendar(slug, month, guests, true, exclude)
+  useBookingCalendar(slug, nextMonth(month), guests, nextMonth(month) <= maxDate.slice(0, 7), exclude)
   const status = new Map(calendar.data?.map((day) => [day.date, day.status]))
 
   return (
