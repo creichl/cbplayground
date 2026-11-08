@@ -13,7 +13,9 @@ function useRevealOnce() {
   // Before the first paint, so an element below the fold never shows before it hides.
   useLayoutEffect(() => {
     const element = ref.current
-    if (element === null || element.getBoundingClientRect().top < window.innerHeight) {
+    // An element hidden by an earlier run of this effect (React runs it twice in development) waits for the view again, also
+    // when the page has jumped to it in between, e.g. to a section in the address; otherwise it would stay hidden.
+    if (element === null || (element.dataset.reveal !== 'hidden' && element.getBoundingClientRect().top < window.innerHeight)) {
       return
     }
     element.dataset.reveal = 'hidden'

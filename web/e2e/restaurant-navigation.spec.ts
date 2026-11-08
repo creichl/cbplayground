@@ -17,6 +17,18 @@ async function openScrolled(page: Page) {
   await expect(navigation(page).getByRole('link', { name: 'Menu' })).toBeVisible()
 }
 
+/**
+ * Checks that the menu can really be seen: the section and its parts that rise in when they come into view (Reveal, Stagger)
+ * are no longer waiting invisible, and the section is fully opaque.
+ */
+async function expectMenuShown(page: Page) {
+  const menu = page.locator('#menu')
+  await expect(menu).not.toHaveAttribute('data-reveal', 'hidden')
+  await expect(menu.locator('[data-reveal="hidden"]')).toHaveCount(0)
+  await expect(menu).toHaveCSS('opacity', '1')
+  await expect(menu.getByText('Obatzda mit Brezn und Radi')).toBeInViewport()
+}
+
 /** The top of an element in the window, in pixels. */
 async function top(page: Page, selector: string) {
   return Number(await page.evaluate(`document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect().top`))
@@ -58,6 +70,7 @@ for (const width of [1440, 390]) {
       await expect.poll(() => top(page, '#menu')).toBeLessThan(covered + 40)
       await expect(navigation(page).getByRole('link', { name: 'Menu' })).toHaveAttribute('aria-current', 'location')
       await expect(page).toHaveURL(/\/r\/zur-linde$/)
+      await expectMenuShown(page)
       await page.waitForTimeout(700)
       await screenshot(page, 'restaurant-navigation', `menu-${width}`, { fullPage: false })
     })
@@ -88,6 +101,7 @@ for (const width of [1440, 390]) {
       await expect.poll(() => top(page, '#menu')).toBeGreaterThanOrEqual(covered)
       await expect.poll(() => top(page, '#menu')).toBeLessThan(covered + 40)
       await expect(navigation(page).getByRole('link', { name: 'Menu' })).toHaveAttribute('aria-current', 'location')
+      await expectMenuShown(page)
       await page.waitForTimeout(700)
       await screenshot(page, 'restaurant-navigation', `hash-menu-${width}`, { fullPage: false })
     })
