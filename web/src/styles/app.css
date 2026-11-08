@@ -293,6 +293,12 @@
   --animate-rise: rise var(--motion-long) var(--ease-out) backwards;
   /* A step or a panel slides in from the side; --slide-from sets from where (default from the right). */
   --animate-slide-in: slide-in var(--motion-medium) var(--ease-out) backwards;
+  /*
+   * The steps of the booking dialog cross-fade: the new one slides in with the spring (--slide-from as above), the old one fades
+   * and slides out towards the side it lies on (--slide-to, default to the left) and stays invisible until it is removed.
+   */
+  --animate-step-in: slide-in var(--motion-slow) var(--ease-spring) backwards;
+  --animate-step-out: slide-out var(--motion-medium) var(--ease-in) forwards;
   /* The cover image of the booking page: once, slowly, from a little larger to its size. */
   --animate-hero-zoom: hero-zoom 1200ms var(--ease-out) backwards;
   /* The calm sweep of light over a skeleton. */
@@ -300,6 +306,10 @@
   /* The circle of a successful booking pops in with a spring; the particles fly out once around it. */
   --animate-success-pop: success-pop var(--motion-slow) var(--ease-spring) backwards;
   --animate-particle: particle var(--motion-long) var(--ease-out) 250ms both;
+  /* A table just chosen on the guest's plan gives way a little and springs back to its size. */
+  --animate-table-settle: table-settle var(--motion-slow) var(--ease-spring);
+  /* A table that cannot be chosen, tapped: it dims for a moment while the reason shows. */
+  --animate-table-dip: table-dip var(--motion-long) var(--ease-out);
 }
 
 @theme {
@@ -373,6 +383,12 @@
       translate: var(--slide-from, 1.5rem) 0;
     }
   }
+  @keyframes slide-out {
+    to {
+      opacity: 0;
+      translate: var(--slide-to, -1.5rem) 0;
+    }
+  }
   @keyframes hero-zoom {
     from {
       scale: 1.06;
@@ -390,6 +406,16 @@
     from {
       opacity: 0;
       scale: 0.5;
+    }
+  }
+  @keyframes table-settle {
+    from {
+      scale: 0.86;
+    }
+  }
+  @keyframes table-dip {
+    35% {
+      opacity: 0.5;
     }
   }
   /* From the edge of the circle outwards; --angle is the particle's direction. */
@@ -512,7 +538,12 @@
     border-radius: inherit;
     pointer-events: none;
     opacity: 0;
-    animation: pulse-ring var(--motion-long) var(--ease-out);
+  }
+  /* Only with motion, so with less motion no animation runs at all, not one of no length. */
+  @variant motion-safe {
+    &::after {
+      animation: pulse-ring var(--motion-long) var(--ease-out);
+    }
   }
 }
 
@@ -613,6 +644,26 @@
 }
 ::view-transition-group(site-header) {
   z-index: 1;
+}
+/*
+ * Another area in the guest's table choice (TablePicker, view-transition-name table-plan): the plan shown fades out, the
+ * new one fades in from a little smaller. With less motion the view transitions above have no animation.
+ */
+::view-transition-group(table-plan) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-out);
+}
+::view-transition-old(table-plan) {
+  animation: fade-out var(--motion-slow) var(--ease-out) both;
+}
+::view-transition-new(table-plan) {
+  animation: plan-in var(--motion-slow) var(--ease-out) both;
+}
+@keyframes plan-in {
+  from {
+    opacity: 0;
+    scale: 0.98;
+  }
 }
 
 /*

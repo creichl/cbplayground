@@ -58,6 +58,7 @@ public class Reservation : ITenantOwned
     public const int MaxEmailLength = 254;
     public const int MaxNotesLength = 500;
     public const int ReferenceCodeLength = 6;
+    public const int MaxIdempotencyKeyLength = 100;
 
     /// <summary>The name stored for a walk-in without a name; the front desk shows it translated.</summary>
     public const string WalkInName = "Walk-in";
@@ -125,6 +126,13 @@ public class Reservation : ITenantOwned
     /// itself is never stored. Only online bookings have one, so only they can be viewed and cancelled by the guest.
     /// </summary>
     public byte[]? ManageTokenHash { get; set; }
+
+    /// <summary>
+    /// The <c>Idempotency-Key</c> header of the online booking that created it; null without one. A repeated booking with the same
+    /// key at the same restaurant within <see cref="Reservations.ReservationRules.IdempotencyKeyLifetime"/> returns this reservation
+    /// instead of booking again.
+    /// </summary>
+    public string? IdempotencyKey { get; set; }
 
     /// <summary>True when the guest cancelled the reservation through the link; staff see it in their lists.</summary>
     public bool CancelledByGuest { get; set; }

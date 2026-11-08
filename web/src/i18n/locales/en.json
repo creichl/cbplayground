@@ -223,6 +223,9 @@
       "tooltipUnavailable": "Table {{number}} · not available",
       "tooltipTooLarge_one": "Table {{number}} · too large for {{count}} person",
       "tooltipTooLarge_other": "Table {{number}} · too large for {{count}} people",
+      "reasonTaken": "Taken at {{time}}",
+      "reasonTooLarge_one": "For {{count}} person or more",
+      "reasonTooLarge_other": "For {{count}} people or more",
       "largeTablesNote": "Larger tables are kept for larger groups.",
       "showList": "Show tables as a list",
       "toScale": "Plan and tables to scale"
@@ -246,7 +249,14 @@
       "submitRequest": "Send request",
       "contactTitle": "How can the restaurant reach you?",
       "requestHint": "This is a request: the restaurant reviews it and gets back to you.",
-      "cancelHint": "After booking you get a link to view your reservation and to cancel it until it starts."
+      "cancelHint": "After booking you get a link to view your reservation and to cancel it until it starts.",
+      "phoneCode": "Country code",
+      "phoneCodeOther": "Other",
+      "remember": "Remember my details on this device",
+      "notYou": "Not you?",
+      "clearRemembered": "Clear",
+      "submitting": "Booking…",
+      "submittingRequest": "Sending request…"
     },
     "errors": {
       "slotTaken": "Sorry, this time has just been booked by someone else. Please choose another time – the free times have been updated.",
@@ -301,12 +311,53 @@
       "stepTable": "Table",
       "stepDetails": "Contact details",
       "stepDone": "Confirmation",
-      "stepOf": "Step {{step}} of {{total}}"
+      "stepOf": "Step {{step}} of {{total}}",
+      "back": "Back"
+    },
+    "hold": {
+      "holding": "We're holding table {{table}} for you · {{left}}",
+      "holdingTables": "We're holding tables {{table}} for you · {{left}}",
+      "expired": "Your hold has expired. The table may still be free – you can still book.",
+      "nearbyTimes": "Free times nearby",
+      "noNearbyTimes": "There are no other free times on this day.",
+      "otherDay": "Choose another day or time"
     },
     "gallery": {
       "title": "Photos",
       "showAll": "All photos ({{total}})",
       "more": "+{{number}}"
+    },
+    "menu": {
+      "title": "Menu",
+      "recommendations": "Recommendations of the house",
+      "sections": "Menu sections",
+      "showAll": "Show whole menu",
+      "legend": "Legend",
+      "allergenNote": "Allergen information is given by the restaurant. If you have an allergy, please tell the staff.",
+      "showPhoto": "Show photo of {{name}}",
+      "allergens": "Allergens: {{list}}",
+      "marks": {
+        "vegetarian": "Vegetarian",
+        "vegan": "Vegan",
+        "glutenFree": "Gluten-free",
+        "spicy": "Spicy"
+      },
+      "allergenNames": {
+        "Gluten": "gluten",
+        "Crustaceans": "crustaceans",
+        "Eggs": "eggs",
+        "Fish": "fish",
+        "Peanuts": "peanuts",
+        "Soy": "soy",
+        "Milk": "milk",
+        "Nuts": "nuts",
+        "Celery": "celery",
+        "Mustard": "mustard",
+        "Sesame": "sesame",
+        "Sulphites": "sulphites",
+        "Lupin": "lupin",
+        "Molluscs": "molluscs"
+      }
     }
   },
   "lightbox": {
@@ -387,6 +438,7 @@
       "serviceScreen": "Service screen",
       "reports": "Reports",
       "profile": "Profile",
+      "menu": "Menu",
       "design": "Appearance",
       "areas": "Areas & tables",
       "openingHours": "Opening hours",
@@ -798,6 +850,114 @@
         "Minimal": "Flat shapes like a seat map, the seats as dots; calm and very clear.",
         "Glow": "Dark glass with light lines; free tables glow softly in your accent colour. Made for dark pages."
       }
+    }
+  },
+  "menu": {
+    "title": "Menu",
+    "description": "Your dishes and drinks by section, with prices, marks, allergens and photos. Guests see the menu on your booking page; every change is saved at once.",
+    "empty": {
+      "title": "No menu yet",
+      "text": "Start with a section such as Starters, Mains, Desserts or Drinks, then add its dishes. Recommended dishes with a photo appear on top of the menu on your booking page.",
+      "action": "Add first section"
+    },
+    "section": {
+      "add": "Add section",
+      "full": "The menu has the most sections it can have ({{max}}).",
+      "moveUp": "Move section up",
+      "moveDown": "Move section down",
+      "edit": "Rename section",
+      "delete": "Delete section",
+      "noItems": "No dishes in this section yet. Guests only see sections with dishes.",
+      "addTitle": "New section",
+      "editTitle": "Edit section",
+      "name": "Name",
+      "namePlaceholder": "e.g. Starters",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Optional, e.g. All mains come with a side",
+      "addConfirm": "Add section",
+      "save": "Save",
+      "deleteTitle": "Delete section?",
+      "deleteEmpty": "The section “{{name}}” will be deleted.",
+      "deleteText_one": "The section “{{name}}” and its {{count}} dish will be deleted, with its photo.",
+      "deleteText_other": "The section “{{name}}” and its {{count}} dishes will be deleted, with their photos.",
+      "deleteConfirm": "Delete section"
+    },
+    "item": {
+      "open": "Edit {{name}}",
+      "moveUp": "Move dish up",
+      "moveDown": "Move dish down",
+      "moveToSection": "Move to section",
+      "add": "Add dish",
+      "addTitle": "New dish",
+      "editTitle": "Edit dish",
+      "name": "Name",
+      "namePlaceholder": "e.g. Roast pork with dumplings",
+      "description": "Description",
+      "descriptionPlaceholder": "Optional, e.g. with red cabbage and dark beer sauce",
+      "price": "Price ({{currency}})",
+      "priceHint": "Leave empty for no price.",
+      "marks": "Marks",
+      "allergens": "Allergens",
+      "photo": "Photo",
+      "photoAlt": "Photo of {{name}}",
+      "noPhoto": "No photo yet.",
+      "choosePhoto": "Choose photo",
+      "replacePhoto": "Replace photo",
+      "removePhoto": "Remove photo",
+      "photoHint": "PNG, JPEG or WebP, at most 10 MB. Shown in 4:3 and as a square thumbnail.",
+      "delete": "Delete dish",
+      "save": "Save dish",
+      "deleteTitle": "Delete dish?",
+      "deleteText": "“{{name}}” will be deleted from the menu, with its photo.",
+      "deleteConfirm": "Delete dish"
+    },
+    "marks": {
+      "recommended": "Recommended",
+      "recommendedLong": "Recommendation of the house",
+      "vegetarian": "Vegetarian",
+      "vegan": "Vegan",
+      "glutenFree": "Gluten-free",
+      "spicy": "Spicy"
+    },
+    "allergens": {
+      "Gluten": "Gluten",
+      "Crustaceans": "Crustaceans",
+      "Eggs": "Eggs",
+      "Fish": "Fish",
+      "Peanuts": "Peanuts",
+      "Soy": "Soy",
+      "Milk": "Milk",
+      "Nuts": "Nuts",
+      "Celery": "Celery",
+      "Mustard": "Mustard",
+      "Sesame": "Sesame",
+      "Sulphites": "Sulphites",
+      "Lupin": "Lupin",
+      "Molluscs": "Molluscs"
+    },
+    "toast": {
+      "orderSaved": "Order saved.",
+      "itemMoved": "“{{name}}” moved to {{section}}.",
+      "sectionAdded": "Section added.",
+      "sectionSaved": "Section saved.",
+      "sectionDeleted": "Section “{{name}}” deleted.",
+      "photoSaved": "Photo saved.",
+      "photoRemoved": "Photo removed.",
+      "itemSaved": "“{{name}}” saved.",
+      "itemAdded": "“{{name}}” added.",
+      "itemDeleted": "“{{name}}” deleted."
+    },
+    "errors": {
+      "invalidName": "Enter a name (sections up to 60, dishes up to 100 characters).",
+      "invalidDescription": "The description is too long (sections up to 200, dishes up to 300 characters).",
+      "invalidPrice": "Enter a price from 0 to 100,000 with at most two decimals, or leave it empty.",
+      "invalidAllergen": "An allergen is not known. Reload the page and try again.",
+      "invalidOrder": "The menu was changed meanwhile. Reload the page and try again.",
+      "menuFull": "The menu is full: at most 20 sections and 300 dishes.",
+      "sectionNotFound": "The section no longer exists. Reload the page.",
+      "photoTooLarge": "The photo is larger than 10 MB.",
+      "photoTypeInvalid": "Choose a PNG, JPEG or WebP image.",
+      "notFound": "This was deleted meanwhile. Reload the page."
     }
   },
   "staff": {

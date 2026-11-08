@@ -305,7 +305,8 @@ export type RestaurantNow = { date: string; minutes: number }
 /**
  * The current date ("YYYY-MM-DD") and time of day (minutes since midnight) in the restaurant's time zone, as the server counts them;
  * null while it loads. Falls back to the device's clock when the restaurant has no location yet or the restaurant could not be read.
- * Updated every 30 seconds, so a page left open moves on to the new day and a line at the current time moves on.
+ * Updated at the start of every minute, so the minute shown is never behind the server's (which, e.g., says a table is free from
+ * the minute a waitlist entry was added), a page left open moves on to the new day and a line at the current time moves on.
  */
 export function useRestaurantNow(): RestaurantNow | null {
   const currentUser = useCurrentUser()
@@ -317,10 +318,11 @@ export function useRestaurantNow(): RestaurantNow | null {
     staleTime: Infinity,
   })
   const [now, setNow] = useState(() => new Date())
+  // Each update waits for the start of the next minute (plus a little, so the new minute has begun).
   useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 30_000)
-    return () => clearInterval(timer)
-  }, [])
+    const timer = setTimeout(() => setNow(new Date()), 60_000 - (now.getTime() % 60_000) + 50)
+    return () => clearTimeout(timer)
+  }, [now])
 
   if (slug !== null && restaurant.isPending) {
     return null

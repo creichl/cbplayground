@@ -50,6 +50,17 @@ type FloorPlanProps = {
    * 18rem high. Without, it fits the width.
    */
   fill?: boolean
+  /**
+   * The guest's plan: it also zooms with the wheel while Ctrl is held and with a pinch on the trackpad, both around the
+   * pointer, with a double tap or double click around that point (at the largest zoom back to the whole plan), and a pan
+   * with the finger glides on after it is let go. Off by default (the area editor and the service screen).
+   */
+  fluid?: boolean
+  /**
+   * A point of the plan (0–1 of its width and height, as a table's position) to bring into view: while zoomed in, the plan
+   * glides to centre it, at the zoom it has; unzoomed, the whole plan is in view anyway. A new object each time.
+   */
+  focus?: { x: number; y: number } | null
   /** The tables, as TableShape, and in the editor the room elements' handles. */
   children: ReactNode
 }
@@ -67,6 +78,15 @@ const zoomStep = 1.5
 /** Below this distance in pixels, a press counts as a tap, not as a move. */
 const moveThreshold = 4
 
+/** How long the zoom buttons, a double tap and bringing a point into view glide, in milliseconds. */
+const glideDuration = 250
+/** Two taps at most this far apart in time (ms) and space (px) are a double tap. */
+const doubleTapTime = 300
+const doubleTapDistance = 30
+/** A pan let go faster than this (px per ms) glides on; it slows down by this factor every 16 ms until it rests. */
+const momentumMinSpeed = 0.25
+const momentumFriction = 0.94
+
 const initialView: View = { scale: 1, x: 0, y: 0 }
 
 const distance = (a: Point, b: Point) => Math.hypot(a.x - b.x, a.y - b.y)
@@ -75,8 +95,10 @@ const middle = (a: Point, b: Point) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2
 /**
  * The area's plan with its tables: the floor plan image, or without one the drawn room in the ratio 3:2 (as in the API's
  * arrangement, see Room) below the tables. It fits the width and keeps its aspect ratio. It zooms and pans with pinch and
- * drag (pointer events) and with the buttons + / − / reset below it or in its corner, which the caller draws (`zoomButton`). Tables that stick out over the plan's
- * edge, and the room's boundary, get room around it.
+ * drag (pointer events) and with the buttons + / − / reset below it or in its corner, which the caller draws (`zoomButton`);
+ * the buttons glide to the new zoom (250 ms, eased out; at once with less motion). The guest's plan (`fluid`) zooms with the
+ * wheel and a double tap too, and glides on after a pan; `focus` brings a point into view. Tables that stick out over the
+ * plan's edge, and the room's boundary, get room around it.
  */
 export function FloorPlan({
   imageUrl,
@@ -93,15 +115,27 @@ export function FloorPlan({
   dark = false,
   widthMeters = null,
   fill = false,
+  fluid = false,
+  focus = null,
   children,
 }: FloorPlanProps) {
   const { t } = useTranslation()
   const viewportRef = useRef<HTMLDivElement>(null)
   const [view, setView] = useState(initialView)
+  // The view as last set, for the gestures and the glides between two renders, and where a running glide is heading.
+  const viewRef = useRef(initialView)
+  const goal = useRef<View | null>(null)
+  const frame = useRef<number | null>(null)
+  const plan = useRef<HTMLDivElement>(null)
   // Height : width of the image, known once it is loaded.
   const [imageHeight, setImageHeight] = useState<number | null>(null)
   const pointers = useRef(new Map<number, Point>())
   const gesture = useRef<Gesture | null>(null)
+  // The speed of the last pan (px per ms) and when it was measured, for the glide after it; the last tap, for a double tap;
+  // whether more than one pointer took part since the first went down (a pinch is no tap).
+  const velocity = useRef<{ x: number; y: number; time: number } | null>(null)
+  const lastTap = useRef<{ point: Point; time: number } | null>(null)
+  const multiTouch = useRef(false)
   // A click right after moving the plan is not a click on a table or on the plan.
   const suppressClick = useRef(false)
 
@@ -124,6 +158,137 @@ export function FloorPlan({
     observer.observe(element)
     return () => observer.disconnect()
   }, [fill])
+
+  function show(next: View) {
+    viewRef.current = next
+    setView(next)
+  }
+
+  /** Stops a running glide where it is. */
+  function stop() {
+    if (frame.current !== null) {
+      cancelAnimationFrame(frame.current)
+      frame.current = null
+    }
+    goal.current = null
+  }
+
+  /** Less motion asked for (the device's setting, or data-reduce-motion as in the styleguide): no glide. */
+  function reduceMotion() {
+    return (
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches || viewportRef.current?.closest('[data-reduce-motion]') != null
+    )
+  }
+
+  /**
+   * Glides to the view, eased out; only the plan's transform changes, frame by frame. Scale and offset change in step, so
+   * the point zoomed around stays where it is.
+   */
+  function glideTo(target: View) {
+    stop()
+    if (reduceMotion()) {
+      show(target)
+      return
+    }
+    const from = viewRef.current
+    const start = performance.now()
+    goal.current = target
+    const step = (now: number) => {
+      const progress = Math.min(1, (now - start) / glideDuration)
+      const eased = 1 - (1 - progress) ** 3
+      show({
+        scale: from.scale + (target.scale - from.scale) * eased,
+        x: from.x + (target.x - from.x) * eased,
+        y: from.y + (target.y - from.y) * eased,
+      })
+      if (progress < 1) {
+        frame.current = requestAnimationFrame(step)
+      } else {
+        frame.current = null
+        goal.current = null
+      }
+    }
+    frame.current = requestAnimationFrame(step)
+  }
+
+  /** After a pan with the finger: the plan glides on at the speed it was let go, slowing down, within its bounds. */
+  function glideOn(speed: { x: number; y: number }) {
+    stop()
+    let last = performance.now()
+    let { x, y } = speed
+    const step = (now: number) => {
+      const elapsed = Math.min(64, now - last)
+      last = now
+      const current = viewRef.current
+      const next = clamp({ ...current, x: current.x + x * elapsed, y: current.y + y * elapsed })
+      show(next)
+      const decay = momentumFriction ** (elapsed / 16)
+      // Against an edge the plan stops in that direction.
+      x = next.x === current.x ? 0 : x * decay
+      y = next.y === current.y ? 0 : y * decay
+      frame.current = Math.hypot(x, y) > 0.02 ? requestAnimationFrame(step) : null
+    }
+    frame.current = requestAnimationFrame(step)
+  }
+
+  /** The view zoomed to `scale` around a point of the viewport, which stays where it is. */
+  function around(base: View, center: Point, scale: number): View {
+    return {
+      scale,
+      x: center.x - ((center.x - base.x) / base.scale) * scale,
+      y: center.y - ((center.y - base.y) / base.scale) * scale,
+    }
+  }
+
+  // Stops a glide when the plan goes away.
+  useEffect(() => stop, [])
+
+  // Ctrl + wheel and the trackpad's pinch (a wheel event with ctrlKey) zoom around the pointer instead of the page. Not with
+  // React's onWheel, which cannot keep the page from zooming.
+  useEffect(() => {
+    const element = viewportRef.current
+    if (!fluid || element === null) {
+      return
+    }
+    const handleWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey) {
+        return
+      }
+      event.preventDefault()
+      stop()
+      const rect = element.getBoundingClientRect()
+      // Lines (Firefox) count as 16 pixels.
+      const delta = event.deltaY * (event.deltaMode === 1 ? 16 : 1)
+      const current = viewRef.current
+      const scale = Math.min(maxScale, Math.max(1, current.scale * Math.exp(-delta * 0.01)))
+      show(clamp(around(current, { x: event.clientX - rect.left, y: event.clientY - rect.top }, scale)))
+    }
+    element.addEventListener('wheel', handleWheel, { passive: false })
+    return () => element.removeEventListener('wheel', handleWheel)
+  }, [fluid])
+
+  // A point to bring into view: centred at the current zoom, which it never raises.
+  useEffect(() => {
+    const viewport = viewportRef.current
+    const element = plan.current
+    if (focus === null || viewport === null || element === null) {
+      return
+    }
+    const current = goal.current ?? viewRef.current
+    if (current.scale === 1) {
+      return
+    }
+    // The point in the unzoomed viewport (offsets ignore the transform); the plan's offset parent is the viewport.
+    const x = element.offsetLeft + focus.x * element.offsetWidth
+    const y = element.offsetTop + focus.y * element.offsetHeight
+    glideTo(
+      clamp({
+        scale: current.scale,
+        x: viewport.clientWidth / 2 - x * current.scale,
+        y: viewport.clientHeight / 2 - y * current.scale,
+      }),
+    )
+  }, [focus])
 
   /** Keeps the zoomed plan covering the viewport. */
   function clamp(next: View): View {
@@ -153,8 +318,12 @@ export function FloorPlan({
     if (event.pointerType === 'mouse' && event.button !== 0) {
       return
     }
+    // A finger on the plan catches it where it is.
+    stop()
     pointers.current.set(event.pointerId, point(event))
-    restart(view)
+    multiTouch.current = pointers.current.size > 1
+    velocity.current = null
+    restart(viewRef.current)
   }
 
   function handlePointerMove(event: PointerEvent<HTMLDivElement>) {
@@ -170,7 +339,22 @@ export function FloorPlan({
       if (!current.moved && (Math.hypot(dx, dy) < moveThreshold || current.view.scale === 1)) {
         return
       }
-      setView(clamp({ ...current.view, x: current.view.x + dx, y: current.view.y + dy }))
+      const next = clamp({ ...current.view, x: current.view.x + dx, y: current.view.y + dy })
+      const previous = viewRef.current
+      const time = event.timeStamp
+      const last = velocity.current
+      if (last !== null && time > last.time) {
+        // Smoothed over the last moves, so a single jerk at the end does not throw the plan.
+        const elapsed = time - last.time
+        velocity.current = {
+          x: 0.8 * ((next.x - previous.x) / elapsed) + 0.2 * last.x,
+          y: 0.8 * ((next.y - previous.y) / elapsed) + 0.2 * last.y,
+          time,
+        }
+      } else {
+        velocity.current = { x: 0, y: 0, time }
+      }
+      show(next)
     } else {
       const [startA, startB] = current.points
       const [a, b] = points
@@ -180,7 +364,8 @@ export function FloorPlan({
       const now = middle(a, b)
       const planX = (start.x - current.view.x) / current.view.scale
       const planY = (start.y - current.view.y) / current.view.scale
-      setView(clamp({ scale, x: now.x - planX * scale, y: now.y - planY * scale }))
+      velocity.current = null
+      show(clamp({ scale, x: now.x - planX * scale, y: now.y - planY * scale }))
     }
     if (!current.moved) {
       current.moved = true
@@ -192,10 +377,36 @@ export function FloorPlan({
   }
 
   function handlePointerEnd(event: PointerEvent<HTMLDivElement>) {
+    const ended = gesture.current
     if (!pointers.current.delete(event.pointerId)) {
       return
     }
-    restart(view)
+    restart(viewRef.current)
+    if (!fluid || pointers.current.size > 0 || ended === null || event.type === 'pointercancel') {
+      return
+    }
+    if (ended.moved) {
+      lastTap.current = null
+      const speed = velocity.current
+      // Only a pan with the finger glides on, and only when it was still moving as it was let go.
+      if (event.pointerType === 'touch' && !multiTouch.current && speed !== null && event.timeStamp - speed.time < 50 &&
+        Math.hypot(speed.x, speed.y) > momentumMinSpeed && !reduceMotion()) {
+        glideOn(speed)
+      }
+      return
+    }
+    if (multiTouch.current) {
+      return
+    }
+    const tap = { point: point(event), time: event.timeStamp }
+    const previous = lastTap.current
+    if (previous !== null && tap.time - previous.time < doubleTapTime && distance(tap.point, previous.point) < doubleTapDistance) {
+      lastTap.current = null
+      const current = viewRef.current
+      glideTo(current.scale >= maxScale - 0.01 ? initialView : clamp(around(current, tap.point, Math.min(maxScale, current.scale * 2))))
+    } else {
+      lastTap.current = tap
+    }
   }
 
   function zoomBy(factor: number) {
@@ -203,17 +414,10 @@ export function FloorPlan({
     if (viewport === null) {
       return
     }
-    // Zooms around the middle of the viewport.
-    const centerX = viewport.clientWidth / 2
-    const centerY = viewport.clientHeight / 2
-    const scale = Math.min(maxScale, Math.max(1, view.scale * factor))
-    setView(
-      clamp({
-        scale,
-        x: centerX - ((centerX - view.x) / view.scale) * scale,
-        y: centerY - ((centerY - view.y) / view.scale) * scale,
-      }),
-    )
+    // Zooms around the middle of the viewport, from where a running glide is heading.
+    const base = goal.current ?? viewRef.current
+    const scale = Math.min(maxScale, Math.max(1, base.scale * factor))
+    glideTo(clamp(around(base, { x: viewport.clientWidth / 2, y: viewport.clientHeight / 2 }, scale)))
   }
 
   const controls = (
@@ -237,7 +441,7 @@ export function FloorPlan({
         label={t('floorPlan.zoomReset')}
         icon={<ZoomResetIcon />}
         disabled={view.scale === 1}
-        onClick={() => setView(initialView)}
+        onClick={() => glideTo(initialView)}
       />
     </>
   )
@@ -247,7 +451,8 @@ export function FloorPlan({
       ref={viewportRef}
       // Unzoomed, a vertical swipe still scrolls the page; zoomed, every move pans the plan. A sheet (vaul) around the plan
       // is not dragged by it (data-vaul-no-drag).
-      className={`relative overflow-hidden rounded-sm select-none ${view.scale === 1 ? 'touch-pan-y' : 'touch-none'}`}
+      // Clipped, not hidden: a focused table never scrolls the viewport, which would shift the plan against its transform.
+      className={`relative overflow-clip rounded-sm select-none ${view.scale === 1 ? 'touch-pan-y' : 'touch-none'}`}
       data-vaul-no-drag=""
       onPointerDownCapture={() => {
         if (pointers.current.size === 0) {
@@ -282,7 +487,14 @@ export function FloorPlan({
         }}
       >
         <div
-          ref={planRef}
+          ref={(element) => {
+            plan.current = element
+            if (typeof planRef === 'function') {
+              planRef(element)
+            } else if (planRef) {
+              planRef.current = element
+            }
+          }}
           style={imageUrl === null ? { position: 'relative', aspectRatio: `${aspectRatio}` } : { position: 'relative' }}
         >
           {imageUrl === null && <Room roomStyle={roomStyle} elements={roomElements} dark={dark} />}

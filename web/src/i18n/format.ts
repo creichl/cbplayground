@@ -62,6 +62,16 @@ export function formatTime(time: string, language: string) {
 }
 
 /**
+ * A price in minor units (cents or para) in its currency, in the user's language, e.g. "14,90 €", "€14.90" or "1.250 RSD".
+ * Euros always with their cents; dinars, which are priced in whole dinars, with para only when there are any.
+ */
+export function formatPrice(minorUnits: number, currency: 'EUR' | 'RSD', language: string) {
+  const amount = minorUnits / 100
+  const fractionDigits = currency === 'RSD' && Number.isInteger(amount) ? 0 : 2
+  return new Intl.NumberFormat(language, { style: 'currency', currency, minimumFractionDigits: fractionDigits, maximumFractionDigits: 2 }).format(amount)
+}
+
+/**
  * The value of a Mantine date picker (a single date or a range) in the format of `formatDate`, for its `valueFormatter`.
  * Mantine's own `valueFormat` uses dayjs' locale data, whose abbreviations differ from the rest of the UI.
  */

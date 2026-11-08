@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback } from 'react'
 import type { Language } from '../i18n/index.ts'
-import { ApiError, apiGet, apiPost } from './client.ts'
+import { ApiError, apiDelete, apiGet, apiPost } from './client.ts'
 import type { RoomElement, RoomStyle, TableRotation, TableShape } from './areas.ts'
 import type { Branding } from './branding.ts'
 import type { Cuisine, PriceLevel, RestaurantFeature } from './restaurantDetails.ts'
@@ -48,6 +49,8 @@ export type PublicRestaurant = {
   houseRules: string | null
   /** The frequently asked questions in their order; empty without. */
   faq: { question: string; answer: string }[]
+  /** The restaurant's country ("DE", "AT", "RS"), whose calling code the form suggests for the phone; null without location. */
+  countryCode: string | null
 }
 
 /** A photo of the restaurant's gallery; `url` is the public URL of the image with its version. */
@@ -118,7 +121,23 @@ export type BookingRequest = {
   /** What the guests celebrate, optional; "None" when nothing is chosen. */
   occasion: Occasion
   language: Language
+  /** The token of the guest's hold of this date, time, party and table (Hold); null without one. */
+  holdToken: string | null
 }
+
+/** A table held for the guest while they enter their contact details, as returned by POST /api/public/restaurants/{slug}/holds. */
+export type Hold = {
+  /** Goes with the booking (BookingRequest) and releases the hold (releaseHold). */
+  holdToken: string
+  /** ISO 8601 in UTC; the hold lasts 5 minutes. */
+  expiresAtUtc: string
+  /** The held table's number, or the numbers of a combination joined, e.g. "4 + 5". */
+  tableNumber: string
+  area: string
+}
+
+/** What to hold: as in the booking, `tableId` where the guest chooses the table. */
+export type HoldRequest = { date: string; time: string; guests: number; tableId: string | null }
 
 /** A booked table: "Confirmed" in the instant mode, "Requested" in the request mode. */
 export type BookingResult = {
@@ -162,6 +181,22 @@ export type GuestReservation = {
 /** The path of the guest's page to view and cancel a reservation; the token stays in the link only. */
 export function managePath(slug: string, referenceCode: string, token: string) {
   return `/r/${encodeURIComponent(slug)}/reservation/${encodeURIComponent(referenceCode)}?t=${encodeURIComponent(token)}`
+}
+
+/**
+ * Holds the table for the guest (POST …/holds). It fails like the booking ("slot_unavailable", "table_unavailable", "table_required",
+ * …) and with 429 "too_many_holds" when the connection holds three tables already.
+ */
+export function createHold(slug: string, hold: HoldRequest) {
+  return apiPost<Hold>(`/public/restaurants/${encodeURIComponent(slug)}/holds`, hold)
+}
+
+/**
+ * Releases a hold (DELETE …/holds/{token}), also while the page closes; resolves once it is done. A hold already gone or booked is
+ * fine, so it never fails.
+ */
+export function releaseHold(slug: string, token: string): Promise<void> {
+  return apiDelete(`/public/restaurants/${encodeURIComponent(slug)}/holds/${encodeURIComponent(token)}`, { keepalive: true }).catch(() => {})
 }
 
 /** Maximum lengths of the guest's details, as on the server. */
@@ -360,12 +395,27 @@ export function useCancelGuestReservation(slug: string, referenceCode: string, t
   })
 }
 
-/** Books a table. Afterwards, and after a failed attempt, the free days, times and tables are loaded anew. */
+/**
+ * Loads the free days, times and tables of the restaurant anew, e.g. after a hold failed because the table was taken, or after
+ * the guest's own hold was released; resolves once they are loaded.
+ */
+export function useReloadAvailability(slug: string) {
+  const queryClient = useQueryClient()
+  return useCallback(() => queryClient.invalidateQueries({ queryKey: publicKey(slug) }), [queryClient, slug])
+}
+
+/**
+ * Books a table. `idempotencyKey` goes in the header "Idempotency-Key": a repeated attempt with the same key (e.g. after a lost
+ * answer) returns the same reservation instead of booking twice. Afterwards, and after a failed attempt, the free days, times
+ * and tables are loaded anew.
+ */
 export function useCreateBooking(slug: string) {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (booking: BookingRequest) =>
-      apiPost<BookingResult>(`/public/restaurants/${encodeURIComponent(slug)}/reservations`, booking),
+    mutationFn: ({ booking, idempotencyKey }: { booking: BookingRequest; idempotencyKey: string }) =>
+      apiPost<BookingResult>(`/public/restaurants/${encodeURIComponent(slug)}/reservations`, booking, {
+        headers: { 'Idempotency-Key': idempotencyKey },
+      }),
     onSettled: () => queryClient.invalidateQueries({ queryKey: publicKey(slug) }),
   })
 }

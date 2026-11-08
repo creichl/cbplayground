@@ -44,6 +44,7 @@ public class ApiFactory : WebApplicationFactory<Program>
         builder.UseSetting("RateLimiting:PublicBookings:PermitLimit", PublicBookingLimit.ToString());
         builder.UseSetting("RateLimiting:Login:PermitLimit", LoginLimit.ToString());
         builder.UseSetting("RateLimiting:PublicReads:PermitLimit", PublicReadLimit.ToString());
+        builder.UseSetting("RateLimiting:PublicHolds:PermitLimit", PublicHoldLimit.ToString());
     }
 
     /// <summary>Online bookings per client in 10 minutes.</summary>
@@ -54,6 +55,9 @@ public class ApiFactory : WebApplicationFactory<Program>
 
     /// <summary>Calls of the public calendar, availability and tables per client in a minute.</summary>
     protected virtual int PublicReadLimit => 10_000;
+
+    /// <summary>Active holds of tables per client.</summary>
+    protected virtual int PublicHoldLimit => 10_000;
 
     protected override IHost CreateHost(IHostBuilder builder)
     {

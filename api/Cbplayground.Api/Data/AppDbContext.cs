@@ -18,6 +18,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
 
     public DbSet<GalleryPhoto> GalleryPhotos => Set<GalleryPhoto>();
 
+    public DbSet<MenuSection> MenuSections => Set<MenuSection>();
+
+    public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
     public DbSet<RestaurantFaq> RestaurantFaqs => Set<RestaurantFaq>();
 
     public DbSet<OpeningPeriod> OpeningPeriods => Set<OpeningPeriod>();
@@ -49,6 +53,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
     public DbSet<WaitlistEntry> WaitlistEntries => Set<WaitlistEntry>();
 
     public DbSet<TableBlock> TableBlocks => Set<TableBlock>();
+
+    public DbSet<ReservationHold> ReservationHolds => Set<ReservationHold>();
 
     /// <summary>
     /// The tenant whose data this context reads and writes. The query filters read it on every query,
@@ -182,6 +188,18 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             block.HasOne<Table>().WithMany().HasForeignKey(b => b.TableId).OnDelete(DeleteBehavior.Cascade);
         });
 
+        modelBuilder.Entity<ReservationHold>(hold =>
+        {
+            hold.HasIndex(h => new { h.TenantId, h.StartLocal });
+            // One hold per token; the limit per client counts the active holds of an IP address.
+            hold.HasIndex(h => h.TokenHash).IsUnique();
+            hold.HasIndex(h => new { h.ClientIp, h.ExpiresAtUtc });
+            hold.Property(h => h.ClientIp).HasMaxLength(ReservationHold.MaxClientIpLength);
+            hold.HasOne<Tenant>().WithMany().HasForeignKey(h => h.TenantId).OnDelete(DeleteBehavior.Cascade);
+            // Stored as a JSON array of the table ids; a hold lasts minutes, so a deleted table's id simply matches no table.
+            hold.PrimitiveCollection(h => h.TableIds);
+        });
+
         modelBuilder.Entity<RoomElement>(element =>
         {
             element.Property(e => e.Kind).HasConversion<string>().HasMaxLength(20);
@@ -206,6 +224,27 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
                 .WithMany()
                 .HasForeignKey(p => p.TenantId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<MenuSection>(section =>
+        {
+            section.Property(s => s.Name).HasMaxLength(MenuSection.MaxNameLength);
+            section.Property(s => s.Description).HasMaxLength(MenuSection.MaxDescriptionLength);
+            section.HasIndex(s => new { s.TenantId, s.SortOrder });
+            section.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Deleting a section deletes its items; the endpoint deletes their photo files.
+            section.HasMany(s => s.Items).WithOne().HasForeignKey(i => i.SectionId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<MenuItem>(item =>
+        {
+            item.Property(i => i.Name).HasMaxLength(MenuItem.MaxNameLength);
+            item.Property(i => i.Description).HasMaxLength(MenuItem.MaxDescriptionLength);
+            item.Property(i => i.PhotoFileName).HasMaxLength(100);
+            item.HasIndex(i => new { i.SectionId, i.SortOrder });
+            item.HasOne<Tenant>().WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Restrict);
+            // Stored as a JSON array of the names, e.g. ["Gluten","Milk"].
+            item.PrimitiveCollection(i => i.Allergens).ElementType().HasConversion<string>();
         });
 
         modelBuilder.Entity<RestaurantFaq>(faq =>
@@ -253,6 +292,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options, ITenantContext
             // Deleting a guest anonymises their reservations first (GuestEndpoints); the reservations stay.
             reservation.HasOne<Guest>().WithMany().HasForeignKey(r => r.GuestId).OnDelete(DeleteBehavior.SetNull);
             reservation.Property(r => r.ReferenceCode).HasMaxLength(Reservation.ReferenceCodeLength);
+            reservation.Property(r => r.IdempotencyKey).HasMaxLength(Reservation.MaxIdempotencyKeyLength);
+            reservation.HasIndex(r => new { r.TenantId, r.IdempotencyKey }).HasFilter("\"IdempotencyKey\" IS NOT NULL");
             reservation.Property(r => r.Language).HasMaxLength(10);
             reservation.Property(r => r.Status).HasConversion<string>().HasMaxLength(20);
             reservation.Property(r => r.Source).HasConversion<string>().HasMaxLength(20);

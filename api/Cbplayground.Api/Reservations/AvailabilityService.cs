@@ -51,6 +51,8 @@ public record WalkInCheck(string? Error, DateTime Start, IReadOnlyList<FreeTable
 /// hours and the buffer after every reservation apply to both. A blocked table (<see cref="TableBlock"/>) is busy for every channel,
 /// walk-ins included, for exactly the time of the block (no buffer), and so is every combination with it.
 /// Online, a start slot whose pacing limit (<see cref="PacingRule"/>) the party would exceed is not available; staff are not bound to it.
+/// Online, an unexpired hold (<see cref="ReservationHold"/>) counts like an online reservation: its tables are busy (with the buffer),
+/// and its party counts for the online quota and the pacing. Staff bookings, walk-ins and the staff's checks do not see holds.
 /// </summary>
 public interface IAvailabilityService
 {
@@ -72,12 +74,13 @@ public interface IAvailabilityService
     /// Checks a reservation and picks its tables: <paramref name="tableIds"/> if given and free (one table, or exactly the tables of
     /// one combination; any other set of several tables: "invalid_tables"), otherwise the smallest free table that seats the party
     /// (then by area order and table number), and only without one the smallest free combination. <paramref name="ignoreReservationId"/>
-    /// is the reservation being changed, so it does not collide with itself. <paramref name="checkPast"/> false skips the "in the past"
-    /// check, <paramref name="checkOpeningHours"/> false the check of the start time against the opening hours.
+    /// is the reservation being changed, so it does not collide with itself, <paramref name="ignoreHoldId"/> the guest's own hold that
+    /// the booking turns into a reservation. <paramref name="checkPast"/> false skips the "in the past" check,
+    /// <paramref name="checkOpeningHours"/> false the check of the start time against the opening hours.
     /// </summary>
     Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
         IReadOnlyCollection<Guid>? tableIds, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
-        CancellationToken cancellationToken = default);
+        Guid? ignoreHoldId = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// The largest party that can be booked online: the seats of the largest table or combination that can be booked online
@@ -176,9 +179,9 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         var notBookable = online && (IsTooFarAhead(date, now, settings) || guests > MaxPartySize(floor, channel, settings));
         // Online, the first possible start is now plus the lead time; staff can book any time after now.
         var earliestOnline = now.AddMinutes(online ? settings.MinLeadTimeMinutes : 0);
-        var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, channel, null, cancellationToken);
         var blocks = await LoadBlocksAsync(DayStart(date), DayStart(date).AddDays(1), cancellationToken);
-        var pacing = await LoadPacingAsync(date, ignoreReservationId, cancellationToken);
+        var pacing = await LoadPacingAsync(date, ignoreReservationId, channel, null, cancellationToken);
 
         var result = new List<PeriodSlots>();
         foreach (var period in periods)
@@ -203,7 +206,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
 
     public async Task<BookingCheck> CheckAsync(DateOnly date, TimeOnly time, int guests, int durationMinutes, ReservationSource channel,
         IReadOnlyCollection<Guid>? tableIds, Guid? ignoreReservationId = null, bool checkPast = true, bool checkOpeningHours = true,
-        CancellationToken cancellationToken = default)
+        Guid? ignoreHoldId = null, CancellationToken cancellationToken = default)
     {
         var settings = await LoadSettingsAsync(cancellationToken);
         var floor = await LoadFloorAsync(cancellationToken);
@@ -242,12 +245,13 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         {
             return Error("outside_opening_hours");
         }
-        if (channel == ReservationSource.Online && (await LoadPacingAsync(date, ignoreReservationId, cancellationToken)).IsExceeded(start, guests))
+        if (channel == ReservationSource.Online && (await LoadPacingAsync(date, ignoreReservationId, channel, ignoreHoldId, cancellationToken)).IsExceeded(start, guests))
         {
             return Error("slot_unavailable");
         }
 
-        var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyAsync(floor, DayStart(date), DayStart(date).AddDays(1), settings.BufferMinutes, ignoreReservationId, channel, ignoreHoldId,
+            cancellationToken);
         var blocks = await LoadBlocksAsync(start, start.AddMinutes(durationMinutes), cancellationToken);
         var free = FreeTables(floor, busy, blocks, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
         if (tableIds is not null)
@@ -285,7 +289,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
         }
 
         var end = start.AddMinutes(durationMinutes);
-        var busy = await LoadBusyAsync(floor, start, end, settings.BufferMinutes, null, cancellationToken);
+        var busy = await LoadBusyAsync(floor, start, end, settings.BufferMinutes, null, ReservationSource.Staff, null, cancellationToken);
         var blocks = await LoadBlocksAsync(start, end, cancellationToken);
         return new WalkInCheck(null, start, FreeTables(floor, busy, blocks, start, end, settings.BufferMinutes, guests, ReservationSource.Staff));
     }
@@ -300,7 +304,8 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             return false;
         }
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
-        var busy = await LoadBusyAsync(await LoadFloorAsync(cancellationToken), startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyAsync(await LoadFloorAsync(cancellationToken), startLocal, endLocal, bufferMinutes, ignoreReservationId, ReservationSource.Staff, null,
+            cancellationToken);
         var blocks = await LoadBlocksAsync(startLocal, endLocal, cancellationToken);
         return busy.All(r => !r.TableIds.Any(tableIds.Contains)) && blocks.All(b => !tableIds.Contains(b.TableId));
     }
@@ -310,7 +315,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     {
         var bufferMinutes = (await LoadSettingsAsync(cancellationToken)).BufferMinutes;
         var floor = await LoadFloorAsync(cancellationToken);
-        var busy = await LoadBusyAsync(floor, startLocal, endLocal, bufferMinutes, ignoreReservationId, cancellationToken);
+        var busy = await LoadBusyAsync(floor, startLocal, endLocal, bufferMinutes, ignoreReservationId, ReservationSource.Staff, null, cancellationToken);
         var blocks = await LoadBlocksAsync(startLocal, endLocal, cancellationToken);
         return FreeTables(floor, busy, blocks, startLocal, endLocal, bufferMinutes, guests, ReservationSource.Staff);
     }
@@ -354,9 +359,11 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
 
     /// <summary>
     /// The pacing rules of the day of the week of <paramref name="date"/>, and per start slot the guests of the reservations
-    /// (all channels, walk-ins included) in a blocking status that start in it, apart from <paramref name="ignoreReservationId"/>.
+    /// (all channels, walk-ins included) in a blocking status that start in it, apart from <paramref name="ignoreReservationId"/>;
+    /// online also the parties of the unexpired holds, apart from <paramref name="ignoreHoldId"/>.
     /// </summary>
-    private async Task<DayPacing> LoadPacingAsync(DateOnly date, Guid? ignoreReservationId, CancellationToken cancellationToken)
+    private async Task<DayPacing> LoadPacingAsync(DateOnly date, Guid? ignoreReservationId, ReservationSource channel, Guid? ignoreHoldId,
+        CancellationToken cancellationToken)
     {
         var rules = (await db.PacingRules.AsNoTracking().ToListAsync(cancellationToken))
             .Where(r => r.Days.Contains(date.DayOfWeek))
@@ -373,6 +380,14 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
                 && ReservationRules.BlockingStatuses.Contains(r.Status))
             .Select(r => new { r.StartLocal, r.PartySize })
             .ToListAsync(cancellationToken);
+        if (channel == ReservationSource.Online)
+        {
+            var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+            starts.AddRange(await db.ReservationHolds
+                .Where(h => h.StartLocal >= dayStart && h.StartLocal < dayEnd && h.ExpiresAtUtc > nowUtc && h.Id != ignoreHoldId)
+                .Select(h => new { h.StartLocal, h.PartySize })
+                .ToListAsync(cancellationToken));
+        }
         return new DayPacing(rules, starts.GroupBy(r => SlotOf(r.StartLocal)).ToDictionary(g => g.Key, g => g.Sum(r => r.PartySize)));
     }
 
@@ -411,9 +426,10 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     /// The reservations that occupy their tables between <paramref name="from"/> and <paramref name="to"/>, including the buffer
     /// of <paramref name="bufferMinutes"/> after them and after the new reservation. A reservation whose guest has left
     /// (<see cref="ReservationStatus.Completed"/>) occupies them only until the guest left (at most until its end), plus the buffer.
+    /// Online the unexpired holds apart from <paramref name="ignoreHoldId"/> occupy their tables like online reservations.
     /// </summary>
     private async Task<List<BusyReservation>> LoadBusyAsync(Floor floor, DateTime from, DateTime to, int bufferMinutes, Guid? ignoreReservationId,
-        CancellationToken cancellationToken)
+        ReservationSource channel, Guid? ignoreHoldId, CancellationToken cancellationToken)
     {
         // A reservation ending up to the buffer before from, or starting up to the buffer after to, still collides.
         var startsBefore = to.AddMinutes(bufferMinutes);
@@ -424,25 +440,38 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
                 && (ReservationRules.BlockingStatuses.Contains(r.Status) || r.Status == ReservationStatus.Completed))
             .ToListAsync(cancellationToken);
         var tableById = floor.Tables.ToDictionary(t => t.Table.Id);
-        return reservations
+
+        // The area is that of the first table.
+        BusyReservation Busy(List<Guid> tableIds, Guid firstTableId, DateTime start, DateTime end, ReservationSource source)
+        {
+            var combination = tableIds.Count > 1
+                ? floor.Combinations.FirstOrDefault(c => IsSameSet(c.Tables.Select(t => t.Id).ToList(), tableIds))
+                : null;
+            return new BusyReservation(tableIds, tableById[firstTableId].Area.Id,
+                combination?.Combination.Seats ?? tableIds.Sum(id => tableById[id].Table.Seats), start, end, source);
+        }
+
+        var busy = reservations
             // Archived tables are never offered, so their reservations (e.g. finished ones) do not matter.
             .Where(r => tableById.ContainsKey(r.TableId) && r.Tables.All(t => tableById.ContainsKey(t.TableId)))
-            .Select(r =>
-            {
-                var tableIds = r.Tables.Select(t => t.TableId).ToList();
-                var combination = tableIds.Count > 1
-                    ? floor.Combinations.FirstOrDefault(c => IsSameSet(c.Tables.Select(t => t.Id).ToList(), tableIds))
-                    : null;
-                return new BusyReservation(
-                    tableIds,
-                    tableById[r.TableId].Area.Id,
-                    combination?.Combination.Seats ?? tableIds.Sum(id => tableById[id].Table.Seats),
-                    r.StartLocal,
-                    r.Status == ReservationStatus.Completed && r.CompletedAtLocal < r.EndLocal ? r.CompletedAtLocal.Value : r.EndLocal,
-                    r.Source);
-            })
-            .Where(r => r.Start < r.End && r.Start < startsBefore && r.End > endsAfter)
+            .Select(r => Busy(
+                r.Tables.Select(t => t.TableId).ToList(),
+                r.TableId,
+                r.StartLocal,
+                r.Status == ReservationStatus.Completed && r.CompletedAtLocal < r.EndLocal ? r.CompletedAtLocal.Value : r.EndLocal,
+                r.Source))
             .ToList();
+        if (channel == ReservationSource.Online)
+        {
+            var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+            var holds = await db.ReservationHolds
+                .Where(h => h.StartLocal < startsBefore && h.EndLocal > endsAfter && h.ExpiresAtUtc > nowUtc && h.Id != ignoreHoldId)
+                .ToListAsync(cancellationToken);
+            busy.AddRange(holds
+                .Where(h => h.TableIds.Count > 0 && h.TableIds.All(tableById.ContainsKey))
+                .Select(h => Busy(h.TableIds, h.TableIds[0], h.StartLocal, h.EndLocal, ReservationSource.Online)));
+        }
+        return busy.Where(r => r.Start < r.End && r.Start < startsBefore && r.End > endsAfter).ToList();
     }
 
     /// <summary>The blocked tables (<see cref="TableBlock"/>) whose block overlaps <paramref name="from"/> to <paramref name="to"/>.</summary>

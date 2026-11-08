@@ -1,22 +1,29 @@
 import type { ParseKeys, TFunction } from 'i18next'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { ApiError, httpErrorMessage } from '../../api/client.ts'
 import {
+  type Availability,
+  createHold,
+  type Hold,
+  type HoldRequest,
   nowIn,
   type PublicRestaurant,
+  releaseHold,
   todayIn,
   useAvailability,
   useCreateBooking,
   useFirstFreeDay,
   usePublicTables,
+  useReloadAvailability,
 } from '../../api/publicBooking.ts'
 import type { Language } from '../../i18n/index.ts'
-import type { GuestDetailsValues } from './GuestDetailsForm.tsx'
+import { type GuestDetailsValues, initialDetails } from './guestDetails.ts'
 
-// The logic of the booking, without its views: the booking so far in the address, its checks, the booking itself and its
-// errors. The reservation card, the booking dialog and the embed show it (BookingFlow).
+// The logic of the booking, without its views: the booking so far in the address, its checks, the hold of the table while the
+// guest enters the contact details, the booking itself and its errors. The reservation card, the booking dialog and the embed
+// show it (BookingFlow).
 
 /**
  * The steps in the address: the time (the reservation card), the table (only when the guest chooses it), the contact
@@ -42,7 +49,10 @@ const detailsErrors: Record<string, ParseKeys> = {
   invalid_occasion: 'booking.details.invalidOccasion',
 }
 
-/** Errors after which the guest picks the time again, from freshly loaded times: the dialog closes, the card says why. */
+/**
+ * Errors after which the guest picks the time again, from freshly loaded times: on the table step the dialog closes and the card
+ * says why; at the contact details (the hold or the booking failed) the dialog says it and offers the nearest free times.
+ */
 const timeErrors: Record<string, ParseKeys> = {
   slot_unavailable: 'booking.errors.slotTaken',
   table_unavailable: 'booking.errors.tableTaken',
@@ -135,9 +145,33 @@ function writeState(params: URLSearchParams, state: BookingState) {
   return next
 }
 
-/** A failed booking that is not about the time, in the guest's language. */
+/** How many of the nearest free times the dialog offers when the chosen one is taken. */
+const nearbyCount = 4
+
+/** The free times of the day nearest to `time`, at most nearbyCount, in their order; `time` itself only when `withTime`. */
+function nearbyTimes(availability: Availability | undefined, time: string | null, withTime: boolean) {
+  const minutes = (value: string) => Number(value.slice(0, 2)) * 60 + Number(value.slice(3, 5))
+  const target = time === null ? 0 : minutes(time)
+  return (availability?.periods ?? [])
+    .flatMap((period) => period.times)
+    .filter((option) => option.available && (withTime || option.time !== time))
+    .map((option) => option.time)
+    .sort((a, b) => Math.abs(minutes(a) - target) - Math.abs(minutes(b) - target))
+    .slice(0, nearbyCount)
+    .sort()
+}
+
+/** A random id for the idempotency key of the booking; also outside a secure context, where crypto.randomUUID is missing. */
+function randomId() {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)), (byte) => byte.toString(16).padStart(2, '0')).join('')
+}
+
+/** A failed booking that is not about the time (that one the dialog shows with the nearest free times), in the guest's language. */
 function bookingErrorMessage(error: Error, t: TFunction) {
   if (error instanceof ApiError) {
+    if (error.code !== null && error.code in timeErrors) {
+      return null
+    }
     if (error.code !== null && error.code in detailsErrors) {
       return t(detailsErrors[error.code])
     }
@@ -170,8 +204,10 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [details, setDetails] = useState<GuestDetailsValues>({ name: '', phone: '', email: '', notes: '', occasion: 'None' })
+  // The remembered details of this device, if the guest asked for it; otherwise empty with the restaurant's calling code.
+  const [details, setDetails] = useState<GuestDetailsValues>(() => initialDetails(restaurant.countryCode))
   const booking = useCreateBooking(slug)
+  const reloadAvailability = useReloadAvailability(slug)
 
   const today = todayIn(timeZoneId)
   const lastDay = addDays(today, restaurant.bookingHorizonDays)
@@ -197,9 +233,13 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     }
   }, [canonical, searchParams, setSearchParams])
 
-  // Beyond the time step (e.g. after reloading or going back), the chosen time and table must still be free.
-  const settled = booking.isIdle
-  const checkTime = settled && (step === 'table' || step === 'details') && time !== null
+  // The guest's holds being released (below): until then, and until the times and tables are loaded anew, they would count as taken.
+  const [releasing, setReleasing] = useState(0)
+
+  // On the table step (e.g. after reloading or going back), the chosen time and table must still be free. At the contact details
+  // the hold checks them (below): the times loaded there would count the guest's own hold as taken.
+  const settled = booking.isIdle && releasing === 0
+  const checkTime = settled && step === 'table' && time !== null
   const availability = useAvailability(slug, date ?? '', partySize, checkTime)
   const slot = availability.data?.periods.flatMap((period) => period.times).find((option) => option.time === time)
   const timeTaken: ParseKeys | null =
@@ -209,10 +249,10 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
         ? 'booking.errors.timeNotBookable'
         : 'booking.errors.slotTaken'
 
-  // Only a combination of tables is free at the chosen time: the system assigns it, the guest chooses no table.
-  const combined = guestChooses && slot?.available === true && slot.combined
-  const tableStepWrong = checkTime && timeTaken === null && guestChooses && slot !== undefined
-    && ((step === 'details' && tableId === null && !combined) || (step === 'table' && combined))
+  // Only a combination of tables is free at the chosen time: the system assigns it, the guest chooses no table. At the contact
+  // details that is the case without a table (otherwise the hold answers "table_required" and the guest goes to the table).
+  const combined = guestChooses && (step === 'details' ? tableId === null : slot?.available === true && slot.combined)
+  const tableStepWrong = checkTime && timeTaken === null && guestChooses && slot !== undefined && combined
 
   const tables = usePublicTables(slug, date ?? '', time ?? '', partySize, guestChooses && tableId !== null && time !== null)
   const chosenArea = tables.data?.find((area) => area.tables.some((option) => option.id === tableId))
@@ -220,8 +260,69 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const checkTable = checkTime && timeTaken === null && guestChooses && tableId !== null
   const tableTaken = checkTable && tables.data !== undefined && table?.available !== true
 
-  // Wait for the checks before the step is shown; a failed check leaves it to the booking itself.
-  const checking = (checkTime && availability.isPending) || (checkTable && tables.isPending)
+  // Wait for the checks (and the release of a hold) before the step is shown; a failed check leaves it to the booking itself.
+  const checking = (checkTime && availability.isPending) || (checkTable && tables.isPending) || (step === 'table' && releasing > 0)
+
+  /*
+   * The hold: at the contact details the table (or the one the system assigns) is held for 5 minutes, so nobody takes it while
+   * the guest types. It is released when the guest leaves the step (back to the table, to the card, closing the dialog, another
+   * time) or the page, and the booking turns it into the reservation.
+   */
+  const holdKey =
+    step === 'details' && date !== null && time !== null && !booking.isSuccess
+      ? JSON.stringify({ date, time, guests: partySize, tableId: guestChooses ? tableId : null } satisfies HoldRequest)
+      : null
+  const [holdResult, setHoldResult] = useState<{ key: string; hold: Hold | null; error: Error | null } | null>(null)
+  // The hold the booking is using: once booked it is the reservation, and releasing it would only answer 404.
+  const bookingHold = useRef<string | null>(null)
+  useEffect(() => {
+    if (holdKey === null) {
+      return
+    }
+    let active = true
+    let token: string | null = null
+    const leavePage = () => {
+      if (token !== null && token !== bookingHold.current) {
+        void releaseHold(slug, token)
+      }
+    }
+    createHold(slug, JSON.parse(holdKey) as HoldRequest).then(
+      (hold) => {
+        if (active) {
+          token = hold.holdToken
+          setHoldResult({ key: holdKey, hold, error: null })
+        } else {
+          void releaseHold(slug, hold.holdToken)
+        }
+      },
+      (error: Error) => {
+        if (active) {
+          setHoldResult({ key: holdKey, hold: null, error })
+          // The guest gets the times that are free now.
+          void reloadAvailability()
+        }
+      },
+    )
+    window.addEventListener('pagehide', leavePage)
+    return () => {
+      active = false
+      window.removeEventListener('pagehide', leavePage)
+      if (token !== null && token !== bookingHold.current) {
+        setReleasing((count) => count + 1)
+        void releaseHold(slug, token)
+          .then(reloadAvailability)
+          .finally(() => setReleasing((count) => count - 1))
+      }
+    }
+  }, [holdKey, slug, reloadAvailability])
+  const holdState = holdKey !== null && holdResult?.key === holdKey ? holdResult : null
+  const holdError = holdState?.error instanceof ApiError ? holdState.error.code : null
+
+  // The time or table was taken: by the hold or, after it expired or when staff took the table, by the booking.
+  const bookingError = booking.isError && booking.error instanceof ApiError ? booking.error.code : null
+  const unavailableCode = bookingError !== null && bookingError in timeErrors ? bookingError : holdError !== null && holdError in timeErrors ? holdError : null
+  const unavailable: ParseKeys | null = step === 'details' && unavailableCode !== null ? timeErrors[unavailableCode] : null
+  const freshTimes = useAvailability(slug, date ?? '', partySize, unavailable !== null && date !== null)
 
   const correction =
     timeTaken !== null
@@ -229,8 +330,12 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
       : tableTaken
         ? writeState(searchParams, { ...state, step: 'table', tableId: null }).toString()
         : tableStepWrong
-          ? writeState(searchParams, { ...state, step: combined ? 'details' : 'table', tableId: null }).toString()
-          : null
+          ? writeState(searchParams, { ...state, step: 'details', tableId: null }).toString()
+          : holdError === 'table_required'
+            ? writeState(searchParams, { ...state, step: 'table' }).toString()
+            : holdError === 'invalid_party_size'
+              ? writeState(searchParams, { ...state, step: 'time', time: null, tableId: null }).toString()
+              : null
   useEffect(() => {
     if (correction !== null) {
       setSearchParams(correction, { replace: true, state: timeTaken !== null ? { timeNotice: timeTaken } : undefined })
@@ -291,6 +396,27 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
   const goToStep = (target: Step) => void go(state, target)
 
   /**
+   * The Back button of the dialog: from the contact details to the table, through the history where the dialog's entries know
+   * the way (the browser's back button does the same), otherwise in place.
+   */
+  const goBack = () => {
+    const depth = dialogDepth(location.state)
+    if (depth !== null && depth > 1) {
+      void navigate(-1)
+    } else {
+      setSearchParams(writeState(searchParams, { ...state, step: 'table' }), { replace: true, state: location.state })
+    }
+  }
+
+  // The idempotency key of the booking: one per opening of the dialog, so a repeated attempt (e.g. after a lost answer) does not
+  // book twice, and a new booking after closing it gets a new one.
+  const dialogOpen = step !== 'time' || booking.isSuccess
+  const [idempotency, setIdempotency] = useState({ open: false, key: '' })
+  if (dialogOpen !== idempotency.open) {
+    setIdempotency({ open: dialogOpen, key: dialogOpen ? randomId() : '' })
+  }
+
+  /**
    * Closes the dialog and returns to the time: back through the history to the time step where the dialog's entries know
    * the way (DialogEntry), otherwise (e.g. after a correction) in place. After the booking it starts a new one.
    */
@@ -307,36 +433,44 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     }
   }
 
+  /** `values.phone` is the number in international form (GuestDetailsForm). */
   const submit = (values: GuestDetailsValues) => {
     if (date === null || time === null) {
       return
     }
     const optional = (value: string) => (value.trim() === '' ? null : value.trim())
+    const holdToken = holdState?.hold?.holdToken ?? null
+    bookingHold.current = holdToken
     booking.mutate(
       {
-        date,
-        time,
-        guests: partySize,
-        tableId: guestChooses ? tableId : null,
-        name: values.name.trim(),
-        phone: optional(values.phone),
-        email: optional(values.email),
-        notes: optional(values.notes),
-        occasion: values.occasion,
-        language,
+        booking: {
+          date,
+          time,
+          guests: partySize,
+          tableId: guestChooses ? tableId : null,
+          name: values.name.trim(),
+          phone: optional(values.phone),
+          email: optional(values.email),
+          notes: optional(values.notes),
+          occasion: values.occasion,
+          language,
+          holdToken,
+        },
+        idempotencyKey: idempotency.key,
       },
       {
-        // A reload after the booking starts a new one instead of showing the booked choices again.
-        onSuccess: () => setSearchParams(writeState(searchParams, emptyState), { replace: true }),
+        onSuccess: () => {
+          // The next booking starts with the remembered details, or empty.
+          setDetails(initialDetails(restaurant.countryCode))
+          // A reload after the booking starts a new one instead of showing the booked choices again.
+          setSearchParams(writeState(searchParams, emptyState), { replace: true })
+        },
         onError: (error) => {
+          bookingHold.current = null
           const code = error instanceof ApiError ? error.code : null
-          if (code !== null && code in timeErrors) {
-            // The availability is loaded anew (useCreateBooking), so the guest gets the times that are free now.
-            setSearchParams(writeState(searchParams, { ...state, step: 'time', time: null, tableId: null }), {
-              replace: true,
-              state: { timeNotice: timeErrors[code] },
-            })
-          } else if (code === 'table_required') {
+          // A taken time or table (timeErrors) stays at the contact details: the dialog offers the nearest free times, loaded anew
+          // (useCreateBooking), and keeps what the guest typed.
+          if (code === 'table_required') {
             setSearchParams(writeState(searchParams, { ...state, step: 'table' }), { replace: true })
           } else if (code === 'invalid_party_size') {
             setSearchParams(writeState(searchParams, { ...state, step: 'time', time: null, tableId: null }), { replace: true })
@@ -368,7 +502,16 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     table,
     chosenArea,
     /** The dialog is open from the table or the contact details on, and with the confirmation. */
-    dialogOpen: step !== 'time' || booking.isSuccess,
+    dialogOpen,
+    /** The table held for the guest at the contact details; null while it is being held, without and after a failed hold. */
+    hold: holdState?.hold ?? null,
+    /**
+     * Why the guest has to choose another time at the contact details (the hold or the booking found the time or table taken);
+     * `nearbyTimes` are the nearest free times of the day then, loaded anew.
+     */
+    unavailable,
+    nearbyTimes: unavailable === null ? [] : nearbyTimes(freshTimes.data, time, guestChooses),
+    nearbyTimesPending: unavailable !== null && freshTimes.isPending,
     details,
     setDetails,
     submitting: booking.isPending,
@@ -380,6 +523,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     chooseDayAndTime,
     chooseTable,
     goToStep,
+    goBack,
     closeDialog,
     submit,
   }
