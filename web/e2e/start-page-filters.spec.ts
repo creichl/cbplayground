@@ -124,9 +124,8 @@ test.describe('Start page filters', () => {
     await expect(sheet).toBeVisible()
     // Live music is at Kafana Dunav only.
     const withLiveMusic = all.filter((restaurant) => restaurant.features.includes('LiveMusic'))
-    // Checked once the address has changed, which happens right after the click.
-    await sheet.getByRole('checkbox', { name: 'Live music' }).click()
-    await expect(sheet.getByRole('checkbox', { name: 'Live music' })).toBeChecked()
+    // check() fails when the click does not change the checkbox at once: the tick shows with the click.
+    await sheet.getByRole('checkbox', { name: 'Live music' }).check()
     await expect(page).toHaveURL(/\?feature=LiveMusic$/)
     const show = sheet.getByRole('button', { name: withLiveMusic.length === 1 ? 'Show 1 restaurant' : `Show ${withLiveMusic.length} restaurants` })
     await expect(show).toBeVisible()

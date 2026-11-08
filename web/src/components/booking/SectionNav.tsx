@@ -14,7 +14,7 @@ export const sectionsEndId = 'sections-end'
  * scrolled past the cover image (`visible`), with the sections the page has, in page order. A click scrolls softly to the
  * section below the header (with less motion it jumps) and moves the focus to its heading. The section at the top of the
  * view is marked, followed with an IntersectionObserver; at the end of the page, the last one. On phones the row scrolls
- * sideways and keeps the marked item in view. While hidden it is inert.
+ * sideways and keeps the marked item in view. While hidden it is inert. A page without sections has no row.
  */
 export function SectionNav({ sections, visible }: { sections: PageSection[]; visible: boolean }) {
   const { t } = useTranslation()
@@ -77,6 +77,10 @@ export function SectionNav({ sections, visible }: { sections: PageSection[]; vis
     const left = item.offsetLeft - (row.clientWidth - item.offsetWidth) / 2
     row.scrollTo({ left, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' })
   }, [current])
+
+  if (sections.length === 0) {
+    return null
+  }
 
   return (
     <nav

@@ -109,9 +109,10 @@ export function HomePage() {
     searchInput.current?.focus()
   }
 
-  // Every change is an entry in the history, so the back button takes it back; the page stays where it is.
+  // Every change is an entry in the history, so the back button takes it back; the page stays where it is. The address
+  // changes right away (flushSync), so a chip or checkbox shows its new state with the click, not a moment later.
   function changeFilters(next: RestaurantFilters) {
-    setSearchParams(writeFilters(next), { preventScrollReset: true })
+    setSearchParams(writeFilters(next), { preventScrollReset: true, flushSync: true })
   }
 
   return (
