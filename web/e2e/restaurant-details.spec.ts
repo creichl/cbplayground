@@ -118,6 +118,9 @@ test.describe('Restaurant details', () => {
       await expect(page.getByText(/Familien, Stammtische und Hunde/)).toBeVisible()
 
       await expect(page.getByRole('heading', { name: 'Good to know', level: 2 })).toBeVisible()
+      // "Good to know" comes last, after the areas, just before "Contact".
+      expect(await page.evaluate(`document.getElementById('areas').compareDocumentPosition(document.getElementById('good-to-know')) & Node.DOCUMENT_POSITION_FOLLOWING`)).toBeTruthy()
+      expect(await page.evaluate(`document.getElementById('good-to-know').compareDocumentPosition(document.getElementById('directions')) & Node.DOCUMENT_POSITION_FOLLOWING`)).toBeTruthy()
       await expect(page.getByRole('heading', { name: 'House rules', level: 3 })).toBeVisible()
       const question = page.getByText('Darf ich meinen Hund mitbringen?')
       const answer = page.getByText(/Hunde sind in der Gaststube und auf der Terrasse willkommen/)

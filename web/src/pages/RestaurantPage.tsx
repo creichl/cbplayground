@@ -10,18 +10,18 @@ import { BookingFlow } from '../components/booking/BookingFlow.tsx'
 import { Gallery } from '../components/booking/Gallery.tsx'
 import { GoodToKnow } from '../components/booking/GoodToKnow.tsx'
 import { MenuSection } from '../components/booking/MenuSection.tsx'
-import { bookingSectionId, PastHeroContext, scrollToBooking, sectionIds } from '../components/booking/layout.ts'
-import { OpeningHoursList } from '../components/booking/OpeningHoursList.tsx'
+import { bookingSectionId, hasContact, hasHours, hasHoursOrLocation, PastHeroContext, scrollToBooking, sectionIds } from '../components/booking/layout.ts'
+import { HoursAndLocation, HoursAndLocationSkeleton } from '../components/booking/HoursAndLocation.tsx'
 import { useOpeningStatus } from '../components/booking/openingStatus.ts'
 import { ReservationCardSkeleton } from '../components/booking/ReservationCard.tsx'
 import { RestaurantContact } from '../components/booking/RestaurantContact.tsx'
 import { RestaurantHeader, RestaurantHeaderSkeleton } from '../components/booking/RestaurantHeader.tsx'
 import { type PageSection, SectionNav, sectionsEndId } from '../components/booking/SectionNav.tsx'
 import { useDocumentTitle } from '../i18n/title.ts'
+import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
 import { Reveal, Stagger } from '../ui/motion/reveal.tsx'
 import { Photo } from '../ui/photo.tsx'
-import { Skeleton } from '../ui/skeleton.tsx'
 import { NotFound } from './NotFoundPage.tsx'
 
 /** What the guest does to move on their own: it ends keeping a section from the address in place. */
@@ -35,9 +35,11 @@ const infoColumnClassName = 'flex flex-col gap-12 pt-12 lg:col-span-7 lg:row-sta
 /**
  * The booking page of a restaurant, like the restaurant pages of Resy, OpenTable or Tock. At the top its cover image (about
  * 60 % of the screen, at most 640 px; about 45 % on phones) with name, city, cuisines, price level and whether it is open
- * today. Below it, from 1024 px on, the information on the left (7 of 12 columns: the photo gallery, about us with the
- * features, areas, good to know, opening hours, directions and contact) and the reservation card on the right, which stays in view below the header. On phones the card comes right
- * below the cover image, the information after it, and a bar "Reserve a table" appears at the bottom of the screen once the card is
+ * now (the live status, openingStatus.ts). Below it, from 1024 px on, the information on the left (7 of 12 columns: the card
+ * "Hours & location" with the live status, today's hours, the week, the coming closing days and special hours, the address and
+ * the phone; then the photo gallery, about us with the features, the menu, the areas, "Good to know", the least important,
+ * and contact) and the reservation card on the right, which stays in view below the header. On phones the reservation card
+ * comes right below the cover image, the information after it, starting with "Hours & location", and a bar "Reserve a table" appears at the bottom of the screen once the card is
  * scrolled out of view. Once the page has scrolled past the cover image, a section navigation below the header lists the
  * sections the page has (SectionNav); every section has a stable id (sectionIds), so `/r/<slug>#menu` opens at the menu.
  * The sections below the first screen rise in once as they are scrolled into view (Reveal), the
@@ -61,12 +63,7 @@ export function RestaurantPage() {
             <ReservationCardSkeleton />
           </div>
           <div className={infoColumnClassName}>
-            <div className="flex flex-col gap-4">
-              <Skeleton className="h-8 w-40" />
-              <Skeleton className="h-5" />
-              <Skeleton className="h-5" />
-              <Skeleton className="h-5 w-3/4" />
-            </div>
+            <HoursAndLocationSkeleton />
           </div>
         </div>
       </>
@@ -97,9 +94,8 @@ export function RestaurantPage() {
 
 function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: PublicRestaurant }) {
   const { t } = useTranslation()
-  const status = useOpeningStatus(slug, restaurant)
+  const status = useOpeningStatus(restaurant)
   const { name, city, description, branding, cuisines, features, houseRules, faq } = restaurant
-  const contact = restaurant.street !== null || restaurant.city !== null || restaurant.phone !== null || restaurant.email !== null || restaurant.website !== null
   const pastHero = use(PastHeroContext)
   const { hash } = useLocation()
   const target = decodeURIComponent(hash.slice(1))
@@ -108,14 +104,17 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
   // address, so the menu above it does not push it away. Otherwise the menu loads when it comes near (MenuSection).
   const menu = usePublicMenu(slug, pastHero || wantsSection)
 
+  // In page order, the same on every layout: "Hours & location" is the first block of the information.
   const sections: PageSection[] = [
+    ...(hasHoursOrLocation(restaurant)
+      ? [{ id: sectionIds.openingHours, title: hasHours(restaurant) ? t('booking.restaurant.openingHours') : t('booking.restaurant.hoursAndLocation') }]
+      : []),
     ...(restaurant.gallery.length > 0 ? [{ id: sectionIds.photos, title: t('booking.gallery.title') }] : []),
     ...(description !== null || features.length > 0 ? [{ id: sectionIds.about, title: t('booking.restaurant.about') }] : []),
     ...(menu.data !== undefined && menu.data.sections.length > 0 ? [{ id: sectionIds.menu, title: t('booking.menu.title') }] : []),
     ...(restaurant.areas.length > 0 ? [{ id: sectionIds.areas, title: t('booking.restaurant.areas') }] : []),
     ...(houseRules !== null || faq.length > 0 ? [{ id: sectionIds.goodToKnow, title: t('restaurantDetails.guest.goodToKnow') }] : []),
-    ...(restaurant.openingHours.length > 0 ? [{ id: sectionIds.openingHours, title: t('booking.restaurant.openingHours') }] : []),
-    ...(contact ? [{ id: sectionIds.directions, title: t('booking.restaurant.directions') }] : []),
+    ...(hasContact(restaurant) ? [{ id: sectionIds.contact, title: t('booking.restaurant.contact') }] : []),
   ]
 
   // A section in the address (`#menu`) is brought into view once, as soon as the menu above it has loaded (or failed). Two
@@ -161,7 +160,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
         coverUrl={branding.coverUrl}
         facts={cuisines.length > 0 ? [cuisines.map((cuisine) => t(`restaurantDetails.cuisines.${cuisine}`)).join(', ')] : []}
         priceLevel={restaurant.priceLevel}
-        status={status}
+        status={status !== null ? { tone: status.tone, text: status.shortText } : null}
       />
       <div className={gridClassName}>
         <div className={cardColumnClassName}>
@@ -173,6 +172,7 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
         </div>
 
         <div className={infoColumnClassName}>
+          <HoursAndLocation restaurant={restaurant} status={status} />
           <Gallery photos={restaurant.gallery} restaurantName={name} />
           {(description !== null || features.length > 0) && (
             <Section id={sectionIds.about} title={t('booking.restaurant.about')}>
@@ -186,17 +186,12 @@ function RestaurantContent({ slug, restaurant }: { slug: string; restaurant: Pub
             </Section>
           )}
           {(houseRules !== null || faq.length > 0) && (
-            <Section id={sectionIds.goodToKnow} title={t('restaurantDetails.guest.goodToKnow')}>
+            <Section id={sectionIds.goodToKnow} title={t('restaurantDetails.guest.goodToKnow')} className="gap-3">
               <GoodToKnow houseRules={houseRules} faq={faq} />
             </Section>
           )}
-          {restaurant.openingHours.length > 0 && (
-            <Section id={sectionIds.openingHours} title={t('booking.restaurant.openingHours')}>
-              <OpeningHoursList restaurant={restaurant} today={status?.periods ?? null} />
-            </Section>
-          )}
-          {contact && (
-            <Section id={sectionIds.directions} title={t('booking.restaurant.directions')}>
+          {hasContact(restaurant) && (
+            <Section id={sectionIds.contact} title={t('booking.restaurant.contact')}>
               <RestaurantContact restaurant={restaurant} />
             </Section>
           )}
@@ -245,11 +240,14 @@ function AreaCards({ areas }: { areas: PublicRestaurant['areas'] }) {
   )
 }
 
-/** A section of the page, with its id for the section navigation; its heading takes the focus when the navigation brings it into view. */
-function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+/**
+ * A section of the page, with its id for the section navigation; its heading takes the focus when the navigation brings it
+ * into view. `className`, e.g. less spacing for a quieter section.
+ */
+function Section({ id, title, className, children }: { id: string; title: string; className?: string; children: ReactNode }) {
   return (
     <Reveal>
-      <section id={id} aria-labelledby={`${id}-heading`} className="flex scroll-mt-36 flex-col gap-4">
+      <section id={id} aria-labelledby={`${id}-heading`} className={cn('flex scroll-mt-36 flex-col gap-4', className)}>
         <h2 id={`${id}-heading`} tabIndex={-1} className="font-display text-2xl outline-none sm:text-3xl">
           {title}
         </h2>

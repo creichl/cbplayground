@@ -179,10 +179,24 @@
       "routeTo": "Kako stići: {{address}}",
       "openToday": "Danas otvoreno · {{hours}}",
       "about": "O nama",
-      "directions": "Kako do nas i kontakt",
+      "contact": "Kontakt",
       "todayBadge": "Danas",
       "todayDiffers": "Danas drugačije:",
-      "areas": "Delovi restorana"
+      "areas": "Delovi restorana",
+      "hoursAndLocation": "Radno vreme i lokacija",
+      "allOpeningHours": "Celo radno vreme",
+      "comingUp": "Uskoro",
+      "call": "Pozovi",
+      "callNumber": "Pozovi {{phone}}",
+      "status": {
+        "openUntil": "Sada otvoreno · do {{time}}",
+        "closesSoon": "Uskoro zatvara · {{time}}",
+        "opensAgain": "Ponovo otvara u {{time}}",
+        "opensToday": "Danas otvara u {{time}}",
+        "opensAt": "Otvara u {{time}}",
+        "opensTomorrow": "Zatvoreno · otvara sutra u {{time}}",
+        "opensOn": "Zatvoreno · otvara: {{day}} u {{time}}"
+      }
     },
     "partySize": {
       "moreThan_one": "Više od {{count}} osobe",
@@ -755,7 +769,10 @@
       "features": "Pogodnosti",
       "goodToKnow": "Dobro je znati",
       "houseRules": "Kućna pravila",
-      "faq": "Česta pitanja"
+      "faq": "Česta pitanja",
+      "showAllQuestions_one": "Prikaži sva pitanja ({{count}})",
+      "showAllQuestions_few": "Prikaži sva pitanja ({{count}})",
+      "showAllQuestions_other": "Prikaži sva pitanja ({{count}})"
     }
   },
   "branding": {
