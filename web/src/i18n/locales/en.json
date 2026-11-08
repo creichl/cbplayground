@@ -26,7 +26,9 @@
     "close": "Close",
     "timeRange": "{{start}}–{{end}}",
     "tableLabel": "{{number}} · {{seats}}",
-    "midnight": "midnight"
+    "midnight": "midnight",
+    "today": "Today",
+    "tomorrow": "Tomorrow"
   },
   "unsavedChanges": {
     "bar": "Unsaved changes",
@@ -319,7 +321,8 @@
       "copy": "Copy",
       "tables": "Tables",
       "tablesInArea": "Tables {{number}} · {{area}}",
-      "done": "Done"
+      "done": "Done",
+      "viewReservation": "View reservation"
     },
     "calendarEvent": {
       "title": "Table reservation – {{restaurant}}",
@@ -337,6 +340,15 @@
       "outlook": "Outlook.com",
       "ics": "Apple Calendar or other",
       "icsHint": "Calendar file (.ics) with a reminder 2 hours before"
+    },
+    "requestTimeline": {
+      "label": "What happens next",
+      "sent": "Request sent",
+      "confirms": "The restaurant confirms",
+      "check": "Check your reservation page",
+      "done": "Done",
+      "current": "Now",
+      "next": "Next"
     },
     "remembered": {
       "label": "Your reservation",
@@ -486,6 +498,11 @@
       "declined": "Request declined",
       "past": "This reservation is over",
       "pastText": "We look forward to your next visit."
+    },
+    "when": "{{day}}, {{time}}",
+    "live": {
+      "confirmed": "The restaurant has confirmed your reservation.",
+      "declined": "The restaurant could not accept your request."
     }
   },
   "admin": {

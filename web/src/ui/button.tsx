@@ -39,7 +39,8 @@ type ButtonProps = ComponentProps<'button'> &
 
 function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
   const Component = asChild ? Slot : 'button'
-  return <Component data-slot="button" className={cn(buttonVariants({ variant, size }), className)} {...props} />
+  // data-variant names the look, e.g. to find the one primary action of a view.
+  return <Component data-slot="button" data-variant={variant ?? 'primary'} className={cn(buttonVariants({ variant, size }), className)} {...props} />
 }
 
 export { Button }

@@ -310,6 +310,15 @@
   --animate-table-settle: table-settle var(--motion-slow) var(--ease-spring);
   /* A table that cannot be chosen, tapped: it dims for a moment while the reason shows. */
   --animate-table-dip: table-dip var(--motion-long) var(--ease-out);
+  /*
+   * The success moment of the confirmation, in sequence: the hand of a request's clock turns once, the line of its timeline
+   * draws itself, the characters of the reference code appear one after another (their delay set per character).
+   */
+  --animate-clock-hand: clock-hand var(--motion-long) var(--ease-spring) 150ms backwards;
+  --animate-line-draw: line-draw var(--motion-long) var(--ease-out) 450ms backwards;
+  --animate-code-char: code-char var(--motion-fast) var(--ease-out) backwards;
+  /* The current step of a request's timeline: a soft ring around its dot, on and on (only with motion). */
+  --animate-dot-pulse: dot-pulse 1.8s var(--ease-out) infinite;
 }
 
 @theme {
@@ -416,6 +425,33 @@
   @keyframes table-dip {
     35% {
       opacity: 0.5;
+    }
+  }
+  @keyframes clock-hand {
+    from {
+      rotate: -1turn;
+    }
+  }
+  @keyframes line-draw {
+    from {
+      scale: 1 0;
+    }
+  }
+  @keyframes code-char {
+    from {
+      opacity: 0;
+      translate: 0 0.25rem;
+    }
+  }
+  @keyframes dot-pulse {
+    from {
+      opacity: 0.6;
+      scale: 1;
+    }
+    70%,
+    to {
+      opacity: 0;
+      scale: 2.2;
     }
   }
   /* From the edge of the circle outwards; --angle is the particle's direction. */
@@ -562,26 +598,33 @@
     [data-stagger]:not([data-reveal='hidden']) > * {
       animation: rise var(--motion-long) var(--ease-out) backwards;
     }
+    /*
+     * A list that rises as part of an entrance in sequence (the actions of the confirmation) waits for what comes before it:
+     * --stagger-start on it, added to each child's delay.
+     */
+    [data-stagger]:not([data-reveal='hidden']) > * {
+      animation-delay: calc(var(--stagger-start, 0ms) + var(--stagger-delay, 0ms));
+    }
     [data-stagger] > :nth-child(2) {
-      animation-delay: 40ms;
+      --stagger-delay: 40ms;
     }
     [data-stagger] > :nth-child(3) {
-      animation-delay: 80ms;
+      --stagger-delay: 80ms;
     }
     [data-stagger] > :nth-child(4) {
-      animation-delay: 120ms;
+      --stagger-delay: 120ms;
     }
     [data-stagger] > :nth-child(5) {
-      animation-delay: 160ms;
+      --stagger-delay: 160ms;
     }
     [data-stagger] > :nth-child(6) {
-      animation-delay: 200ms;
+      --stagger-delay: 200ms;
     }
     [data-stagger] > :nth-child(7) {
-      animation-delay: 240ms;
+      --stagger-delay: 240ms;
     }
     [data-stagger] > :nth-child(n + 8) {
-      animation-delay: 280ms;
+      --stagger-delay: 280ms;
     }
   }
 

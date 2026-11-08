@@ -1,5 +1,5 @@
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
-import { CalendarPlusIcon, CheckIcon, ChevronDownIcon, DownloadIcon, LinkIcon, Share2Icon, TextIcon } from 'lucide-react'
+import { CalendarPlusIcon, CheckIcon, ChevronDownIcon, CopyIcon, DownloadIcon, LinkIcon, Share2Icon, TextIcon } from 'lucide-react'
 import { type ReactNode, useContext, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PublicRestaurant } from '../../api/publicBooking.ts'
@@ -115,7 +115,8 @@ export function CalendarMenu(props: ReservationShareProps) {
 /**
  * "Share" as a menu: the reservation's day, time, party and restaurant, and only on the explicit choice "Share with link" also
  * the guest's link (with which anyone can change or cancel it). Through the device's share sheet where the browser has one,
- * otherwise copied; the button then says "Copied" for a moment, and screen readers hear it.
+ * otherwise copied. "Copy link" copies only the guest's link, to keep it. After copying the button says "Copied" for a
+ * moment, and screen readers hear it.
  */
 export function ShareMenu(props: ReservationShareProps) {
   const { t, i18n } = useTranslation()
@@ -178,6 +179,10 @@ export function ShareMenu(props: ReservationShareProps) {
         <DropdownMenu.Item className={itemClassName} onSelect={() => share(true)}>
           <LinkIcon aria-hidden="true" />
           <ItemText label={t('booking.share.withLink')} hint={t('booking.share.withLinkHint')} />
+        </DropdownMenu.Item>
+        <DropdownMenu.Item className={itemClassName} onSelect={() => copy(manageUrl)}>
+          <CopyIcon aria-hidden="true" />
+          <ItemText label={t('booking.confirmation.copyLink')} hint={t('booking.confirmation.manageLinkHint')} />
         </DropdownMenu.Item>
       </Menu>
       <span role="status" className="sr-only">
