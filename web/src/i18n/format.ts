@@ -49,6 +49,23 @@ export function formatLongDate(date: string, language: string) {
 }
 
 /**
+ * A day relative to today, both "YYYY-MM-DD" (today e.g. in the restaurant's time zone): "Today" and "Tomorrow" (in the user's
+ * language), otherwise the weekday written out with day and month, e.g. "Saturday, Nov 15" or "Samstag, 15. Nov.", with a capital letter.
+ */
+export function formatRelativeDay(date: string, today: string, language: string) {
+  const days = Math.round((toDate(date).getTime() - toDate(today).getTime()) / 86_400_000)
+  if (days === 0) {
+    return i18n.t('common.today', { lng: language })
+  }
+  if (days === 1) {
+    return i18n.t('common.tomorrow', { lng: language })
+  }
+  const day = new Intl.DateTimeFormat(language, { weekday: 'long', day: 'numeric', month: 'short' }).format(toDate(date))
+  // It starts a heading, so with a capital letter also in Serbian, which writes its weekdays in lower case.
+  return day.charAt(0).toLocaleUpperCase(language) + day.slice(1)
+}
+
+/**
  * A moment with time zone (ISO 8601, e.g. a UTC time of the API) as date and time in the device's time zone,
  * e.g. "31. Okt. 2026, 19:05" or "Oct 31, 2026, 7:05 PM".
  */

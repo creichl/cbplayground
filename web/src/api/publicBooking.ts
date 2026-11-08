@@ -423,6 +423,10 @@ export function useGuestReservation(slug: string, referenceCode: string, token: 
     retry: (failureCount, error) => !isNotFound(error) && failureCount < 1,
     // The link is rate limited like the booking; switching tabs should not use up the requests.
     refetchOnWindowFocus: false,
+    // A request is asked for again every 30 s while the page is visible (not in a hidden tab), so the guest sees the
+    // restaurant confirm or decline it without reloading.
+    refetchInterval: (query) => (query.state.data?.status === 'Requested' ? 30_000 : false),
+    refetchIntervalInBackground: false,
   })
 }
 
