@@ -140,6 +140,82 @@ public static class DemoMenus
                 new("Blaufränkisch, 1/8", "Mittelburgenland", 950, [Sulphites], Vegan: true, GlutenFree: true),
             ]),
         ],
+        ["il-faro"] =
+        [
+            new("Antipasti", "Zum Teilen oder für sich allein",
+            [
+                new("Bruschetta", "Geröstetes Weißbrot mit Kirschtomaten und Rucola", 890, [Gluten], "bruschetta", Vegetarian: true, Vegan: true),
+                new("Carpaccio vom Rind", "Hauchdünn, mit Rucola, Parmesan und Zitrone", 1450, [Milk], "carpaccio", GlutenFree: true),
+                new("Caprese", "Tomaten und Büffelmozzarella mit Basilikum und Balsamico", 1190, [Milk, Sulphites], "caprese", Vegetarian: true, GlutenFree: true),
+                new("Antipasto misto für zwei", "Prosciutto, Salami, gegrilltes Gemüse und Bruschetta", 2190, [Gluten, Milk, Sulphites]),
+                new("Minestrone", "Gemüsesuppe nach Art der Nonna", 790, [Celery], Vegetarian: true, Vegan: true, GlutenFree: true),
+            ]),
+            new("Pasta & Risotto", "Pasta aus eigener Herstellung, auf Wunsch glutenfrei",
+            [
+                new("Pici alle vongole", "Handgerollte Pici mit Venusmuscheln, Knoblauch, Weißwein und Petersilie", 1890, [Gluten, Molluscs, Sulphites], "vongole", Recommended: true),
+                new("Risotto mit Garnelen", "Mit gegrillten Riesengarnelen, gerösteter Paprika und Kresse", 2150, [Crustaceans, Milk, Celery], "risotto", GlutenFree: true),
+                new("Lasagne al ragù", "Mit Rinderragù, Tomatensauce und Ricotta, aus dem Ofen", 1590, [Gluten, Eggs, Milk, Celery], "lasagne", Recommended: true),
+                new("Tagliatelle mit Steinpilzen", "In Butter und Salbei geschwenkt", 1690, [Gluten, Eggs, Milk], Vegetarian: true),
+                new("Spaghetti alla carbonara", "Mit Guanciale, Eigelb und Pecorino", 1490, [Gluten, Eggs, Milk]),
+                new("Orecchiette con cime di rapa", "Apulische Orecchiette mit Stängelkohl, Knoblauch und Chili", 1450, [Gluten], Vegetarian: true, Vegan: true, Spicy: true),
+            ]),
+            new("Pizza", "Aus dem Holzofen",
+            [
+                new("Pizza Margherita", "Tomaten, Fior di Latte und Basilikum", 1090, [Gluten, Milk], Vegetarian: true),
+                new("Pizza Diavola", "Mit scharfer Salami aus Kalabrien", 1350, [Gluten, Milk], Spicy: true),
+                new("Pizza Ortolana", "Mit Gemüse vom Grill, ohne Käse", 1250, [Gluten], Vegetarian: true, Vegan: true),
+            ]),
+            new("Secondi", null,
+            [
+                new("Polpo alla griglia", "Gegrillter Oktopus mit Kartoffeln aus der Pfanne, Rucola und Zitrone", 2490, [Molluscs], "octopus", GlutenFree: true, Recommended: true),
+                new("Saltimbocca alla romana", "Kalbsschnitzel mit Salbei und Parmaschinken in Weißweinsauce", 2390, [Milk, Sulphites]),
+                new("Fisch des Tages", "Frisch vom Großmarkt, gegrillt, mit Gemüse der Saison", 2690, [Fish], GlutenFree: true),
+            ]),
+            new("Dolci", null,
+            [
+                new("Tiramisu", "Nach dem Rezept der Nonna, mit Mascarpone und Kakao", 790, [Gluten, Eggs, Milk], "tiramisu", Vegetarian: true, Recommended: true),
+                new("Panna cotta", "Mit Beerensauce", 690, [Milk], Vegetarian: true, GlutenFree: true),
+                new("Affogato", "Vanilleeis mit einem heißen Espresso", 590, [Milk], Vegetarian: true, GlutenFree: true),
+            ]),
+        ],
+        ["izakaya-kaze"] =
+        [
+            new("Mali tanjiri", "Za sto, za deljenje",
+            [
+                new("Edamame", "Mlada soja sa morskom solju", 45000, [Soy], "edamame", Vegetarian: true, Vegan: true, GlutenFree: true),
+                new("Miso supa", "Sa tofuom, vakame algama i micubom", 49000, [Fish, Soy], "miso-soup"),
+                new("Karaage", "Japanska pržena piletina sa kupusom i majonezom", 89000, [Gluten, Eggs, Soy], "karaage"),
+                new("Gjoze (6 kom)", "Sa svinjetinom i kupusom, iz tiganja", 85000, [Gluten, Soy, Sesame]),
+                new("Takojaki", "Loptice od testa sa hobotnicom, sosom i ljuspicama tune", 79000, [Gluten, Eggs, Fish, Molluscs]),
+                new("Tempura od povrća", "Sa sosom tencuju", 79000, [Gluten, Eggs, Soy], Vegetarian: true),
+            ]),
+            new("Suši i sašimi", "Za šankom, pred vama",
+            [
+                new("Sašimi moriavase", "Žutorepa tuna, tuna i orada na listu šisoa, sa vasabijem", 249000, [Fish], "sashimi", GlutenFree: true, Recommended: true),
+                new("Nigiri izbor (8 kom)", "Tuna, losos, škamp, jegulja i bela riba", 229000, [Fish, Crustaceans, Soy]),
+                new("Maki sa lososom i krastavcem (8 kom)", null, 119000, [Fish, Soy], "maki"),
+                new("Maki sa avokadom (8 kom)", null, 89000, [Soy], Vegetarian: true, Vegan: true),
+            ]),
+            new("Sa roštilja", "Robata na drvenom uglju",
+            [
+                new("Jakitori negima (2 kom)", "Piletina i praziluk u tare sosu", 69000, [Gluten, Soy]),
+                new("Goveđi tataki", "Kratko pečena govedina sa belim lukom, mladim lukom i ponzu sosom", 189000, [Gluten, Soy], "beef-tataki", Recommended: true),
+                new("Bakalar u misou", "Crni bakalar mariniran u misou tri dana", 289000, [Fish, Soy]),
+                new("Šitake sa žara", "Sa sojinim sosom i limunom", 59000, [Soy], Vegetarian: true, Vegan: true),
+            ]),
+            new("Ramen", "Čorba se kuva dvanaest sati",
+            [
+                new("Tonkotsu ramen", "Čorba od svinjskih kostiju sa čašuom, mariniranim jajetom, crvenim đumbirom i uljem od crnog belog luka", 139000, [Gluten, Eggs, Soy, Sesame], "tonkotsu-ramen", Recommended: true),
+                new("Šojo ramen", "Bistra pileća čorba sa sojinim sosom, piletinom i bambusom", 129000, [Gluten, Eggs, Soy, Fish]),
+                new("Ramen sa povrćem", "Miso čorba sa tofuom i povrćem", 119000, [Gluten, Soy, Sesame], Vegetarian: true, Vegan: true),
+            ]),
+            new("Dezerti", null,
+            [
+                new("Sakura moći", "Pirinčani kolačići sa pastom od crvenog pasulja, u listu trešnje", 49000, [], "sakura-mochi", Vegetarian: true, Vegan: true, GlutenFree: true),
+                new("Sladoled od matče", null, 45000, [Milk], Vegetarian: true, GlutenFree: true),
+                new("Juzu šerbet", null, 42000, [], Vegetarian: true, Vegan: true, GlutenFree: true),
+            ]),
+        ],
         ["cafe-morgenrot"] =
         [
             new("Frühstück", "Den ganzen Tag, von 8 bis 16:30 Uhr",

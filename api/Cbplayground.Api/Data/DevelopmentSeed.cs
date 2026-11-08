@@ -344,6 +344,15 @@ public static class DevelopmentSeed
             Branding: new("#b5532f", ThemeMode.Light, FontStyle.Classic, "il-faro-logo.png", "il-faro-cover.jpg"),
             Gallery:
             [
+                new("il-faro-gallery-fresh-pasta.jpg", "Tagliatelle, jeden Morgen frisch von Hand"),
+                new("il-faro-gallery-pizza.jpg", "Pizza Margherita aus dem Holzofen"),
+                new("il-faro-gallery-antipasti.jpg", "Antipasti und Bruschetta zum Start"),
+                new("il-faro-gallery-speicherstadt.jpg", "Die Speicherstadt zur blauen Stunde, ein paar Minuten entfernt"),
+                new("il-faro-gallery-aperitivo.jpg", "Aperitivo mit Orange"),
+                new("il-faro-gallery-pizza-oven.jpg", "Unser Holzofen"),
+                new("il-faro-gallery-lemons.jpg", "Zitronen, wie sie in Apulien wachsen"),
+                new("il-faro-gallery-espresso.jpg", "Ein Espresso zum Schluss"),
+                new("il-faro-gallery-olive-oil.jpg", "Olivenöl von befreundeten Erzeugern"),
             ],
             // Two tables for 4 pushed together for a group of up to 8.
             Combinations: [new("Sala", ["2", "3"])]),
@@ -467,6 +476,15 @@ public static class DevelopmentSeed
             Branding: new("#c0313a", ThemeMode.Dark, FontStyle.Urban, "izakaya-kaze-logo.png", "izakaya-kaze-cover.jpg"),
             Gallery:
             [
+                new("izakaya-kaze-gallery-nigiri.jpg", "Nigiri od ribe koja stiže dva puta nedeljno"),
+                new("izakaya-kaze-gallery-yakitori.jpg", "Jakitori sa piletinom i prazilukom"),
+                new("izakaya-kaze-gallery-lanterns.jpg", "Papirne lampe uveče"),
+                new("izakaya-kaze-gallery-tempura.jpg", "Tempura sa škampima i šisoom"),
+                new("izakaya-kaze-gallery-gyoza.jpg", "Gjoze iz tiganja"),
+                new("izakaya-kaze-gallery-belgrade.jpg", "Brankov most noću, deset minuta od nas"),
+                new("izakaya-kaze-gallery-cocktail.jpg", "Koktel sa japanskim viskijem"),
+                new("izakaya-kaze-gallery-hands.jpg", "Vagaši, japanski slatkiši oblikovani rukom"),
+                new("izakaya-kaze-gallery-shochu.jpg", "Šoču sa ledom"),
             ],
             // Two tables for 4 pushed together for a group of up to 8.
             Combinations: [new("Sala", ["2", "3"])]),

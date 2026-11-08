@@ -567,7 +567,7 @@
       },
       "floorPlan": {
         "title": "Prostor sa tlocrtom",
-        "description": "Prostor, npr. sala, sa otpremljenim tlocrtom."
+        "description": "Prostor, npr. sala, sa otpremljenim tlocrtom ili kao nacrtana prostorija sa stolovima."
       },
       "tables": {
         "title": "Stolovi",

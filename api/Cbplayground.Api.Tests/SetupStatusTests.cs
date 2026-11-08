@@ -38,6 +38,24 @@ public class SetupStatusTests(ApiFactory factory) : IClassFixture<ApiFactory>
     }
 
     [Fact]
+    public async Task A_drawn_room_with_a_table_counts_as_an_area_with_a_floor_plan()
+    {
+        // A restaurant of its own, so the other tests of this class keep theirs as they expect them.
+        var restaurant = await TestRestaurants.CreateAsync(factory, []);
+        using var client = await TestRestaurants.SignInAsync(factory, restaurant.AdminEmail);
+        var area = (await (await client.PostAsJsonAsync("/api/admin/areas", new { name = "Bašta" }, Ct)).Content.ReadFromJsonAsync<AreaResponse>(Ct))!;
+        Assert.Null(area.FloorPlanUrl);
+        Assert.False((await StatusAsync(client)).FloorPlan);
+
+        var table = (await (await client.PostAsJsonAsync("/api/admin/tables", new { areaId = area.Id, number = "B1", seats = 4 }, Ct)).Content.ReadFromJsonAsync<TableResponse>(Ct))!;
+        Assert.True((await StatusAsync(client)).FloorPlan);
+
+        // Without its table the drawn room no longer counts.
+        Assert.Equal(HttpStatusCode.NoContent, (await client.DeleteAsync($"/api/admin/tables/{table.Id}", Ct)).StatusCode);
+        Assert.False((await StatusAsync(client)).FloorPlan);
+    }
+
+    [Fact]
     public async Task Each_step_is_done_once_its_data_is_saved_and_open_again_when_it_is_removed()
     {
         using var client = await LoginAsync("admin@zur-linde.test");

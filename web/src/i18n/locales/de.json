@@ -555,7 +555,7 @@
       },
       "floorPlan": {
         "title": "Bereich mit Grundriss",
-        "description": "Ein Bereich, z. B. die Gaststube, mit hochgeladenem Grundriss."
+        "description": "Ein Bereich, z. B. die Gaststube, mit hochgeladenem Grundriss oder als gezeichneter Raum mit Tischen."
       },
       "tables": {
         "title": "Tische",

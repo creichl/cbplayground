@@ -332,8 +332,8 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(1, (await guest.GetFromJsonAsync<List<TenantEndpoints.TenantListItem>>("/api/tenants", Ct))!.Count(t => t.Slug == demo.Slug));
 
         using var admin = await DemoLoginAsync($"admin@{demo.Slug}.local");
-        var status = (await admin.GetFromJsonAsync<SetupStatusResponse>("/api/admin/setup-status", Ct))!;
-        Assert.Equal(new SetupStatusResponse(true, true, true, status.FloorPlan, true, true), status);
+        // Complete: the drawn rooms with their tables count as areas with a floor plan.
+        Assert.Equal(new SetupStatusResponse(true, true, true, true, true, true), await admin.GetFromJsonAsync<SetupStatusResponse>("/api/admin/setup-status", Ct));
 
         // Two drawn rooms without floor plan image, each with its real width, a photo and a description, 8 to 14 tables of mixed size
         // that lie within the room without overlapping and keep away from its elements; the large ones are for groups online.
