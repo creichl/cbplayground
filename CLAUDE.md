@@ -25,7 +25,9 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   `table-choice-ux.spec.ts` (choosing a table: feedback on tap, zoom, areas, "No preference", keyboard, less motion),
   `booking-dialog.spec.ts` (the booking dialog's frame and its change of size, Back, the hold and its countdown, a table
   taken meanwhile, the contact form, the embed's inline steps), `booking-card.spec.ts` (the reservation card: party
-  size chips, date strip, times kept while loading, taken and scarce times, alternatives of a fully booked day, the embed).
+  size chips, date strip, times kept while loading, taken and scarce times, alternatives of a fully booked day, the embed), `guest-change.spec.ts` (after booking: changing the time on "Your reservation", the remembered
+  booking's notice on the restaurant page, the calendar and share menus, a change in request mode and the guest's entry in
+  the staff's history).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
   with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
   width, tables, archived tables), `pacing.spec.ts`, `reports.spec.ts` (reports page), `superadmin.spec.ts`,
@@ -84,8 +86,8 @@ the web frontend again after every change to it): `npx playwright test`, or one 
 
 The tests run in English (`locale: 'en-US'`) against the demo data of the development seed, with one browser at a time,
 so the run fits in the agent container's memory (2 GB). `.connbridge/autotest.json` runs the same script for the review
-packages, within 20 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
-the tests about 15 minutes. Keep new tests short: one page per state, several checks on it, instead of a page load per check.
+packages, within 25 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
+the tests about 16 minutes. Keep new tests short: one page per state, several checks on it, instead of a page load per check.
 
 ## Working in parallel and merging
 

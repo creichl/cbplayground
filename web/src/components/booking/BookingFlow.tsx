@@ -8,6 +8,7 @@ import { Card } from '../../ui/card.tsx'
 import { Dialog, DialogContent } from '../../ui/dialog.tsx'
 import { Sheet, SheetContent } from '../../ui/sheet.tsx'
 import { BookingSteps } from './BookingSteps.tsx'
+import { RememberedBookingNotice } from './RememberedBookingNotice.tsx'
 import { ReservationCard } from './ReservationCard.tsx'
 import { timeChipAttribute } from './TimeSlotGrid.tsx'
 import { useBookingFlow } from './useBookingFlow.ts'
@@ -95,6 +96,7 @@ function Booking({ slug, restaurant, timeZoneId, inline, className }: Required<O
   if (inline) {
     return (
       <div className={className}>
+        <RememberedBookingNotice slug={slug} newTab className="mb-4" />
         <ReservationCard ref={cardRef} slug={slug} restaurant={restaurant} flow={flow} />
         {/* The main buttons stay below the step: a bar at the bottom of the screen does not work in an iframe that grows with its content. */}
         {flow.dialogOpen && (
@@ -111,6 +113,7 @@ function Booking({ slug, restaurant, timeZoneId, inline, className }: Required<O
 
   return (
     <>
+      <RememberedBookingNotice slug={slug} className="mb-4" />
       <ReservationCard ref={cardRef} slug={slug} restaurant={restaurant} flow={flow} className={className} />
       {wide ? (
         <Dialog open={flow.dialogOpen} onOpenChange={onOpenChange}>

@@ -2,7 +2,7 @@ import { CalendarXIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react'
 import type { ParseKeys } from 'i18next'
 import { type MouseEvent, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { type Availability, type AvailabilityTime, useAvailabilities, useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
+import { type Availability, type AvailabilityTime, type ExcludedReservation, useAvailabilities, useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
 import { formatLongDate, formatShortDate, formatTime, periodLabel } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
@@ -28,6 +28,8 @@ type TimeSlotGridProps = {
   onChangeGuests: (guests: number) => void
   /** A time on another day, from the alternatives of a fully booked day; `combined` as the time's. */
   onChooseDayAndTime: (date: string, time: string, combined: boolean) => void
+  /** The guest's own reservation, which a change leaves out of the free times. */
+  exclude?: ExcludedReservation
 }
 
 /** The attribute of a time chip, by which the focus finds it again when the booking dialog closes. */
@@ -103,10 +105,10 @@ function usePulseThenChoose() {
  * a time pulses its chip and then opens the booking dialog. A fully booked day offers alternatives instead (FullDay).
  */
 export function TimeSlotGrid(props: TimeSlotGridProps) {
-  const { slug, date, guests, value, waiting = false, earliestStart, notice, onChange } = props
+  const { slug, date, guests, value, waiting = false, earliestStart, notice, onChange, exclude } = props
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
-  const availability = useAvailability(slug, date, guests, true, true)
+  const availability = useAvailability(slug, date, guests, true, true, exclude)
   const { picked, pick } = usePulseThenChoose()
   const timesRef = useRef<HTMLDivElement>(null)
   // The times drawn: those of another day or party size take their place through a layout transition.
@@ -256,17 +258,18 @@ function FullDay({
   availability,
   onChangeGuests,
   onChooseDayAndTime,
+  exclude,
   picked,
   pick,
 }: TimeSlotGridProps & { availability: Availability } & ReturnType<typeof usePulseThenChoose>) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const { date, guests } = availability
-  const nextFreeDays = useNextFreeDays(slug, date, maxDate, guests, true)
+  const nextFreeDays = useNextFreeDays(slug, date, maxDate, guests, true, exclude)
   const days = nextFreeDays.days.slice(0, alternativeDays)
-  const dayTimes = useAvailabilities(slug, days.map((day) => ({ date: day, guests })))
+  const dayTimes = useAvailabilities(slug, days.map((day) => ({ date: day, guests })), exclude)
   const smallerSizes = [guests - 1, guests - 2].filter((size) => size >= 1)
-  const smaller = useAvailabilities(slug, smallerSizes.map((size) => ({ date, guests: size })))
+  const smaller = useAvailabilities(slug, smallerSizes.map((size) => ({ date, guests: size })), exclude)
   // The largest smaller party with a free time on this day.
   const smallerIndex = smaller.findIndex((result) => freeTimes(result.data, earliestStart).length > 0)
   const smallerFree = smallerIndex === -1 ? [] : freeTimes(smaller[smallerIndex].data, earliestStart).slice(0, alternativeTimes)

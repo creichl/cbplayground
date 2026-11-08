@@ -19,7 +19,7 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the online booking, see Program.cs.</summary>
     public const string BookingRateLimitPolicy = "public-booking";
 
-    /// <summary>The rate limiter policy of the guest's reservation link (view and cancel), with the limit of the booking; see Program.cs.</summary>
+    /// <summary>The rate limiter policy of the guest's reservation link (view, change and cancel), with the limit of the booking; see Program.cs.</summary>
     public const string ManageRateLimitPolicy = "public-manage";
 
     /// <summary>The rate limiter policy of the calendar, the availability, the tables and the holds, see Program.cs.</summary>
@@ -163,7 +163,8 @@ public static class PublicRestaurantEndpoints
 
     /// <summary>
     /// A reservation as the guest sees it through the link. <see cref="CanCancel"/> tells whether the guest can still cancel it
-    /// (<see cref="ReservationRules.CanGuestCancel"/>). <see cref="TableNumber"/> is the joined label of <see cref="TableNumbers"/>, e.g. "4 + 5".
+    /// (<see cref="ReservationRules.CanGuestCancel"/>), <see cref="CanChange"/> whether they can still change its day, time and party
+    /// size (<see cref="ReservationRules.CanGuestChange"/>). <see cref="TableNumber"/> is the joined label of <see cref="TableNumbers"/>, e.g. "4 + 5".
     /// </summary>
     public record GuestReservationResponse(
         string ReferenceCode,
@@ -179,10 +180,19 @@ public static class PublicRestaurantEndpoints
         IReadOnlyList<string> TableNumbers,
         string Name,
         bool CancelledByGuest,
-        bool CanCancel);
+        bool CanCancel,
+        bool CanChange);
 
     /// <summary>The guest cancels with the token of the link. Errors: 404 (wrong code or token), 409 "cancellation_not_possible".</summary>
     public record CancelRequest(string? Token);
+
+    /// <summary>
+    /// The guest changes the day, time and party size with the token of the link; <see cref="Date"/> is "YYYY-MM-DD", <see cref="Time"/>
+    /// "HH:mm". Errors: 404 (wrong code or token), 409 "change_not_possible", and those of the booking: (400) "invalid_date",
+    /// "invalid_time", "invalid_party_size", "outside_opening_hours", "too_short_notice", "too_far_ahead", "in_the_past"; (409)
+    /// "slot_unavailable".
+    /// </summary>
+    public record ChangeRequest(string? Token, string? Date, string? Time, int Guests);
 
     public static void MapPublicRestaurantEndpoints(this IEndpointRouteBuilder app)
     {
@@ -248,7 +258,10 @@ public static class PublicRestaurantEndpoints
         });
 
         // One entry per day of the month. Days in the past and beyond the booking horizon are "closed", like closing days.
-        group.MapGet("/calendar", async (string? month, int guests, AppDbContext db, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
+        // With exclude (a reference code) and the token of its link, that reservation does not count, for the guest who changes it;
+        // a wrong code or token is 404, as for the link itself.
+        group.MapGet("/calendar", async (string? month, int guests, string? exclude, string? token, AppDbContext db, IAvailabilityService availability,
+            IReservationDurationPolicy durationPolicy) =>
         {
             if (!DateOnly.TryParseExact($"{month}-01", "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var first))
             {
@@ -257,6 +270,11 @@ public static class PublicRestaurantEndpoints
             if (guests < 1)
             {
                 return Error("invalid_party_size");
+            }
+            var ignored = await ExcludedAsync(db, exclude, token);
+            if (ignored.NotFound)
+            {
+                return Results.NotFound();
             }
 
             var now = await availability.GetLocalNowAsync();
@@ -269,7 +287,7 @@ public static class PublicRestaurantEndpoints
                 var status = "closed";
                 if (today is not null && date >= today && date <= today.Value.AddDays(horizonDays))
                 {
-                    var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online);
+                    var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online, ignored.ReservationId);
                     if (periods.Count > 0)
                     {
                         status = periods.Any(p => p.Slots.Any(s => s.FreeTables.Count > 0)) ? "available" : "full";
@@ -280,15 +298,22 @@ public static class PublicRestaurantEndpoints
             return Results.Ok(days);
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
-        group.MapGet("/availability", async (DateOnly date, int guests, IAvailabilityService availability, IReservationDurationPolicy durationPolicy) =>
+        // With exclude and token as the calendar's.
+        group.MapGet("/availability", async (DateOnly date, int guests, string? exclude, string? token, AppDbContext db, IAvailabilityService availability,
+            IReservationDurationPolicy durationPolicy) =>
         {
             if (guests < 1)
             {
                 return Error("invalid_party_size");
             }
+            var ignored = await ExcludedAsync(db, exclude, token);
+            if (ignored.NotFound)
+            {
+                return Results.NotFound();
+            }
 
             var duration = await durationPolicy.GetDurationAsync(guests);
-            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online, countRemaining: true);
+            var periods = await availability.GetSlotsAsync(date, guests, duration, ReservationSource.Online, ignored.ReservationId, countRemaining: true);
             return Results.Ok(new AvailabilityResponse(date, guests, duration, periods
                 .Select(p => new AvailabilityPeriod(
                     FormatTime(p.Period.Start),
@@ -583,7 +608,109 @@ public static class PublicRestaurantEndpoints
             await db.SaveChangesAsync();
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
         }).RequireRateLimiting(ManageRateLimitPolicy);
+
+        // The guest changes the day, time and party size, until the start, under the online rules (lead time, horizon, largest party,
+        // quota, pacing, smallest party of a table, combinations, holds), without the reservation counting against itself. It keeps its
+        // tables while they still fit and are free; otherwise the system assigns them, also where the guest chose the table. In the
+        // request mode the restaurant confirms the change: the reservation is a request again. The duration follows a new party size.
+        group.MapPut("/reservations/{referenceCode}", async (string referenceCode, ChangeRequest request, AppDbContext db, IAvailabilityService availability,
+            IReservationDurationPolicy durationPolicy, TimeProvider timeProvider, CancellationToken cancellationToken) =>
+        {
+            // A wrong code or token is 404 before anything else, as for the link itself.
+            var found = await FindForGuestAsync(db, referenceCode, request.Token);
+            if (found is null)
+            {
+                return Results.NotFound();
+            }
+            if (!DateOnly.TryParseExact(request.Date, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+            {
+                return Error("invalid_date");
+            }
+            if (!TryParseTime(request.Time, allowEndOfDay: false, out var time))
+            {
+                return Error("invalid_time");
+            }
+            if (request.Guests < 1)
+            {
+                return Error("invalid_party_size");
+            }
+
+            // Checked and saved in one transaction, so a booking of the same table in between cannot slip through.
+            await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+            var reservation = await db.Reservations.Include(r => r.Tables).SingleAsync(r => r.Id == found.Id, cancellationToken);
+            if (await availability.GetLocalNowAsync(cancellationToken) is not { } localNow || !ReservationRules.CanGuestChange(reservation, localNow))
+            {
+                return ErrorResponse.Result("change_not_possible", StatusCodes.Status409Conflict);
+            }
+            var start = date.ToDateTime(time);
+            if (start == reservation.StartLocal && request.Guests == reservation.PartySize)
+            {
+                // Nothing to change.
+                return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
+            }
+
+            var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
+            await DeleteExpiredHoldsAsync(db, nowUtc, cancellationToken);
+            var duration = request.Guests == reservation.PartySize
+                ? reservation.DurationMinutes
+                : await durationPolicy.GetDurationAsync(request.Guests, cancellationToken);
+            // The first table stays the first one.
+            var currentTableIds = reservation.Tables.Select(t => t.TableId).OrderBy(t => t != reservation.TableId).ToList();
+            var check = await availability.CheckAsync(date, time, request.Guests, duration, ReservationSource.Online, currentTableIds,
+                ignoreReservationId: reservation.Id, cancellationToken: cancellationToken);
+            // Its tables no longer fit or are taken then (or are no longer a combination): the system assigns others.
+            if (check.Error is "table_unavailable" or "invalid_tables")
+            {
+                check = await availability.CheckAsync(date, time, request.Guests, duration, ReservationSource.Online, null,
+                    ignoreReservationId: reservation.Id, cancellationToken: cancellationToken);
+            }
+            if (check.Table is not { } table)
+            {
+                return CheckError(check.Error!);
+            }
+
+            var before = ReservationHistory.Snapshot(reservation, await TableLabelAsync(db, currentTableIds, cancellationToken));
+            var tableIds = table.TableIds.All(currentTableIds.Contains) && table.TableIds.Count == currentTableIds.Count ? currentTableIds : table.TableIds.ToList();
+            reservation.TableId = tableIds[0];
+            reservation.Tables.RemoveAll(t => !tableIds.Contains(t.TableId));
+            reservation.Tables.AddRange(tableIds.Where(id => reservation.Tables.All(t => t.TableId != id)).Select(id => new ReservationTable { TableId = id }));
+            reservation.StartLocal = start;
+            reservation.EndLocal = start.AddMinutes(duration);
+            reservation.DurationMinutes = duration;
+            reservation.PartySize = request.Guests;
+            if ((await LoadSettingsAsync(db)).ConfirmationMode == ConfirmationMode.Request)
+            {
+                reservation.Status = ReservationStatus.Requested;
+                reservation.WasRequested = true;
+            }
+            reservation.UpdatedAtUtc = nowUtc;
+            ReservationHistory.Record(db, reservation, ReservationEventKind.Updated, ReservationEditor.Guest, nowUtc,
+                ReservationHistory.Changes(before, ReservationHistory.Snapshot(reservation, await TableLabelAsync(db, tableIds, cancellationToken))));
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
+        }).RequireRateLimiting(ManageRateLimitPolicy);
     }
+
+    /// <summary>
+    /// The reservation that the free days and times leave out (<c>exclude</c> and <c>token</c> of the calendar and the availability):
+    /// none without <paramref name="exclude"/>; <see cref="Excluded.NotFound"/> for a wrong code or token.
+    /// </summary>
+    private static async Task<Excluded> ExcludedAsync(AppDbContext db, string? exclude, string? token)
+    {
+        if (string.IsNullOrEmpty(exclude))
+        {
+            return new Excluded(null, false);
+        }
+        var reservation = await FindForGuestAsync(db, exclude, token);
+        return new Excluded(reservation?.Id, reservation is null);
+    }
+
+    private record Excluded(Guid? ReservationId, bool NotFound);
+
+    /// <summary>The numbers of the tables as the history shows them: "4", or "4 + 5" for a combination.</summary>
+    private static async Task<string> TableLabelAsync(AppDbContext db, IReadOnlyCollection<Guid> tableIds, CancellationToken cancellationToken) =>
+        AvailabilityService.CombinedLabel(StaffReservationEndpoints.InNumberOrder(await db.Tables.Where(t => tableIds.Contains(t.Id)).ToListAsync(cancellationToken)));
 
     /// <summary>
     /// The endpoint filter of the routes under <c>/api/public/restaurants/{slug}</c>: sets the restaurant of the slug as the
@@ -679,7 +806,8 @@ public static class PublicRestaurantEndpoints
             tables.Select(t => t.Number).ToList(),
             reservation.GuestName,
             reservation.CancelledByGuest,
-            now is not null && ReservationRules.CanGuestCancel(reservation, now.Value));
+            now is not null && ReservationRules.CanGuestCancel(reservation, now.Value),
+            now is not null && ReservationRules.CanGuestChange(reservation, now.Value));
     }
 
     /// <summary>Deletes the expired holds of the current restaurant; they are ignored everywhere already.</summary>
