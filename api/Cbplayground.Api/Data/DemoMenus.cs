@@ -140,6 +140,45 @@ public static class DemoMenus
                 new("Blaufränkisch, 1/8", "Mittelburgenland", 950, [Sulphites], Vegan: true, GlutenFree: true),
             ]),
         ],
+        ["cafe-morgenrot"] =
+        [
+            new("Frühstück", "Den ganzen Tag, von 8 bis 16:30 Uhr",
+            [
+                new("Butter-Croissant", "Frisch aus dem Ofen, mit Butter und hausgemachter Marillenmarmelade", 390, [Gluten, Eggs, Milk], "croissant", Vegetarian: true),
+                new("Wiener Frühstück", "Semmel, Kipferl, Butter, Marmelade und eine Melange", 890, [Gluten, Milk], Vegetarian: true),
+                new("Eierspeise auf Bauernbrot", "Drei Eier vom Hof, mit Schnittlauch", 950, [Gluten, Eggs, Milk], Vegetarian: true),
+                new("Chia-Joghurt-Bowl", "Joghurt mit Chia, Banane, Kiwi, Erdbeeren und Brombeeren", 980, [Milk], "chia-bowl", Vegetarian: true, GlutenFree: true),
+                new("Porridge mit Hafermilch", "Mit Apfel, Zimt und gerösteten Walnüssen", 850, [Gluten, Nuts], Vegetarian: true, Vegan: true),
+            ]),
+            new("Brunch-Klassiker", "Ab 11 Uhr",
+            [
+                new("Shakshuka", "Vier Eier in würziger Paradeiser-Paprika-Sauce aus der Pfanne, mit Basilikum und Sauerteigbrot", 1390, [Gluten, Eggs], "shakshuka", Vegetarian: true, Spicy: true, Recommended: true),
+                new("Eggs Benedict", "Pochierte Eier mit Sauce hollandaise und Beinschinken auf Toast, dazu Blattsalat", 1450, [Gluten, Eggs, Milk, Mustard], "eggs-benedict"),
+                new("French Toast", "Mit Ricotta, frischen Beeren, Granatapfel und essbaren Blüten", 1250, [Gluten, Eggs, Milk], "french-toast", Vegetarian: true, Recommended: true),
+                new("Waffel mit Joghurt und Beeren", "Belgische Waffel mit Joghurt, Heidelbeeren, Erdbeeren und Granola", 1190, [Gluten, Eggs, Milk], "waffles", Vegetarian: true),
+                new("Toast-Sandwich", "Getoastet, mit Schinken, Käse, Ei, Paradeiser und Salat", 1050, [Gluten, Eggs, Milk, Mustard], "sandwich"),
+                new("Avocado-Brot", "Vollkornbrot mit Avocado, Rosmarin, Sesam und Zitrone", 1090, [Gluten, Sesame], Vegetarian: true, Vegan: true),
+            ]),
+            new("Kuchen & Süßes", "Aus der eigenen Backstube",
+            [
+                new("Schokoladentorte", "Drei Schichten dunkle Schokolade mit Glasur", 520, [Gluten, Eggs, Milk], "chocolate-cake", Vegetarian: true),
+                new("Marillenkuchen", "Mit Marillen aus der Wachau und Staubzucker", 480, [Gluten, Eggs, Milk], Vegetarian: true, Recommended: true),
+                new("Topfenstrudel", "Warm, mit Vanillesauce", 520, [Gluten, Eggs, Milk], Vegetarian: true),
+                new("Veganer Kuchen der Woche", "Fragen Sie uns, was heute in der Vitrine steht", 490, [Gluten], Vegetarian: true, Vegan: true),
+            ]),
+            new("Kaffee & Tee", "Hafer- und Sojamilch ohne Aufpreis",
+            [
+                new("Melange", null, 420, [Milk], Vegetarian: true, GlutenFree: true),
+                new("Cappuccino", null, 410, [Milk], Vegetarian: true, GlutenFree: true),
+                new("Espresso", null, 290, [], Vegan: true, GlutenFree: true),
+                new("Chai Latte", "Mit Gewürzen und Honig", 450, [Milk], Vegetarian: true, GlutenFree: true),
+            ]),
+            new("Säfte", null,
+            [
+                new("Frisch gepresster Orangensaft 0,25 l", null, 450, [], Vegan: true, GlutenFree: true),
+                new("Holundersaft gespritzt 0,5 l", "Hausgemacht, mit Soda", 390, [], Vegan: true, GlutenFree: true),
+            ]),
+        ],
     };
 
     /// <summary>

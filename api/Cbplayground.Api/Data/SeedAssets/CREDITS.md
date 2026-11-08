@@ -15,7 +15,7 @@ or Envato, nothing of unclear licence, no logos or brands of others.
 
 ## Materials, models and fonts used in the floor plans and logos
 
-All retrieved on 2026-11-01.
+All retrieved on 2026-11-01; the fonts of the logos of Trattoria Il Faro, Café Morgenrot and Izakaya Kaze (Playfair Display, Source Sans 3, Inter, Montserrat) on 2026-11-08.
 
 Materials from ambientCG (https://ambientcg.com), author ambientCG (Lennart Demes), licence CC0 1.0
 (https://docs.ambientcg.com/license/), each the 1K JPG set (colour, normal and roughness maps), page `https://ambientcg.com/view?id=<name>`:
@@ -47,10 +47,11 @@ Models from Poly Haven (https://polyhaven.com), licence CC0 1.0 (https://polyhav
 
 Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font License 1.1 (https://openfontlicense.org):
 
-- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop (set with Pillow), logo of Rooftop Belvedere
+- Montserrat (Julieta Ulanovsky and contributors): label "Blick auf den Stephansdom" on the Rooftop (set with Pillow), logos of Rooftop Belvedere and Izakaya Kaze
 - Cormorant Garamond (Christian Thalmann): logo of Rooftop Belvedere
 - Merriweather (Sorkin Type): logo of Gasthaus zur Linde
-- Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logo of Kafana Dunav
+- Playfair Display (Claus Eggers Sørensen) and Source Sans 3 (Paul D. Hunt): logos of Kafana Dunav and Trattoria Il Faro
+- Inter (Rasmus Andersson): logo of Café Morgenrot
 
 ## `gaststube.webp`
 
@@ -627,3 +628,309 @@ Fonts from Google Fonts (https://fonts.google.com), licence SIL Open Font Licens
 - Licence: CC0 1.0
 - Retrieved: 2026-11-07
 - Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `zur-linde-gallery-maibaum.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: blue-and-white Bavarian maypole with carved guild figures against a blue sky with clouds (Gelting, Upper Bavaria)
+- Source: https://commons.wikimedia.org/wiki/File:Maibaum_Gelting.jpg
+- Photographer: Edelmauswaldgeist
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `zur-linde-gallery-frauenkirche.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: the twin towers of the Frauenkirche in Munich with their green onion domes, seen from Marienplatz on a bright overcast day
+- Source: https://commons.wikimedia.org/wiki/File:2019-11-16,_T%C3%BCrme,_M%C3%BCnchner_Frauenkirche,_IMG_7470_edit_Christoph_Braun.JPG
+- Photographer: Christoph Braun
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `zur-linde-gallery-laugensemmeln.jpg`
+
+- Motif: Gallery of Gasthaus zur Linde: freshly baked pretzel rolls (Laugensemmeln) with coarse salt on a dark baking tray
+- Source: https://commons.wikimedia.org/wiki/File:%D0%91%D0%B0%D0%B2%D0%B0%D1%80%D1%81%D0%BA%D0%B8_%D0%BB%D0%B5%D0%BF%D1%87%D0%B8%D1%9A%D0%B0.jpg ("Баварски лепчиња")
+- Photographer: Gordana Adzieva
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-novi-sad.jpg`
+
+- Motif: Gallery of Kafana Dunav: view from Petrovaradin Fortress over the Danube, the Varadin Bridge and Novi Sad on a sunny spring day
+- Source: https://commons.wikimedia.org/wiki/File:Varadinski_most_u_Novom_Sadu_2022.jpg
+- Photographer: Imeao
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-kafa.jpg`
+
+- Motif: Gallery of Kafana Dunav: copper džezva with freshly brewed coffee and a white cup on a blue plate, seen from above
+- Source: https://commons.wikimedia.org/wiki/File:Caf%C3%A9_grec_%C3%A0_Almyrida_(1).jpg
+- Photographer: Benoît Prieur
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, label of a sugar sachet blurred, saved as JPEG
+
+## `kafana-dunav-gallery-baklava.jpg`
+
+- Motif: Gallery of Kafana Dunav: rows of baklava rolls with sour cherries, glazed with syrup, in the tray
+- Source: https://commons.wikimedia.org/wiki/File:%D0%91%D0%B0%D0%BA%D0%BB%D0%B0%D0%B2%D0%B0_%D1%81%D0%BE_%D0%B2%D0%B8%D1%88%D0%BD%D0%B0.jpg ("Баклава со вишна")
+- Photographer: Lili Arsova
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `kafana-dunav-gallery-gibanica.jpg`
+
+- Motif: Gallery of Kafana Dunav: a whole golden-baked gibanica (cheese pie of filo pastry) in a round baking dish, seen from above
+- Source: https://commons.wikimedia.org/wiki/File:Gibanica_februar_26.jpg
+- Photographer: Biljana Milenković SD
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-stephansdom.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: the patterned tiled roof and the south tower of St. Stephen's Cathedral in Vienna, lit at night against a black sky
+- Source: https://commons.wikimedia.org/wiki/File:Stephansdom_Wien_at_night_2022-08-08_01.jpg
+- Photographer: Leonhard Lenz
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-belvedere.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: the Upper Belvedere in Vienna lit at night with festive star lights, mirrored in the pond, no people
+- Source: https://commons.wikimedia.org/wiki/File:Belvedere_Palace_1.jpg
+- Photographer: Dimitry Anikin
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-dessert.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: plated dessert of fresh berries, chocolate quenelle, crumble, a caramel flower and lemon basil on a dark stoneware plate
+- Source: https://commons.wikimedia.org/wiki/File:Dessert_for_Chef%27s_table,_Mainz.jpg
+- Photographer: Gerda Arendt
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `rooftop-belvedere-gallery-dj.jpg`
+
+- Motif: Gallery of Rooftop Belvedere: close-up of a DJ deck with jog wheel and glowing buttons in the dark, no people
+- Source: https://commons.wikimedia.org/wiki/File:DJ_turntable_in_close-up_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/JiSNvVs3keU (under CC0 at the time)
+- Photographer: Dan Stark dan_stark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-cover.jpg`
+
+- Motif: Cover image of Café Morgenrot: brunch table from above: porridge and yoghurt bowls with berries, waffles with honeycomb, a cup of tea, milk jugs and honey on white marble
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_on_the_Veranda_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/HlNcigvUi4Q (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 2000 × 1125, saved as JPEG
+
+## `cafe-morgenrot-cafe-photo.jpg`
+
+- Motif: Area "Café" of Café Morgenrot: bright café room with tall arched windows onto green trees, a leather bench, wooden tables with small succulents and copper pendant lamps
+- Source: https://commons.wikimedia.org/wiki/File:Arched_café_windows_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/ACtEE_FcaRU (under CC0 at the time)
+- Photographer: The Anchor anchorcoffee
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, window decals (logo and lettering) blurred, saved as JPEG
+
+## `cafe-morgenrot-gastgarten-photo.jpg`
+
+- Motif: Area "Gastgarten" of Café Morgenrot: garden café courtyard with wooden folding chairs and round tables under a large tree
+- Source: https://commons.wikimedia.org/wiki/File:Schillerhaus_Rudolstadt,_Garten_04.jpg
+- Photographer: Catatine
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped, scaled to 1200 × 800, saved as JPEG
+
+## `cafe-morgenrot-gallery-cappuccino.jpg`
+
+- Motif: Gallery of Café Morgenrot: cappuccino with latte art in a white cup on a saucer
+- Source: https://commons.wikimedia.org/wiki/File:Latte_art_on_cappuccino_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/tZKwLRO904E (under CC0 at the time)
+- Photographer: Drew Coffman drewcoffman
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-pancakes.jpg`
+
+- Motif: Gallery of Café Morgenrot: stack of pancakes with strawberries, blueberries and syrup on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Pancakes_with_Berries_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/odouHPr0Lqw (under CC0 at the time)
+- Photographer: Herson Rodriguez hero
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-brunch.jpg`
+
+- Motif: Gallery of Café Morgenrot: friends sharing brunch at a round table, seen from above (hands only)
+- Source: https://commons.wikimedia.org/wiki/File:Brunching_with_Friends_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/y3aP9oo9Pjc (under CC0 at the time)
+- Photographer: Ali Inay inayali
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-avocado-toast.jpg`
+
+- Motif: Gallery of Café Morgenrot: avocado toasts with avocado roses, rosemary and sesame on a blue stone surface
+- Source: https://commons.wikimedia.org/wiki/File:Avocado_Rose_Toast_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/k4116JZ07S0 (under CC0 at the time)
+- Photographer: Brenda Godinez cravethebenefits
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-bakery.jpg`
+
+- Motif: Gallery of Café Morgenrot: rustic breads in baskets behind a bakery counter window with handwritten price cards
+- Source: https://commons.wikimedia.org/wiki/File:Fresh_Bread_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/Mvz8Xfy3TPU (under CC0 at the time)
+- Photographer: Roman Kraft romankraft
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-uhrturm.jpg`
+
+- Motif: Gallery of Café Morgenrot: the Uhrturm (clock tower) on the Schlossberg in Graz in morning sun, with the rooftops of Graz behind
+- Source: https://commons.wikimedia.org/wiki/File:Uhrturm_in_Graz.jpg
+- Photographer: DJ3tausend
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-garden-morning.jpg`
+
+- Motif: Gallery of Café Morgenrot: long wooden table and stools in a garden in dappled morning light
+- Source: https://commons.wikimedia.org/wiki/File:Restaurant_Patio_Furniture_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/yEuEHQdLLEc (under CC0 at the time)
+- Photographer: rawpixel.com rawpixel
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-breakfast-table.jpg`
+
+- Motif: Gallery of Café Morgenrot: breakfast table with orange juice, a plate of sliced fruit and cherries, small toasts and a teapot
+- Source: https://commons.wikimedia.org/wiki/File:Brooke_Lark_2016_(Unsplash).jpg; originally published on Unsplash, http://unsplash.com/photos/IDTEXXXfS44 (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-gallery-apricot-jam.jpg`
+
+- Motif: Gallery of Café Morgenrot: jars of apricot jam with fresh apricots, redcurrants and a wooden spoon
+- Source: https://commons.wikimedia.org/wiki/File:Apricot_jam.jpg; originally published on Pixabay, https://pixabay.com/photo-2444752/ (under CC0 at the time)
+- Photographer: Rita
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 3:2, scaled to 1600 × 1067, saved as JPEG
+
+## `cafe-morgenrot-menu-eggs-benedict.jpg`
+
+- Motif: Menu of Café Morgenrot: eggs Benedict with hollandaise, side salad and cherry tomatoes
+- Source: https://commons.wikimedia.org/wiki/File:Eggs_Benedict_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/dKxGVeb3F2w (under CC0 at the time)
+- Photographer: Constance Chen theskyandthesea
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-shakshuka.jpg`
+
+- Motif: Menu of Café Morgenrot: shakshuka: eggs baked in tomato sauce in a pan, with bread
+- Source: https://commons.wikimedia.org/wiki/File:Shakshuka_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/2IHVVbT08f8 (under CC0 at the time)
+- Photographer: Jarosław Ceborski jarson
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-waffles.jpg`
+
+- Motif: Menu of Café Morgenrot: waffle with yoghurt, blueberries, strawberries and granola
+- Source: https://commons.wikimedia.org/wiki/File:Fruit_waffles_and_coffee_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/Wns3U-oVoLA (under CC0 at the time)
+- Photographer: Joseph Gonzalez miracletwentyone
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, side plate cut off, saved as JPEG
+
+## `cafe-morgenrot-menu-french-toast.jpg`
+
+- Motif: Menu of Café Morgenrot: French toast with cream, fresh berries and edible flowers
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_at_Dawn_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/aGjP08-HbYY (under CC0 at the time)
+- Photographer: Brooke Lark brookelark
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-sandwich.jpg`
+
+- Motif: Menu of Café Morgenrot: toasted sandwich with ham, cheese, egg, tomato and lettuce
+- Source: https://commons.wikimedia.org/wiki/File:Breakfast_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/ya5oLwJff4g (under CC0 at the time)
+- Photographer: Sofiya Levchenko sofelini
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-croissant.jpg`
+
+- Motif: Menu of Café Morgenrot: butter croissant on a plate with a knife
+- Source: https://commons.wikimedia.org/wiki/File:Croissant_-_GAIL's_2024-08-18.jpg
+- Photographer: Andy Li
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-chia-bowl.jpg`
+
+- Motif: Menu of Café Morgenrot: chia and yoghurt bowl with kiwi, blackberries, banana and strawberries, with orange juice and bread
+- Source: https://commons.wikimedia.org/wiki/File:Healthy_Trendy_Brunch_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/8manzosDSGM (under CC0 at the time)
+- Photographer: Jannis Brandt _jannis
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `cafe-morgenrot-menu-chocolate-cake.jpg`
+
+- Motif: Menu of Café Morgenrot: slice of chocolate layer cake on a white plate
+- Source: https://commons.wikimedia.org/wiki/File:Chocolate_Cake_(Unsplash).jpg; originally published on Unsplash, https://unsplash.com/photos/1Hh57OhkdCc (under CC0 at the time)
+- Photographer: Toa Heftiba heftiba
+- Licence: CC0 1.0
+- Retrieved: 2026-11-08
+- Changes: cropped to 4:3, scaled to 1200 × 900, saved as JPEG
+
+## `il-faro-logo.png`
+
+- Motif: Logo of Trattoria Il Faro: a lighthouse with its light over the waves in a terracotta circle, "Trattoria" and "Il Faro" in two lines in terracotta
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; fonts Source Sans 3, Playfair Display (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide
+
+## `cafe-morgenrot-logo.png`
+
+- Motif: Logo of Café Morgenrot: the morning sun rising out of a coffee cup in an apricot circle, "Café" and "Morgenrot" in two lines in apricot and a darker orange
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; font Inter (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide
+
+## `izakaya-kaze-logo.png`
+
+- Motif: Logo of Izakaya Kaze: three lines of wind in a deep red circle, "Izakaya" in red and "Kaze" in warm white in two lines, for a dark background
+- Source: designed for this project as SVG and rendered as PNG with resvg, transparent background; font Montserrat (see above)
+- Author: made for this project (cbplayground)
+- Licence: made for this project, without rights of others: fonts SIL Open Font License 1.1
+- Retrieved: 2026-11-08 (fonts)
+- Changes: none after rendering; cropped to the content and scaled to 800 pixels wide

@@ -21,8 +21,9 @@ namespace Cbplayground.Api.Tests;
 
 /// <summary>
 /// The demo setup of the development seed, run against the test database: its two restaurants have the demo slugs
-/// but none of the setup, like an existing development database from before the seed. The third demo restaurant,
-/// Rooftop Belvedere, does not exist yet, as in a development database from before it was added.
+/// but none of the setup, like an existing development database from before the seed. The other demo restaurants,
+/// Rooftop Belvedere, Trattoria Il Faro, Café Morgenrot and Izakaya Kaze, do not exist yet, as in a development database from
+/// before they were added.
 /// </summary>
 public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory>
 {
@@ -66,10 +67,10 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
             Assert.Equal(HttpStatusCode.OK, image.StatusCode);
             Assert.Equal("image/webp", image.Content.Headers.ContentType?.MediaType);
         }
-        // Five floor plans, logo and cover image of each of the three restaurants, a photo of each of the six areas and the
+        // Five floor plans, logo and cover image of each of the six restaurants, a photo of each of the twelve areas and the
         // gallery photos and the dish photos of the menus, copied once.
         var seedAssets = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
-        Assert.Equal(17 + Directory.GetFiles(seedAssets, "*-gallery-*").Length + Directory.GetFiles(seedAssets, "*-menu-*").Length,
+        Assert.Equal(29 + Directory.GetFiles(seedAssets, "*-gallery-*").Length + Directory.GetFiles(seedAssets, "*-menu-*").Length,
             Directory.GetFiles(factory.UploadsPath).Length);
 
         var hours = (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Ct))!;
@@ -218,17 +219,21 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.Equal(1, await db.Tenants.CountAsync(t => t.Slug == "rooftop-belvedere", Ct));
     }
 
+    /// <summary>The slugs of the six demo restaurants.</summary>
+    internal static readonly string[] DemoSlugs = ["zur-linde", "kafana-dunav", "rooftop-belvedere", "il-faro", "cafe-morgenrot", "izakaya-kaze"];
+
     [Fact]
-    public async Task Every_demo_restaurant_has_a_gallery_of_6_to_8_captioned_photos_that_guests_can_load()
+    public async Task Every_demo_restaurant_has_a_gallery_of_8_to_11_captioned_photos_that_guests_can_load()
     {
         await SeedAsync();
         await SeedAsync();
 
         using var guest = factory.CreateHttpsClient();
-        foreach (var slug in new[] { "zur-linde", "kafana-dunav", "rooftop-belvedere" })
+        foreach (var slug in DemoSlugs)
         {
             var restaurant = (await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{slug}", Ct))!;
-            Assert.InRange(restaurant.Gallery.Count, 6, 8);
+            // The first three have 10 or 11 photos, the newer ones 8 to 10.
+            Assert.InRange(restaurant.Gallery.Count, slug is "zur-linde" or "kafana-dunav" or "rooftop-belvedere" ? 10 : 8, slug is "zur-linde" or "kafana-dunav" or "rooftop-belvedere" ? 11 : 10);
             Assert.All(restaurant.Gallery, p => Assert.InRange(p.Caption?.Length ?? 0, 1, GalleryPhoto.MaxCaptionLength));
             Assert.Equal(restaurant.Gallery.Count, restaurant.Gallery.Select(p => p.Caption).Distinct().Count());
             foreach (var photo in restaurant.Gallery)
@@ -247,35 +252,141 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         var folder = Path.Combine(factory.Services.GetRequiredService<IWebHostEnvironment>().ContentRootPath, "Data", "SeedAssets");
         var files = Directory.GetFiles(folder, "*-gallery-*");
 
-        Assert.InRange(files.Length, 18, 24);
+        Assert.InRange(files.Length, 3 * 10 + 3 * 8, 3 * 11 + 3 * 10);
         Assert.All(files, f => Assert.Contains(Path.GetExtension(f), new[] { ".jpg", ".webp" }));
         Assert.All(files, f => Assert.InRange(new FileInfo(f).Length, 1, 360 * 1024));
     }
 
-    [Fact]
-    public async Task The_demo_users_of_Rooftop_Belvedere_can_sign_in()
+    /// <summary>Adds the demo users of appsettings.Development.json (the tests run in the "Testing" environment), twice.</summary>
+    private async Task SeedDevelopmentUsersAsync()
     {
-        await SeedAsync();
-        // The demo users of appsettings.Development.json (the tests run in the "Testing" environment).
         var environment = factory.Services.GetRequiredService<IWebHostEnvironment>();
         var configuration = new ConfigurationBuilder()
             .AddJsonFile(Path.Combine(environment.ContentRootPath, "appsettings.Development.json"), optional: false)
             .Build();
-        using (var scope = factory.Services.CreateScope())
-        {
-            await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, configuration);
-            await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, configuration);
-        }
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, configuration);
+        await DevelopmentSeed.SeedUsersAsync(scope.ServiceProvider, configuration);
+    }
 
-        foreach (var (email, role) in new[] { ("admin@rooftop-belvedere.local", "TenantAdmin"), ("frontdesk@rooftop-belvedere.local", "FrontDesk") })
+    private async Task<HttpClient> DemoLoginAsync(string email)
+    {
+        var client = factory.CreateHttpsClient();
+        var response = await client.PostAsJsonAsync("/api/auth/login", new { email, password = "Demo1234!" }, Ct);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        return client;
+    }
+
+    [Theory]
+    [InlineData("rooftop-belvedere")]
+    [InlineData("il-faro")]
+    [InlineData("cafe-morgenrot")]
+    [InlineData("izakaya-kaze")]
+    public async Task The_demo_users_of_the_restaurants_added_later_can_sign_in(string slug)
+    {
+        await SeedAsync();
+        await SeedDevelopmentUsersAsync();
+
+        foreach (var (email, role) in new[] { ($"admin@{slug}.local", "TenantAdmin"), ($"frontdesk@{slug}.local", "FrontDesk") })
         {
-            using var client = factory.CreateHttpsClient();
-            var response = await client.PostAsJsonAsync("/api/auth/login", new { email, password = "Demo1234!" }, Ct);
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            using var client = await DemoLoginAsync(email);
             var me = (await client.GetFromJsonAsync<AuthEndpoints.MeResponse>("/api/auth/me", Ct))!;
             Assert.Equal(role, me.Role);
-            Assert.Equal("rooftop-belvedere", me.Tenant?.Slug);
+            Assert.Equal(slug, me.Tenant?.Slug);
         }
+    }
+
+    /// <summary>A new demo restaurant and what it is expected to have.</summary>
+    public record NewDemo(string Slug, string Name, string City, string TimeZone, ConfirmationMode Confirmation, TableSelectionMode Selection,
+        string BrandColor, ThemeMode Theme, FontStyle Font, string[] Areas, RoomStyle[] RoomStyles, double[] Widths);
+
+    public static TheoryData<NewDemo> NewDemos() =>
+    [
+        new NewDemo("il-faro", "Trattoria Il Faro", "Hamburg", "Europe/Berlin", ConfirmationMode.Request, TableSelectionMode.GuestChooses,
+            "#b5532f", ThemeMode.Light, FontStyle.Classic, ["Sala", "Terrazza"], [RoomStyle.Indoor, RoomStyle.Terrace], [13, 12]),
+        new NewDemo("cafe-morgenrot", "Café Morgenrot", "Graz", "Europe/Vienna", ConfirmationMode.Instant, TableSelectionMode.SystemAssigns,
+            "#e0864a", ThemeMode.Light, FontStyle.Modern, ["Café", "Gastgarten"], [RoomStyle.Indoor, RoomStyle.Garden], [11, 12]),
+        new NewDemo("izakaya-kaze", "Izakaya Kaze", "Beograd", "Europe/Belgrade", ConfirmationMode.Instant, TableSelectionMode.GuestChooses,
+            "#c0313a", ThemeMode.Dark, FontStyle.Urban, ["Bar", "Sala"], [RoomStyle.Indoor, RoomStyle.Indoor], [10, 12]),
+    ];
+
+    [Theory]
+    [MemberData(nameof(NewDemos))]
+    public async Task The_seed_adds_the_new_demo_restaurants_completely_with_drawn_rooms(NewDemo demo)
+    {
+        await SeedAsync();
+        await SeedAsync();
+        await SeedDevelopmentUsersAsync();
+
+        using var guest = factory.CreateHttpsClient();
+        var restaurant = (await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{demo.Slug}", Ct))!;
+        Assert.Equal((demo.Name, demo.City, demo.TimeZone), (restaurant.Name, restaurant.City, restaurant.TimeZoneId));
+        Assert.All(new[] { restaurant.Street, restaurant.PostalCode, restaurant.Phone, restaurant.Email, restaurant.Website }, Assert.NotNull);
+        Assert.InRange(restaurant.Description!.Split("\n\n").Length, 3, 4);
+        Assert.Equal((demo.Confirmation, demo.Selection), (restaurant.ConfirmationMode, restaurant.TableSelectionMode));
+        Assert.True(restaurant.Bookable);
+        Assert.NotEmpty(restaurant.OpeningHours);
+        Assert.Equal((demo.BrandColor, demo.Theme, demo.Font), (restaurant.Branding.BrandColor, restaurant.Branding.ThemeMode, restaurant.Branding.FontStyle));
+        Assert.Equal("image/png", (await guest.GetAsync(restaurant.Branding.LogoUrl, Ct)).Content.Headers.ContentType?.MediaType);
+        Assert.Equal("image/jpeg", (await guest.GetAsync(restaurant.Branding.CoverUrl, Ct)).Content.Headers.ContentType?.MediaType);
+        Assert.Equal(1, (await guest.GetFromJsonAsync<List<TenantEndpoints.TenantListItem>>("/api/tenants", Ct))!.Count(t => t.Slug == demo.Slug));
+
+        using var admin = await DemoLoginAsync($"admin@{demo.Slug}.local");
+        var status = (await admin.GetFromJsonAsync<SetupStatusResponse>("/api/admin/setup-status", Ct))!;
+        Assert.Equal(new SetupStatusResponse(true, true, true, status.FloorPlan, true, true), status);
+
+        // Two drawn rooms without floor plan image, each with its real width, a photo and a description, 8 to 14 tables of mixed size
+        // that lie within the room without overlapping and keep away from its elements; the large ones are for groups online.
+        var areas = (await admin.GetFromJsonAsync<List<AreaResponse>>("/api/admin/areas", Ct))!;
+        Assert.Equal(demo.Areas, areas.Select(a => a.Name));
+        Assert.Equal(demo.RoomStyles, areas.Select(a => a.RoomStyle));
+        Assert.Equal(demo.Widths, areas.Select(a => a.WidthMeters ?? 0));
+        var tables = (await admin.GetFromJsonAsync<List<TableResponse>>("/api/admin/tables", Ct))!;
+        foreach (var area in areas)
+        {
+            Assert.Null(area.FloorPlanUrl);
+            Assert.Equal(TableLayout.RealSizeScale(area.WidthMeters!.Value), area.TableScale);
+            Assert.InRange(area.Description?.Length ?? 0, 1, Area.MaxDescriptionLength);
+            Assert.Equal("image/jpeg", (await guest.GetAsync(area.PhotoUrl, Ct)).Content.Headers.ContentType?.MediaType);
+            var areaTables = tables.Where(t => t.AreaId == area.Id).ToList();
+            Assert.InRange(areaTables.Count, 8, 14);
+            Assert.All(areaTables, t => Assert.Equal(t.Seats switch { >= 8 => 5, >= 6 => 3, _ => 1 }, t.MinGuests));
+            AssertArrangedWithoutOverlap(areaTables.Select(t => (t.Number, t.Shape, t.Seats, t.Rotation, t.PosX, t.PosY)).ToList(), area.TableScale);
+            var room = (await admin.GetFromJsonAsync<RoomResponse>($"/api/admin/areas/{area.Id}/room", Ct))!;
+            Assert.Single(room.Elements, e => e.Kind == RoomElementKind.Entrance);
+            AssertClearOfElements(areaTables, room.Elements, area.TableScale);
+        }
+        Assert.True(tables.Select(t => t.Seats).Distinct().Count() >= 3);
+
+        // The gallery, the menu and the details.
+        Assert.InRange(restaurant.Gallery.Count, 8, 10);
+        Assert.InRange(restaurant.Faq.Count, 4, 5);
+        Assert.NotNull(restaurant.PriceLevel);
+        Assert.NotEmpty(restaurant.Cuisines);
+        var menu = (await guest.GetFromJsonAsync<MenuEndpoints.PublicMenuResponse>($"/api/public/restaurants/{demo.Slug}/menu", Ct))!;
+        Assert.InRange(menu.Sections.SelectMany(s => s.Items).Count(), 18, 25);
+
+        using var frontDesk = await DemoLoginAsync($"frontdesk@{demo.Slug}.local");
+        Assert.Equal(HttpStatusCode.Forbidden, (await frontDesk.GetAsync("/api/admin/setup-status", Ct)).StatusCode);
+    }
+
+    [Fact]
+    public async Task Izakaya_Kaze_has_its_counter_seats_in_a_row_in_front_of_the_bar()
+    {
+        await SeedAsync();
+
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == "izakaya-kaze", Ct)).Id;
+        var bar = await db.Areas.SingleAsync(a => a.Name == "Bar", Ct);
+        var counter = Assert.Single(await db.RoomElements.Where(e => e.AreaId == bar.Id && e.Kind == RoomElementKind.Bar).ToListAsync(Ct));
+        var seats = (await db.Tables.Where(t => t.AreaId == bar.Id && t.Number.StartsWith("B")).ToListAsync(Ct)).OrderBy(t => t.PosX).ToList();
+        Assert.Equal(8, seats.Count);
+        Assert.All(seats, t => Assert.Equal(2, t.Seats));
+        // One row right below the counter, within its length.
+        Assert.Single(seats.Select(t => t.PosY).Distinct());
+        Assert.All(seats, t => Assert.InRange(t.PosX, counter.PosX - counter.Width / 2, counter.PosX + counter.Width / 2));
+        Assert.InRange(seats[0].PosY - (counter.PosY + counter.Height / 2), 0, 0.15);
     }
 
     [Fact]
@@ -284,7 +395,11 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         await SeedAsync();
         await SeedAsync();
 
-        foreach (var (slug, area, tables) in new[] { ("zur-linde", "Gaststube", "2 + 3"), ("kafana-dunav", "Sala", "2 + 3"), ("rooftop-belvedere", "Lounge", "L2 + L3") })
+        foreach (var (slug, area, tables) in new[]
+        {
+            ("zur-linde", "Gaststube", "2 + 3"), ("kafana-dunav", "Sala", "2 + 3"), ("rooftop-belvedere", "Lounge", "L2 + L3"),
+            ("il-faro", "Sala", "2 + 3"), ("cafe-morgenrot", "Café", "3 + 5"), ("izakaya-kaze", "Sala", "2 + 3"),
+        })
         {
             using var scope = factory.Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -312,8 +427,12 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
         Assert.All(reservations, r => Assert.Equal(r.TableId, Assert.Single(r.Tables).TableId));
     }
 
-    [Fact]
-    public async Task The_demo_reservations_cover_Rooftop_Belvedere()
+    [Theory]
+    [InlineData("rooftop-belvedere")]
+    [InlineData("il-faro")]
+    [InlineData("cafe-morgenrot")]
+    [InlineData("izakaya-kaze")]
+    public async Task The_demo_reservations_cover_the_restaurants_added_later(string slug)
     {
         await SeedAsync();
 
@@ -321,7 +440,7 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
 
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == "rooftop-belvedere", Ct)).Id;
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == slug, Ct)).Id;
         Assert.NotEmpty(await db.Reservations.ToListAsync(Ct));
     }
 
@@ -347,11 +466,11 @@ public class DevelopmentSeedTests(ApiFactory factory) : IClassFixture<ApiFactory
     }
 
     /// <summary>The tables and their chairs do not touch a blocking element or the room in front of an entrance.</summary>
-    private static void AssertClearOfElements(List<TableResponse> tables, IReadOnlyList<RoomElementResponse> elements) =>
+    private static void AssertClearOfElements(List<TableResponse> tables, IReadOnlyList<RoomElementResponse> elements, int tableScale = 100) =>
         RoomLayoutTests.AssertClearOfElements(
             tables.Select(t => new Table { Number = t.Number, Seats = t.Seats, Shape = t.Shape, Rotation = t.Rotation, PosX = t.PosX, PosY = t.PosY }),
             elements.Select(e => new RoomElement { Kind = e.Kind, PosX = e.PosX, PosY = e.PosY, Width = e.Width, Height = e.Height, Rotation = e.Rotation }),
-            100,
+            tableScale,
             TableLayout.ChairSpace);
 
     /// <summary>The tables lie completely within the plan and do not overlap each other.</summary>
@@ -541,10 +660,10 @@ public class DevelopmentSeedLostImagesTests(ApiFactory factory) : IClassFixture<
         // Every demo image once again, the second run copied nothing.
         Assert.Equal(filesBefore, Directory.GetFiles(factory.UploadsPath).Length);
         using var guest = factory.CreateHttpsClient();
-        foreach (var slug in new[] { "zur-linde", "kafana-dunav", "rooftop-belvedere" })
+        foreach (var slug in DevelopmentSeedTests.DemoSlugs)
         {
             var restaurant = (await guest.GetFromJsonAsync<PublicRestaurantEndpoints.RestaurantResponse>($"/api/public/restaurants/{slug}", Ct))!;
-            Assert.InRange(restaurant.Gallery.Count, 6, 8);
+            Assert.InRange(restaurant.Gallery.Count, 8, 11);
             var urls = new[] { restaurant.Branding.LogoUrl, restaurant.Branding.CoverUrl }
                 .Concat(restaurant.Areas.Select(a => a.PhotoUrl))
                 .Concat(restaurant.Gallery.Select(p => p.Url));
@@ -600,5 +719,65 @@ public class DevelopmentSeedLostOwnPhotoTests(ApiFactory factory) : IClassFixtur
         var after = Assert.Single((await linde.GetFromJsonAsync<List<GalleryEndpoints.GalleryPhotoResponse>>("/api/admin/gallery", Ct))!, p => p.Id == photo.Id);
         Assert.Equal(photo with { Caption = "Unser Lieblingsbild" }, after);
         Assert.Equal(HttpStatusCode.NotFound, (await linde.GetAsync(after.Url, Ct)).StatusCode);
+    }
+}
+
+/// <summary>
+/// The seed and the gallery photos added to the demo later, on a factory of its own: the photos are deleted in the database to
+/// stand for a gallery from before they were added.
+/// </summary>
+public class DevelopmentSeedGalleryUpdateTests(ApiFactory factory) : IClassFixture<ApiFactory>
+{
+    private static CancellationToken Ct => TestContext.Current.CancellationToken;
+
+    private async Task SeedAsync()
+    {
+        using var scope = factory.Services.CreateScope();
+        await DevelopmentSeed.SeedRestaurantsAsync(scope.ServiceProvider);
+    }
+
+    /// <summary>Runs <paramref name="action"/> on the database as the restaurant <paramref name="slug"/>.</summary>
+    private async Task<T> AsRestaurantAsync<T>(string slug, Func<AppDbContext, Task<T>> action)
+    {
+        using var scope = factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        scope.ServiceProvider.GetRequiredService<TenantScope>().TenantId = (await db.Tenants.SingleAsync(t => t.Slug == slug, Ct)).Id;
+        return await action(db);
+    }
+
+    private Task<List<GalleryPhoto>> GalleryAsync(string slug) =>
+        AsRestaurantAsync(slug, db => db.GalleryPhotos.OrderBy(p => p.SortOrder).AsNoTracking().ToListAsync(Ct));
+
+    /// <summary>Removes the photos after the first <paramref name="earlier"/>, as in a gallery from before they were added.</summary>
+    private Task<int> RemovePhotosAfterAsync(string slug, int earlier) =>
+        AsRestaurantAsync(slug, db => db.GalleryPhotos.Where(p => p.SortOrder >= earlier).ExecuteDeleteAsync(Ct));
+
+    [Fact]
+    public async Task A_gallery_with_exactly_the_earlier_demo_photos_gets_the_new_ones_and_a_changed_one_does_not()
+    {
+        await SeedAsync();
+        // Before this ticket the demo galleries had 7, 6 and 7 photos.
+        var lindeBefore = await GalleryAsync("zur-linde");
+        var dunavBefore = await GalleryAsync("kafana-dunav");
+        var rooftopBefore = await GalleryAsync("rooftop-belvedere");
+        Assert.All(new[] { lindeBefore, dunavBefore, rooftopBefore }, gallery => Assert.InRange(gallery.Count, 10, 11));
+        await RemovePhotosAfterAsync("zur-linde", 7);
+        await RemovePhotosAfterAsync("kafana-dunav", 6);
+        await RemovePhotosAfterAsync("rooftop-belvedere", 7);
+        // Kafana Dunav's admin gave a photo an own caption, Rooftop Belvedere's admin moved the first photo to the end.
+        await AsRestaurantAsync("kafana-dunav", db => db.GalleryPhotos.Where(p => p.SortOrder == 2).ExecuteUpdateAsync(u => u.SetProperty(p => p.Caption, "Naša omiljena slika"), Ct));
+        await AsRestaurantAsync("rooftop-belvedere", db => db.GalleryPhotos.Where(p => p.SortOrder == 0).ExecuteUpdateAsync(u => u.SetProperty(p => p.SortOrder, 7), Ct));
+
+        await SeedAsync();
+        await SeedAsync();
+
+        // Zur Linde gets the photos added later again, after the earlier ones, which stay as they are.
+        var lindeAfter = await GalleryAsync("zur-linde");
+        Assert.Equal(lindeBefore.Select(p => p.Caption), lindeAfter.Select(p => p.Caption));
+        Assert.Equal(lindeBefore.Take(7).Select(p => (p.Id, p.FileName)), lindeAfter.Take(7).Select(p => (p.Id, p.FileName)));
+        Assert.Equal(lindeAfter.Count, lindeAfter.Select(p => p.SortOrder).Distinct().Count());
+        // The changed galleries keep what the admins made of them.
+        Assert.Equal(6, (await GalleryAsync("kafana-dunav")).Count);
+        Assert.Equal(7, (await GalleryAsync("rooftop-belvedere")).Count);
     }
 }

@@ -178,7 +178,7 @@ cd api/Cbplayground.Api
 dotnet run
 ```
 
-The API listens on http://localhost:5025. In every environment it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` (and its folder) on startup and applies all migrations. In the Development environment (the default for `dotnet run`), it also sets up the three demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
+The API listens on http://localhost:5025. In every environment it creates the SQLite database `api/Cbplayground.Api/data/cbplayground.db` (and its folder) on startup and applies all migrations. In the Development environment (the default for `dotnet run`), it also sets up the six demo restaurants (see [Demo data](#demo-data)), creates the demo staff users (see below) that do not exist yet and adds demo reservations (see [Demo reservations](#demo-reservations)). The connection string is in `appsettings.json`.
 
 To start from scratch with fresh demo data, for example to see new seed content, stop the API and start it with:
 
@@ -192,7 +192,7 @@ In Development, the running API holds a lock on its database (`data/cbplayground
 
 #### Demo data
 
-In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so all three are ready to try right after the first start:
+In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo restaurants that do not exist yet (by slug) and completes their setup, so all six are ready to try right after the first start:
 
 | | Gasthaus zur Linde (`zur-linde`) | Kafana Dunav (`kafana-dunav`) | Rooftop Belvedere (`rooftop-belvedere`) |
 | --- | --- | --- | --- |
@@ -204,7 +204,7 @@ In Development only, `DevelopmentSeed.SeedRestaurantsAsync` creates the demo res
 | Area photos and descriptions | A photo and a German description for each area | A photo and a Serbian (Latin) description for each area, e.g. "Bašta u hladu lipa, pogled na Dunav" | A photo and a German description for each area |
 | Reservation settings | Instant confirmation, the system assigns tables, 1–2 guests 90 minutes, 3–6 guests 120 minutes | Request, the guest picks the table, 120 minutes | Instant confirmation, the guest picks the table, 120 minutes |
 | Branding | Light, `Rustic`, warm green `#5a7d3a`, logo and cover image | Light, `Classic`, Danube blue `#1f5f8b`, logo and cover image | Dark, `Elegant`, champagne gold `#c9a96e`, logo and cover image |
-| Photo gallery | 7 photos with German captions: Schweinsbraten, Dunkles vom Holzfass, the Stube with the tiled stove, beer garden under old trees, Weißwurst with Brezn, a Helles in the garden, Kaiserschmarrn | 6 photos with Serbian (Latin) captions: riblja čorba, mixed grill, red wine at sunset, evening on the Danube, tamburaši, a laid table | 7 photos with German captions: signature cocktails, sharing plates, the bar in the evening, Vienna at sunset, the lounge corner, champagne, the view over the roofs of Vienna |
+| Photo gallery | 10 photos with German captions: Schweinsbraten, Dunkles vom Holzfass, the Stube with the tiled stove, beer garden under old trees, Weißwurst with Brezn, a Helles in the garden, Kaiserschmarrn; added later: Laugensemmeln, the maypole, the towers of the Frauenkirche | 10 photos with Serbian (Latin) captions: riblja čorba, mixed grill, red wine at sunset, evening on the Danube, tamburaši, a laid table; added later: gibanica, Serbian coffee from the džezva, baklava with sour cherries, the view from Petrovaradin over the Danube | 11 photos with German captions: signature cocktails, sharing plates, the bar in the evening, Vienna at sunset, the lounge corner, champagne, the view over the roofs of Vienna; added later: the Stephansdom at night, a berry dessert, the DJ desk, the Upper Belvedere lit up |
 | Menu | German, in EUR: 5 sections (Brotzeit & Vorspeisen, Suppen, Hauptgerichte, Nachspeisen, Getränke), 22 dishes, 4 recommendations, 7 dish photos | Serbian (Latin), in RSD: 5 sections (Predjela, Čorbe i kuvana jela, Sa roštilja i iz Dunava, Dezerti, Pića), 25 dishes, 4 recommendations, 10 dish photos | German, in EUR: 5 sections (Zum Teilen, Hauptgerichte, Desserts, Signature-Cocktails, Champagner & Wein), 23 dishes, 4 recommendations, 10 dish photos |
 | Details and FAQ (`Data/DemoDetails.cs`) | Bavarian, €€; terrace, garden, dogs welcome, child friendly, vegetarian options, parking, card payment; house rules on the terrace and held tables; 5 German questions (dogs, children's menu, groups, parking, vegetarian dishes) | Serbian and Balkan, €€; garden, view, live music (tamburaši), child friendly, vegetarian options, card payment, Wi-Fi; 5 questions in Serbian (Latin) | Bar & cocktails and Mediterranean, €€€; rooftop, view, wheelchair accessible (lift), vegetarian and vegan options, card payment, Wi-Fi; the dress code in the house rules; 4 German questions (weather, age, lift, private events) |
 
@@ -241,7 +241,8 @@ The seed is idempotent and never overwrites what an admin maintained. For each r
 - the areas with their floor plans, rooms, tables, photos and descriptions, if there are no areas (an area without tables gets none); so an existing area never gets a room from the seed;
 - the photo and description of an existing demo area (found by its name), if it has neither;
 - the reservation settings with their duration rules and booking rules, closing days and special hours with their precedence, if they were never saved;
-- the photo gallery with its captions, if the restaurant has no gallery photos (so a restaurant whose admin deleted all of them gets the demo gallery again on the next start).
+- the photo gallery with its captions, if the restaurant has no gallery photos (so a restaurant whose admin deleted all of them gets the demo gallery again on the next start);
+- the gallery photos added to the demo later (marked `AddedLater` in `DevelopmentSeed.cs`, e.g. the 3–4 more photos of the first three restaurants), after the others, if the gallery still holds exactly the earlier demo photos: the same captions in the same order and nothing else. A gallery the admin changed in any way (a photo deleted, added, moved or captioned anew) stays as it is and gets them only after resetting the demo data.
 - the menu with its dish photos (`DemoMenus.cs`), if the restaurant has no menu sections (so a restaurant whose admin deleted all of them gets the demo menu again on the next start).
 - the details (cuisines, price level, features, house rules) and the frequently asked questions (`DemoDetails.SeedAsync`, by slug), if none of the details is set and the restaurant has no question.
 
@@ -626,8 +627,12 @@ Demo users, created in Development only (from `Seed:Users` in `appsettings.Devel
 | `frontdesk@kafana-dunav.local` | FrontDesk | Kafana Dunav |
 | `admin@rooftop-belvedere.local` | TenantAdmin | Rooftop Belvedere |
 | `frontdesk@rooftop-belvedere.local` | FrontDesk | Rooftop Belvedere |
-
-The login page of the development server does not list the two Rooftop Belvedere users yet; they sign in like the others.
+| `admin@il-faro.local` | TenantAdmin | Trattoria Il Faro |
+| `frontdesk@il-faro.local` | FrontDesk | Trattoria Il Faro |
+| `admin@cafe-morgenrot.local` | TenantAdmin | Café Morgenrot |
+| `frontdesk@cafe-morgenrot.local` | FrontDesk | Café Morgenrot |
+| `admin@izakaya-kaze.local` | TenantAdmin | Izakaya Kaze |
+| `frontdesk@izakaya-kaze.local` | FrontDesk | Izakaya Kaze |
 
 ### Opening hours and public holidays
 

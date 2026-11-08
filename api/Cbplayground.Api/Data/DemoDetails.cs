@@ -55,6 +55,48 @@ public static class DemoDetails
                 ("Gibt es einen Lift?", "Ja, ein Lift fährt vom Eingang in der Prinz-Eugen-Straße direkt auf die Dachterrasse. Die Terrasse und die Lounge sind stufenlos erreichbar."),
                 ("Kann ich die Dachterrasse für eine Feier mieten?", "Für Firmenfeiern und private Events bis 80 Personen bieten wir die ganze Terrasse exklusiv an. Schreiben Sie uns an info@rooftop-belvedere.example."),
             ]),
+        ["il-faro"] = new(
+            [Italian, Mediterranean],
+            2,
+            [Terrace, View, ChildFriendly, VegetarianOptions, GlutenFreeOptions, PrivateDining, CardPayment],
+            "Auf der Terrazza servieren wir von Mai bis September; bei Regen finden wir für Sie einen Platz in der Sala.\n"
+            + "Reservierungsanfragen bestätigen wir in der Regel innerhalb von zwei Stunden per E-Mail.\n"
+            + "Reservierte Tische halten wir 15 Minuten für Sie frei.",
+            [
+                ("Warum muss ich auf die Bestätigung warten?", "Wir schauen uns jede Anfrage selbst an, damit Sie genau den Tisch bekommen, den Sie auf dem Plan ausgesucht haben. Meist bestätigen wir innerhalb von zwei Stunden."),
+                ("Sieht man von der Terrazza das Wasser?", "Ja, von den vorderen Tischen der Terrazza blicken Sie über die Elbe auf die Kräne des Hafens. Wählen Sie diese Tische bei der Reservierung direkt auf dem Plan."),
+                ("Gibt es glutenfreie Pasta?", "Jede Pasta bereiten wir auf Wunsch mit glutenfreien Nudeln zu. Bitte sagen Sie uns bei der Reservierung Bescheid, dann ist die Küche vorbereitet."),
+                ("Kann ich die Sala für eine Feier reservieren?", "Für Feiern bis 40 Personen gehört Ihnen die ganze Sala. Wir stellen gern ein Menü mit Antipasti, Pasta und Dolci zusammen, rufen Sie uns einfach an."),
+                ("Wie komme ich zu Ihnen?", "Mit der S-Bahn bis Landungsbrücken, von dort sind es fünf Minuten zu Fuß am Wasser entlang. Autos parken am besten im Parkhaus am Hafen."),
+            ]),
+        ["cafe-morgenrot"] = new(
+            [CafeBrunch],
+            1,
+            [Garden, ChildFriendly, DogsWelcome, VegetarianOptions, VeganOptions, CardPayment, Wifi],
+            "Ein reservierter Tisch gehört Ihnen 60 Minuten, ab 5 Personen 90 Minuten; ist danach frei, bleiben Sie gern länger.\n"
+            + "Reservierte Tische halten wir 10 Minuten frei.\n"
+            + "Am Wochenende bitten wir darum, den Laptop zu Hause zu lassen.",
+            [
+                ("Bis wann gibt es Frühstück?", "Den ganzen Tag, von 8 bis 16:30 Uhr. Ab 11 Uhr kommen unsere Brunch-Klassiker und die hausgemachten Kuchen dazu."),
+                ("Gibt es veganes Frühstück?", "Ja, zum Beispiel Porridge mit Hafermilch, Avocado-Brot und einen veganen Kuchen der Woche. Hafer- und Sojamilch gibt es zu jedem Kaffee ohne Aufpreis."),
+                ("Warum ist ein Tisch nur 60 Minuten reserviert?", "Damit am Vormittag möglichst viele Gäste einen Platz bekommen. Ab 5 Personen planen wir 90 Minuten ein, und wenn nach Ihnen niemand reserviert hat, bleiben Sie natürlich länger."),
+                ("Darf mein Hund mit?", "Ja, im Café und im Gastgarten. Ein Wassernapf steht gleich beim Eingang."),
+                ("Ist der Gastgarten im Winter offen?", "Der Gastgarten hat von April bis Oktober geöffnet. In der kalten Jahreszeit reservieren Sie bitte einen Tisch im Café."),
+            ]),
+        ["izakaya-kaze"] = new(
+            [Japanese, Asian],
+            3,
+            [VegetarianOptions, GlutenFreeOptions, PrivateDining, CardPayment, Wifi],
+            "Za šankom sedite u paru i gledate kako kuvari spremaju jela pred vama.\n"
+            + "Rezervisani sto čuvamo 15 minuta.\n"
+            + "U restoranu se ne puši, ni za stolom ni za šankom.",
+            [
+                ("Šta je izakaja?", "Izakaja je japanska kafana: mesto gde se posle posla sedi uz piće i male tanjire koji se dele. Naručite više jela za sto i probajte od svega."),
+                ("Mogu li da sednem za šank?", "Da. Mesta za šankom rezervišete kao sto za dvoje u delu „Bar“. Odatle gledate kako kuvari spremaju suši i jakitori."),
+                ("Imate li jela bez mesa i ribe?", "Da: edamame, miso supu, tempuru od povrća i ramen sa povrćem. Recite nam pri rezervaciji ako imate alergiju, kuhinja će se prilagoditi."),
+                ("Imate li sake?", "Imamo desetak vrsta sakea, toplog i hladnog, kao i japanski viski i koktele sa japanskim notama. Rado vam preporučimo sake uz jela."),
+                ("Da li primate veće grupe?", "Grupe do 8 osoba rezervišu online. Za veća društva i privatne večeri pozovite nas, salu možemo zatvoriti samo za vas."),
+            ]),
     };
 
     /// <summary>
