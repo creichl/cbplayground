@@ -114,6 +114,12 @@ test.describe('Front desk: waitlist', () => {
 
   test('marks the quoted time as exceeded and changes the entry', async ({ page }) => {
     const name = 'Jelena Strpljiva'
+    // The clock moves on 16 minutes below; in the last 20 minutes of Kafana Dunav's day that is tomorrow, whose waitlist is another.
+    const [hours, minutes] = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/Belgrade', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .format(new Date())
+      .split(':')
+      .map(Number)
+    test.skip(hours * 60 + minutes >= 24 * 60 - 20, 'It is less than 20 minutes to midnight in Belgrade, so the waiting time cannot be moved on within today.')
     // The waiting time runs with the browser's clock, so the test moves it on instead of waiting.
     await page.clock.install()
     await signIn(page, 'frontdesk@kafana-dunav.local')

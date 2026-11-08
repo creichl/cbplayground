@@ -53,6 +53,9 @@ export default defineConfig({
         RateLimiting__Login__PermitLimit: '1000',
         RateLimiting__PublicReads__PermitLimit: '1000',
         RateLimiting__PublicBookings__PermitLimit: '1000',
+        // Every test that reaches the contact details holds a table from the same address; the limit of 3 at a time would turn
+        // the holds of later tests away while earlier ones have not expired yet.
+        RateLimiting__PublicHolds__PermitLimit: '1000',
         // Workstation GC instead of ASP.NET Core's default Server GC, which reserves a heap per core, and a GC that
         // compacts sooner to keep the heap small.
         DOTNET_gcServer: '0',

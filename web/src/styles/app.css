@@ -293,6 +293,12 @@
   --animate-rise: rise var(--motion-long) var(--ease-out) backwards;
   /* A step or a panel slides in from the side; --slide-from sets from where (default from the right). */
   --animate-slide-in: slide-in var(--motion-medium) var(--ease-out) backwards;
+  /*
+   * The steps of the booking dialog cross-fade: the new one slides in with the spring (--slide-from as above), the old one fades
+   * and slides out towards the side it lies on (--slide-to, default to the left) and stays invisible until it is removed.
+   */
+  --animate-step-in: slide-in var(--motion-slow) var(--ease-spring) backwards;
+  --animate-step-out: slide-out var(--motion-medium) var(--ease-in) forwards;
   /* The cover image of the booking page: once, slowly, from a little larger to its size. */
   --animate-hero-zoom: hero-zoom 1200ms var(--ease-out) backwards;
   /* The calm sweep of light over a skeleton. */
@@ -375,6 +381,12 @@
     from {
       opacity: 0;
       translate: var(--slide-from, 1.5rem) 0;
+    }
+  }
+  @keyframes slide-out {
+    to {
+      opacity: 0;
+      translate: var(--slide-to, -1.5rem) 0;
     }
   }
   @keyframes hero-zoom {

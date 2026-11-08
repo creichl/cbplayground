@@ -200,9 +200,11 @@ test.describe('Guests: occasion', () => {
     const date = params.get('date')!
     await dialog.getByLabel('Name').fill(name)
     await dialog.getByLabel('Email').fill('greta.geburtstag@example.com')
-    await dialog.getByLabel('Occasion (optional)').click()
-    await page.getByRole('option', { name: 'Birthday' }).click()
-    await expect(dialog.getByLabel('Occasion (optional)')).toHaveText('Birthday')
+    // The occasion is a chip: one at most.
+    const birthday = dialog.getByRole('group', { name: 'Occasion (optional)' }).getByRole('button', { name: 'Birthday' })
+    await birthday.click()
+    await expect(birthday).toHaveAttribute('aria-pressed', 'true')
+    await birthday.scrollIntoViewIfNeeded()
     await settle(page)
     await screenshot(page, 'guests', 'booking-occasion', { fullPage: false })
     await dialog.getByRole('button', { name: 'Book now' }).click()
