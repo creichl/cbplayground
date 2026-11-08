@@ -28,56 +28,63 @@ const restaurants = [
   { slug: 'rooftop-belvedere', name: 'Rooftop Belvedere', look: 'dark' },
 ] as const
 
+// One page per restaurant, first at 1440 px, then at 390 px (resized, not loaded again, to keep the run short).
 for (const { slug, name, look } of restaurants) {
-  for (const width of [1440, 390]) {
-    test(`shows the card Hours & location of ${name} (${look}) at ${width} px`, async ({ page }) => {
-      await page.setViewportSize({ width, height: width === 390 ? 844 : 900 })
-      await page.goto(`/r/${slug}`)
-      await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
-      await expect(card(page).getByRole('heading', { name: 'Hours & location', level: 2 })).toBeVisible()
-      await expect(status(page)).toHaveText(/^(Open now · until|Closes soon · |Opens again at|Opens today at|Closed · opens|Closed today)/)
-      await expect(card(page).getByText('Today', { exact: true }).first()).toBeVisible()
-      await expect(card(page).getByRole('link', { name: /^Directions to / })).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/search\//)
-      await expect(card(page).getByRole('link', { name: /^Call / })).toHaveAttribute('href', /^tel:\+/)
+  test(`shows the card Hours & location of ${name} (${look}) at 1440 and 390 px`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.goto(`/r/${slug}`)
+    await expect(page.getByRole('heading', { name, level: 1 })).toBeVisible()
+    await expect(card(page).getByRole('heading', { name: 'Hours & location', level: 2 })).toBeVisible()
+    await expect(status(page)).toHaveText(/^(Open now · until|Closes soon · |Opens again at|Opens today at|Closed · opens|Closed today)/)
+    const today = card(page).getByText('Today', { exact: true }).first()
+    await expect(today).toBeVisible()
+    await expect(card(page).getByRole('link', { name: /^Directions to / })).toHaveAttribute('href', /^https:\/\/www\.google\.com\/maps\/search\//)
+    await expect(card(page).getByRole('link', { name: /^Call / })).toHaveAttribute('href', /^tel:\+/)
 
-      if (width === 1440) {
-        // In the first screen, above the photos: the status and today's hours, and, unless a closing day or special hours of
-        // the next 7 days add rows below them, the whole card with address and phone.
-        await expect(status(page)).toBeInViewport({ ratio: 1 })
-        await expect(card(page).getByText('Today', { exact: true }).first()).toBeInViewport({ ratio: 1 })
-        if (!(await card(page).getByRole('heading', { name: 'Coming up' }).isVisible())) {
-          expect((await box(page, '#opening-hours')).bottom).toBeLessThanOrEqual(900)
-        }
-        expect((await box(page, '#opening-hours')).top).toBeLessThan((await box(page, '#photos')).top)
-        await screenshot(page, 'restaurant-hours', `${slug}-${width}`, { fullPage: false })
-      } else {
-        // Right after the reservation card, before the photos.
-        const booking = await box(page, '#booking')
-        const hours = await box(page, '#opening-hours')
-        expect(hours.top).toBeGreaterThanOrEqual(booking.bottom)
-        expect(hours.top - booking.bottom).toBeLessThanOrEqual(64)
-        expect(hours.top).toBeLessThan((await box(page, '#photos')).top)
-        await card(page).scrollIntoViewIfNeeded()
-        await screenshot(page, 'restaurant-hours', `${slug}-${width}`, { fullPage: false })
-      }
+    // Desktop: in the first screen, above the photos: the status and today's hours, and, unless a closing day or special
+    // hours of the next 7 days add rows below them, the whole card with address and phone.
+    await expect(status(page)).toBeInViewport({ ratio: 1 })
+    await expect(today).toBeInViewport({ ratio: 1 })
+    if (!(await card(page).getByRole('heading', { name: 'Coming up' }).isVisible())) {
+      expect((await box(page, '#opening-hours')).bottom).toBeLessThanOrEqual(900)
+    }
+    expect((await box(page, '#opening-hours')).top).toBeLessThan((await box(page, '#photos')).top)
+    await screenshot(page, 'restaurant-hours', `${slug}-1440`, { fullPage: false })
 
-      // "All opening hours" unfolds the week in place, Monday first, today marked.
-      const toggle = card(page).getByRole('button', { name: 'All opening hours' })
-      await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-      const week = card(page).locator(`[id="${await toggle.getAttribute('aria-controls')}"]`)
-      await expect(week.getByRole('listitem').first()).toBeHidden()
-      await toggle.click()
-      await expect(toggle).toHaveAttribute('aria-expanded', 'true')
-      await expect(week.getByRole('listitem')).toHaveCount(7)
-      await expect(week.getByRole('listitem').first()).toContainText('Monday')
-      await expect(week.getByRole('listitem').last()).toContainText('Sunday')
-      await expect(week.locator('[aria-current="date"]')).toHaveCount(1)
-      await expect(week.getByRole('listitem').last()).toBeVisible()
-      await page.waitForTimeout(400)
-      await card(page).scrollIntoViewIfNeeded()
-      await screenshot(page, 'restaurant-hours', `${slug}-${width}-week`, { fullPage: false })
-    })
-  }
+    // "All opening hours" unfolds the week in place, Monday first, today marked.
+    const toggle = card(page).getByRole('button', { name: 'All opening hours' })
+    await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    const week = card(page).locator(`[id="${await toggle.getAttribute('aria-controls')}"]`)
+    await expect(week.getByRole('listitem').first()).toBeHidden()
+    await toggle.click()
+    await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    await expect(week.getByRole('listitem')).toHaveCount(7)
+    await expect(week.getByRole('listitem').first()).toContainText('Monday')
+    await expect(week.getByRole('listitem').last()).toContainText('Sunday')
+    await expect(week.locator('[aria-current="date"]')).toHaveCount(1)
+    await expect(week.getByRole('listitem').last()).toBeVisible()
+    await page.waitForTimeout(400)
+    await screenshot(page, 'restaurant-hours', `${slug}-1440-week`, { fullPage: false })
+
+    // Phone: right after the reservation card, before the photos.
+    await toggle.click()
+    await expect(week.getByRole('listitem').first()).toBeHidden()
+    await page.setViewportSize({ width: 390, height: 844 })
+    await expect.poll(async () => (await box(page, '#opening-hours')).top).toBeGreaterThanOrEqual((await box(page, '#booking')).bottom)
+    const booking = await box(page, '#booking')
+    const hours = await box(page, '#opening-hours')
+    expect(hours.top - booking.bottom).toBeLessThanOrEqual(64)
+    expect(hours.top).toBeLessThan((await box(page, '#photos')).top)
+    await card(page).scrollIntoViewIfNeeded()
+    // Past the cover image: the header and the section navigation have faded in.
+    await expect(page.getByRole('navigation', { name: 'On this page' })).toHaveCSS('opacity', '1')
+    await screenshot(page, 'restaurant-hours', `${slug}-390`, { fullPage: false })
+    await toggle.click()
+    await expect(week.getByRole('listitem').last()).toBeVisible()
+    await page.waitForTimeout(400)
+    await card(page).scrollIntoViewIfNeeded()
+    await screenshot(page, 'restaurant-hours', `${slug}-390-week`, { fullPage: false })
+  })
 }
 
 test('shows a closing day created by the admin under Coming up', async ({ page }) => {
@@ -154,48 +161,49 @@ test('opens at the card with #opening-hours in the address', async ({ page }) =>
   await screenshot(page, 'restaurant-hours', 'hash-opening-hours-390', { fullPage: false })
 })
 
-test('the chip says Closes soon at 21:45 at Gasthaus zur Linde', async ({ page }) => {
-  // Tuesday, 18 November 2025, 21:45 in Munich: open until 22:00.
-  await page.clock.setFixedTime(new Date('2025-11-18T21:45:00+01:00'))
-  await page.setViewportSize({ width: 1440, height: 900 })
-  await page.goto('/r/zur-linde')
-  await expect(chip(page)).toHaveText('Closes soon · 10:00 PM')
-  await expect(status(page)).toHaveText('Closes soon · 10:00 PM')
-  await screenshot(page, 'restaurant-hours', 'closes-soon-1440', { fullPage: false })
-})
+/** A moment of the restaurant's time zone (Munich and Vienna, both UTC+1 in November) and the status it shows. */
+type Moment = { what: string; at: string; long: string; short: string }
 
 /**
  * The live status at fixed moments (page.clock), in the card (long) and on the cover image (short). The moments are in the
- * past, so no closing day or holiday of the coming days (upcomingChanges) falls on them: the regular week decides.
- * Gasthaus zur Linde: Tuesday to Sunday 11:30–14:30 and 17:30–22:00; Rooftop Belvedere: Wednesday to Sunday 17:00–24:00.
+ * past, so no closing day or holiday of the coming days (upcomingChanges) falls on them: the regular week decides. One page
+ * per restaurant: the clock is set a minute before each moment and runs that minute, so the status follows it as it does
+ * every minute while the page is open.
  */
-const moments = [
-  { what: 'open', slug: 'zur-linde', at: '2025-11-18T12:00:00+01:00', long: 'Open now · until 2:30 PM', short: 'Open now · until 2:30 PM' },
-  { what: 'between two windows', slug: 'zur-linde', at: '2025-11-18T15:00:00+01:00', long: 'Opens again at 5:30 PM', short: 'Opens at 5:30 PM' },
-  { what: 'before opening', slug: 'zur-linde', at: '2025-11-18T09:00:00+01:00', long: 'Opens today at 11:30 AM', short: 'Opens at 11:30 AM' },
-  { what: 'after closing', slug: 'zur-linde', at: '2025-11-18T23:00:00+01:00', long: 'Closed · opens tomorrow at 11:30 AM', short: 'Closed today' },
-  { what: 'closed today (Monday)', slug: 'zur-linde', at: '2025-11-17T10:00:00+01:00', long: 'Closed · opens tomorrow at 11:30 AM', short: 'Closed today' },
-  { what: 'after closing before a closed day', slug: 'zur-linde', at: '2025-11-23T22:30:00+01:00', long: 'Closed · opens Tuesday at 11:30 AM', short: 'Closed today' },
-  { what: 'closed today until Wednesday', slug: 'rooftop-belvedere', at: '2025-11-17T12:00:00+01:00', long: 'Closed · opens Wednesday at 5:00 PM', short: 'Closed today' },
-  { what: 'closing soon', slug: 'zur-linde', at: '2025-11-18T21:45:00+01:00', long: 'Closes soon · 10:00 PM', short: 'Closes soon · 10:00 PM' },
-  { what: 'open until midnight', slug: 'rooftop-belvedere', at: '2025-11-19T20:00:00+01:00', long: 'Open now · until midnight', short: 'Open now · until midnight' },
-] as const
-
-for (const moment of moments) {
-  test(`live status: ${moment.what}`, async ({ page }) => {
-    await page.clock.setFixedTime(new Date(moment.at))
-    await page.goto(`/r/${moment.slug}`)
-    await expect(status(page)).toHaveText(moment.long)
-    await expect(chip(page)).toHaveText(moment.short)
-  })
+const moments: Record<'zur-linde' | 'rooftop-belvedere', Moment[]> = {
+  // Tuesday to Sunday 11:30–14:30 and 17:30–22:00, closed on Mondays. No two moments in a row show the same text, so each
+  // step shows that the status followed the clock.
+  'zur-linde': [
+    { what: 'open', at: '2025-11-18T12:00:00+01:00', long: 'Open now · until 2:30 PM', short: 'Open now · until 2:30 PM' },
+    { what: 'closed today (Monday)', at: '2025-11-17T10:00:00+01:00', long: 'Closed · opens tomorrow at 11:30 AM', short: 'Closed today' },
+    { what: 'between two windows', at: '2025-11-18T15:00:00+01:00', long: 'Opens again at 5:30 PM', short: 'Opens at 5:30 PM' },
+    { what: 'before opening', at: '2025-11-18T09:00:00+01:00', long: 'Opens today at 11:30 AM', short: 'Opens at 11:30 AM' },
+    { what: 'after closing', at: '2025-11-18T23:00:00+01:00', long: 'Closed · opens tomorrow at 11:30 AM', short: 'Closed today' },
+    { what: 'after closing before a closed day', at: '2025-11-23T22:30:00+01:00', long: 'Closed · opens Tuesday at 11:30 AM', short: 'Closed today' },
+    { what: 'a minute before closing soon', at: '2025-11-18T21:29:30+01:00', long: 'Open now · until 10:00 PM', short: 'Open now · until 10:00 PM' },
+    { what: 'closing soon', at: '2025-11-18T21:45:00+01:00', long: 'Closes soon · 10:00 PM', short: 'Closes soon · 10:00 PM' },
+  ],
+  // Wednesday to Sunday 17:00–24:00.
+  'rooftop-belvedere': [
+    { what: 'closed today until Wednesday', at: '2025-11-17T12:00:00+01:00', long: 'Closed · opens Wednesday at 5:00 PM', short: 'Closed today' },
+    { what: 'open until midnight', at: '2025-11-19T20:00:00+01:00', long: 'Open now · until midnight', short: 'Open now · until midnight' },
+  ],
 }
 
-test('the live status follows the clock every minute', async ({ page }) => {
-  // Tuesday, 21:29:30 in Munich: open until 22:00; a minute later closing soon.
-  await page.clock.install({ time: new Date('2025-11-18T21:29:30+01:00') })
-  await page.goto('/r/zur-linde')
-  await expect(chip(page)).toHaveText('Open now · until 10:00 PM')
-  await page.clock.fastForward('01:00')
-  await expect(chip(page)).toHaveText('Closes soon · 10:00 PM')
-  await expect(status(page)).toHaveText('Closes soon · 10:00 PM')
-})
+for (const [slug, list] of Object.entries(moments)) {
+  test(`live status at ${slug}: ${list.map((moment) => moment.what).join(', ')}`, async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 })
+    await page.clock.install({ time: new Date(list[0].at) })
+    await page.goto(`/r/${slug}`)
+    for (const moment of list) {
+      await page.clock.setSystemTime(new Date(new Date(moment.at).getTime() - 61_000))
+      await page.clock.fastForward('01:01')
+      await expect(status(page), moment.what).toHaveText(moment.long)
+      await expect(chip(page), moment.what).toHaveText(moment.short)
+    }
+    if (slug === 'zur-linde') {
+      // 21:45 at Gasthaus zur Linde: open until 22:00, so the chip says "Closes soon", in the warning colour.
+      await screenshot(page, 'restaurant-hours', 'closes-soon-1440', { fullPage: false })
+    }
+  })
+}
