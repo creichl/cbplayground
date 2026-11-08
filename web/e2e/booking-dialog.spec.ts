@@ -242,7 +242,7 @@ for (const size of sizes) {
 
       await page.getByRole('button', { name: 'Back' }).click()
       await expect(page.getByRole('heading', { name: 'Choose your table' })).toBeVisible()
-      await page.getByRole('button', { name: 'Close' }).click()
+      await page.getByRole('button', { name: 'Close', exact: true }).click()
       await expect(page.getByRole('heading', { name: 'Choose your table' })).toHaveCount(0)
     })
   })
