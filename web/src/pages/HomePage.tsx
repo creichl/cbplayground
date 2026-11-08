@@ -14,14 +14,17 @@ import {
 } from 'lucide-react'
 import { Fragment, type ReactNode, useId, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useViewTransitionState } from 'react-router'
+import { Link, useSearchParams, useViewTransitionState } from 'react-router'
 import { homePath, useCurrentUser } from '../api/auth.ts'
 import { requestErrorMessage } from '../api/client.ts'
 import { type Tenant, useTenants } from '../api/tenants.ts'
 import { primaryVariables } from '../brandTheme.ts'
 import { BrandLogo } from '../components/BrandLogo.tsx'
+import { RestaurantFilterBar } from '../components/RestaurantFilterBar.tsx'
+import { hasFilters, matchesFilters, noFilters, type RestaurantFilters, readFilters, writeFilters } from '../components/restaurantFilters.ts'
 import { headerHeight } from '../components/booking/layout.ts'
 import { PriceLevel } from '../components/booking/PriceLevel.tsx'
+import { formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
 import { Button } from '../ui/button.tsx'
@@ -63,8 +66,8 @@ const benefits = [
 /**
  * The start page, the platform's entrance, in its look (design system, src/ui), in five parts: a large photo of a laid table
  * in the evening (zooming in once, ParallaxImage) with the header lying transparently on it, the heading and a large search
- * by name or city that filters the restaurants as you type and scrolls softly down to them; the restaurants as photo cards
- * that rise in one after another; "How it works" in three steps; "For restaurants" with the sign-in (or the way to the
+ * by name or city that filters the restaurants as you type and scrolls softly down to them; the restaurants with a bar of
+ * filters (RestaurantFilterBar, kept in the address, combined with the search) as photo cards that rise in one after another; "How it works" in three steps; "For restaurants" with the sign-in (or the way to the
  * own area); and the plain footer.
  */
 export function HomePage() {
@@ -72,6 +75,9 @@ export function HomePage() {
   useDocumentTitle(t('home.title'), null)
   const tenants = useTenants()
   const [query, setQuery] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const filters = readFilters(searchParams)
+  const filtered = hasFilters(filters)
   const [hero, setHero] = useState<HTMLElement | null>(null)
   const searchInput = useRef<HTMLInputElement>(null)
   const id = useId()
@@ -79,7 +85,8 @@ export function HomePage() {
   const search = searchable(query.trim())
   const matches =
     tenants.data?.filter(
-      (tenant) => searchable(tenant.name).includes(search) || (tenant.city !== null && searchable(tenant.city).includes(search)),
+      (tenant) =>
+        (searchable(tenant.name).includes(search) || (tenant.city !== null && searchable(tenant.city).includes(search))) && matchesFilters(tenant, filters),
     ) ?? []
   // The search is offered while the restaurants load and when there are any.
   const withSearch = tenants.isPending || (tenants.isSuccess && tenants.data.length > 0)
@@ -100,6 +107,12 @@ export function HomePage() {
   function resetSearch() {
     setQuery('')
     searchInput.current?.focus()
+  }
+
+  // Every change is an entry in the history, so the back button takes it back; the page stays where it is. The address
+  // changes right away (flushSync), so a chip or checkbox shows its new state with the click, not a moment later.
+  function changeFilters(next: RestaurantFilters) {
+    setSearchParams(writeFilters(next), { preventScrollReset: true, flushSync: true })
   }
 
   return (
@@ -143,8 +156,11 @@ export function HomePage() {
           </h2>
           {/* Tells screen reader users how many restaurants the search leaves, as they type. */}
           <p role="status" className="sr-only">
-            {tenants.isPending ? t('home.loading') : search !== '' ? t('home.results', { count: matches.length }) : ''}
+            {tenants.isPending ? t('home.loading') : search !== '' || filtered ? t('home.results', { count: matches.length }) : ''}
           </p>
+          {tenants.isSuccess && tenants.data.length > 0 && (
+            <RestaurantFilterBar tenants={tenants.data} filters={filters} onChange={changeFilters} matchCount={matches.length} />
+          )}
 
           {tenants.isPending ? (
             <div className={gridClassName} aria-hidden="true">
@@ -170,12 +186,21 @@ export function HomePage() {
           ) : matches.length === 0 ? (
             <PageState
               icon={<SearchXIcon />}
-              title={t('home.noMatchTitle', { query: query.trim() })}
-              text={t('home.noMatch')}
+              title={search !== '' ? t('home.noMatchTitle', { query: query.trim() }) : t('home.filters.noMatchTitle')}
+              text={filtered ? t('home.filters.noMatch') : t('home.noMatch')}
               action={
-                <Button variant="outline" size="lg" onClick={resetSearch}>
-                  {t('home.resetSearch')}
-                </Button>
+                <div className="flex flex-wrap justify-center gap-3">
+                  {filtered && (
+                    <Button variant="outline" size="lg" onClick={() => changeFilters(noFilters)}>
+                      {t('home.filters.reset')}
+                    </Button>
+                  )}
+                  {search !== '' && (
+                    <Button variant="outline" size="lg" onClick={resetSearch}>
+                      {t('home.resetSearch')}
+                    </Button>
+                  )}
+                </div>
               }
             />
           ) : (
@@ -328,12 +353,14 @@ function PageState({ icon, tone = 'neutral', title, text, action }: { icon: Reac
  * rounded corners, the card lifting a little and the photo zooming in softly under the pointer, with the logo as a badge on
  * a light surface in its lower left corner; below it the name, a line with the cuisines, the price level and the city
  * (e.g. "Bavarian · €€ · München"), the description cut to two lines and "Reserve a
- * table" with an arrow in the restaurant's accent colour. Without photo, or when it cannot be loaded, a calm surface in a
+ * table" with an arrow in the restaurant's accent colour. A small chip on the photo's upper left corner tells whether it is
+ * open today, with today's hours ("Open today · 08:00–17:00" or "Closed today"). Without photo, or when it cannot be loaded, a calm surface in a
  * light tint of the accent colour (the platform's without one) with the logo or the name. Opening it, the photo moves into
  * the cover image of the booking page (view transition, app.css).
  */
 function RestaurantCard({ tenant }: { tenant: Tenant }) {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
+  const language = i18n.resolvedLanguage ?? 'en'
   // The card's own accent colour, as on the restaurant's light pages; without one, the platform's stays.
   const variables = useMemo(() => (tenant.brandColor !== null ? primaryVariables(tenant.brandColor, 'light') : undefined), [tenant.brandColor])
   const [coverFailed, setCoverFailed] = useState(false)
@@ -347,6 +374,13 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
     ...(tenant.priceLevel !== null ? [<PriceLevel key="price" level={tenant.priceLevel} />] : []),
     ...(tenant.city !== null ? [tenant.city] : []),
   ]
+  const today = tenant.openToday
+    ? t('booking.restaurant.openToday', {
+        hours: tenant.todayHours
+          .map((period) => t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) }))
+          .join(', '),
+      })
+    : t('booking.restaurant.closedToday')
 
   const name = (
     <span aria-hidden="true" className="line-clamp-2 text-center font-display text-2xl wrap-anywhere">
@@ -355,7 +389,7 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
   )
 
   return (
-    <Link to={to} viewTransition style={variables} className="group flex h-full flex-col gap-4 rounded-xl lift focus-ring">
+    <Link to={to} viewTransition style={variables} className="group relative flex h-full flex-col gap-4 rounded-xl lift focus-ring">
       {/* Photo and logo only accompany the name below, so they have no text alternative. */}
       <div className={cn('relative', opening && '[view-transition-name:restaurant-cover]')}>
         <Photo
@@ -400,6 +434,12 @@ function RestaurantCard({ tenant }: { tenant: Tenant }) {
           <ArrowRightIcon aria-hidden="true" className="size-4 transition-transform group-hover:translate-x-1 motion-reduce:group-hover:translate-x-0" />
         </span>
       </div>
+      {/* On the photo, but after the name, so the link is named by the restaurant first. */}
+      <span className="absolute top-3 left-3 inline-flex max-w-[calc(100%-1.5rem)] items-center gap-2 rounded-2xl bg-stone-950/75 px-3 py-1 text-xs font-medium text-white backdrop-blur-sm">
+        {/* The text says it; the dot only repeats it. */}
+        <span aria-hidden="true" className={cn('size-2 shrink-0 rounded-full', tenant.openToday ? 'bg-green-400' : 'bg-red-400')} />
+        {today}
+      </span>
     </Link>
   )
 }

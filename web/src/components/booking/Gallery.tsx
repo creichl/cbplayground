@@ -7,6 +7,7 @@ import { cn } from '../../lib/utils.ts'
 import { Lightbox } from '../../ui/lightbox.tsx'
 import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Photo } from '../../ui/photo.tsx'
+import { sectionIds } from './layout.ts'
 
 /** The address parameter of the photo shown in the lightbox. */
 const photoParam = 'photo'
@@ -125,8 +126,8 @@ export function Gallery({ photos, restaurantName }: { photos: GalleryPhoto[]; re
   }
 
   return (
-    <section aria-labelledby="gallery-heading" className="flex flex-col gap-3">
-      <h2 id="gallery-heading" className="sr-only">
+    <section id={sectionIds.photos} aria-labelledby="gallery-heading" className="flex scroll-mt-36 flex-col gap-3">
+      <h2 id="gallery-heading" tabIndex={-1} className="sr-only">
         {t('booking.gallery.title')}
       </h2>
 

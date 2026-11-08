@@ -103,6 +103,25 @@
     "restaurantsCount_one": "{{count}} restoran",
     "restaurantsCount_few": "{{count}} restorana",
     "restaurantsCount_other": "{{count}} restorana",
+    "filters": {
+      "label": "Filteri",
+      "city": "Grad",
+      "allCities": "Svi gradovi",
+      "cuisine": "Kuhinja",
+      "price": "Cena",
+      "openToday": "Otvoreno danas",
+      "more": "Još filtera",
+      "moreHint": "Samo restorani sa svim izabranim odlikama.",
+      "selected_one": "{{count}} izabrana",
+      "selected_few": "{{count}} izabrane",
+      "selected_other": "{{count}} izabranih",
+      "show_one": "Prikaži {{count}} restoran",
+      "show_few": "Prikaži {{count}} restorana",
+      "show_other": "Prikaži {{count}} restorana",
+      "reset": "Poništi filtere",
+      "noMatchTitle": "Nijedan restoran ne odgovara vašim filterima",
+      "noMatch": "Uklonite neki filter ili poništite filtere da biste videli više restorana."
+    },
     "howItWorks": {
       "heading": "Kako funkcioniše",
       "restaurantTitle": "Izaberite restoran",
@@ -150,6 +169,7 @@
       "details": "Vaši kontakt podaci"
     },
     "restaurant": {
+      "sections": "Na ovoj stranici",
       "openingHours": "Radno vreme",
       "website": "Veb-sajt",
       "route": "Kako stići",
