@@ -39,8 +39,8 @@ const infoColumnClassName = 'flex flex-col gap-12 pt-12 lg:col-span-7 lg:row-sta
  * "Hours & location" with the live status, today's hours, the week, the coming closing days and special hours, the address and
  * the phone; then the photo gallery, about us with the features, the menu, the areas, "Good to know", the least important,
  * and contact) and the reservation card on the right, which stays in view below the header. On phones the reservation card
- * comes right below the cover image, the information after it, starting with "Hours & location", and a bar "Reserve a table" appears at the bottom of the screen once the card is
- * scrolled out of view. Once the page has scrolled past the cover image, a section navigation below the header lists the
+ * comes right below the cover image, the information after it, starting with "Hours & location", and a bar "Reserve a
+ * table" appears at the bottom of the screen once the card is scrolled out of view. Once the page has scrolled past the cover image, a section navigation below the header lists the
  * sections the page has (SectionNav); every section has a stable id (sectionIds), so `/r/<slug>#menu` opens at the menu.
  * The sections below the first screen rise in once as they are scrolled into view (Reveal), the
  * area cards one after another (Stagger).
