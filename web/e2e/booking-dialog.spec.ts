@@ -128,7 +128,10 @@ for (const size of sizes) {
       await dialog.getByText('Show tables as a list').click()
       const radio = dialog.getByRole('radio').first()
       await radio.click()
-      // Someone else holds the table just before the guest continues.
+      // Once the dialog has checked the chosen table (a table taken while the guest is still on this step is simply unselected),
+      // someone else holds it just before the guest continues.
+      await expect(dialog.getByRole('button', { name: 'Continue' })).toBeEnabled()
+      await page.waitForLoadState('networkidle')
       const { date, time } = Object.fromEntries(new URL(page.url()).searchParams)
       const taken = await page.request.post('/api/public/restaurants/rooftop-belvedere/holds', {
         data: { date, time, guests: 2, tableId: await radio.getAttribute('value') },
