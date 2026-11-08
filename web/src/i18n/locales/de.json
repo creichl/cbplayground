@@ -213,6 +213,9 @@
       "tooltipUnavailable": "Tisch {{number}} · nicht verfügbar",
       "tooltipTooLarge_one": "Tisch {{number}} · zu groß für {{count}} Person",
       "tooltipTooLarge_other": "Tisch {{number}} · zu groß für {{count}} Personen",
+      "reasonTaken": "Belegt um {{time}}",
+      "reasonTooLarge_one": "Ab {{count}} Person",
+      "reasonTooLarge_other": "Ab {{count}} Personen",
       "largeTablesNote": "Größere Tische bleiben für größere Gruppen frei.",
       "showList": "Tische als Liste anzeigen",
       "toScale": "Plan und Tische maßstabsgetreu"
