@@ -51,156 +51,141 @@ async function bookByApi(page: Page, name: string) {
   throw new Error('No free time at Gasthaus zur Linde in the next 40 days.')
 }
 
-for (const [width, height] of [
-  [1440, 1000],
-  [390, 844],
-]) {
-  test.describe(`After booking at ${width} px`, () => {
-    test.use({ viewport: { width, height } })
-
-    test('books, finds the booking on the restaurant page, opens it and changes the time', async ({ page }) => {
-      // Book the first free time through the card.
-      await page.goto('/r/zur-linde')
-      await page.locator('[data-time-chip]').first().click()
-      const details = page.getByRole('dialog', { name: 'Your contact details' })
-      await expect(details).toBeVisible()
-      const params = new URL(page.url()).searchParams
-      const date = params.get('date')!
-      const time = params.get('time')!
-      await details.getByLabel('Name').fill('Clara Change')
-      await details.getByLabel('Email').fill('clara.change@example.com')
-      await details.getByRole('button', { name: 'Book now' }).click()
-
-      // The confirmation has the calendar and share menus and a clear "Done", which closes it.
-      const confirmation = page.getByRole('dialog', { name: 'Your table is reserved' })
-      await expect(confirmation).toBeVisible()
-      await expect(confirmation.getByRole('button', { name: 'Add to calendar' })).toBeVisible()
-      await expect(confirmation.getByRole('button', { name: 'Share' })).toBeVisible()
-      await settle(page)
-      await screenshot(page, 'guest-change', `confirmation-${width}`, { fullPage: false })
-      await confirmation.getByRole('button', { name: 'Done' }).click()
-      await expect(confirmation).toBeHidden()
-
-      // Above the card the calm notice of the remembered booking.
-      const notice = page.getByRole('note', { name: 'Your reservation' })
-      await expect(notice).toContainText(`at ${timeOfDay(time)} for 2`)
-      await notice.scrollIntoViewIfNeeded()
-      await settle(page)
-      await screenshot(page, 'guest-change', `notice-${width}`, { fullPage: false })
-      await notice.getByRole('link', { name: 'View' }).click()
-
-      // The guest's page of the reservation.
-      await expect(page.getByRole('heading', { name: 'Reservation confirmed', level: 1 })).toBeVisible()
-      await expect(page.getByText(longDate(date))).toBeVisible()
-
-      // Change: the free times without the reservation itself; its own time is free in them.
-      await page.getByRole('button', { name: 'Change reservation' }).click()
-      const panel = width >= 768 ? page.getByRole('region', { name: 'Change reservation' }) : page.getByRole('dialog', { name: 'Change reservation' })
-      await expect(panel).toBeVisible()
-      await expect(panel.locator(`[data-time-chip="${time}"]`)).toBeVisible()
-      const other = panel.locator(`[data-time-chip]:not([data-time-chip="${time}"])`).first()
-      const newTime = (await other.getAttribute('data-time-chip'))!
-      await other.click()
-      const confirm = panel.getByRole('button', { name: 'Change', exact: true })
-      await expect(confirm).toBeVisible()
-      await expect(panel).toContainText(`${timeOfDay(time)} · 2 people`)
-      await expect(panel).toContainText(`${timeOfDay(newTime)} · 2 people`)
-      await confirm.scrollIntoViewIfNeeded()
-      await settle(page)
-      await screenshot(page, 'guest-change', `change-summary-${width}`, { fullPage: false })
-
-      await confirm.click()
-      const heading = page.getByRole('heading', { name: 'Your reservation has been changed', level: 1 })
-      await expect(heading).toBeVisible()
-      await expect(heading).toBeFocused()
-      await expect(panel).toBeHidden()
-      await expect(page.getByText(new RegExp(`^${timeOfDay(newTime)}–`))).toBeVisible()
-      await settle(page)
-      await screenshot(page, 'guest-change', `changed-${width}`)
-
-      // The restaurant page's notice follows the change.
-      await page.goto('/r/zur-linde')
-      await expect(page.getByRole('note', { name: 'Your reservation' })).toContainText(`at ${timeOfDay(newTime)} for 2`)
-    })
-  })
+/** Sets the window's size and waits until what changed with it has settled. */
+async function resize(page: Page, width: number) {
+  await page.setViewportSize({ width, height: width >= 768 ? 1000 : 844 })
+  await settle(page)
 }
 
-test.describe('Calendar and share', () => {
-  test('the calendar menu offers Google with the right UTC times, Outlook.com and the file', async ({ page }) => {
-    const booking = await bookByApi(page, 'Carl Calendar')
-    const { timeZoneId } = (await (await page.request.get(restaurant)).json()) as { timeZoneId: string }
-    await page.goto(booking.path)
-    await page.getByRole('button', { name: 'Add to calendar' }).click()
+// One booking for both widths, so the run stays short: the wide screen changes the time inline, the phone in the sheet.
+test('books, finds the booking on the restaurant page, changes it at 1440 px and at 390 px and forgets it', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 })
+  // Book the first free time through the card.
+  await page.goto('/r/zur-linde')
+  await page.locator('[data-time-chip]').first().click()
+  const details = page.getByRole('dialog', { name: 'Your contact details' })
+  await expect(details).toBeVisible()
+  const params = new URL(page.url()).searchParams
+  const date = params.get('date')!
+  const time = params.get('time')!
+  await details.getByLabel('Name').fill('Clara Change')
+  await details.getByLabel('Email').fill('clara.change@example.com')
+  await details.getByRole('button', { name: 'Book now' }).click()
 
-    const menu = page.getByRole('menu')
-    const google = new URL((await menu.getByRole('menuitem', { name: 'Google Calendar' }).getAttribute('href'))!)
-    expect(google.origin).toBe('https://calendar.google.com')
-    expect(google.searchParams.get('dates')).toBe(
-      `${utcStamp(booking.date, booking.time, timeZoneId)}/${utcStamp(booking.date, booking.time, timeZoneId, booking.durationMinutes)}`,
-    )
-    expect(google.searchParams.get('text')).toBe('Table reservation – Gasthaus zur Linde')
-    expect(google.searchParams.get('details')).toContain(booking.path.split('?')[0])
-    const outlook = new URL((await menu.getByRole('menuitem', { name: 'Outlook.com' }).getAttribute('href'))!)
-    expect(outlook.searchParams.get('startdt')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z$/)
-    await expect(menu.getByRole('menuitem', { name: /Apple Calendar or other/ })).toBeVisible()
+  // The confirmation has the calendar and share menus and a clear "Done", which closes it.
+  const confirmation = page.getByRole('dialog', { name: 'Your table is reserved' })
+  await expect(confirmation.getByRole('button', { name: 'Add to calendar' })).toBeVisible()
+  await expect(confirmation.getByRole('button', { name: 'Share' })).toBeVisible()
+  await settle(page)
+  await screenshot(page, 'guest-change', 'confirmation-1440', { fullPage: false })
+  await resize(page, 390)
+  await expect(confirmation.getByRole('button', { name: 'Done' })).toBeVisible()
+  await screenshot(page, 'guest-change', 'confirmation-390', { fullPage: false })
+  await resize(page, 1440)
+  await confirmation.getByRole('button', { name: 'Done' }).click()
+  await expect(confirmation).toBeHidden()
+
+  // Above the card the calm notice of the remembered booking.
+  const notice = page.getByRole('note', { name: 'Your reservation' })
+  await expect(notice).toContainText(`at ${timeOfDay(time)} for 2`)
+  for (const width of [390, 1440]) {
+    await resize(page, width)
+    await notice.scrollIntoViewIfNeeded()
+    await screenshot(page, 'guest-change', `notice-${width}`, { fullPage: false })
+  }
+  await notice.getByRole('link', { name: 'View' }).click()
+
+  // The guest's page of the reservation.
+  await expect(page.getByRole('heading', { name: 'Reservation confirmed', level: 1 })).toBeVisible()
+  await expect(page.getByText(longDate(date))).toBeVisible()
+
+  /** Changes to the first other free time: inline below the details on the wide screen, in a sheet on the phone. */
+  async function changeTime(width: number, from: string) {
+    await page.getByRole('button', { name: 'Change reservation' }).click()
+    const panel = width >= 768 ? page.getByRole('region', { name: 'Change reservation' }) : page.getByRole('dialog', { name: 'Change reservation' })
+    // The free times leave out the reservation itself: its own time is free in them.
+    await expect(panel.locator(`[data-time-chip="${from}"]`)).toBeVisible()
+    const other = panel.locator(`[data-time-chip]:not([data-time-chip="${from}"])`).first()
+    const to = (await other.getAttribute('data-time-chip'))!
+    await other.click()
+    const confirm = panel.getByRole('button', { name: 'Change', exact: true })
+    await expect(panel).toContainText(`${timeOfDay(from)} · 2 people`)
+    await expect(panel).toContainText(`${timeOfDay(to)} · 2 people`)
+    await confirm.scrollIntoViewIfNeeded()
     await settle(page)
-    await screenshot(page, 'guest-change', 'calendar-menu', { fullPage: false })
+    await screenshot(page, 'guest-change', `change-summary-${width}`, { fullPage: false })
 
-    // The file has the reminder 2 hours before.
-    const download = page.waitForEvent('download')
-    await menu.getByRole('menuitem', { name: /Apple Calendar or other/ }).click()
-    const file = await (await download).path()
-    const content = await readFile(file, 'utf8')
-    expect(content).toContain(`DTSTART:${utcStamp(booking.date, booking.time, timeZoneId)}`)
-    expect(content).toContain('BEGIN:VALARM\r\nACTION:DISPLAY')
-    expect(content).toContain('TRIGGER:-PT2H')
-  })
-
-  test('share falls back to copying the text in headless Chromium, with the link only on request', async ({ page, context }) => {
-    await context.grantPermissions(['clipboard-read', 'clipboard-write'])
-    const booking = await bookByApi(page, 'Sven Share')
-    await page.goto(booking.path)
-    expect(await page.evaluate('typeof navigator.share')).toBe('undefined')
-
-    await page.getByRole('button', { name: 'Share' }).click()
-    await page.getByRole('menuitem', { name: /Share the details/ }).click()
-    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
-    const text = String(await page.evaluate('navigator.clipboard.readText()'))
-    expect(text).toBe(`Table at Gasthaus zur Linde on ${longDate(booking.date)} at ${timeOfDay(booking.time)} for 2 people`)
-
-    await page.getByRole('button', { name: 'Copied' }).click()
-    await expect(page.getByRole('menuitem', { name: /Share with link/ })).toBeVisible()
+    await confirm.click()
+    const heading = page.getByRole('heading', { name: 'Your reservation has been changed', level: 1 })
+    await expect(heading).toBeFocused()
+    await expect(panel).toBeHidden()
+    await expect(page.getByText(new RegExp(`^${timeOfDay(to)}–`))).toBeVisible()
     await settle(page)
-    await screenshot(page, 'guest-change', 'share-menu', { fullPage: false })
-    await page.getByRole('menuitem', { name: /Share with link/ }).click()
-    const withLink = String(await page.evaluate('navigator.clipboard.readText()'))
-    expect(withLink).toBe(`${text}\nhttp://localhost:5173${booking.path}`)
-  })
+    await screenshot(page, 'guest-change', `changed-${width}`)
+    return to
+  }
+  const changed = await changeTime(1440, time)
+  await resize(page, 390)
+  const changedAgain = await changeTime(390, changed)
 
-  test('the restaurant page forgets a booking on "×" and after it was cancelled', async ({ page }) => {
-    const booking = await bookByApi(page, 'Fiona Forget')
-    const [code, token] = [booking.path.split('/reservation/')[1].split('?')[0], new URL(booking.path, 'http://x').searchParams.get('t')!]
-    const remember = (entries: object[]) =>
-      page.evaluate(`localStorage.setItem('cbplayground.bookings', ${JSON.stringify(JSON.stringify(entries))})`)
-    const entry = { slug: 'zur-linde', code, token, date: booking.date, time: booking.time, guests: 2, restaurantName: 'Gasthaus zur Linde' }
+  // The restaurant page's notice follows the change; "×" forgets the booking.
+  await page.goto('/r/zur-linde')
+  await expect(notice).toContainText(`at ${timeOfDay(changedAgain)} for 2`)
+  await notice.getByRole('button', { name: 'Forget this reservation on this device' }).click()
+  await expect(notice).toBeHidden()
+})
 
-    // An entry whose day has passed is left out.
-    await page.goto('/r/zur-linde')
-    await remember([{ ...entry, code: 'PASSED', date: dateFromToday(-1) }, entry])
-    await page.reload()
-    const notice = page.getByRole('note', { name: 'Your reservation' })
-    await expect(notice).toContainText(`at ${timeOfDay(booking.time)} for 2`)
-    await notice.getByRole('button', { name: 'Forget this reservation on this device' }).click()
-    await expect(notice).toBeHidden()
+test('the calendar menu, sharing without a share sheet, and forgetting a cancelled booking', async ({ page, context }) => {
+  await context.grantPermissions(['clipboard-read', 'clipboard-write'])
+  const booking = await bookByApi(page, 'Carl Calendar')
+  const { timeZoneId } = (await (await page.request.get(restaurant)).json()) as { timeZoneId: string }
+  await page.goto(booking.path)
+  // Remembered by this browser, with an entry whose day has passed.
+  const code = booking.path.split('/reservation/')[1].split('?')[0]
+  const token = new URL(booking.path, 'http://localhost').searchParams.get('t')!
+  const entry = { slug: 'zur-linde', code, token, date: booking.date, time: booking.time, guests: 2, restaurantName: 'Gasthaus zur Linde' }
+  const stored = JSON.stringify([{ ...entry, code: 'PASSED', date: dateFromToday(-1) }, entry])
+  await page.evaluate(`localStorage.setItem('cbplayground.bookings', ${JSON.stringify(stored)})`)
 
-    // Seen cancelled on the guest's page, it is forgotten too.
-    await remember([entry])
-    await page.goto(booking.path)
-    await page.getByRole('button', { name: 'Cancel reservation' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Cancel reservation' }).click()
-    await expect(page.getByRole('heading', { name: 'Your reservation has been cancelled' })).toBeVisible()
-    await page.goto('/r/zur-linde')
-    await expect(page.locator('[data-time-chip]').first()).toBeVisible()
-    await expect(notice).toBeHidden()
-  })
+  // Google Calendar with the right UTC times, Outlook.com and the file.
+  await page.getByRole('button', { name: 'Add to calendar' }).click()
+  const menu = page.getByRole('menu')
+  const google = new URL((await menu.getByRole('menuitem', { name: 'Google Calendar' }).getAttribute('href'))!)
+  expect(google.origin).toBe('https://calendar.google.com')
+  expect(google.searchParams.get('dates')).toBe(
+    `${utcStamp(booking.date, booking.time, timeZoneId)}/${utcStamp(booking.date, booking.time, timeZoneId, booking.durationMinutes)}`,
+  )
+  expect(google.searchParams.get('text')).toBe('Table reservation – Gasthaus zur Linde')
+  expect(google.searchParams.get('details')).toContain(booking.path.split('?')[0])
+  const outlook = new URL((await menu.getByRole('menuitem', { name: 'Outlook.com' }).getAttribute('href'))!)
+  expect(outlook.searchParams.get('startdt')).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:00Z$/)
+  await settle(page)
+  await screenshot(page, 'guest-change', 'calendar-menu', { fullPage: false })
+  // The file has the reminder 2 hours before.
+  const download = page.waitForEvent('download')
+  await menu.getByRole('menuitem', { name: /Apple Calendar or other/ }).click()
+  const content = await readFile(await (await download).path(), 'utf8')
+  expect(content).toContain(`DTSTART:${utcStamp(booking.date, booking.time, timeZoneId)}`)
+  expect(content).toContain('BEGIN:VALARM\r\nACTION:DISPLAY')
+  expect(content).toContain('TRIGGER:-PT2H')
+
+  // Headless Chromium has no share sheet: the text is copied, the link only on request.
+  expect(await page.evaluate('typeof navigator.share')).toBe('undefined')
+  await page.getByRole('button', { name: 'Share' }).click()
+  await page.getByRole('menuitem', { name: /Share the details/ }).click()
+  await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible()
+  const text = String(await page.evaluate('navigator.clipboard.readText()'))
+  expect(text).toBe(`Table at Gasthaus zur Linde on ${longDate(booking.date)} at ${timeOfDay(booking.time)} for 2 people`)
+  await page.getByRole('button', { name: 'Copied' }).click()
+  await expect(page.getByRole('menuitem', { name: /Share with link/ })).toBeVisible()
+  await settle(page)
+  await screenshot(page, 'guest-change', 'share-menu', { fullPage: false })
+  await page.getByRole('menuitem', { name: /Share with link/ }).click()
+  expect(String(await page.evaluate('navigator.clipboard.readText()'))).toBe(`${text}\nhttp://localhost:5173${booking.path}`)
+
+  // Seen cancelled, the booking is forgotten, and the entry whose day has passed is dropped with it.
+  await page.getByRole('button', { name: 'Cancel reservation' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel reservation' }).click()
+  await expect(page.getByRole('heading', { name: 'Your reservation has been cancelled' })).toBeVisible()
+  await expect.poll(() => page.evaluate("localStorage.getItem('cbplayground.bookings')")).toBe('[]')
 })
