@@ -41,9 +41,10 @@ async function requestIlFaro(page: Page, name: string) {
   return confirmation
 }
 
-/** Scrolls the confirmation's actions into view and waits until everything has settled. */
+/** Scrolls the confirmation's actions into view and waits until everything has settled, the reference code complete on screen. */
 async function showActions(page: Page, confirmation: Locator) {
   await confirmation.getByRole('button', { name: 'Done' }).scrollIntoViewIfNeeded()
+  await expect(confirmation.locator('[data-code-character]').last()).toHaveCSS('opacity', '1')
   await settle(page)
 }
 
@@ -53,7 +54,7 @@ test('confirmed: one primary "Add to calendar", "Copy link" in "Share", and the 
   // Holds the code's characters at the start of their entrance as soon as they are there, so the check below sees them typing in.
   await page.evaluate(`
     window.heldCharacters = []
-    new MutationObserver(() => {
+    window.codeObserver = new MutationObserver(() => {
       for (const character of document.querySelectorAll('[data-code-character]:not([data-held])')) {
         character.dataset.held = ''
         for (const animation of character.getAnimations()) {
@@ -61,7 +62,8 @@ test('confirmed: one primary "Add to calendar", "Copy link" in "Share", and the 
           window.heldCharacters.push(animation)
         }
       }
-    }).observe(document.body, { childList: true, subtree: true })
+    })
+    window.codeObserver.observe(document.body, { childList: true, subtree: true })
   `)
   await dialog.getByLabel('Name').fill('Vera Verlauf')
   await dialog.getByLabel('Email').fill('vera.verlauf@example.com')
@@ -76,7 +78,8 @@ test('confirmed: one primary "Add to calendar", "Copy link" in "Share", and the 
   expect(Number(await page.evaluate('window.heldCharacters.length'))).toBe(code.length)
   await expect(codeLine.locator('[data-code-character]').last()).toHaveCSS('opacity', '0')
   await expect(codeLine).toMatchAriaSnapshot(`- paragraph: ${code}`)
-  await page.evaluate('window.heldCharacters.forEach((animation) => animation.play())')
+  // Let go, and hold nothing more: the confirmation is drawn anew in the sheet on the phone below.
+  await page.evaluate('window.codeObserver.disconnect(); window.heldCharacters.forEach((animation) => animation.play())')
   await expect(codeLine.locator('[data-code-character]').last()).toHaveCSS('opacity', '1')
 
   // Exactly one primary action, "Add to calendar"; "Directions" and "Manage reservation" are quiet links, "Done" closes.
@@ -232,5 +235,8 @@ test.describe('with less motion', () => {
     await expect(confirmation.getByRole('list', { name: 'What happens next' })).toBeVisible()
     await expect(confirmation.getByRole('link', { name: 'View reservation' })).toBeVisible()
     await screenshot(page, feature, 'reduced-motion-request-1440', { fullPage: false })
+    // Its actions, scrolled into view in the dialog: there as well, without any entrance.
+    await showActions(page, confirmation)
+    await screenshot(page, feature, 'reduced-motion-request-actions-1440', { fullPage: false })
   })
 })
