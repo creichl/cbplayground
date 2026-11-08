@@ -64,7 +64,7 @@ function SiteHeader({ hero = null }: SiteHeaderProps) {
         header: it is as large as the row of a restaurant's header (GuestLayout), so neither is scaled while one becomes
         the other; the surface and the border cross-fade with the page.
       */}
-      <div className="relative mx-auto flex h-16 max-w-page items-center justify-between gap-2 px-4 [view-transition-name:site-header] sm:px-6">
+      <div data-page-part="site-header" className="relative mx-auto flex h-16 max-w-page items-center justify-between gap-2 px-4 sm:px-6">
         <Link to="/" className={cn('shrink-0 rounded-lg font-display text-lg focus-ring', overHero ? 'text-white' : 'text-primary-text')}>
           {t('app.name')}
         </Link>
