@@ -95,20 +95,21 @@ for (const width of [1440, 390]) {
 }
 
 test('shows no row on a page without sections', async ({ page }) => {
-  // A new restaurant has nothing set up: no photos, description, menu, areas, questions, opening hours or contact.
+  // Bistro Morgenrot, the restaurant without any setup of superadmin.spec.ts: no photos, description, menu, areas, questions,
+  // opening hours or contact. Created when missing and active only during this test, so it is left deactivated, as the
+  // Superadmin's test and the start page's tests expect.
   expect((await page.request.post('/api/auth/login', { data: { email: 'superadmin@cbplayground.local', password: 'Demo1234!' } })).status()).toBe(200)
-  const slug = `leer-${Date.now().toString(36)}`
-  const created = await page.request.post('/api/superadmin/tenants', { data: { name: 'Gasthaus Leer', slug } })
-  expect(created.status()).toBe(201)
-  const { id } = (await created.json()) as { id: string }
+  const created = await page.request.post('/api/superadmin/tenants', { data: { name: 'Bistro Morgenrot', slug: 'bistro-morgenrot' } })
+  const tenants = (await (await page.request.get('/api/superadmin/tenants')).json()) as { id: string; slug: string }[]
+  const id = created.status() === 201 ? ((await created.json()) as { id: string }).id : tenants.find((tenant) => tenant.slug === 'bistro-morgenrot')!.id
+  expect((await page.request.post(`/api/superadmin/tenants/${id}/activate`)).status()).toBe(200)
   try {
     await page.setViewportSize({ width: 390, height: 500 })
-    await page.goto(`/r/${slug}`)
-    await expect(page.getByRole('heading', { name: 'Gasthaus Leer', level: 1 })).toBeVisible()
+    await page.goto('/r/bistro-morgenrot')
+    await expect(page.getByRole('heading', { name: 'Bistro Morgenrot', level: 1 })).toBeVisible()
     await page.evaluate('window.scrollTo(0, document.body.scrollHeight)')
     await expect(page.locator('nav[aria-label="On this page"]')).toHaveCount(0)
   } finally {
-    // Deactivated, so the start page lists the demo restaurants only, as the other tests expect.
     expect((await page.request.post(`/api/superadmin/tenants/${id}/deactivate`)).status()).toBe(200)
   }
 })
