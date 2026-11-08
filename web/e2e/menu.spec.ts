@@ -80,7 +80,12 @@ test.describe('Menu', () => {
     await menu.getByRole('tab', { name: 'Hauptgerichte' }).click()
     await expect(menu.getByRole('tabpanel').getByText('Käsespätzle', { exact: true })).toBeVisible()
     await expect(menu.getByRole('tabpanel').getByText('€14.50')).toBeVisible()
-    await menu.getByRole('tabpanel').getByRole('img', { name: 'Vegetarian' }).first().hover()
+    // The dishes of the new tab rise in as they come into view: hovered while they still move, the mark slips out from under the
+    // pointer before the tooltip's delay is over.
+    const vegetarian = menu.getByRole('tabpanel').getByRole('img', { name: 'Vegetarian' }).first()
+    await vegetarian.scrollIntoViewIfNeeded()
+    await settle(page)
+    await vegetarian.hover()
     await expect(page.getByRole('tooltip', { name: 'Vegetarian' })).toBeVisible()
     await revealAll(page)
     await menu.scrollIntoViewIfNeeded()
