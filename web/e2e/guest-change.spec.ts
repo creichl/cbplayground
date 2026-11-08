@@ -60,8 +60,12 @@ async function resize(page: Page, width: number) {
 // One booking for both widths, so the run stays short: the wide screen changes the time inline, the phone in the sheet.
 test('books, finds the booking on the restaurant page, changes it at 1440 px and at 390 px and forgets it', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
-  // Book the first free time through the card.
+  // Book the first free time of a later day through the card: a time of today can slip within the lead time while the test runs,
+  // and then the change no longer offers it.
   await page.goto('/r/zur-linde')
+  await page.getByRole('group', { name: 'Date' }).getByRole('button', { name: /, available$/ }).nth(1).click()
+  // The times of the day before stay, dimmed and busy, until those of the chosen day are there.
+  await expect(page.locator('[data-layout-part="booking-times"] [aria-busy="true"]')).toHaveCount(0)
   await page.locator('[data-time-chip]').first().click()
   const details = page.getByRole('dialog', { name: 'Your contact details' })
   await expect(details).toBeVisible()
