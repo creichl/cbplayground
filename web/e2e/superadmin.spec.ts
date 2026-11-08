@@ -28,13 +28,20 @@ test.describe('Superadmin', () => {
     await signIn(page, 'superadmin@cbplayground.local')
     await expect(page).toHaveURL(/\/superadmin$/)
     await addDeactivatedRestaurant(page)
+    // The numbers from the API, so a restaurant added to the demo data does not break the test.
+    const tenants = (await (await page.request.get('/api/superadmin/tenants')).json()) as {
+      isActive: boolean
+      setup: Record<string, boolean>
+    }[]
+    const active = tenants.filter((tenant) => tenant.isActive).length
+    const incomplete = tenants.filter((tenant) => Object.values(tenant.setup).includes(false)).length
     await page.reload()
     await expect(page.getByRole('heading', { name: 'Restaurants' })).toBeVisible()
     const rows = page.locator('tbody tr')
-    await expect(rows).toHaveCount(4)
-    // The figures on top: three of four restaurants active, one setup incomplete.
+    await expect(rows).toHaveCount(tenants.length)
+    // The figures on top: all demo restaurants active, the added one deactivated and its setup incomplete.
     await expect(page.getByText('Active restaurants')).toBeVisible()
-    await expect(page.getByText('3 / 4')).toBeVisible()
+    await expect(page.getByText(`${active} / ${tenants.length}`)).toBeVisible()
     await expect(page.getByText('Bookings in the last 7 days')).toBeVisible()
     // The demo data has bookings in the past 7 days.
     expect(await figure(page, 'Bookings in the last 7 days')).toBeGreaterThan(0)
@@ -50,15 +57,15 @@ test.describe('Superadmin', () => {
 
     const filter = page.getByRole('radiogroup', { name: 'Show' })
     await filter.getByText('Setup incomplete').click()
-    await expect(rows).toHaveCount(1)
-    await expect(rows.first()).toContainText('Bistro Morgenrot')
+    await expect(rows).toHaveCount(incomplete)
+    await expect(rows.filter({ hasText: 'Bistro Morgenrot' })).toHaveCount(1)
     await screenshot(page, 'superadmin', 'restaurants-setup-incomplete')
 
     await filter.getByText('Deactivated').click()
     await expect(rows).toHaveCount(1)
     await expect(rows.first()).toContainText('Bistro Morgenrot')
     await filter.getByText('Active', { exact: true }).click()
-    await expect(rows).toHaveCount(3)
+    await expect(rows).toHaveCount(active)
     await expect(rows.filter({ hasText: 'Bistro Morgenrot' })).toHaveCount(0)
 
     // By name the new restaurant comes first; by activity last, as it has none.

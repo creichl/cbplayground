@@ -138,7 +138,8 @@ public class SuperadminTests(ApiFactory factory) : IClassFixture<ApiFactory>
     [Fact]
     public async Task The_list_shows_the_setup_steps_of_each_restaurant_as_its_admin_sees_them()
     {
-        // Location, opening hours, tables and reservation settings are set up; profile and floor plan are not.
+        // Location, opening hours, tables and reservation settings are set up, and the area without floor plan image counts as a
+        // drawn room with its table; the profile is not set up.
         var partly = await TestRestaurants.CreateAsync(factory, [new TestArea("Saal", true, 100, ("1", 4))]);
         var complete = await TestRestaurants.CreateAsync(factory, [new TestArea("Saal", true, 100, ("1", 4))]);
         using (var scope = factory.Services.CreateScope())
@@ -155,7 +156,7 @@ public class SuperadminTests(ApiFactory factory) : IClassFixture<ApiFactory>
 
         var tenants = await ListAsync(superadmin);
 
-        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, true, true, false, true, true), tenants.Single(t => t.Id == partly.Id).Setup);
+        Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, true, true, true, true, true), tenants.Single(t => t.Id == partly.Id).Setup);
         Assert.Equal(new ProfileEndpoints.SetupStatusResponse(true, true, true, true, true, true), tenants.Single(t => t.Id == complete.Id).Setup);
         Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, false, false, false, false, false), tenants.Single(t => t.Id == empty.Id).Setup);
         Assert.Equal(new ProfileEndpoints.SetupStatusResponse(false, false, false, false, false, false), empty.Setup);

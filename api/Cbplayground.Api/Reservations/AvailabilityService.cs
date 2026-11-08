@@ -25,9 +25,11 @@ public record SlotPacing(int Max, int Booked);
 
 /// <summary>
 /// A possible start time and the tables free from it for the whole duration, in the order the system assigns them;
-/// <see cref="Pacing"/> is null when no pacing rule applies to it.
+/// <see cref="Pacing"/> is null when no pacing rule applies to it. <see cref="Remaining"/> is how many more parties of the
+/// same size could still get a table then, one after the other, at most <see cref="AvailabilityService.MaxRemaining"/>
+/// (0 when none is free); null unless it was asked for (countRemaining of <see cref="IAvailabilityService.GetSlotsAsync"/>).
 /// </summary>
-public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables, SlotPacing? Pacing);
+public record TimeSlot(TimeOnly Time, IReadOnlyList<FreeTable> FreeTables, SlotPacing? Pacing, int? Remaining);
 
 /// <summary>The possible start times within one opening window of a day.</summary>
 public record PeriodSlots(OpenPeriod Period, IReadOnlyList<TimeSlot> Slots);
@@ -61,10 +63,12 @@ public interface IAvailabilityService
     /// The start times of <paramref name="date"/> in 15-minute steps, grouped by opening window, with the free tables
     /// for <paramref name="guests"/>. Times in the past (and, online, within the lead time, days beyond the booking horizon
     /// and parties larger than the largest online party) have no free tables.
-    /// Empty when the restaurant is closed or has no location.
+    /// Empty when the restaurant is closed or has no location. With <paramref name="countRemaining"/> each time also counts
+    /// how many more parties could still get a table (<see cref="TimeSlot.Remaining"/>), which costs a few more passes over
+    /// the tables per free time; only the guest's availability shows it.
     /// </summary>
     Task<IReadOnlyList<PeriodSlots>> GetSlotsAsync(DateOnly date, int guests, int durationMinutes, ReservationSource channel,
-        Guid? ignoreReservationId = null, CancellationToken cancellationToken = default);
+        Guid? ignoreReservationId = null, bool countRemaining = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks a reservation and picks its tables: <paramref name="tableIds"/> if given and free (one table, or exactly the tables of
@@ -110,6 +114,9 @@ public interface IAvailabilityService
 
 public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, IOpeningCalendar openingCalendar, TimeProvider timeProvider) : IAvailabilityService
 {
+    /// <summary>The most parties <see cref="TimeSlot.Remaining"/> counts: from this many on, a time is not scarce.</summary>
+    public const int MaxRemaining = 3;
+
     private record TableInfo(Table Table, Area Area);
 
     /// <summary>A combination with its area and its tables in number order; <see cref="Label"/> their numbers, e.g. "4 + 5".</summary>
@@ -154,7 +161,7 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
     }
 
     public async Task<IReadOnlyList<PeriodSlots>> GetSlotsAsync(DateOnly date, int guests, int durationMinutes, ReservationSource channel,
-        Guid? ignoreReservationId = null, CancellationToken cancellationToken = default)
+        Guid? ignoreReservationId = null, bool countRemaining = false, CancellationToken cancellationToken = default)
     {
         if (await GetLocalNowAsync(cancellationToken) is not { } now)
         {
@@ -182,10 +189,15 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
             var slots = new List<TimeSlot>();
             foreach (var start in StartTimes(date, period, durationMinutes))
             {
+                var end = start.AddMinutes(durationMinutes);
                 var free = start <= now || start < earliestOnline || notBookable || (online && pacing.IsExceeded(start, guests))
                     ? []
-                    : FreeTables(floor, busy, blocks, start, start.AddMinutes(durationMinutes), settings.BufferMinutes, guests, channel);
-                slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free, pacing.For(start)));
+                    : FreeTables(floor, busy, blocks, start, end, settings.BufferMinutes, guests, channel);
+                var slotPacing = pacing.For(start);
+                int? remaining = countRemaining
+                    ? Remaining(floor, busy, blocks, start, end, settings.BufferMinutes, guests, channel, online ? slotPacing : null, free)
+                    : null;
+                slots.Add(new TimeSlot(TimeOnly.FromDateTime(start), free, slotPacing, remaining));
             }
             result.Add(new PeriodSlots(period, slots));
         }
@@ -511,6 +523,32 @@ public class AvailabilityService(AppDbContext db, ITenantContext tenantContext, 
                 .Select(c => new FreeTable(c.Combination.Id, c.Label, c.Combination.Seats, c.Area.Id, c.Area.Name, FreeTable.CombinationKind,
                     c.Tables.Select(t => t.Id).ToList())),
         ];
+    }
+
+    /// <summary>
+    /// How many more parties of <paramref name="guests"/> could still get a table at <paramref name="start"/>, at most
+    /// <see cref="MaxRemaining"/>: each one takes the table or combination the system would assign it (the first of
+    /// <paramref name="free"/>), and the next one gets what is still free then, so tables shared by combinations, the online
+    /// quota and the smallest party count as for one booking. With <paramref name="pacing"/> (online), the parties must also
+    /// fit into its limit.
+    /// </summary>
+    private static int Remaining(Floor floor, List<BusyReservation> busy, List<BusyBlock> blocks, DateTime start, DateTime end,
+        int bufferMinutes, int guests, ReservationSource channel, SlotPacing? pacing, List<FreeTable> free)
+    {
+        var count = 0;
+        var assumed = busy;
+        while (free.Count > 0 && count < MaxRemaining && (pacing is null || pacing.Booked + (count + 1) * guests <= pacing.Max))
+        {
+            count++;
+            if (count == MaxRemaining)
+            {
+                break;
+            }
+            var table = free[0];
+            assumed = [.. assumed, new BusyReservation(table.TableIds, table.AreaId, table.Seats, start, end, channel)];
+            free = FreeTables(floor, assumed, blocks, start, end, bufferMinutes, guests, channel);
+        }
+        return count;
     }
 
     /// <summary>How many of an area's seats can be booked online at the same time: floor(seats of its tables × percent / 100).</summary>

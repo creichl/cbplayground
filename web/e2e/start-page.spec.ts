@@ -27,8 +27,9 @@ test.describe('Start page', () => {
       // The header lies transparently with white text on the photo and becomes opaque when the page scrolls.
       const header = page.locator('header')
       await expect(header).toHaveCSS('color', 'rgb(255, 255, 255)')
-      await expect(page.getByRole('heading', { name: '3 restaurants', level: 2 })).toBeVisible()
-      await expect(page.locator('main a[href^="/r/"]')).toHaveCount(3)
+      const count = ((await (await page.request.get('/api/tenants')).json()) as unknown[]).length
+      await expect(page.getByRole('heading', { name: `${count} restaurants`, level: 2 })).toBeVisible()
+      await expect(page.locator('main a[href^="/r/"]')).toHaveCount(count)
       await expect(page.getByRole('heading', { name: 'How it works', level: 2 })).toBeVisible()
       for (const step of ['Choose a restaurant', 'Pick a time and table', 'Get your confirmation']) {
         await expect(page.getByRole('heading', { name: step, level: 3 })).toBeVisible()
@@ -80,8 +81,9 @@ test.describe('Start page', () => {
 
   test('does not move with reduced motion', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' })
+    const count = ((await (await page.request.get('/api/tenants')).json()) as unknown[]).length
     await page.goto('/')
-    await expect(page.locator('main a[href^="/r/"]')).toHaveCount(3)
+    await expect(page.locator('main a[href^="/r/"]')).toHaveCount(count)
     await page.waitForLoadState('networkidle')
     const moving = await page.evaluate(
       "document.getAnimations().filter((animation) => animation.playState === 'running' && Number(animation.effect?.getComputedTiming().duration) > 0).length",

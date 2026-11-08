@@ -13,13 +13,18 @@ function useRevealOnce() {
   // Before the first paint, so an element below the fold never shows before it hides.
   useLayoutEffect(() => {
     const element = ref.current
-    if (element === null || element.getBoundingClientRect().top < window.innerHeight) {
+    // An element hidden by an earlier run of this effect (React runs it twice in development) waits for the view again, also
+    // when the page has jumped to it in between, e.g. to a section in the address; otherwise it would stay hidden.
+    if (element === null || (element.dataset.reveal !== 'hidden' && element.getBoundingClientRect().top < window.innerHeight)) {
       return
     }
     element.dataset.reveal = 'hidden'
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting) {
+        // The report can stem from before a jump in the same frame (e.g. to a section in the address), and the browser then
+        // sends no new one: where the element is now counts as well, with the same 10 % above the bottom edge.
+        const { top, bottom } = element.getBoundingClientRect()
+        if (entry.isIntersecting || (top < window.innerHeight * 0.9 && bottom > 0)) {
           element.dataset.reveal = 'shown'
           observer.disconnect()
         }

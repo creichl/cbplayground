@@ -18,6 +18,12 @@ export type Tenant = {
   cuisines: Cuisine[]
   priceLevel: PriceLevel | null
   features: RestaurantFeature[]
+  /**
+   * Whether the restaurant has an opening window today in its own time zone, with public holidays, closing days and special
+   * hours; false without location. `todayHours` are those windows ("HH:mm", the end may be "24:00"), sorted by start.
+   */
+  openToday: boolean
+  todayHours: { start: string; end: string }[]
 }
 
 /** All restaurants, sorted by name. */

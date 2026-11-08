@@ -101,6 +101,23 @@
     "restaurants": "Restaurants",
     "restaurantsCount_one": "{{count}} Restaurant",
     "restaurantsCount_other": "{{count}} Restaurants",
+    "filters": {
+      "label": "Filter",
+      "city": "Stadt",
+      "allCities": "Alle Städte",
+      "cuisine": "Küche",
+      "price": "Preis",
+      "openToday": "Heute geöffnet",
+      "more": "Weitere Filter",
+      "moreHint": "Nur Restaurants mit allen gewählten Merkmalen.",
+      "selected_one": "{{count}} gewählt",
+      "selected_other": "{{count}} gewählt",
+      "show_one": "{{count}} Restaurant anzeigen",
+      "show_other": "{{count}} Restaurants anzeigen",
+      "reset": "Filter zurücksetzen",
+      "noMatchTitle": "Kein Restaurant passt zu Ihren Filtern",
+      "noMatch": "Entfernen Sie einen Filter oder setzen Sie die Filter zurück, um mehr Restaurants zu sehen."
+    },
     "howItWorks": {
       "heading": "So funktioniert’s",
       "restaurantTitle": "Restaurant wählen",
@@ -147,6 +164,7 @@
       "details": "Ihre Kontaktdaten"
     },
     "restaurant": {
+      "sections": "Auf dieser Seite",
       "openingHours": "Öffnungszeiten",
       "website": "Website",
       "route": "Route",
@@ -175,15 +193,25 @@
       "closed": "geschlossen",
       "previousMonth": "Vorheriger Monat",
       "nextMonth": "Nächster Monat",
-      "legend": "Ausgegraute Tage sind geschlossen oder nicht buchbar, durchgestrichene ausgebucht."
+      "legend": "Ausgegraute Tage sind geschlossen oder nicht buchbar, durchgestrichene ausgebucht.",
+      "available": "frei",
+      "earlierDays": "Frühere Tage",
+      "laterDays": "Spätere Tage",
+      "moreDates": "Weitere Tage"
     },
     "time": {
       "morning": "Vormittag",
       "midday": "Mittag",
       "evening": "Abend",
-      "noTables": "Keine freien Tische – nächste freie Tage:",
+      "noTables": "An diesem Tag sind keine Tische mehr frei.",
       "noFreeDays": "In den nächsten Wochen ist leider kein Tag mehr frei. Bitte wählen Sie ein anderes Datum oder rufen Sie uns an.",
-      "freeTimes": "Freie Zeiten"
+      "freeTimes": "Freie Zeiten",
+      "nextFreeDays": "Nächste freie Tage",
+      "taken": "{{time}}, ausgebucht",
+      "tablesLeft_one": "Nur noch {{count}} Tisch",
+      "tablesLeft_other": "Nur noch {{count}} Tische",
+      "smallerParty_one": "Für {{count}} Person gibt es Zeiten um {{times}}",
+      "smallerParty_other": "Für {{count}} Personen gibt es Zeiten um {{times}}"
     },
     "table": {
       "listLabel": "Freie Tische – {{area}}",
@@ -574,7 +602,7 @@
       },
       "floorPlan": {
         "title": "Bereich mit Grundriss",
-        "description": "Ein Bereich, z. B. die Gaststube, mit hochgeladenem Grundriss."
+        "description": "Ein Bereich, z. B. die Gaststube, mit hochgeladenem Grundriss oder als gezeichneter Raum mit Tischen."
       },
       "tables": {
         "title": "Tische",

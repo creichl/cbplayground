@@ -14,7 +14,7 @@ test.describe('API smoke', () => {
     const response = await request.get(`${api}/api/tenants`)
     expect(response.status()).toBe(200)
     const slugs = ((await response.json()) as { slug: string }[]).map((tenant) => tenant.slug)
-    expect(slugs).toEqual(expect.arrayContaining(['zur-linde', 'kafana-dunav', 'rooftop-belvedere']))
+    expect(slugs).toEqual(expect.arrayContaining(['zur-linde', 'kafana-dunav', 'rooftop-belvedere', 'il-faro', 'cafe-morgenrot', 'izakaya-kaze']))
   })
 
   test('shows a restaurant to guests', async ({ request }) => {

@@ -32,6 +32,14 @@ const demoAccounts = [
   { email: 'frontdesk@zur-linde.local', role: 'login.demo.frontDesk', restaurant: 'Gasthaus zur Linde' },
   { email: 'admin@kafana-dunav.local', role: 'login.demo.tenantAdmin', restaurant: 'Kafana Dunav' },
   { email: 'frontdesk@kafana-dunav.local', role: 'login.demo.frontDesk', restaurant: 'Kafana Dunav' },
+  { email: 'admin@rooftop-belvedere.local', role: 'login.demo.tenantAdmin', restaurant: 'Rooftop Belvedere' },
+  { email: 'frontdesk@rooftop-belvedere.local', role: 'login.demo.frontDesk', restaurant: 'Rooftop Belvedere' },
+  { email: 'admin@il-faro.local', role: 'login.demo.tenantAdmin', restaurant: 'Trattoria Il Faro' },
+  { email: 'frontdesk@il-faro.local', role: 'login.demo.frontDesk', restaurant: 'Trattoria Il Faro' },
+  { email: 'admin@cafe-morgenrot.local', role: 'login.demo.tenantAdmin', restaurant: 'Café Morgenrot' },
+  { email: 'frontdesk@cafe-morgenrot.local', role: 'login.demo.frontDesk', restaurant: 'Café Morgenrot' },
+  { email: 'admin@izakaya-kaze.local', role: 'login.demo.tenantAdmin', restaurant: 'Izakaya Kaze' },
+  { email: 'frontdesk@izakaya-kaze.local', role: 'login.demo.frontDesk', restaurant: 'Izakaya Kaze' },
   { email: 'superadmin@cbplayground.local', role: 'login.demo.superadmin', restaurant: null },
 ] as const
 

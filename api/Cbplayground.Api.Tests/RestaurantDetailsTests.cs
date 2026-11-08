@@ -347,6 +347,9 @@ public class DevelopmentSeedDetailsTests(ApiFactory factory) : IClassFixture<Api
             ["zur-linde"] = ([Cuisine.Bavarian], 2, RestaurantFeature.DogsWelcome),
             ["kafana-dunav"] = ([Cuisine.Serbian, Cuisine.Balkan], 2, RestaurantFeature.LiveMusic),
             ["rooftop-belvedere"] = ([Cuisine.BarCocktails, Cuisine.Mediterranean], 3, RestaurantFeature.Rooftop),
+            ["il-faro"] = ([Cuisine.Italian, Cuisine.Mediterranean], 2, RestaurantFeature.Terrace),
+            ["cafe-morgenrot"] = ([Cuisine.CafeBrunch], 1, RestaurantFeature.Garden),
+            ["izakaya-kaze"] = ([Cuisine.Japanese, Cuisine.Asian], 3, RestaurantFeature.PrivateDining),
         };
         foreach (var (slug, demo) in expected)
         {

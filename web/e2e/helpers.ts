@@ -90,3 +90,18 @@ export function reservationRow(page: Page, name: string): Locator {
 export function statusToast(page: Page, text: string): Locator {
   return page.getByRole('region', { name: /^Notifications/ }).getByRole('listitem').filter({ hasText: text })
 }
+
+/**
+ * The loaded menu section of the restaurant page, scrolled into view: it loads once it comes near the view, and while it
+ * loads a skeleton with the same heading stands in.
+ */
+export async function menuSection(page: Page) {
+  const menu = page.locator('section[aria-labelledby="menu-heading"]')
+  for (let y = 0; (await menu.count()) === 0 && y < 8000; y += 500) {
+    await page.evaluate(`window.scrollTo(0, ${y})`)
+    await page.waitForTimeout(100)
+  }
+  await expect(menu.getByRole('heading', { name: 'Menu', level: 2, exact: true })).toBeAttached()
+  await menu.scrollIntoViewIfNeeded()
+  return menu
+}
