@@ -157,9 +157,11 @@ test.describe('Booking card', () => {
     await settle(page)
     const before = (await card(page).boundingBox())!.height
 
-    // Slow answers, so the moment between the tap and the new times can be seen.
+    // The answers wait until both screenshots are taken, so the moment between the tap and the new times stays.
+    let release = () => {}
+    const released = new Promise<void>((resolve) => (release = resolve))
     await page.route('**/availability?*', async (route) => {
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      await released
       await route.continue()
     })
     const strip = page.getByRole('group', { name: 'Date' })
@@ -170,8 +172,12 @@ test.describe('Booking card', () => {
     // The old chips hold the card's height: it does not drop to the skeleton.
     expect((await card(page).boundingBox())!.height).toBeCloseTo(before, 0)
     await shoot(page, 'loading', waiting)
+    // Both screenshots (1440 and 390 px) show the old times, still dimmed.
+    await expect(waiting).toBeVisible()
 
-    await page.unroute('**/availability?*')
+    release()
+    // Lets the held answers go on before the route is removed.
+    await page.unrouteAll({ behavior: 'wait' })
     await expect(waiting).toHaveCount(0)
     await expect(page.locator('[data-time-chip]').first()).toBeVisible()
   })
