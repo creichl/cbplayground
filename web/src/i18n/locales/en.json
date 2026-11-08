@@ -213,6 +213,9 @@
       "tooltipUnavailable": "Table {{number}} · not available",
       "tooltipTooLarge_one": "Table {{number}} · too large for {{count}} person",
       "tooltipTooLarge_other": "Table {{number}} · too large for {{count}} people",
+      "reasonTaken": "Taken at {{time}}",
+      "reasonTooLarge_one": "For {{count}} person or more",
+      "reasonTooLarge_other": "For {{count}} people or more",
       "largeTablesNote": "Larger tables are kept for larger groups.",
       "showList": "Show tables as a list",
       "toScale": "Plan and tables to scale"
