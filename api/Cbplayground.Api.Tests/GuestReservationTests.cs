@@ -288,24 +288,38 @@ public class GuestReservationTests(ApiFactory factory) : IClassFixture<ApiFactor
     }
 }
 
-/// <summary>The guest's reservation link with the real rate limit of 10 requests per client in 10 minutes.</summary>
+/// <summary>
+/// The guest's reservation link with the real rate limit of changing and cancelling, 10 requests per client in 10 minutes; viewing
+/// it counts against the reads instead.
+/// </summary>
 public class GuestReservationRateLimitTests(PublicBookingRateLimitTests.RateLimitedApiFactory factory) : IClassFixture<PublicBookingRateLimitTests.RateLimitedApiFactory>
 {
     [Fact]
-    public async Task The_eleventh_request_within_10_minutes_is_answered_with_429()
+    public async Task A_guest_can_cancel_after_checking_a_request_for_long_and_the_eleventh_cancellation_is_answered_with_429()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
         using var anonymous = factory.CreateHttpsClient();
-        var path = $"/api/public/restaurants/{restaurant.Slug}/reservations/ZZZZZZ";
+        var ct = TestContext.Current.CancellationToken;
+        var booked = await anonymous.PostAsJsonAsync($"/api/public/restaurants/{restaurant.Slug}/reservations",
+            new { date = TestRestaurants.NextOpenDay(factory).ToString("yyyy-MM-dd"), time = "18:00", guests = 2, name = "Eva Gast", phone = "+43 660 1234567", language = "de" }, ct);
+        Assert.Equal(HttpStatusCode.Created, booked.StatusCode);
+        var booking = (await booked.Content.ReadFromJsonAsync<BookingResponse>(ct))!;
+        var path = $"/api/public/restaurants/{restaurant.Slug}/reservations/{booking.ReferenceCode}";
 
-        for (var i = 0; i < 5; i++)
+        // "Your reservation" open for a quarter of an hour, asking every 30 s.
+        for (var i = 0; i < 30; i++)
         {
-            Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"{path}?token=x", TestContext.Current.CancellationToken)).StatusCode);
-            Assert.Equal(HttpStatusCode.NotFound,
-                (await anonymous.PostAsJsonAsync($"{path}/cancel", new { token = "x" }, TestContext.Current.CancellationToken)).StatusCode);
+            Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync($"{path}?token={Uri.EscapeDataString(booking.ManageToken)}", ct)).StatusCode);
         }
-        var limited = await anonymous.GetAsync($"{path}?token=x", TestContext.Current.CancellationToken);
+        Assert.Equal(HttpStatusCode.OK, (await anonymous.PostAsJsonAsync($"{path}/cancel", new { token = booking.ManageToken }, ct)).StatusCode);
 
-        Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
+        var unknown = $"/api/public/restaurants/{restaurant.Slug}/reservations/ZZZZZZ";
+        for (var i = 0; i < 9; i++)
+        {
+            Assert.Equal(HttpStatusCode.NotFound, (await anonymous.PostAsJsonAsync($"{unknown}/cancel", new { token = "x" }, ct)).StatusCode);
+        }
+        Assert.Equal(HttpStatusCode.TooManyRequests, (await anonymous.PostAsJsonAsync($"{unknown}/cancel", new { token = "x" }, ct)).StatusCode);
+        // Viewing stays possible.
+        Assert.Equal(HttpStatusCode.OK, (await anonymous.GetAsync($"{path}?token={Uri.EscapeDataString(booking.ManageToken)}", ct)).StatusCode);
     }
 }

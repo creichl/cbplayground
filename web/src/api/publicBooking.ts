@@ -421,13 +421,18 @@ export function useGuestReservation(slug: string, referenceCode: string, token: 
     queryKey: guestReservationKey(slug, referenceCode, token),
     queryFn: () => apiGet<GuestReservation>(`${guestReservationPath(slug, referenceCode)}?token=${encodeURIComponent(token)}`),
     retry: (failureCount, error) => !isNotFound(error) && failureCount < 1,
-    // The link is rate limited like the booking; switching tabs should not use up the requests.
-    refetchOnWindowFocus: false,
-    // A request is asked for again every 30 s while the page is visible (not in a hidden tab) and until its start (as long as
-    // the guest can cancel it), so the guest sees the restaurant confirm or decline it without reloading.
-    refetchInterval: (query) => (query.state.data?.status === 'Requested' && query.state.data.canCancel ? 30_000 : false),
+    // A request is asked for again every 30 s while the page is visible (paused in a hidden tab) and until its start (as long as
+    // the guest can cancel it), and at once when the guest comes back to the tab, so the guest sees the restaurant confirm or
+    // decline it without reloading. Viewing the link counts against the API's reads, not the limit of changing and cancelling.
+    refetchInterval: (query) => (openRequest(query.state.data) ? 30_000 : false),
     refetchIntervalInBackground: false,
+    refetchOnWindowFocus: (query) => openRequest(query.state.data),
   })
+}
+
+/** Whether a reservation is a request the restaurant may still decide on: requested, before its start. */
+function openRequest(reservation: GuestReservation | undefined) {
+  return reservation?.status === 'Requested' && reservation.canCancel
 }
 
 /** Cancels the guest's reservation. Errors: 409 "cancellation_not_possible", 404 for a wrong code or token. */

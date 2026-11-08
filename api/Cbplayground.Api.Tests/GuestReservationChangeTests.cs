@@ -423,11 +423,14 @@ public class GuestReservationChangeTests(BookingRulesTests.FixedClockApiFactory 
     }
 }
 
-/// <summary>The change through the guest's link shares the rate limit of the link: 10 requests per client in 10 minutes.</summary>
+/// <summary>
+/// The change through the guest's link shares the rate limit of cancelling: 10 requests per client in 10 minutes; viewing the link
+/// does not count against it.
+/// </summary>
 public class GuestReservationChangeRateLimitTests(PublicBookingRateLimitTests.RateLimitedApiFactory factory) : IClassFixture<PublicBookingRateLimitTests.RateLimitedApiFactory>
 {
     [Fact]
-    public async Task Views_changes_and_cancellations_share_the_limit_and_the_eleventh_is_answered_with_429()
+    public async Task Changes_and_cancellations_share_the_limit_views_do_not_count_and_the_eleventh_is_answered_with_429()
     {
         var restaurant = await TestRestaurants.CreateAsync(factory, [new TestArea("Gaststube", true, 100, ("1", 4))]);
         using var anonymous = factory.CreateHttpsClient();
@@ -435,7 +438,7 @@ public class GuestReservationChangeRateLimitTests(PublicBookingRateLimitTests.Ra
         var change = new { token = "x", date = "2030-01-01", time = "18:00", guests = 2 };
         var ct = TestContext.Current.CancellationToken;
 
-        for (var i = 0; i < 4; i++)
+        for (var i = 0; i < 8; i++)
         {
             Assert.Equal(HttpStatusCode.NotFound, (await anonymous.PutAsJsonAsync(path, change, ct)).StatusCode);
             Assert.Equal(HttpStatusCode.NotFound, (await anonymous.GetAsync($"{path}?token=x", ct)).StatusCode);
@@ -446,3 +449,4 @@ public class GuestReservationChangeRateLimitTests(PublicBookingRateLimitTests.Ra
         Assert.Equal(HttpStatusCode.TooManyRequests, (await anonymous.PutAsJsonAsync(path, change, ct)).StatusCode);
     }
 }
+
