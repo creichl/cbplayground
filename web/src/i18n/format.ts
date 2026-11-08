@@ -28,6 +28,16 @@ export function formatWeekday(weekday: number, language: string) {
   return new Intl.DateTimeFormat(language, { weekday: 'short' }).format(new Date(2024, 0, weekday))
 }
 
+/** The weekday of a date written out, e.g. "Mittwoch" or "Wednesday" (in Serbian in lower case, as in a sentence). */
+export function formatWeekdayName(date: string, language: string) {
+  return new Intl.DateTimeFormat(language, { weekday: 'long' }).format(toDate(date))
+}
+
+/** Two dates of the same span as day and month, e.g. "24.–26. Dez." or "Dec 24 – 26"; one date when they are the same. */
+export function formatDateRange(from: string, to: string, language: string) {
+  return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).formatRange(toDate(from), toDate(to))
+}
+
 /** A date with weekday and year, e.g. "Sa., 31. Okt. 2026" or "Sat, Oct 31, 2026". Also the format of the date pickers. */
 export function formatDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(toDate(date))

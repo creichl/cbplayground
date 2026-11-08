@@ -51,6 +51,23 @@ export type PublicRestaurant = {
   faq: { question: string; answer: string }[]
   /** The restaurant's country ("DE", "AT", "RS"), whose calling code the form suggests for the phone; null without location. */
   countryCode: string | null
+  /**
+   * The days of the next 14 days from today (the restaurant's time zone) whose opening windows differ from the regular week,
+   * by date; consecutive days are entries of their own. Empty without location.
+   */
+  upcomingChanges: UpcomingChange[]
+}
+
+/**
+ * A day that differs from the regular week: closed (a closing day, or a public holiday on which the restaurant is closed
+ * although the weekday is open; no periods) or with special hours. `holidayKey` names the public holiday when it closes the
+ * day (`openingHours.holidayNames`), otherwise null.
+ */
+export type UpcomingChange = {
+  date: string
+  kind: 'closed' | 'specialHours'
+  periods: { start: string; end: string }[]
+  holidayKey: string | null
 }
 
 /** A photo of the restaurant's gallery; `url` is the public URL of the image with its version. */

@@ -1,6 +1,7 @@
 using System.Globalization;
 using Cbplayground.Api.Auth;
 using Cbplayground.Api.Data;
+using Cbplayground.Api.OpeningHours;
 using Cbplayground.Api.Reservations;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -39,6 +40,8 @@ public static class PublicRestaurantEndpoints
     /// its order (empty without photos), its details (cuisines, price level, features and house rules, see
     /// <see cref="RestaurantDetailsEndpoints.DetailsResponse"/>), its frequently asked questions in their order (empty without) and its
     /// country ("DE", "AT", "RS"; null without location), whose calling code the booking form suggests for the phone number.
+    /// <see cref="UpcomingChanges"/> are the days of the next <see cref="UpcomingDays"/> days from today whose opening windows
+    /// differ from the regular week (see <see cref="UpcomingChange"/>); empty without location.
     /// </summary>
     public record RestaurantResponse(
         string Name,
@@ -65,7 +68,23 @@ public static class PublicRestaurantEndpoints
         IReadOnlyList<RestaurantFeature> Features,
         string? HouseRules,
         IReadOnlyList<RestaurantDetailsEndpoints.PublicFaq> Faq,
-        string? CountryCode);
+        string? CountryCode,
+        IReadOnlyList<UpcomingChange> UpcomingChanges);
+
+    /// <summary>How many days from today (today included) <see cref="RestaurantResponse.UpcomingChanges"/> covers.</summary>
+    public const int UpcomingDays = 14;
+
+    /// <summary>
+    /// A day whose opening windows differ from the regular hours of its day of the week (<see cref="IOpeningCalendar"/>): a
+    /// closing day, a public holiday on which the restaurant is closed, or special hours. <see cref="Kind"/> is "closed" (no
+    /// <see cref="Periods"/>) or "specialHours"; <see cref="HolidayKey"/> names the public holiday (e.g. "christmasDay", which
+    /// the web frontend translates) when the holiday closes the day, otherwise null. Consecutive days are entries of their own.
+    /// The special day's internal note is never part of it.
+    /// </summary>
+    public record UpcomingChange(DateOnly Date, string Kind, IReadOnlyList<UpcomingPeriod> Periods, string? HolidayKey);
+
+    /// <summary>An opening window of an <see cref="UpcomingChange"/>, "HH:mm"; the end may be "24:00".</summary>
+    public record UpcomingPeriod(string Start, string End);
 
     /// <summary>An area open for online booking, in the order of the areas; description and photo are null when not given.</summary>
     public record RestaurantArea(string Name, string? Description, string? PhotoUrl);
@@ -179,7 +198,7 @@ public static class PublicRestaurantEndpoints
     {
         var group = app.MapGroup("/api/public/restaurants/{slug}").AddEndpointFilter(RestaurantFromSlug);
 
-        group.MapGet("/", async (ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability) =>
+        group.MapGet("/", async (ITenantContext tenantContext, AppDbContext db, IAvailabilityService availability, IOpeningCalendar openingCalendar, IHolidayProvider holidayProvider) =>
         {
             var tenant = await db.Tenants.SingleAsync(t => t.Id == tenantContext.TenantId);
             var settings = await LoadSettingsAsync(db);
@@ -215,7 +234,8 @@ public static class PublicRestaurantEndpoints
                 Features: tenant.Features,
                 HouseRules: tenant.HouseRules,
                 Faq: await RestaurantDetailsEndpoints.PublicListAsync(db),
-                CountryCode: tenant.CountryCode);
+                CountryCode: tenant.CountryCode,
+                UpcomingChanges: await UpcomingChangesAsync(db, tenant, availability, openingCalendar, holidayProvider));
         });
 
         group.MapGet("/logo", async (string? v, HttpContext httpContext, ITenantContext tenantContext, AppDbContext db, IConfiguration configuration, IWebHostEnvironment environment) =>
@@ -716,6 +736,46 @@ public static class PublicRestaurantEndpoints
     /// The reservation of the current restaurant with this reference code, if the token matches its stored hash (compared in
     /// constant time); otherwise null. Reservations without a token (entered by staff) are never found.
     /// </summary>
+    /// <summary>
+    /// The days of the next <see cref="UpcomingDays"/> days from today (in the restaurant's time zone) whose opening windows
+    /// differ from the regular week, each with the windows of the opening calendar; empty without location.
+    /// </summary>
+    private static async Task<IReadOnlyList<UpcomingChange>> UpcomingChangesAsync(AppDbContext db, Tenant tenant, IAvailabilityService availability,
+        IOpeningCalendar openingCalendar, IHolidayProvider holidayProvider)
+    {
+        if (await availability.GetLocalNowAsync() is not { } now)
+        {
+            return [];
+        }
+        var today = DateOnly.FromDateTime(now);
+        var last = today.AddDays(UpcomingDays - 1);
+        var regular = (await db.OpeningPeriods.ToListAsync())
+            .ToLookup(p => p.DayOfWeek, p => new OpenPeriod(p.Start, p.End));
+        var specialDays = await db.SpecialDays.Where(d => d.From <= last && d.To >= today).Select(d => new { d.From, d.To }).ToListAsync();
+        var holidays = tenant.CountryCode is null
+            ? []
+            : holidayProvider.GetHolidays(tenant.CountryCode, tenant.RegionCode, today, last).ToDictionary(h => h.Date, h => h.Key);
+
+        var changes = new List<UpcomingChange>();
+        for (var date = today; date <= last; date = date.AddDays(1))
+        {
+            var periods = await openingCalendar.GetOpenPeriodsAsync(date);
+            if (periods.SequenceEqual(regular[date.DayOfWeek].OrderBy(p => p.Start)))
+            {
+                continue;
+            }
+            // A closed public holiday, unless a special day of the restaurant decides the day.
+            var day = date;
+            var holidayKey = periods.Count == 0 && !specialDays.Any(d => d.From <= day && d.To >= day) ? holidays.GetValueOrDefault(date) : null;
+            changes.Add(new UpcomingChange(
+                date,
+                periods.Count == 0 ? "closed" : "specialHours",
+                periods.Select(p => new UpcomingPeriod(FormatTime(p.Start), FormatTime(p.End))).ToList(),
+                holidayKey));
+        }
+        return changes;
+    }
+
     private static async Task<Reservation?> FindForGuestAsync(AppDbContext db, string referenceCode, string? token)
     {
         var hash = ManageToken.Hash(token);
