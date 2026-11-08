@@ -1,6 +1,8 @@
 // Layout constants and helpers of a restaurant's guest pages and its booking.
 
 import { createContext } from 'react'
+import type { PublicRestaurant } from '../../api/publicBooking.ts'
+import { formatAddress } from './format.ts'
 
 /**
  * Lets the cover image of a restaurant's page (RestaurantHeader) tell the restaurant's layout where it is, so the header
@@ -19,14 +21,31 @@ export const PastHeroContext = createContext(false)
  * as `/r/<slug>#menu`.
  */
 export const sectionIds = {
+  /** The card "Hours & location". */
+  openingHours: 'opening-hours',
   photos: 'photos',
   about: 'about',
   menu: 'menu',
   areas: 'areas',
   goodToKnow: 'good-to-know',
-  openingHours: 'opening-hours',
-  directions: 'directions',
+  /** "Contact"; the id of the former "Directions & contact", so links to it still lead there. */
+  contact: 'directions',
 } as const
+
+/** Whether the card "Hours & location" has its opening hours part: the restaurant has a location (and so a live status) and opening hours. */
+export function hasHours(restaurant: PublicRestaurant) {
+  return restaurant.timeZoneId !== null && restaurant.openingHours.length > 0
+}
+
+/** Whether the card "Hours & location" is shown at all: with opening hours, an address or a phone. */
+export function hasHoursOrLocation(restaurant: PublicRestaurant) {
+  return hasHours(restaurant) || formatAddress(restaurant) !== '' || restaurant.phone !== null
+}
+
+/** Whether the restaurant has anything for "Contact" at the end of its page: a phone, an email address or a website. */
+export function hasContact(restaurant: PublicRestaurant) {
+  return restaurant.phone !== null || restaurant.email !== null || restaurant.website !== null
+}
 
 /** Brings a section of the restaurant's page into view below the header and the section navigation (scroll-mt-36) and moves the focus to its heading. */
 export function scrollToSection(id: string) {

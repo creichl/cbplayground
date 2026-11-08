@@ -174,10 +174,24 @@
       "routeTo": "Route zu {{address}}",
       "openToday": "Heute geöffnet · {{hours}}",
       "about": "Über uns",
-      "directions": "Anfahrt & Kontakt",
+      "contact": "Kontakt",
       "todayBadge": "Heute",
       "todayDiffers": "Heute abweichend:",
-      "areas": "Bereiche"
+      "areas": "Bereiche",
+      "hoursAndLocation": "Öffnungszeiten & Lage",
+      "allOpeningHours": "Alle Öffnungszeiten",
+      "comingUp": "Demnächst",
+      "call": "Anrufen",
+      "callNumber": "{{phone}} anrufen",
+      "status": {
+        "openUntil": "Jetzt geöffnet · bis {{time}}",
+        "closesSoon": "Schließt bald · {{time}}",
+        "opensAgain": "Öffnet wieder um {{time}}",
+        "opensToday": "Öffnet heute um {{time}}",
+        "opensAt": "Öffnet um {{time}}",
+        "opensTomorrow": "Geschlossen · öffnet morgen um {{time}}",
+        "opensOn": "Geschlossen · öffnet {{day}} um {{time}}"
+      }
     },
     "partySize": {
       "moreThan_one": "Mehr als {{count}} Person",
@@ -738,7 +752,9 @@
       "features": "Ausstattung",
       "goodToKnow": "Gut zu wissen",
       "houseRules": "Hausregeln",
-      "faq": "Häufige Fragen"
+      "faq": "Häufige Fragen",
+      "showAllQuestions_one": "Alle {{count}} Fragen anzeigen",
+      "showAllQuestions_other": "Alle {{count}} Fragen anzeigen"
     }
   },
   "branding": {

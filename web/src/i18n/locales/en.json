@@ -174,10 +174,24 @@
       "routeTo": "Directions to {{address}}",
       "openToday": "Open today · {{hours}}",
       "about": "About us",
-      "directions": "Directions & contact",
+      "contact": "Contact",
       "todayBadge": "Today",
       "todayDiffers": "Today differs:",
-      "areas": "Areas"
+      "areas": "Areas",
+      "hoursAndLocation": "Hours & location",
+      "allOpeningHours": "All opening hours",
+      "comingUp": "Coming up",
+      "call": "Call",
+      "callNumber": "Call {{phone}}",
+      "status": {
+        "openUntil": "Open now · until {{time}}",
+        "closesSoon": "Closes soon · {{time}}",
+        "opensAgain": "Opens again at {{time}}",
+        "opensToday": "Opens today at {{time}}",
+        "opensAt": "Opens at {{time}}",
+        "opensTomorrow": "Closed · opens tomorrow at {{time}}",
+        "opensOn": "Closed · opens {{day}} at {{time}}"
+      }
     },
     "partySize": {
       "moreThan_one": "More than {{count}} person",
@@ -738,7 +752,9 @@
       "features": "Features",
       "goodToKnow": "Good to know",
       "houseRules": "House rules",
-      "faq": "Frequently asked questions"
+      "faq": "Frequently asked questions",
+      "showAllQuestions_one": "Show all {{count}} questions",
+      "showAllQuestions_other": "Show all {{count}} questions"
     }
   },
   "branding": {

@@ -1,8 +1,8 @@
-import { GlobeIcon, MailIcon, MapPinIcon, NavigationIcon, PhoneIcon } from 'lucide-react'
+import { GlobeIcon, MailIcon, PhoneIcon } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PublicRestaurant } from '../../api/publicBooking.ts'
-import { addressLines, formatAddress, mapSearchUrl } from './format.ts'
+import { hasContact } from './layout.ts'
 
 /** The website without "https://" and "www.", e.g. "zur-linde.at"; the address itself if it is not a valid URL. */
 function websiteLabel(website: string) {
@@ -29,44 +29,21 @@ function breakable(text: string) {
 const linkClassName = 'rounded-sm underline-offset-4 hover:underline focus-ring'
 
 /**
- * The restaurant's address with "Directions" (a map search, new tab) below it, its phone, email and website, one row each
- * with its icon (lucide) in the same column; nothing when all are empty. Email and website break only before "@" and dots
- * (anywhere only as the last resort) and carry the full value as title. The links are in the text colour, so they keep the
- * contrast in every branding; every row is at least 44 px high to tap.
+ * "Contact" at the end of the restaurant's page: its phone, email and website, one row each with its icon (lucide) in the
+ * same column; nothing when all are empty. The address with "Directions" is in the card "Hours & location" at the top
+ * (HoursAndLocation), and so is the phone, which stays here too for the guest who reaches the end. Email and website break
+ * only before "@" and dots (anywhere only as the last resort) and carry the full value as title. The links are in the text
+ * colour, so they keep the contrast in every branding; every row is at least 44 px high to tap.
  */
 export function RestaurantContact({ restaurant }: { restaurant: PublicRestaurant }) {
   const { t } = useTranslation()
-  const lines = addressLines(restaurant)
-  const address = formatAddress(restaurant)
 
-  if (address === '' && restaurant.phone === null && restaurant.email === null && restaurant.website === null) {
+  if (!hasContact(restaurant)) {
     return null
   }
 
   return (
     <ul className="flex flex-col divide-y divide-border">
-      {address !== '' && (
-        <Row icon={<MapPinIcon />}>
-          <address className="not-italic">
-            {lines.map((line, index) => (
-              <Fragment key={index}>
-                {index > 0 && <br />}
-                {line}
-              </Fragment>
-            ))}
-          </address>
-          <a
-            href={mapSearchUrl(address)}
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label={t('booking.restaurant.routeTo', { address })}
-            className={`inline-flex min-h-11 items-center gap-2 self-start font-semibold text-primary-text ${linkClassName}`}
-          >
-            <NavigationIcon aria-hidden="true" className="size-4" />
-            {t('booking.restaurant.route')}
-          </a>
-        </Row>
-      )}
       {restaurant.phone !== null && (
         <Row icon={<PhoneIcon />}>
           <a href={`tel:${restaurant.phone.replace(/[^0-9+]/g, '')}`} className={`whitespace-nowrap ${linkClassName}`}>
