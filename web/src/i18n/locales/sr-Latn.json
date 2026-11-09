@@ -26,7 +26,9 @@
     "close": "Zatvori",
     "timeRange": "{{start}}–{{end}}",
     "tableLabel": "{{number}} · {{seats}}",
-    "midnight": "ponoć"
+    "midnight": "ponoć",
+    "today": "Danas",
+    "tomorrow": "Sutra"
   },
   "unsavedChanges": {
     "bar": "Nesačuvane izmene",
@@ -336,7 +338,8 @@
       "copy": "Kopiraj",
       "tables": "Stolovi",
       "tablesInArea": "Stolovi {{number}} · {{area}}",
-      "done": "Gotovo"
+      "done": "Gotovo",
+      "viewReservation": "Pogledaj rezervaciju"
     },
     "calendarEvent": {
       "title": "Rezervacija stola – {{restaurant}}",
@@ -354,6 +357,15 @@
       "outlook": "Outlook.com",
       "ics": "Apple kalendar ili drugi",
       "icsHint": "Datoteka kalendara (.ics) sa podsetnikom 2 sata ranije"
+    },
+    "requestTimeline": {
+      "label": "Šta sledi",
+      "sent": "Zahtev je poslat",
+      "confirms": "Restoran potvrđuje",
+      "check": "Proverite stranicu vaše rezervacije",
+      "done": "Gotovo",
+      "current": "Sada",
+      "next": "Zatim"
     },
     "remembered": {
       "label": "Vaša rezervacija",
@@ -503,6 +515,11 @@
       "declined": "Zahtev odbijen",
       "past": "Ova rezervacija je prošla",
       "pastText": "Radujemo se vašoj sledećoj poseti."
+    },
+    "when": "{{day}}, {{time}}",
+    "live": {
+      "confirmed": "Restoran je potvrdio vašu rezervaciju.",
+      "declined": "Restoran nije mogao da prihvati vaš zahtev."
     }
   },
   "admin": {

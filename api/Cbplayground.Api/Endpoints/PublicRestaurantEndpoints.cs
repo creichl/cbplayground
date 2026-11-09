@@ -19,10 +19,10 @@ public static class PublicRestaurantEndpoints
     /// <summary>The rate limiter policy of the online booking, see Program.cs.</summary>
     public const string BookingRateLimitPolicy = "public-booking";
 
-    /// <summary>The rate limiter policy of the guest's reservation link (view, change and cancel), with the limit of the booking; see Program.cs.</summary>
+    /// <summary>The rate limiter policy of changing and cancelling through the guest's reservation link, with the limit of the booking; see Program.cs.</summary>
     public const string ManageRateLimitPolicy = "public-manage";
 
-    /// <summary>The rate limiter policy of the calendar, the availability, the tables and the holds, see Program.cs.</summary>
+    /// <summary>The rate limiter policy of the calendar, the availability, the tables, the holds and the view of the guest's link, see Program.cs.</summary>
     public const string ReadRateLimitPolicy = "public-read";
 
     /// <summary>The setting of the most active holds (<see cref="ReservationHold"/>) per client IP, across all restaurants.</summary>
@@ -574,7 +574,9 @@ public static class PublicRestaurantEndpoints
             return deleted > 0 ? Results.NoContent() : Results.NotFound();
         }).RequireRateLimiting(ReadRateLimitPolicy);
 
-        // The guest's link. A wrong code and a wrong token are both 404, so neither tells which one is wrong.
+        // The guest's link. A wrong code and a wrong token are both 404, so neither tells which one is wrong. Viewing it counts
+        // against the reads, not the strict limit of changing and cancelling: "Your reservation" asks for an open request every
+        // 30 s, and the token (32 random bytes) cannot be guessed at any rate.
         group.MapGet("/reservations/{referenceCode}", async (string referenceCode, string? token, AppDbContext db, IAvailabilityService availability) =>
         {
             var reservation = await FindForGuestAsync(db, referenceCode, token);
@@ -583,7 +585,7 @@ public static class PublicRestaurantEndpoints
                 return Results.NotFound();
             }
             return Results.Ok(await ToGuestResponseAsync(db, availability, reservation));
-        }).RequireRateLimiting(ManageRateLimitPolicy);
+        }).RequireRateLimiting(ReadRateLimitPolicy);
 
         group.MapPost("/reservations/{referenceCode}/cancel", async (string referenceCode, CancelRequest request, AppDbContext db, IAvailabilityService availability,
             TimeProvider timeProvider) =>
