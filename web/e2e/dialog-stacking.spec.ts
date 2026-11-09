@@ -134,9 +134,10 @@ async function expectOnTop(page: Page, slot: Slot) {
   })()`)) as string[]
   expect(opacities.length).toBeGreaterThan(1)
   expect(new Set(opacities)).toEqual(new Set(['1']))
-  // Nothing in time still running (the cover image's parallax follows the scrolling, not the time).
+  // No entrance or other animation that ends is still running. Left out, as in settle(): endless ones, which never end by
+  // design (e.g. a pulsing status dot), and the cover image's parallax, which follows the scrolling instead of the time.
   const running = await page.evaluate(
-    "document.getAnimations().filter((animation) => animation.playState === 'running' && animation.timeline === document.timeline).map((animation) => animation.animationName ?? animation.transitionProperty ?? 'animation')",
+    "document.getAnimations().filter((animation) => animation.playState === 'running' && animation.timeline === document.timeline && animation.effect?.getComputedTiming().iterations !== Infinity).map((animation) => animation.animationName ?? animation.transitionProperty ?? 'animation')",
   )
   expect(running).toEqual([])
 
