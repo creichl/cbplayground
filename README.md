@@ -886,14 +886,14 @@ Every view has one main action in the accent colour; touch targets are at least 
 
 ##### The confirmation
 
-`BookingConfirmation` (`web/src/components/booking/BookingConfirmation.tsx`), in the dialog, the sheet and the embed, unfolds as one success moment in sequence, with the motion tokens and the spring, moving only transform and opacity, over in under 1.4 s:
+`BookingConfirmation` (`web/src/components/booking/BookingConfirmation.tsx`), in the dialog, the sheet and the embed, unfolds as one success moment in sequence, with the motion tokens and the spring, moving only transform and opacity, over within about 0.85 s, so everything stands still one second after it appeared (title, timeline, ticket and actions rise for `--motion-slow` with the spring):
 
 1. the icon: a check that draws itself, with a few particles in the accent colour flying out once (`SuccessMark`); for a request a clock that pops in and turns its long hand once;
 2. the title and its sentence;
 3. for a request, a short timeline of what happens next (`RequestTimeline.tsx`): "Request sent" (done, with a check), "The restaurant confirms" (now, with a softly pulsing dot) and "Check your reservation page" (to come; no email is promised, there are none yet); the line from the first step to the second draws itself once;
 4. a card like a ticket rises, with a narrow photo band on top (the cover image, otherwise the first photo of the gallery, otherwise the accent colour, almost black in the dark mode; not in the embed), the reference code, date, time, people, table and area, and the address;
 5. the reference code appears character by character, 40 ms apart, in monospace; screen readers read it whole at once (a visually hidden copy, the characters on screen are hidden from them);
-6. the actions rise one after another (the rise of `Stagger`, here right away as part of the sequence, `--stagger-start`).
+6. the actions rise one after another (the rise of `Stagger`, here right away as part of the sequence and faster, `--stagger-start` and `--stagger-duration`).
 
 With less motion everything is there at once. The actions have one primary: confirmed, **"Add to calendar"** (the menu with Google Calendar, Outlook.com and the `.ics` file, see below); for a request, **"View reservation"** (the guest's page in a new tab, so it also works from an embedded booking), and no calendar until the restaurant confirms. Below it "Share" as secondary (its menu also has "Copy link", the guest's link to keep), the quiet text links "Directions" and, confirmed, "Manage reservation" (the guest's page, new tab), the hint to save the link, and "Done" as a ghost button at the bottom, which closes the dialog (in the embed: back to the card). Every action is at least 44 px high; the focus moves to the heading as on every step.
 

@@ -108,6 +108,13 @@ test('confirmed: one primary "Add to calendar", "Copy link" in "Share", and the 
 test('request: primary "View reservation", the timeline, and no "Add to calendar"', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 })
   const confirmation = await requestIlFaro(page, 'Rosa Richiesta')
+  // The whole entrance (title, timeline, ticket, code, actions) is over one second after the confirmation appeared; only the
+  // pulse of the current step goes on.
+  await page.waitForTimeout(1000)
+  const running = await page.evaluate(
+    "document.getAnimations().filter((animation) => animation.playState === 'running' && animation.timeline === document.timeline && animation.effect?.getComputedTiming().iterations !== Infinity).map((animation) => animation.animationName ?? 'animation')",
+  )
+  expect(running).toEqual([])
 
   const timeline = confirmation.getByRole('list', { name: 'What happens next' })
   await expect(timeline.getByRole('listitem')).toHaveText(['Done: Request sent', 'Now: The restaurant confirms', 'Next: Check your reservation page'])

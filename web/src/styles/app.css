@@ -314,8 +314,8 @@
    * The success moment of the confirmation, in sequence: the hand of a request's clock turns once, the line of its timeline
    * draws itself, the characters of the reference code appear one after another (their delay set per character).
    */
-  --animate-clock-hand: clock-hand var(--motion-long) var(--ease-spring) 150ms backwards;
-  --animate-line-draw: line-draw var(--motion-long) var(--ease-out) 450ms backwards;
+  --animate-clock-hand: clock-hand var(--motion-long) var(--ease-spring) 100ms backwards;
+  --animate-line-draw: line-draw var(--motion-slow) var(--ease-out) 300ms backwards;
   --animate-code-char: code-char var(--motion-fast) var(--ease-out) backwards;
   /* The current step of a request's timeline: a soft ring around its dot, on and on (only with motion). */
   --animate-dot-pulse: dot-pulse 1.8s var(--ease-out) infinite;
@@ -599,10 +599,11 @@
       animation: rise var(--motion-long) var(--ease-out) backwards;
     }
     /*
-     * A list that rises as part of an entrance in sequence (the actions of the confirmation) waits for what comes before it:
-     * --stagger-start on it, added to each child's delay.
+     * A list that rises as part of an entrance in sequence (the actions of the confirmation) waits for what comes before it
+     * (--stagger-start on it, added to each child's delay) and may rise faster (--stagger-duration).
      */
     [data-stagger]:not([data-reveal='hidden']) > * {
+      animation-duration: var(--stagger-duration, var(--motion-long));
       animation-delay: calc(var(--stagger-start, 0ms) + var(--stagger-delay, 0ms));
     }
     [data-stagger] > :nth-child(2) {

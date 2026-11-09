@@ -22,12 +22,18 @@ type BookingConfirmationProps = {
 }
 
 /**
- * When the parts of the success moment begin, in milliseconds after it appears (README, "Booking page and embed",
- * Confirmation): the icon at once, then the title, a request's timeline, the ticket, the reference code character by character
- * and the actions one after another (Stagger, 40 ms apart, each rising for --motion-long). All of it is over within 1.4 s;
- * with less motion everything is there at once.
+ * When the parts of the success moment begin, in milliseconds after it appears (README, "The confirmation"): the icon at once,
+ * then the title, a request's timeline, the ticket, the reference code character by character and the actions one after
+ * another (Stagger, 40 ms apart). Title, timeline, ticket and actions rise for --motion-slow with the spring (`rise`), so all of
+ * it is over within about 0.85 s and everything stands still one second after the confirmation appeared; with less motion
+ * everything is there at once.
  */
-const sequence = { title: 120, timeline: 240, ticket: { confirmed: 240, requested: 360 }, code: 250, codeCharacter: 40, actions: 600 }
+const sequence = { title: 60, timeline: 140, ticket: { confirmed: 140, requested: 220 }, code: 120, codeCharacter: 40, actions: 300 }
+
+/** The entrance of one part of the sequence: `animate-rise`, shortened to --motion-slow with the spring, after `delay` ms. */
+function riseAfter(delay: number): CSSProperties {
+  return { animationDelay: `${delay}ms`, animationDuration: 'var(--motion-slow)', animationTimingFunction: 'var(--ease-spring)' }
+}
 
 /** The quiet links among the actions: in the text colour, so they keep the contrast in every branding, and 44 px high to tap. */
 const quietLinkClassName =
@@ -87,19 +93,19 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
     <div className="mx-auto flex w-full max-w-xl flex-col items-center gap-8 pt-2 pb-6 text-center md:pb-2">
       <div className="flex flex-col items-center gap-4">
         {requested ? <RequestClock /> : <SuccessMark />}
-        <div className="flex animate-rise flex-col gap-2" style={{ animationDelay: `${sequence.title}ms` }}>
+        <div className="flex animate-rise flex-col gap-2" style={riseAfter(sequence.title)}>
           {title}
           <p className="text-muted-foreground">{requested ? t('booking.confirmation.requestText') : t('booking.confirmation.confirmedText')}</p>
         </div>
         {requested && (
-          <div className="mt-2 animate-rise" style={{ animationDelay: `${sequence.timeline}ms` }}>
+          <div className="mt-2 animate-rise" style={riseAfter(sequence.timeline)}>
             <RequestTimeline />
           </div>
         )}
       </div>
 
       {/* Like a ticket: the code at the top, a perforation with two notches, what was booked below it. */}
-      <div className="w-full animate-rise rounded-2xl border border-border bg-card text-left shadow-card" style={{ animationDelay: `${ticketDelay}ms` }}>
+      <div className="w-full animate-rise rounded-2xl border border-border bg-card text-left shadow-card" style={riseAfter(ticketDelay)}>
         {photoBand && (
           // Only a picture of the place; on the accent colour (almost black in the dark mode) without photo or while it loads.
           // Its corners follow the card's inside its border; the card itself does not clip, so the notches below cut its border.
@@ -149,10 +155,10 @@ export function BookingConfirmation({ result, slug, restaurant, timeZoneId, phot
 
       {/*
         One primary action, then the others ever quieter, rising one after another as in Stagger, but right away, as part of the
-        sequence: not only once scrolled into view, so the moment is over within 1.4 s and the embed shows them at once too.
+        sequence: not only once scrolled into view, so the moment is over within 0.85 s and the embed shows them at once too.
         Each in a wrapper: an entrance on a control would replay after its focus ring.
       */}
-      <div data-stagger="" className="flex w-full flex-col gap-3" style={{ '--stagger-start': `${sequence.actions}ms` } as CSSProperties}>
+      <div data-stagger="" className="flex w-full flex-col gap-3" style={{ '--stagger-start': `${sequence.actions}ms`, '--stagger-duration': 'var(--motion-slow)' } as CSSProperties}>
         <div>
           {requested ? (
             // A new tab, so the link also works from the booking embedded in the restaurant's website.
