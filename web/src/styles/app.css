@@ -627,6 +627,12 @@
  * cover image of a restaurant (view-transition-name restaurant-cover) moves from the card of the start page into the cover
  * image of the booking page, and the header stays on top. Without the API the page simply changes.
  */
+[data-page-part='restaurant-cover'] {
+  view-transition-name: restaurant-cover;
+}
+[data-page-part='site-header'] {
+  view-transition-name: site-header;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: var(--motion-slow);
@@ -646,18 +652,15 @@
   z-index: 1;
 }
 /*
- * Another area in the guest's table choice (TablePicker, view-transition-name table-plan): the plan shown fades out, the
- * new one fades in from a little smaller. With less motion the view transitions above have no animation.
+ * Another area in the guest's table choice (TablePicker): the plan shown fades out above the new one, which fades in from a
+ * little smaller. CSS animations on the plans, not a view transition: that would paint the page above the booking dialog.
+ * With less motion the view transitions above have no animation and TablePicker simply changes the plan.
  */
-::view-transition-group(table-plan) {
-  animation-duration: var(--motion-slow);
-  animation-timing-function: var(--ease-out);
-}
-::view-transition-old(table-plan) {
-  animation: fade-out var(--motion-slow) var(--ease-out) both;
-}
-::view-transition-new(table-plan) {
+@utility animate-plan-in {
   animation: plan-in var(--motion-slow) var(--ease-out) both;
+}
+@utility animate-plan-out {
+  animation: fade-out var(--motion-slow) var(--ease-out) both;
 }
 @keyframes plan-in {
   from {
@@ -670,8 +673,13 @@
  * Layout transitions (src/ui/motion/layout-transition.ts): while one runs, the reservation card, its times and its footer
  * have names, so the card's snapshot is clipped to its height as it glides from the old to the new one, the times
  * cross-fade within it and the footer moves along; only transform, opacity and the snapshots' size change, the page is not
- * laid out per frame. The rest of the page is not animated: it shows its new state at once.
+ * laid out per frame. The rest of the page is not animated: it shows its new state at once. The parts named for page
+ * transitions (the cover image, the header's row) are not named then: they would be painted above the rest of the page, which
+ * has nothing to move.
  */
+:root[data-layout-transition] [data-page-part] {
+  view-transition-name: none;
+}
 :root[data-layout-transition] [data-layout-part='booking-card'] {
   view-transition-name: booking-card;
 }

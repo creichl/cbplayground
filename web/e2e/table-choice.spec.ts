@@ -14,10 +14,11 @@ async function setRooftopTableStyle(page: Page, tableStyle: string) {
 
 /**
  * The plan in the dialog is drawn: its image or room has a size (it once shrank to nothing with the list open). Waits while the
- * plan changes, e.g. while a table chosen in another area cross-fades to that area's plan and is zoomed to.
+ * plan changes, e.g. while a table chosen in another area cross-fades to that area's plan and is zoomed to. During the
+ * cross-fade the previous area's plan fades out above it, inert: only the plan shown counts.
  */
 async function expectPlanDrawn(dialog: Locator) {
-  const plan = dialog.locator('[data-vaul-no-drag]')
+  const plan = dialog.locator('[data-vaul-no-drag]:not([inert] *)')
   await expect.poll(async () => (await plan.boundingBox())?.width ?? 0).toBeGreaterThan(300)
   await expect.poll(async () => (await plan.boundingBox())?.height ?? 0).toBeGreaterThan(200)
 }

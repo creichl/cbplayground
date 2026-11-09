@@ -40,8 +40,8 @@ export function GuestLayout() {
  * A restaurant's guest pages in its branding (BrandTheme), built with the design system (src/ui). The header has the
  * restaurant's logo on the left (without box, 40 px high, see BrandLogo; without logo the name) and the language as a
  * compact menu on the right. While a page's cover image (RestaurantHeader, through HeroContext) is behind it, the header is
- * transparent with white text and the logo has a soft shadow; once the page scrolls past the image it is fixed, opaque with
- * a blur (a layer that fades in, so the change is smooth), and on the booking page it adds "Reserve a table", which brings
+ * transparent with white text and the logo has a soft shadow; once the restaurant's name on the image reaches the header
+ * (so the logo never lies over it) it is fixed, opaque with a blur (a layer that fades in, so the change is smooth), and on the booking page it adds "Reserve a table", which brings
  * the reservation card into view; the page learns of it through PastHeroContext (the booking page then shows its section
  * navigation below the header). Links between the guest pages change the page with a view transition. The platform
  * steps back into a plain footer with the staff sign-in and "powered by". An unknown restaurant gets the platform's look.
@@ -71,7 +71,12 @@ function RestaurantFrame({ slug }: { slug: string }) {
     if (hero === null) {
       return
     }
-    const update = () => setHeroInView(hero.getBoundingClientRect().bottom > headerHeight)
+    // Transparent only while the restaurant's name (the h1 at the bottom of the image) is below the header, so the logo never
+    // lies over it; the skeleton, without a name, until its bottom reaches the header.
+    const update = () => {
+      const name = hero.querySelector('h1')
+      setHeroInView(name !== null ? name.getBoundingClientRect().top > headerHeight : hero.getBoundingClientRect().bottom > headerHeight)
+    }
     update()
     window.addEventListener('scroll', update, { passive: true })
     window.addEventListener('resize', update)
@@ -110,7 +115,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
             Logo and language: their own layer in page transitions, on top of the cover image moving below them (app.css). As
             large as the row of the start page's header (SiteHeader), so neither is scaled while one becomes the other.
           */}
-          <div className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 [view-transition-name:site-header] sm:px-6">
+          <div data-page-part="site-header" className="relative mx-auto flex h-full max-w-page items-center justify-between gap-2 px-4 sm:px-6">
             {restaurant.isPending ? (
               <Skeleton className="h-10 w-30" />
             ) : restaurant.isError ? (

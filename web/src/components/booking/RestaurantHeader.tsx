@@ -92,12 +92,12 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], priceLevel 
   return (
     <div
       ref={page ? registerHero : undefined}
+      data-page-part={page ? 'restaurant-cover' : undefined}
       className={cn(
         // overflow-clip, not hidden: the parallax of the cover image needs the page as its scroller.
         'relative flex items-end overflow-clip',
         coverUrl !== null ? heights[size].cover : heights[size].band,
         withCover ? 'bg-primary-900 text-white' : 'bg-primary text-primary-foreground',
-        page && '[view-transition-name:restaurant-cover]',
       )}
     >
       {withCover && (
@@ -121,5 +121,5 @@ export function RestaurantHeader({ name, city, coverUrl, facts = [], priceLevel 
 /** The cover image while the restaurant loads, in the height of the page's cover image, so nothing jumps. */
 export function RestaurantHeaderSkeleton({ size = 'page' }: Pick<RestaurantHeaderProps, 'size'>) {
   const registerHero = use(HeroContext)
-  return <Skeleton ref={registerHero} className={cn('rounded-none', heights[size].cover, size === 'page' && '[view-transition-name:restaurant-cover]')} />
+  return <Skeleton ref={registerHero} data-page-part={size === 'page' ? 'restaurant-cover' : undefined} className={cn('rounded-none', heights[size].cover)} />
 }

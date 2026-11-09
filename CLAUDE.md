@@ -27,7 +27,9 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   taken meanwhile, the contact form, the embed's inline steps), `booking-card.spec.ts` (the reservation card: party
   size chips, date strip, times kept while loading, taken and scarce times, alternatives of a fully booked day, the embed), `guest-change.spec.ts` (after booking: changing the time on "Your reservation", the remembered
   booking's notice on the restaurant page, the calendar and share menus, a change in request mode and the guest's entry in
-  the staff's history).
+  the staff's history), `dialog-stacking.spec.ts` (the booking dialog on top of the page: no view transition while it is
+  open, the page dimmed, its content fully opaque, the card behind it keeping the booked choice; the header logo never over
+  the restaurant's name; the page transition from the start page).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
   with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
   width, tables, archived tables), `pacing.spec.ts`, `reports.spec.ts` (reports page), `superadmin.spec.ts`,
