@@ -150,7 +150,9 @@ test.describe('Embed', () => {
     const heading = page.getByRole('heading', { name: 'Ihre Kontaktdaten' })
     await expect(heading).toBeVisible()
     await expect(page.getByRole('dialog')).toHaveCount(0)
-    expect((await heading.boundingBox())!.y).toBeGreaterThan((await chip.boundingBox())!.y)
+    // Below the card, which has folded to one line with the choice.
+    const card = (await page.locator('[data-layout-part="booking-card"]').boundingBox())!
+    expect((await heading.boundingBox())!.y).toBeGreaterThan(card.y + card.height)
     // Scrolled to the steps, the summary bar at their top does not cover the heading.
     await expect
       .poll(() =>
