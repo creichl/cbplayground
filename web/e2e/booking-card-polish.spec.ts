@@ -113,8 +113,8 @@ test.describe('Booking card polish', () => {
       await expectPillUnder(page, party, four)
 
       await expect(card(page).locator('[aria-busy="true"]')).toHaveCount(0)
-      const day = strip.getByRole('button', { name: /, available$/, pressed: false }).nth(1)
-      const date = (await day.getAttribute('data-day'))!
+      const date = (await strip.getByRole('button', { name: /, available$/, pressed: false }).nth(1).getAttribute('data-day'))!
+      const day = strip.locator(`[data-day="${date}"]`)
       await day.click()
       await expect(day).toHaveAttribute('aria-pressed', 'true')
       await expect(summary).toHaveText(`4 people · ${shortDate(date)}`)
@@ -166,6 +166,9 @@ test.describe('Booking card polish', () => {
     await scroller.scrollIntoViewIfNeeded()
     await scroller.evaluate((element) => element.scrollTo({ left: element.scrollWidth, behavior: 'instant' }))
     await expect(month).toHaveText(monthOf(firstDay))
+    // On a phone with the divider in the middle of the strip.
+    await divider.evaluate((element) => element.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'instant' }))
+    await expect(divider).toBeInViewport()
     await settle(page)
     await screenshot(page, 'booking-card-polish', 'month-divider-390', { fullPage: false })
   })
@@ -353,7 +356,8 @@ test.describe('Booking card polish', () => {
       await expect(card(page).locator('[aria-busy="true"]')).toHaveCount(0)
       expect(await runningAnimations(page)).toEqual([])
 
-      const day = strip.getByRole('button', { name: /, available$/, pressed: false }).nth(1)
+      const date = (await strip.getByRole('button', { name: /, available$/, pressed: false }).nth(1).getAttribute('data-day'))!
+      const day = strip.locator(`[data-day="${date}"]`)
       await day.click()
       await expect(day).toHaveAttribute('aria-pressed', 'true')
       expect(await runningAnimations(page)).toEqual([])
