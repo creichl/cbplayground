@@ -430,12 +430,44 @@ async function recordMotion(page: Page) {
     const mark = (event) => event.target instanceof Element && event.target.setAttribute('data-sweep-animated', '')
     document.addEventListener('animationstart', mark, true)
     document.addEventListener('transitionstart', mark, true)
+    // Every frame: an entrance that waits (a delay) without holding its first frame meanwhile shows its end first and then jumps
+    // to its start; two animations of the same property on the same element at the same moment compete.
+    window.__motionFaults = new Set()
+    const describe = (target) => target ? target.tagName.toLowerCase() + '.' + String(target.className).slice(0, 50) : 'document'
+    const properties = (animation) => animation.transitionProperty !== undefined ? [animation.transitionProperty]
+      : [...new Set((animation.effect?.getKeyframes() ?? []).flatMap((frame) => Object.keys(frame)))]
+          .filter((key) => !['offset', 'computedOffset', 'easing', 'composite'].includes(key))
+    const sample = () => {
+      const running = new Map()
+      for (const animation of document.getAnimations()) {
+        const effect = animation.effect
+        if (effect === null || animation.playState !== 'running') continue
+        const timing = effect.getTiming()
+        const moves = properties(animation)
+        const name = animation.animationName ?? animation.transitionProperty ?? 'animation'
+        if (timing.delay > 0 && animation.transitionProperty === undefined && !['backwards', 'both'].includes(timing.fill)
+            && moves.some((property) => property === 'opacity' || property === 'transform' || property === 'translate' || property === 'scale')) {
+          window.__motionFaults.add('starts with a jump (delay without fill backwards): ' + name + ' on ' + describe(effect.target))
+        }
+        if (effect.getComputedTiming().duration === 0 || effect.target === null || effect.composite !== 'replace') continue
+        for (const property of moves) {
+          const key = property + ' on ' + describe(effect.target) + (effect.pseudoElement ?? '')
+          const other = running.get(key)
+          if (other !== undefined && other.target === effect.target && other.pseudo === effect.pseudoElement) {
+            window.__motionFaults.add('competing: ' + other.name + ' and ' + name + ' move ' + key)
+          }
+          running.set(key, { target: effect.target, pseudo: effect.pseudoElement, name })
+        }
+      }
+      requestAnimationFrame(sample)
+    }
+    requestAnimationFrame(sample)
   })()`)
 }
 
 /**
  * Once everything has settled: the elements that animated and stayed between invisible and visible (an animation ending below
- * opacity 1), and the layout shifts so far.
+ * opacity 1), the jumps at the start and the competing animations so far, and the layout shifts so far.
  */
 async function motionAfter(page: Page) {
   await settle(page)
@@ -446,8 +478,8 @@ async function motionAfter(page: Page) {
       const opacity = Number(getComputedStyle(element).opacity)
       if (opacity > 0 && opacity < 1) halfVisible.push(element.tagName.toLowerCase() + '.' + String(element.className).slice(0, 60) + ' ' + opacity)
     }
-    return { halfVisible, shifts: Math.round(window.__shifts * 1000) / 1000 }
-  })()`)) as { halfVisible: string[]; shifts: number }
+    return { halfVisible, faults: [...window.__motionFaults], shifts: Math.round(window.__shifts * 1000) / 1000 }
+  })()`)) as { halfVisible: string[]; faults: string[]; shifts: number }
 }
 
 /** The animations and transitions running now that take any time (with reduced motion there are none). */
@@ -486,20 +518,26 @@ for (const size of [sizes[0], sizes[2]]) {
   test.describe(`Motion of the main flow at ${size.label} px`, () => {
     test.use({ viewport: size.viewport, hasTouch: size.touch })
 
-    test('every step ends fully visible, without layout shifts', async ({ page, browser }) => {
+    test('every step starts without a jump, ends fully visible, nothing competes and the page does not shift', async ({ page, browser }) => {
       await recordMotion(page)
-      // The browser's performance trace of the flow, with its frames, in the test's results folder (playwright/…/motion-trace.json),
-      // to be opened in the browser's developer tools (Performance).
-      await browser.startTracing(page, { path: test.info().outputPath('motion-trace.json'), screenshots: true })
-      await mainFlow(page, async (step) => {
-        const motion = await motionAfter(page)
-        expect(motion.halfVisible, step).toEqual([])
-        // The page itself does not shift. In the dialog the layout shifts are recorded in the report: the frame takes the next
-        // step's size at once and glides there by transform (counted as a shift on desktops), and on phones the table step's
-        // floor plan grows once its image has loaded (see the pull request, "Not fixed, needs decision").
-        if (step === 'page') expect(motion.shifts, step).toBeLessThan(0.05)
-        test.info().annotations.push({ type: 'layout shifts', description: `${step}: ${motion.shifts}` })
-      })
+      // The browser's performance trace of the flow, with its frames; kept only when the test fails (attached as motion-trace.json,
+      // to be opened in the browser's developer tools, Performance), as it is 60–70 MB.
+      await browser.startTracing(page, { screenshots: true })
+      try {
+        await mainFlow(page, async (step) => {
+          const motion = await motionAfter(page)
+          expect(motion.halfVisible, step).toEqual([])
+          expect(motion.faults, step).toEqual([])
+          // The page itself does not shift. In the dialog the layout shifts are recorded in the report: the frame takes the next
+          // step's size at once and glides there by transform (counted as a shift on desktops), and on phones the table step's
+          // floor plan grows once its image has loaded (see the pull request, "Not fixed, needs decision").
+          if (step === 'page') expect(motion.shifts, step).toBeLessThan(0.05)
+          test.info().annotations.push({ type: 'layout shifts', description: `${step}: ${motion.shifts}` })
+        })
+      } catch (error) {
+        await test.info().attach('motion-trace.json', { body: await browser.stopTracing(), contentType: 'application/json' })
+        throw error
+      }
       await browser.stopTracing()
     })
 
@@ -511,3 +549,197 @@ for (const size of [sizes[0], sizes[2]]) {
     })
   })
 }
+
+/**
+ * Contrast and focus rings in the page, as functions on `window.__sweep`: `contrast(scope)` lists the texts in view inside `scope`
+ * below 4.5:1 (3:1 from 24 px, or 18.66 px bold) against what lies behind them, and the borders of empty fields below 3:1;
+ * `focus()` checks the focused element's ring: 2 px or more, 3:1 against what lies around it, and not cut off by a parent that
+ * clips. What lies on a photo (an image or a gradient behind it) and what is disabled are left out.
+ */
+async function installChecks(page: Page) {
+  await page.addInitScript(`(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = canvas.height = 1
+    const context = canvas.getContext('2d', { willReadFrequently: true })
+    const rgba = (color) => {
+      context.clearRect(0, 0, 1, 1)
+      context.fillStyle = '#000'
+      context.fillStyle = color
+      context.fillRect(0, 0, 1, 1)
+      const [r, g, b, a] = context.getImageData(0, 0, 1, 1).data
+      return [r, g, b, a / 255]
+    }
+    const over = (top, bottom) => [0, 1, 2].map((i) => top[i] * top[3] + bottom[i] * (1 - top[3])).concat(1)
+    const luminance = (color) => {
+      const [r, g, b] = color.slice(0, 3).map((value) => (value /= 255) <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4)
+      return 0.2126 * r + 0.7152 * g + 0.0722 * b
+    }
+    const ratio = (a, b) => (Math.max(luminance(a), luminance(b)) + 0.05) / (Math.min(luminance(a), luminance(b)) + 0.05)
+    // Surfaces that let the pointer through (a selection pill, a shade) are part of the stack too.
+    const through = document.createElement('style')
+    through.textContent = '* { pointer-events: auto !important; }'
+    // The colour behind a point, from the elements stacked there below 'from' (itself left out unless 'self'); null on a photo.
+    const behind = (x, y, from, self) => {
+      const stack = document.elementsFromPoint(x, y)
+      const layers = []
+      let start = from === null ? 0 : stack.indexOf(from)
+      if (start === -1) return null
+      if (!self) start += 1
+      for (const element of stack.slice(start)) {
+        if (from !== null && !self && from.contains(element)) continue
+        const style = getComputedStyle(element)
+        if (['IMG', 'VIDEO', 'CANVAS', 'PICTURE'].includes(element.tagName) || style.backgroundImage !== 'none') return null
+        const color = rgba(style.backgroundColor)
+        if (color[3] > 0) layers.push(color)
+        if (color[3] >= 0.99) break
+      }
+      return layers.reverse().reduce((bottom, top) => over(top, bottom), [255, 255, 255, 1])
+    }
+    const name = (element) => (element.getAttribute('aria-label') ?? element.textContent ?? '').trim().slice(0, 40) + ' (' + element.tagName.toLowerCase() + ')'
+    const opaque = (element) => {
+      for (let current = element; current !== null; current = current.parentElement) if (Number(getComputedStyle(current).opacity) < 0.99) return false
+      return true
+    }
+    window.__sweep = {
+      contrast(scope) {
+        document.head.append(through)
+        const found = []
+        for (const element of document.querySelectorAll(scope + ' *')) {
+          if (element.closest('.sr-only, [disabled], [aria-disabled="true"], [inert]')) continue
+          const box = element.getBoundingClientRect()
+          if (box.width < 2 || box.height < 2 || box.bottom < 0 || box.top > innerHeight || box.right < 0 || box.left > innerWidth) continue
+          const style = getComputedStyle(element)
+          if (style.visibility === 'hidden' || !opaque(element)) continue
+          const x = Math.min(Math.max(box.left + box.width / 2, 1), innerWidth - 1)
+          const y = Math.min(Math.max(box.top + box.height / 2, 1), innerHeight - 1)
+          const field = ['INPUT', 'TEXTAREA'].includes(element.tagName) && element.type !== 'radio' && element.type !== 'checkbox'
+          if (field) {
+            const background = behind(box.left - 2, y, element, false)
+            if (background === null) continue
+            const border = over(rgba(style.borderTopColor), background)
+            const value = ratio(border, background)
+            if (value < 3) found.push('field border ' + value.toFixed(2) + ':1 ' + name(element.labels?.[0] ?? element))
+            continue
+          }
+          if (![...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim() !== '')) continue
+          const background = behind(x, y, element, true)
+          if (background === null) continue
+          const value = ratio(over(rgba(style.color), background), background)
+          const size = parseFloat(style.fontSize)
+          const needed = size >= 24 || (size >= 18.66 && Number(style.fontWeight) >= 700) ? 3 : 4.5
+          if (value < needed) found.push('text ' + value.toFixed(2) + ':1 ' + name(element))
+        }
+        through.remove()
+        return [...new Set(found)]
+      },
+      focus() {
+        const element = document.activeElement
+        if (element === null || element === document.body) return []
+        const style = getComputedStyle(element)
+        const box = element.getBoundingClientRect()
+        if (box.width === 0) return []
+        if (style.outlineStyle === 'none' || parseFloat(style.outlineWidth) < 2) {
+          // A ring drawn inside instead, on a mark over a photo that its frame clips (the gallery): a box-shadow of 2 px or more.
+          const inset = [...element.querySelectorAll('*')].some((mark) => /0px 0px 0px ([2-9]|\\d\\d)px inset/.test(getComputedStyle(mark).boxShadow))
+          return inset ? [] : ['no focus ring: ' + name(element)]
+        }
+        const reach = parseFloat(style.outlineOffset) + parseFloat(style.outlineWidth)
+        const found = []
+        document.head.append(through)
+        const background = behind(box.left - reach - 2, box.top + box.height / 2, element, false) ?? behind(box.left + box.width / 2, box.top - reach - 2, element, false)
+        through.remove()
+        if (background !== null) {
+          const value = ratio(over(rgba(style.outlineColor), background), background)
+          if (value < 3) found.push('focus ring ' + value.toFixed(2) + ':1 ' + name(element))
+        }
+        for (let parent = element.parentElement; parent !== null && parent !== document.body; parent = parent.parentElement) {
+          const clip = getComputedStyle(parent)
+          const clipsX = clip.overflowX !== 'visible'
+          const clipsY = clip.overflowY !== 'visible'
+          if (!clipsX && !clipsY) continue
+          const frame = parent.getBoundingClientRect()
+          const left = frame.left + parent.clientLeft
+          const top = frame.top + parent.clientTop
+          if ((clipsX && (box.left - reach < left - 0.5 || box.right + reach > left + parent.clientWidth + 0.5))
+              || (clipsY && (box.top - reach < top - 0.5 || box.bottom + reach > top + parent.clientHeight + 0.5))) {
+            found.push('focus ring cut off by ' + parent.tagName.toLowerCase() + '.' + String(parent.className).slice(0, 50) + ': ' + name(element))
+            break
+          }
+        }
+        return found
+      },
+    }
+  })()`)
+}
+
+/** The contrast faults of the whole page, screen by screen from top to bottom, inside `scope`. */
+async function contrastOfPage(page: Page, scope: string) {
+  const found = new Set<string>()
+  const height = Number(await page.evaluate('document.scrollingElement.scrollHeight'))
+  for (let y = 0; y < height; y += 600) {
+    await page.evaluate(`window.scrollTo(0, ${y})`)
+    await page.waitForTimeout(150)
+    await settle(page)
+    for (const fault of (await page.evaluate(`window.__sweep.contrast(${JSON.stringify(scope)})`)) as string[]) found.add(fault)
+  }
+  return [...found]
+}
+
+/** Moves the focus with Tab `count` times and checks the ring each time; the faults of all of them. */
+async function focusRings(page: Page, count: number) {
+  const found = new Set<string>()
+  for (let i = 0; i < count; i++) {
+    await page.keyboard.press('Tab')
+    // The ring glides in (150 ms).
+    await settle(page)
+    for (const fault of (await page.evaluate('window.__sweep.focus()')) as string[]) found.add(fault)
+  }
+  return [...found]
+}
+
+// Every demo restaurant in its own theme and accent colour, and the start page in the platform's.
+const demoRestaurants = [
+  { slug: 'zur-linde', theme: 'light' },
+  { slug: 'kafana-dunav', theme: 'light' },
+  { slug: 'il-faro', theme: 'light' },
+  { slug: 'cafe-morgenrot', theme: 'light' },
+  { slug: 'rooftop-belvedere', theme: 'dark' },
+  { slug: 'izakaya-kaze', theme: 'dark' },
+] as const
+
+test.describe('Contrast and focus rings at 1440 px', () => {
+  test.use({ viewport: sizes[0].viewport })
+  // Each test checks a whole page screen by screen and tabs through it.
+  test.describe.configure({ timeout: 90_000 })
+
+  test('the start page', async ({ page }) => {
+    await installChecks(page)
+    await page.goto('/')
+    await expect(page.locator('main a[href^="/r/"]').first()).toBeVisible()
+    await revealWhole(page)
+    expect(await contrastOfPage(page, 'main')).toEqual([])
+    await page.evaluate('window.scrollTo(0, 0)')
+    expect(await focusRings(page, 20)).toEqual([])
+  })
+
+  for (const restaurant of demoRestaurants) {
+    test(`${restaurant.slug} (${restaurant.theme}): the page and the booking dialog`, async ({ page }) => {
+      await installChecks(page)
+      await page.goto(`/r/${restaurant.slug}`)
+      const time = await lastFreeTime(page)
+      await revealWhole(page)
+      expect(await contrastOfPage(page, 'body'), 'page').toEqual([])
+      await page.evaluate('window.scrollTo(0, 0)')
+      expect(await focusRings(page, 40), 'page focus').toEqual([])
+
+      await time.click()
+      const dialog = page.getByRole('dialog')
+      await expect(dialog).toBeVisible()
+      await settle(page)
+      expect(await page.evaluate(`window.__sweep.contrast('[role="dialog"]')`), 'dialog').toEqual([])
+      expect(await focusRings(page, 12), 'dialog focus').toEqual([])
+      // The dialog with a focused control, its ring in the accent colour.
+      await shoot(page, `focus-${restaurant.slug}`, sizes[0], { theme: restaurant.theme, language: 'en' }, { fullPage: false })
+    })
+  }
+})
