@@ -107,10 +107,24 @@ test.describe('Front desk: phone reservation', () => {
     const name = 'Jovana Telefon'
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    // Tomorrow: Kafana Dunav is open every day, and the whole day lies ahead.
-    await page.getByRole('button', { name: 'Next day' }).click()
-    await expect(page).toHaveURL(/\/frontdesk\?date=/)
-    const date = new URL(page.url()).searchParams.get('date')!
+    // From tomorrow on, so the whole day lies ahead: the first day with free times. Kafana Dunav is open every day except on
+    // public holidays (e.g. Armistice Day, 11 November), when it is closed.
+    let date = ''
+    for (let days = 1; days <= 7 && date === ''; days++) {
+      const day = new Date(`${todayInBelgrade()}T12:00:00Z`)
+      day.setUTCDate(day.getUTCDate() + days)
+      const candidate = day.toISOString().slice(0, 10)
+      // One "Next day" per day; the address changes first.
+      await page.getByRole('button', { name: 'Next day' }).click()
+      await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${candidate}$`))
+      const availability = (await (await page.request.get(`/api/public/restaurants/kafana-dunav/availability?date=${candidate}&guests=2`)).json()) as {
+        periods: { times: { available: boolean }[] }[]
+      }
+      if (availability.periods.some((period) => period.times.some((slot) => slot.available))) {
+        date = candidate
+      }
+    }
+    expect(date).not.toBe('')
     // The address changes first; the page shows the day right after.
     await expect(page.getByRole('button', { name: 'Date', exact: true })).toHaveText(pickerDate(date))
 
