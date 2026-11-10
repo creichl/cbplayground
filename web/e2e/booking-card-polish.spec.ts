@@ -1,5 +1,5 @@
 import { expect, type Frame, type Locator, type Page, test } from '@playwright/test'
-import { dateFromToday, settle, timeOfDay } from './helpers.ts'
+import { dateFromToday, settle, signIn, timeOfDay } from './helpers.ts'
 import { screenshot } from './screenshot.ts'
 
 // The polish of the reservation card: the selection pill below the chosen party size and day, the month labels of the date
@@ -156,6 +156,9 @@ test.describe('Booking card polish', () => {
     const dividerBox = (await divider.boundingBox())!
     const dayBox = (await strip.locator(`[data-day="${firstDay}"]`).boundingBox())!
     expect(dividerBox.x + dividerBox.width).toBeLessThanOrEqual(dayBox.x)
+    // The whole strip in the middle of the window, not at its bottom edge.
+    await strip.evaluate((element) => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }))
+    await expect(divider).toBeInViewport({ ratio: 1 })
     await settle(page)
     await screenshot(page, 'booking-card-polish', 'month-divider-1440', { fullPage: false })
 
@@ -257,6 +260,48 @@ test.describe('Booking card polish', () => {
     await expect(card(page).getByRole('button', { name: `${timeOfDay(run[0])}, fully booked`, exact: true })).toHaveCount(0)
     await expect(card(page).locator('[data-time-chip]').first()).toBeVisible()
     await shoot(page, 'taken-run', chip)
+  })
+
+  test('shows a single taken time quiet between free ones', async ({ page }) => {
+    // A pacing limit on one 15-minute start slot takes that time alone: a booked table would also take the times around it.
+    // At Café Morgenrot, which no other booking test uses; the rule is removed again at the end.
+    const slug = 'cafe-morgenrot'
+    await signIn(page, 'admin@cafe-morgenrot.local')
+    await expect(page).toHaveURL(/\/admin$/)
+    const date = await openDayFrom(page, slug, 70, 2, 6)
+    const times = (await periodsOf(page, slug, date, 2)).flatMap((period) => period.slice(1, -1).filter((slot, index) => slot.available && period[index].available && period[index + 2].available))
+    expect(times.length).toBeGreaterThan(0)
+    const time = times[Math.floor(times.length / 2)].time
+    const [hours, minutes] = time.split(':').map(Number)
+    const end = `${String(hours + Math.floor((minutes + 15) / 60)).padStart(2, '0')}:${String((minutes + 15) % 60).padStart(2, '0')}`
+    const settings = (await (await page.request.get('/api/admin/reservation-settings')).json()) as { pacingRules: unknown[] }
+    const rule = { days: [toDate(date).getDay()], from: time, to: end, maxCovers: 2 }
+    expect((await page.request.put('/api/admin/reservation-settings', { data: { ...settings, pacingRules: [...settings.pacingRules, rule] } })).status()).toBe(200)
+    try {
+      await book(page, slug, date, time, 2)
+      const slots = (await periodsOf(page, slug, date, 2)).flat()
+      const index = slots.findIndex((slot) => slot.time === time)
+      expect(slots[index].available).toBe(false)
+      expect(slots[index - 1].available && slots[index + 1].available).toBe(true)
+
+      await page.goto(`/r/${slug}?guests=2&date=${date}`)
+      const taken = card(page).getByRole('button', { name: `${timeOfDay(time)}, fully booked`, exact: true })
+      await expect(taken).toBeDisabled()
+      await expect(taken).not.toHaveAttribute('data-taken-run')
+      await expect(card(page).locator(`[data-time-chip="${slots[index - 1].time}"]`)).toBeVisible()
+      await expect(card(page).locator(`[data-time-chip="${slots[index + 1].time}"]`)).toBeVisible()
+      // Muted and struck through, without a dashed border.
+      const look = await taken.evaluate((element) => {
+        const style = element.ownerDocument.defaultView!.getComputedStyle(element)
+        return { line: style.textDecorationLine, border: style.borderTopStyle, borderColour: style.borderTopColor }
+      })
+      expect(look.line).toContain('line-through')
+      expect(look.border).not.toBe('dashed')
+      expect(look.borderColour).toBe('rgba(0, 0, 0, 0)')
+      await shoot(page, 'taken-single', taken)
+    } finally {
+      expect((await page.request.put('/api/admin/reservation-settings', { data: settings })).status()).toBe(200)
+    }
   })
 
   for (const { slug, look } of restaurants) {
