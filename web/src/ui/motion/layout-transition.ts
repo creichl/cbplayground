@@ -42,3 +42,39 @@ function behindModal(element: Element) {
 
 /** Whether the browser can show layout transitions; without it, new content fades in instead. */
 export const layoutTransitions = typeof document !== 'undefined' && typeof document.startViewTransition === 'function'
+
+/**
+ * Moves one element into another as a view transition, e.g. the time chip of the reservation card into the time in the booking
+ * dialog's summary, and back when it closes. Only these two carry `name`, each for this one transition: `from` in the old state,
+ * the element `to` returns once `update` is made (waited for up to half a second, e.g. until the dialog has rendered) in the new
+ * one; once it has ended neither keeps it. While it runs, the document carries data-shared-transition: app.css then leaves the
+ * parts named for page transitions without their names and shows the page in its new state at once, so only the element moves
+ * (the dialog's own entrance or exit plays live in the page's new state). Returns false, and simply makes the change, without the
+ * View Transitions API, with less motion, in a hidden tab or without `from`.
+ */
+export function sharedElementTransition(from: HTMLElement | null, name: string, update: () => void, to: () => HTMLElement | null) {
+  const withoutMotion = from === null || parseFloat(getComputedStyle(from).getPropertyValue('--motion-slow')) === 0
+  if (typeof document.startViewTransition !== 'function' || withoutMotion || document.visibilityState !== 'visible') {
+    update()
+    return false
+  }
+  const root = document.documentElement
+  root.dataset.sharedTransition = ''
+  from.style.viewTransitionName = name
+  let target: HTMLElement | null = null
+  const transition = document.startViewTransition(async () => {
+    update()
+    from.style.removeProperty('view-transition-name')
+    // React renders the new state on its own schedule; the browser waits for it with the page as it was.
+    for (let waited = 0; (target = to()) === null && waited < 500; waited += 20) {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+    target?.style.setProperty('view-transition-name', name)
+  })
+  void transition.finished.finally(() => {
+    from.style.removeProperty('view-transition-name')
+    target?.style.removeProperty('view-transition-name')
+    delete root.dataset.sharedTransition
+  })
+  return true
+}

@@ -752,6 +752,72 @@
   animation-timing-function: var(--ease-out);
 }
 
+/*
+ * Shared element transitions (sharedElementTransition in src/ui/motion/layout-transition.ts): the chosen time's chip moves into
+ * the time in the booking dialog's summary, and back when the dialog closes. Only the two chips are named (booking-time, inline
+ * for this one transition); the parts named for page transitions are not, and the page shows its new state at once, with the
+ * dialog's entrance or exit playing live in it, so nothing of the page is painted above the dialog.
+ */
+:root[data-shared-transition] [data-page-part] {
+  view-transition-name: none;
+}
+:root[data-shared-transition]::view-transition-old(root) {
+  display: none;
+}
+:root[data-shared-transition]::view-transition-new(root) {
+  animation: none;
+}
+::view-transition-group(booking-time) {
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-spring);
+}
+::view-transition-old(booking-time),
+::view-transition-new(booking-time) {
+  height: 100%;
+  animation-duration: var(--motion-slow);
+  animation-timing-function: var(--ease-out);
+}
+
+/*
+ * The booking dialog (BookingSteps, HoldNotice, GuestDetailsForm): a changed digit of the hold's countdown slides up into place,
+ * the countdown pulses softly once when its last minute starts, the summary's time pops in when the sheet rises on phones, and
+ * the main button's check pops in once the booking is made while its surface shrinks to the circle behind it.
+ */
+@utility animate-digit-roll {
+  animation: digit-roll var(--motion-medium) var(--ease-out) backwards;
+}
+@utility animate-hold-pulse {
+  animation: hold-pulse var(--motion-long) var(--ease-out);
+}
+@utility animate-chip-pop {
+  animation: success-pop var(--motion-slow) var(--ease-spring) var(--motion-slow) backwards;
+}
+@utility animate-button-shrink {
+  animation: button-shrink var(--motion-slow) var(--ease-in) forwards;
+}
+@utility animate-button-circle {
+  animation: success-pop var(--motion-slow) var(--ease-spring) 150ms backwards;
+}
+@keyframes digit-roll {
+  from {
+    opacity: 0;
+    translate: 0 60%;
+  }
+}
+@keyframes hold-pulse {
+  40% {
+    opacity: 0.55;
+    scale: 1.02;
+  }
+}
+/* --circle-scale: the button's height divided by its width (GuestDetailsForm). */
+@keyframes button-shrink {
+  to {
+    opacity: 0;
+    scale: var(--circle-scale, 0.2) 1;
+  }
+}
+
 /* The light around the chosen table in the table style "Glow" breathes softly; with less motion it stays still. */
 @keyframes table-glow {
   from {

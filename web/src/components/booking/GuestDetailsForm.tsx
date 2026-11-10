@@ -1,5 +1,5 @@
 import { CircleAlertIcon, LoaderCircleIcon } from 'lucide-react'
-import { type ComponentProps, type FormEvent, type ReactNode, useId, useRef, useState } from 'react'
+import { type ComponentProps, type CSSProperties, type FormEvent, type ReactNode, useEffect, useId, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { isValidEmail } from '../../api/profile.ts'
 import { guestMaxLengths, isValidPhone } from '../../api/publicBooking.ts'
@@ -34,6 +34,8 @@ type GuestDetailsFormProps = {
   /** Called with the checked values; `phone` is the number in international form (internationalPhone). */
   onSubmit: (values: GuestDetailsValues) => void
   submitting: boolean
+  /** The booking is made: the main button turns into a check for a moment, before the confirmation follows (BookingSteps). */
+  succeeded?: boolean
   /** The translated reason a booking failed, shown above the button. */
   error: string | null
   /** The request mode sends a request instead of booking. */
@@ -57,9 +59,10 @@ function regionName(region: string, language: string) {
  * "Remember my details on this device" (off until the guest ticks it) stores name, phone and email for the next booking at any
  * restaurant; "Not you? Clear" forgets them. Below them what happens next: in the request mode that the restaurant confirms,
  * and that the reservation can be cancelled through the link. The main button books or sends the request, and says so with a
- * spinner while it is sent.
+ * spinner while it is sent. Once it is made, the button's surface shrinks to a circle in its middle where a check draws itself;
+ * when it fails, the button gives way a little and springs back to its label while the error shows.
  */
-export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, submitting, error, request }: GuestDetailsFormProps) {
+export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, submitting, succeeded = false, error, request }: GuestDetailsFormProps) {
   const { t, i18n } = useTranslation()
   const language = i18n.resolvedLanguage ?? 'en'
   const [values, setValues] = useState(initialValues)
@@ -68,6 +71,9 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
   const [validated, setValidated] = useState(false)
   const [remembered, setRemembered] = useState(() => rememberedDetails() !== null)
   const formRef = useRef<HTMLFormElement>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  // The button's height divided by its width: how far its surface shrinks for the circle of the check.
+  const [circleScale, setCircleScale] = useState(1)
   const contactId = useId()
   const rememberId = useId()
 
@@ -135,8 +141,26 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
       forgetDetails()
     }
     setRemembered(values.remember)
+    const button = buttonRef.current
+    if (button !== null && button.offsetWidth > 0) {
+      setCircleScale(Math.min(1, button.offsetHeight / button.offsetWidth))
+    }
     onSubmit({ ...values, phone: internationalPhone(values.phoneCode, values.phone) })
   }
+
+  // Sending ended without the booking (an error, or the time was taken): the button shrinks a little and springs back.
+  const wasSubmitting = useRef(false)
+  useEffect(() => {
+    const button = buttonRef.current
+    if (wasSubmitting.current && !submitting && !succeeded && button !== null) {
+      const motion = Number.parseFloat(getComputedStyle(button).getPropertyValue('--motion-slow')) || 0
+      if (motion > 0) {
+        const spring = getComputedStyle(button).getPropertyValue('--ease-spring')
+        button.animate([{ scale: '1' }, { scale: '0.95', offset: 0.35 }, { scale: '1' }], { duration: motion * 1.5, easing: spring || 'ease-out' })
+      }
+    }
+    wasSubmitting.current = submitting
+  }, [submitting, succeeded])
 
   const field = (name: TextField) => ({
     name,
@@ -270,15 +294,43 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
       )}
 
       <StepActions>
-        <Button type="submit" size="lg" className="w-full md:w-auto" aria-disabled={submitting || undefined}>
-          {submitting && <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />}
-          {submitting
-            ? request
-              ? t('booking.details.submittingRequest')
-              : t('booking.details.submitting')
-            : request
-              ? t('booking.details.submitRequest')
-              : t('booking.details.submit')}
+        <Button
+          ref={buttonRef}
+          type="submit"
+          size="lg"
+          data-submit-state={succeeded ? 'success' : submitting ? 'sending' : 'idle'}
+          className={cn('relative w-full md:w-auto', succeeded && 'bg-transparent hover:bg-transparent')}
+          style={{ '--circle-scale': circleScale } as CSSProperties}
+          aria-disabled={submitting || succeeded || undefined}
+        >
+          {succeeded ? (
+            <>
+              {/* The button's surface shrinks towards its middle and fades into the circle of the check, which pops in. */}
+              <span aria-hidden="true" className="absolute inset-0 rounded-[inherit] bg-primary motion-safe:animate-button-shrink motion-reduce:opacity-0" />
+              <span aria-hidden="true" className="absolute inset-y-0 left-1/2 flex aspect-square h-full -translate-x-1/2 items-center justify-center rounded-full bg-primary motion-safe:animate-button-circle">
+                <svg viewBox="0 0 24 24" className="size-6" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" pathLength={1} strokeDasharray={1} className="motion-safe:animate-check-draw" />
+                </svg>
+              </span>
+              {/* Keeps the button's width as it was while sending; screen readers hear what happened. */}
+              <span aria-hidden="true" className="invisible flex items-center gap-2">
+                <LoaderCircleIcon />
+                {request ? t('booking.details.submittingRequest') : t('booking.details.submitting')}
+              </span>
+              <span className="sr-only">{request ? t('booking.details.submittedRequest') : t('booking.details.submitted')}</span>
+            </>
+          ) : (
+            <>
+              {submitting && <LoaderCircleIcon aria-hidden="true" className="animate-spin motion-reduce:animate-none" />}
+              {submitting
+                ? request
+                  ? t('booking.details.submittingRequest')
+                  : t('booking.details.submitting')
+                : request
+                  ? t('booking.details.submitRequest')
+                  : t('booking.details.submit')}
+            </>
+          )}
         </Button>
       </StepActions>
     </form>

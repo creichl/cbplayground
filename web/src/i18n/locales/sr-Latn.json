@@ -307,7 +307,9 @@
       "notYou": "Niste vi?",
       "clearRemembered": "Obriši",
       "submitting": "Rezervišemo…",
-      "submittingRequest": "Šaljemo zahtev…"
+      "submittingRequest": "Šaljemo zahtev…",
+      "submitted": "Rezervisano",
+      "submittedRequest": "Zahtev je poslat"
     },
     "errors": {
       "slotTaken": "Nažalost, ovo vreme je upravo zauzeto. Izaberite drugo – slobodna vremena su ažurirana.",
@@ -395,12 +397,21 @@
       "back": "Nazad"
     },
     "hold": {
-      "holding": "Čuvamo sto {{table}} za vas · {{left}}",
-      "holdingTables": "Čuvamo stolove {{table}} za vas · {{left}}",
-      "expired": "Vreme čuvanja stola je isteklo. Sto je možda još slobodan – i dalje možete da rezervišete.",
+      "holding": "Čuvamo sto {{table}} za vas · <left/>",
+      "holdingTables": "Čuvamo stolove {{table}} za vas · <left/>",
+      "ended": "Vreme čuvanja stola je isteklo.",
+      "lastMinute": "Sto vam čuvamo još jedan minut.",
+      "holdAgain": "Sačuvajte ponovo",
       "nearbyTimes": "Slobodna vremena u blizini",
       "noNearbyTimes": "Ovog dana nema drugih slobodnih vremena.",
       "otherDay": "Izaberite drugi dan ili vreme"
+    },
+    "leave": {
+      "title": "Napuštate?",
+      "held": "Sto vam čuvamo još {{left}}.",
+      "unfinished": "Rezervacija još nije završena.",
+      "stay": "Ostanite",
+      "leave": "Napustite"
     },
     "gallery": {
       "title": "Fotografije",

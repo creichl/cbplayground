@@ -74,7 +74,10 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
   const [direction, setDirection] = useState<'forward' | 'back' | null>(null)
   // The step that is sliding out, shown for a moment behind the new one.
   const [leaving, setLeaving] = useState<(Shown & { direction: 'forward' | 'back' }) | null>(null)
-  if (current !== null && (current.step !== shown?.step || current.result !== shown.result)) {
+  // The booking just made: the contact details stay a moment longer, while their main button turns into a check (GuestDetailsForm).
+  const [celebrated, setCelebrated] = useState<BookingResult | null>(null)
+  const celebrating = current?.step === 'done' && shown?.step === 'details' && current.result !== celebrated
+  if (current !== null && !celebrating && (current.step !== shown?.step || current.result !== shown.result)) {
     if (shown !== null && current.step !== shown.step) {
       const next = stepOrder.indexOf(current.step) < stepOrder.indexOf(shown.step) ? 'back' : 'forward'
       setDirection(next)
@@ -100,6 +103,17 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     }
   }, [step, frame])
 
+  // The check is drawn (--motion-slow) and held for about 300 ms; with less motion the confirmation follows at once.
+  const celebratedResult = celebrating ? current.result : null
+  useEffect(() => {
+    if (celebratedResult === null) {
+      return
+    }
+    const motion = Number.parseFloat(getComputedStyle(rootRef.current ?? document.documentElement).getPropertyValue('--motion-slow')) || 0
+    const timeout = setTimeout(() => setCelebrated(celebratedResult), motion > 0 ? motion + 300 : 0)
+    return () => clearTimeout(timeout)
+  }, [celebratedResult])
+
   // The old step is gone once it has slid out (with less motion right away); the timeout in case its animation never ends.
   useEffect(() => {
     if (leaving === null) {
@@ -114,7 +128,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
   }
 
   // Without a table step when only a combination of tables is (or was, for the confirmation) free.
-  const tableStep = flow.guestChooses && !flow.combined && (shown.result === null || shown.result.tableNumbers.length === 1)
+  // The booking shown, or the one just made while its button turns into a check.
+  const booked = shown.result ?? (celebrating ? current.result : null)
+  const tableStep = flow.guestChooses && (booked !== null ? booked.tableNumbers.length === 1 : !flow.combined)
   const steps: DialogStep[] = tableStep ? ['table', 'details', 'done'] : ['details', 'done']
   const index = steps.indexOf(step)
   // Back from every step after the first; not from the confirmation, where the booking is made.
@@ -129,18 +145,22 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     return frame === 'dialog' ? <DialogTitle {...props} /> : frame === 'sheet' ? <SheetTitle {...props} /> : <h2 {...props} />
   }
 
-  // The choices so far in short; people, date and time lead back to the card, the table to its step.
+  // The choices so far in short; people, date and time lead back to the card, the table to its step. While the button turns into
+  // a check, the booking's own (the address already starts a new booking then).
+  const summaryDate = booked?.date ?? flow.date
+  const summaryTime = booked?.time ?? flow.time
   const parts: { key: string; icon: ReactNode; label: string; onClick: () => void }[] = []
-  if (flow.date !== null && flow.time !== null) {
-    parts.push({ key: 'guests', icon: <UsersIcon />, label: t('booking.guestsCount', { count: flow.partySize }), onClick: flow.closeDialog })
-    parts.push({ key: 'date', icon: <CalendarIcon />, label: formatShortDate(flow.date, language), onClick: flow.closeDialog })
-    parts.push({ key: 'time', icon: <ClockIcon />, label: formatTime(flow.time, language), onClick: flow.closeDialog })
+  if (summaryDate !== null && summaryTime !== null) {
+    parts.push({ key: 'guests', icon: <UsersIcon />, label: t('booking.guestsCount', { count: booked?.guests ?? flow.partySize }), onClick: flow.closeDialog })
+    parts.push({ key: 'date', icon: <CalendarIcon />, label: formatShortDate(summaryDate, language), onClick: flow.closeDialog })
+    parts.push({ key: 'time', icon: <ClockIcon />, label: formatTime(summaryTime, language), onClick: flow.closeDialog })
   }
-  if (flow.guestChooses && flow.table !== undefined) {
+  const tableNumber = !flow.guestChooses ? null : booked !== null ? (tableStep ? booked.tableNumber : null) : (flow.table?.number ?? null)
+  if (tableNumber !== null) {
     parts.push({
       key: 'table',
       icon: <ArmchairIcon />,
-      label: t('booking.tableNumber', { number: flow.table.number }),
+      label: t('booking.tableNumber', { number: tableNumber }),
       onClick: () => flow.goToStep('table'),
     })
   }
@@ -149,9 +169,11 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     step !== 'done' && parts.length > 0 ? (
       <ul aria-label={t('booking.summaryLabel')} className="flex flex-wrap items-center gap-1">
         {parts.map((part) => (
-          <li key={part.key}>
+          // On phones the time pops in as the sheet rises; from 768 px on the card's time chip moves into it (BookingFlow).
+          <li key={part.key} className={cn(frame === 'sheet' && part.key === 'time' && 'motion-safe:animate-chip-pop')}>
             <button
               type="button"
+              data-summary-part={part.key}
               onClick={part.onClick}
               aria-label={t('booking.changePart', { part: part.label })}
               className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-muted px-3 text-sm font-medium whitespace-nowrap press hover:bg-accent hover:text-accent-foreground focus-ring touch:h-11 [&_svg]:size-3.5 [&_svg]:text-muted-foreground"
@@ -216,6 +238,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
               onValuesChange={flow.setDetails}
               onSubmit={flow.submit}
               submitting={flow.submitting}
+              succeeded={active && celebrating}
               error={flow.error}
               request={flow.request}
             />
@@ -261,7 +284,16 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
               aria-current={position === index ? 'step' : undefined}
               className={cn('flex min-w-0 flex-1 flex-col gap-1.5', position === index ? 'font-semibold text-foreground' : 'text-muted-foreground')}
             >
-              <span aria-hidden="true" className={cn('h-1 rounded-full', position <= index ? 'bg-primary' : 'bg-muted')} />
+              {/* A step reached fills its segment from the left; going back empties it again. */}
+              <span aria-hidden="true" className="h-1 overflow-clip rounded-full bg-muted">
+                <span
+                  data-step-fill=""
+                  className={cn(
+                    'block h-full origin-left rounded-full bg-primary transition-transform duration-(--motion-slow) ease-out',
+                    position <= index ? 'scale-x-100' : 'scale-x-0',
+                  )}
+                />
+              </span>
               <span className={cn('truncate', position !== index && 'max-sm:sr-only')}>
                 <span className="sr-only">{`${t('booking.dialog.stepOf', { step: position + 1, total: steps.length })}: `}</span>
                 {t(stepLabels[option])}
@@ -269,7 +301,9 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
             </li>
           ))}
         </ol>
-        {step === 'details' && flow.hold !== null && flow.unavailable === null && <HoldNotice key={flow.hold.holdToken} hold={flow.hold} />}
+        {step === 'details' && flow.hold !== null && flow.unavailable === null && (
+          <HoldNotice key={flow.hold.holdToken} hold={flow.hold} onHoldAgain={flow.holdAgain} />
+        )}
       </header>
 
       {/* While a step slides out it lies over the new one and is cut to the new one's size. */}

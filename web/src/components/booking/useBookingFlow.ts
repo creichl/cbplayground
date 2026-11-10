@@ -277,6 +277,8 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
       ? JSON.stringify({ date, time, guests: partySize, tableId: guestChooses ? tableId : null } satisfies HoldRequest)
       : null
   const [holdResult, setHoldResult] = useState<{ key: string; hold: Hold | null; error: Error | null } | null>(null)
+  // Counts "Hold again": each one holds the table anew for the same key, once the ended hold is released.
+  const [holdRound, setHoldRound] = useState(0)
   // The hold the booking is using: once booked it is the reservation, and releasing it would only answer 404.
   const bookingHold = useRef<string | null>(null)
   useEffect(() => {
@@ -318,7 +320,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
           .finally(() => setReleasing((count) => count - 1))
       }
     }
-  }, [holdKey, slug, reloadAvailability])
+  }, [holdKey, holdRound, slug, reloadAvailability])
   const holdState = holdKey !== null && holdResult?.key === holdKey ? holdResult : null
   const holdError = holdState?.error instanceof ApiError ? holdState.error.code : null
 
@@ -437,6 +439,16 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     }
   }
 
+  /**
+   * "Hold again" after the hold has ended: releases it (in case the API's clock is behind the device's, so it does not stand in the
+   * way of the new one) and holds the table anew. The new hold restarts the countdown; when the table is gone meanwhile, the dialog
+   * offers the nearest free times, as when the first hold fails.
+   */
+  const holdAgain = () => {
+    const token = holdState?.hold?.holdToken ?? null
+    void (token !== null ? releaseHold(slug, token) : Promise.resolve()).then(() => setHoldRound((round) => round + 1))
+  }
+
   /** `values.phone` is the number in international form (GuestDetailsForm). */
   const submit = (values: GuestDetailsValues) => {
     if (date === null || time === null) {
@@ -519,6 +531,7 @@ export function useBookingFlow(slug: string, restaurant: PublicRestaurant, timeZ
     dialogOpen,
     /** The table held for the guest at the contact details; null while it is being held, without and after a failed hold. */
     hold: holdState?.hold ?? null,
+    holdAgain,
     /**
      * Why the guest has to choose another time at the contact details (the hold or the booking found the time or table taken);
      * `nearbyTimes` are the nearest free times of the day then, loaded anew.
