@@ -98,18 +98,39 @@ async function shoot(
   { fullPage = true, loading = false }: { fullPage?: boolean; loading?: boolean } = {},
 ) {
   // First the images and API calls, then what they set moving (a header fading in after a scroll, the hold's digits rolling).
-  // Photos load lazily: all of them now, each one loaded and, where it fades in (Photo), faded in, so no frame is caught empty.
-  if (!loading) {
-    await page.evaluate(`document.querySelectorAll('img[loading="lazy"]').forEach((image) => { image.loading = 'eager' })`)
-    await page.waitForFunction(
-      `[...document.images].every((image) => image.complete && (image.naturalWidth === 0 || !image.classList.contains('transition-opacity') || image.hasAttribute('data-loaded')))`,
-    )
-    await page.waitForLoadState('networkidle')
-  }
+  if (!loading) await photosShown(page)
   await settle(page)
   const name = `${screen}-${size.label}-${look.theme}-${look.language}`
   expect(await faults(page, size.touch), name).toEqual([])
+  if (!fullPage) {
+    await screenshot(page, feature, name, { fullPage, networkIdle: !loading })
+    return
+  }
+  // A full-page screenshot makes the window as high as the page, and photos that were already there fade in again then. So the
+  // window takes the page's height first (until it no longer grows, as heights in svh follow it), everything settles, and the
+  // window gets its size back afterwards.
+  for (let i = 0; i < 3; i++) {
+    const height = Number(await page.evaluate('document.scrollingElement.scrollHeight'))
+    if (height === page.viewportSize()!.height) break
+    await page.setViewportSize({ width: size.viewport.width, height })
+    if (!loading) await photosShown(page)
+    await settle(page)
+  }
   await screenshot(page, feature, name, { fullPage, networkIdle: !loading })
+  await page.setViewportSize(size.viewport)
+  await settle(page)
+}
+
+/**
+ * Waits until every photo is there: photos load lazily, so all of them now, each one loaded and, in a Photo (which fades it in),
+ * faded in fully, so no frame is caught empty or washed out. A photo that failed to load shows its fallback instead.
+ */
+async function photosShown(page: Page) {
+  await page.evaluate(`document.querySelectorAll('img[loading="lazy"]').forEach((image) => { image.loading = 'eager' })`)
+  await page.waitForFunction(`[...document.images].every((image) => image.complete)
+    && [...document.querySelectorAll('[data-slot="photo"] > img')].every((image) =>
+      image.naturalWidth === 0 || (image.hasAttribute('data-loaded') && getComputedStyle(image).opacity === '1'))`)
+  await page.waitForLoadState('networkidle')
 }
 
 /**
