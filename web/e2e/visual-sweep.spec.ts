@@ -98,7 +98,14 @@ async function shoot(
   { fullPage = true, loading = false }: { fullPage?: boolean; loading?: boolean } = {},
 ) {
   // First the images and API calls, then what they set moving (a header fading in after a scroll, the hold's digits rolling).
-  if (!loading) await page.waitForLoadState('networkidle')
+  // Photos load lazily: all of them now, each one loaded and, where it fades in (Photo), faded in, so no frame is caught empty.
+  if (!loading) {
+    await page.evaluate(`document.querySelectorAll('img[loading="lazy"]').forEach((image) => { image.loading = 'eager' })`)
+    await page.waitForFunction(
+      `[...document.images].every((image) => image.complete && (image.naturalWidth === 0 || !image.classList.contains('transition-opacity') || image.hasAttribute('data-loaded')))`,
+    )
+    await page.waitForLoadState('networkidle')
+  }
   await settle(page)
   const name = `${screen}-${size.label}-${look.theme}-${look.language}`
   expect(await faults(page, size.touch), name).toEqual([])
@@ -283,6 +290,24 @@ for (const size of sizes) {
       await expect(alternatives).toBeVisible()
       await alternatives.scrollIntoViewIfNeeded()
       await shoot(page, 'booking-full-day', size, zurLinde.look, { fullPage: false })
+      await page.unrouteAll({ behavior: 'ignoreErrors' })
+
+      // Scarce times in German, the longest hint ("Noch 2 Tische"): every second free time with two tables left.
+      await page.route(
+        (url) => url.pathname === '/api/public/restaurants/rooftop-belvedere/availability',
+        async (route) => {
+          const response = await route.fetch()
+          const availability = (await response.json()) as { periods: { times: { available: boolean; remaining: number }[] }[] }
+          for (const time of availability.periods.flatMap((period) => period.times).filter((slot) => slot.available).filter((_, i) => i % 2 === 0)) {
+            time.remaining = 2
+          }
+          await route.fulfill({ response, json: availability })
+        },
+      )
+      await page.goto(`/r/rooftop-belvedere${belvedere.query}`)
+      await expect(page.locator('[data-tables-left]').first()).toBeVisible()
+      await page.locator('[data-tables-left]').first().scrollIntoViewIfNeeded()
+      await shoot(page, 'booking-scarce', size, belvedere.look, { fullPage: false })
       await page.unrouteAll({ behavior: 'ignoreErrors' })
 
       const release = await holdBack(page, (url) => url.pathname === '/api/public/restaurants/zur-linde')

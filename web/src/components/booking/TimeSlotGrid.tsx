@@ -283,11 +283,16 @@ function TimeChip({
     >
       {time}
       {scarce !== null && (
+        // The chip's whole width (its padding too) before it wraps; where even that is too narrow (long words), it wraps in
+        // balanced lines with the flame in front of the first.
         <span
           data-tables-left=""
-          className={cn('inline-flex items-center gap-0.5 text-center text-xs leading-none font-medium', chosen ? 'text-primary-foreground' : 'text-primary-text')}
+          className={cn(
+            '-mx-1.5 block text-center text-xs leading-none font-medium text-balance',
+            chosen ? 'text-primary-foreground' : 'text-primary-text',
+          )}
         >
-          <FlameIcon aria-hidden="true" className="size-3 shrink-0" />
+          <FlameIcon aria-hidden="true" className="mr-0.5 inline-block size-3 align-[-0.15em]" />
           {scarce}
         </span>
       )}
