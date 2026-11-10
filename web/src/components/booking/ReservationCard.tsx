@@ -107,7 +107,7 @@ export function ReservationCard({ slug, restaurant, flow, foldable = false, ref,
       </div>
 
       {/* What folds in the embed: the choice and the footer. Folded it is out of the way: no height, invisible and inert. */}
-      <div ref={bodyRef} inert={folded} className={cn('overflow-hidden', folded && 'invisible h-0')}>
+      <div ref={bodyRef} inert={folded} className={cn('overflow-clip', folded && 'invisible h-0')}>
         <div className="flex flex-col gap-5 p-5 sm:p-6">
           <PartySizePicker
             value={flow.partySize}
