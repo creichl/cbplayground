@@ -291,7 +291,9 @@
       "notYou": "Nicht Sie?",
       "clearRemembered": "Löschen",
       "submitting": "Wird reserviert…",
-      "submittingRequest": "Anfrage wird gesendet…"
+      "submittingRequest": "Anfrage wird gesendet…",
+      "submitted": "Reserviert",
+      "submittedRequest": "Anfrage gesendet"
     },
     "errors": {
       "slotTaken": "Diese Uhrzeit wurde leider gerade vergeben. Bitte wählen Sie eine andere – die freien Zeiten sind aktualisiert.",
@@ -380,12 +382,21 @@
       "back": "Zurück"
     },
     "hold": {
-      "holding": "Wir halten Tisch {{table}} für Sie frei · {{left}}",
-      "holdingTables": "Wir halten die Tische {{table}} für Sie frei · {{left}}",
-      "expired": "Wir halten den Tisch nicht mehr für Sie frei. Vielleicht ist er noch frei – Sie können trotzdem reservieren.",
+      "holding": "Wir halten Tisch {{table}} für Sie frei · <left/>",
+      "holdingTables": "Wir halten die Tische {{table}} für Sie frei · <left/>",
+      "ended": "Wir halten den Tisch nicht mehr für Sie frei.",
+      "lastMinute": "Wir halten den Tisch noch eine Minute für Sie frei.",
+      "holdAgain": "Erneut freihalten",
       "nearbyTimes": "Freie Zeiten in der Nähe",
       "noNearbyTimes": "An diesem Tag gibt es keine anderen freien Zeiten.",
       "otherDay": "Anderen Tag oder andere Uhrzeit wählen"
+    },
+    "leave": {
+      "title": "Verlassen?",
+      "held": "Wir halten Ihren Tisch noch {{left}} für Sie frei.",
+      "unfinished": "Ihre Reservierung ist noch nicht abgeschlossen.",
+      "stay": "Bleiben",
+      "leave": "Verlassen"
     },
     "gallery": {
       "title": "Fotos",

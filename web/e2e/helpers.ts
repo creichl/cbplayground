@@ -26,12 +26,12 @@ export async function revealAll(page: Page) {
 
 /**
  * Waits until the dialog's entrance and every other finite animation in time are over, so a screenshot shows the dialog as
- * it stays. Endless ones (the light of the table style Glow breathes on) and the cover image's parallax, which follows the
- * scrolling instead of the time, are left out.
+ * it stays. Endless ones (the light of the table style Glow breathes on), the cover image's parallax, which follows the
+ * scrolling instead of the time, and the hold's line, which drains with the countdown second by second, are left out.
  */
 export async function settle(page: Page) {
   await page.waitForFunction(
-    "document.getAnimations().every((animation) => animation.playState !== 'running' || animation.timeline !== document.timeline || animation.effect?.getComputedTiming().iterations === Infinity)",
+    "document.getAnimations().every((animation) => animation.playState !== 'running' || animation.timeline !== document.timeline || animation.effect?.getComputedTiming().iterations === Infinity || animation.effect?.target?.closest?.('[data-hold-line]') != null)",
   )
 }
 

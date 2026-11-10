@@ -31,6 +31,20 @@ async function createTodaysReservation(page: Page, name: string) {
   return time
 }
 
+/** The day `days` after `date`, both "YYYY-MM-DD". */
+function addDays(date: string, days: number) {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+/** How many times of Kafana Dunav have a free table for 2 on `date`, from the staff's availability (signed in as its front desk). */
+async function freeTimes(page: Page, date: string) {
+  const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+    periods?: { times: { tables: unknown[] }[] }[]
+  }
+  return (availability.periods ?? []).flatMap((period) => period.times).filter((slot) => slot.tables.length > 0).length
+}
+
 test.describe('Front desk: accepting a request', () => {
   test('lists the online request among the open requests and confirms it', async ({ page }) => {
     // A name the demo reservations never get (DevelopmentSeed), so the open requests list it once.
@@ -107,24 +121,17 @@ test.describe('Front desk: phone reservation', () => {
     const name = 'Jovana Telefon'
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    // From tomorrow on, so the whole day lies ahead: the first day with free times. Kafana Dunav is open every day except on
-    // public holidays (e.g. Armistice Day, 11 November), when it is closed.
-    let date = ''
-    for (let days = 1; days <= 7 && date === ''; days++) {
-      const day = new Date(`${todayInBelgrade()}T12:00:00Z`)
-      day.setUTCDate(day.getUTCDate() + days)
-      const candidate = day.toISOString().slice(0, 10)
-      // One "Next day" per day; the address changes first.
-      await page.getByRole('button', { name: 'Next day' }).click()
-      await expect(page).toHaveURL(new RegExp(`/frontdesk\\?date=${candidate}$`))
-      const availability = (await (await page.request.get(`/api/public/restaurants/kafana-dunav/availability?date=${candidate}&guests=2`)).json()) as {
-        periods: { times: { available: boolean }[] }[]
-      }
-      if (availability.periods.some((period) => period.times.some((slot) => slot.available))) {
-        date = candidate
-      }
+    // From tomorrow on, so the whole day lies ahead: the first day with a free time. Kafana Dunav is open every day except on
+    // Serbia's public holidays (e.g. November 11).
+    let days = 1
+    while (days < 8 && (await freeTimes(page, addDays(todayInBelgrade(), days))) === 0) {
+      days++
     }
-    expect(date).not.toBe('')
+    for (let step = 0; step < days; step++) {
+      await page.getByRole('button', { name: 'Next day' }).click()
+      await expect(page).toHaveURL(new RegExp(`date=${addDays(todayInBelgrade(), step + 1)}$`))
+    }
+    const date = new URL(page.url()).searchParams.get('date')!
     // The address changes first; the page shows the day right after.
     await expect(page.getByRole('button', { name: 'Date', exact: true })).toHaveText(pickerDate(date))
 

@@ -24,7 +24,9 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   the guest's reservation link, the embed's booking and height), `table-choice.spec.ts` (the guest's table choice),
   `table-choice-ux.spec.ts` (choosing a table: feedback on tap, zoom, areas, "No preference", keyboard, less motion),
   `booking-dialog.spec.ts` (the booking dialog's frame and its change of size, Back, the hold and its countdown, a table
-  taken meanwhile, the contact form, the embed's inline steps), `booking-card.spec.ts` (the reservation card: party
+  taken meanwhile, the contact form, the embed's inline steps), `booking-dialog-polish.spec.ts` (the time chip moving into the dialog, the hold's
+  draining line and "Hold again", the check in the button before the confirmation, the step segments filling, the phone sheet
+  dragged only by its handle and asking first, less motion), `booking-card.spec.ts` (the reservation card: party
   size chips, date strip, times kept while loading, taken and scarce times, alternatives of a fully booked day, the embed),
   `booking-card-polish.spec.ts` (the reservation card's selection pill, month labels, summary line, readable scarcity, a
   single taken time and runs of taken times, the card folding in the embed with the frame's height, less motion),
