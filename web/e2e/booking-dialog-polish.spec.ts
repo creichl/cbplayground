@@ -250,11 +250,20 @@ for (const size of sizes) {
       await expect(page.getByRole('heading', { name: 'Your table is reserved' })).toHaveCount(0)
       await expect(button.locator('path[pathLength]')).toBeVisible()
       await settle(page)
+      // The check has drawn itself completely (its stroke fully shown) while the confirmation still waits.
+      expect(await page.evaluate(`getComputedStyle(document.querySelector('[data-submit-state] path[pathLength]')).strokeDashoffset`)).toMatch(/^0(px)?$/)
+      await expect(page.getByRole('heading', { name: 'Your table is reserved' })).toHaveCount(0)
       await screenshot(page, 'booking-dialog-polish', `submit-check-${size.width}`, { fullPage: false })
 
-      await page.clock.resume()
+      // The check is held: 700 ms after it appeared (drawing takes 600 ms) the confirmation is not there yet; 300 ms later it is.
+      await page.clock.runFor(700)
+      await page.waitForTimeout(200)
+      await expect(page.getByRole('heading', { name: 'Your table is reserved' })).toHaveCount(0)
+      await expect(button).toHaveAttribute('data-submit-state', 'success')
+      await page.clock.runFor(300)
       const confirmation = page.getByRole('dialog', { name: 'Your table is reserved' })
       await expect(confirmation).toBeVisible()
+      await page.clock.resume()
       await settle(page)
       expect(await segmentFills(confirmation)).toEqual([1, 1, 1])
     })

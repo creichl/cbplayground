@@ -66,12 +66,15 @@ export function HoldNotice({ hold, onHoldAgain }: { hold: Hold; onHoldAgain: () 
           {t('booking.hold.holdAgain')}
         </button>
       )}
-      {/* The line drains with the countdown: every second it glides to the next value, linearly, so it moves on without a stop. */}
+      {/*
+       * The line drains with the countdown: every second it glides to the next value, linearly, so it moves on without a stop. Only
+       * its transform moves; the warning colour comes at once, with the pulse.
+       */}
       <span
         aria-hidden="true"
         data-hold-line=""
         className={cn(
-          'pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left transition-[transform,background-color] duration-1000 ease-linear',
+          'pointer-events-none absolute inset-x-0 -bottom-px h-0.5 origin-left transition-transform duration-1000 ease-linear',
           ended || warning ? 'bg-warning' : 'bg-primary',
         )}
         style={{ transform: `scaleX(${Math.min(1, Math.max(0, left) / holdDuration)})` }}

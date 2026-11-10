@@ -27,6 +27,10 @@ const stepLabels: Record<DialogStep, ParseKeys> = {
   done: 'booking.dialog.stepDone',
 }
 
+/** When the check in the main button has drawn itself (animate-check-draw: 200 ms delay and 400 ms), and how long it is held then, in ms. */
+const checkDrawn = 600
+const checkHeld = 300
+
 /** The order of the steps, for the direction in which a new step slides in. */
 const stepOrder: DialogStep[] = ['table', 'details', 'done']
 
@@ -103,14 +107,15 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
     }
   }, [step, frame])
 
-  // The check is drawn (--motion-slow) and held for about 300 ms; with less motion the confirmation follows at once.
+  // The check in the button has drawn itself after 600 ms (animate-check-draw in app.css: 200 ms delay, 400 ms drawing) and is held
+  // for about 300 ms more; with less motion nothing is drawn and the confirmation follows at once.
   const celebratedResult = celebrating ? current.result : null
   useEffect(() => {
     if (celebratedResult === null) {
       return
     }
     const motion = Number.parseFloat(getComputedStyle(rootRef.current ?? document.documentElement).getPropertyValue('--motion-slow')) || 0
-    const timeout = setTimeout(() => setCelebrated(celebratedResult), motion > 0 ? motion + 300 : 0)
+    const timeout = setTimeout(() => setCelebrated(celebratedResult), motion > 0 ? checkDrawn + checkHeld : 0)
     return () => clearTimeout(timeout)
   }, [celebratedResult])
 
