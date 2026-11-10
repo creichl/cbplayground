@@ -44,7 +44,8 @@ export function dateFromToday(days: number) {
 
 /**
  * Books an online request at Kafana Dunav (request mode, the guest chooses the table) on the first day from ten days ahead
- * with a free time and table, after the demo reservations, so the test does not depend on them.
+ * with a free time and table, after the demo reservations, so the test does not depend on them. Returns its day and time, and
+ * its reference code and the token of the guest's link.
  */
 export async function bookRequest(page: Page, name: string) {
   const restaurant = '/api/public/restaurants/kafana-dunav'
@@ -64,8 +65,9 @@ export async function bookRequest(page: Page, name: string) {
       data: { date, time, guests: 2, tableId: table.id, name, phone: '+381 64 1234567', language: 'en' },
     })
     expect(booking.status()).toBe(201)
-    expect(await booking.json()).toMatchObject({ status: 'Requested' })
-    return { date, time }
+    const result = (await booking.json()) as { status: string; referenceCode: string; manageToken: string }
+    expect(result).toMatchObject({ status: 'Requested' })
+    return { date, time, referenceCode: result.referenceCode, manageToken: result.manageToken }
   }
   throw new Error('No free time at Kafana Dunav in the next 40 days.')
 }

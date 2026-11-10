@@ -76,7 +76,9 @@ builder.Services.AddScoped<IAvailabilityService, AvailabilityService>();
 // Limits per client IP (with forwarded headers the real client's), answered with 429 { "error": "too_many_requests" }:
 // - online bookings: "RateLimiting:PublicBookings:PermitLimit" (default 10) in 10 minutes;
 // - sign-in attempts: "RateLimiting:Login:PermitLimit" (default 10) per minute, so nobody can lock out accounts at scale;
-// - the public calendar, availability, tables and holds: "RateLimiting:PublicReads:PermitLimit" (default 120) per minute.
+// - changing and cancelling through the guest's reservation link: the limit of the bookings in 10 minutes, counted apart;
+// - the public calendar, availability, tables, holds and the view of the guest's link: "RateLimiting:PublicReads:PermitLimit"
+//   (default 120) per minute.
 // Active holds of tables per client IP are limited apart from these, by "RateLimiting:PublicHolds:PermitLimit" (default 3, see
 // PublicRestaurantEndpoints), answered with 429 { "error": "too_many_holds" }.
 var publicBookingLimit = builder.Configuration.GetValue("RateLimiting:PublicBookings:PermitLimit", 10);
@@ -91,7 +93,7 @@ builder.Services.AddRateLimiter(options =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
             _ => new FixedWindowRateLimiterOptions { PermitLimit = publicBookingLimit, Window = TimeSpan.FromMinutes(10) }));
-    // The guest's reservation link (view and cancel) with the same limit, counted apart from the bookings.
+    // Changing and cancelling through the guest's reservation link with the same limit, counted apart from the bookings.
     options.AddPolicy(PublicRestaurantEndpoints.ManageRateLimitPolicy, httpContext =>
         RateLimitPartition.GetFixedWindowLimiter(
             httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",

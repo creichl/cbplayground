@@ -1,5 +1,5 @@
 import { ArmchairIcon, BanIcon, CheckIcon, ChevronDownIcon, TriangleAlertIcon } from 'lucide-react'
-import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
+import { Fragment, type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { TableStyle } from '../../api/branding.ts'
@@ -73,7 +73,8 @@ const hintDuration = 2000
  * dims it for a moment and says why at the table ("Taken at 19:30", "For 3 people or more") for about two seconds.
  * The plan zooms with the buttons, pinch, Ctrl + wheel and a double tap (FloorPlan's `fluid`); a table chosen from the list
  * or with the keyboard, or tapped on a phone, is brought into view at the current zoom. Another area crossfades the plans
- * (a view transition) and starts unzoomed. "No preference" chooses the table the system would and moves on to the contact
+ * (CSS animations on the plans themselves: a view transition of the document would paint the page above the dialog) and
+ * starts unzoomed. "No preference" chooses the table the system would and moves on to the contact
  * details. With the keyboard the free tables on the plan are buttons in the order of their numbers (Enter or Space
  * chooses), named like their tooltip; the others are announced but not focusable. The list of the free tables of all areas,
  * folded away below the plan, offers the same choice. With less motion everything changes at once.
@@ -82,6 +83,10 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
   const { t, i18n } = useTranslation()
   const areas = usePublicTables(slug, date, time, guests)
   const [activeArea, setActiveArea] = useState<string | null>(null)
+  // The area whose plan fades out over the new one after a switch, and whether the guest has switched yet (the first plan
+  // comes in with the step, without an animation of its own).
+  const [leavingArea, setLeavingArea] = useState<string | null>(null)
+  const [switched, setSwitched] = useState(false)
   const phone = useMediaQuery('(max-width: 767px)')
   const rootRef = useRef<HTMLDivElement>(null)
   // The point of the plan to bring into view (a new object each time, see FloorPlan's `focus`).
@@ -162,19 +167,118 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
       ? t('booking.table.reasonTooLarge', { count: table.minGuests })
       : t('booking.table.reasonTaken', { time: formatTime(time, i18n.resolvedLanguage ?? 'en') })
 
-  /** Shows another area: the plans crossfade where the browser can (view transition), with less motion it simply changes. */
+  /** Shows another area: the plan shown fades out over the new one, which fades in from a little smaller; with less motion it simply changes. */
   const showArea = (id: string) => {
     if (id === area.id) {
       return
     }
     const reduce =
       window.matchMedia('(prefers-reduced-motion: reduce)').matches || rootRef.current?.closest('[data-reduce-motion]') != null
-    if (reduce || !('startViewTransition' in document)) {
-      setActiveArea(id)
-      return
-    }
-    document.startViewTransition(() => flushSync(() => setActiveArea(id)))
+    setLeavingArea(reduce ? null : area.id)
+    setSwitched(!reduce)
+    setActiveArea(id)
   }
+
+  /**
+   * The plan of an area with its tables; `active` false for the one fading out after a switch, which only shows its tables
+   * (no tooltips, nothing to choose).
+   */
+  const plan = (shown: PublicArea, active: boolean) => (
+    <FloorPlan
+      imageUrl={shown.floorPlanUrl}
+      imageAlt=""
+      roomStyle={shown.roomStyle}
+      roomElements={shown.roomElements}
+      tables={shown.tables}
+      tableScale={shown.tableScale}
+      zoomControls="inside"
+      zoomButton={ZoomButton}
+      dark={dark}
+      widthMeters={shown.widthMeters}
+      fill={fill}
+      fluid
+      focus={active ? focus : null}
+    >
+      {byNumber(shown.tables).map((table) => {
+        const selected = table.id === value
+        const look = tableLook(tableStyle, selected ? 'selected' : table.available ? 'free' : 'unavailable')
+        const hinted = hint?.id === table.id
+        const shape = (
+          <TableShape
+            number={table.number}
+            seats={table.seats}
+            shape={table.shape}
+            rotation={table.rotation}
+            posX={table.posX}
+            posY={table.posY}
+            tableScale={shown.tableScale}
+            dark={dark}
+            {...look}
+            note={selected ? <CheckIcon aria-hidden="true" className="my-px size-3" strokeWidth={3} /> : undefined}
+            // A free table is a button, named like its tooltip; one that cannot be chosen is only announced.
+            {...(!active
+              ? {}
+              : table.available
+                ? {
+                    role: 'button',
+                    tabIndex: 0,
+                    'aria-pressed': selected,
+                    onClick: () => choose(table, 'plan'),
+                    onKeyDown: (event: KeyboardEvent) => handleTableKey(event, table),
+                    onFocus: (event) => {
+                      if (event.currentTarget.matches(':focus-visible')) {
+                        setFocus({ x: table.posX, y: table.posY })
+                      }
+                    },
+                  }
+                : {
+                    role: 'img',
+                    // The tooltip's own closing on a click is skipped (preventDefault): the reason shows instead.
+                    onClick: (event) => {
+                      event.preventDefault()
+                      setHint({ id: table.id })
+                    },
+                  })}
+            aria-label={active ? tooltip(table) : undefined}
+            className={cn(
+              // Above the other tables, so its check is never covered; under the pointer above all of them.
+              selected ? 'z-2' : 'z-1',
+              table.shape === 'Round' ? 'rounded-full' : 'rounded-[20%]',
+              // The colours of table, chairs and badge change with a short transition.
+              '[&_svg_*]:transition-[fill,stroke] [&_svg_*]:duration-(--motion-medium) [&>span_span]:transition-colors [&>span_span]:duration-(--motion-medium)',
+              'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+              table.available
+                ? 'cursor-pointer transition-[scale] duration-(--motion-fast) hover:z-3 motion-safe:hover:scale-110'
+                : 'cursor-not-allowed',
+              // Just chosen: it gives way and springs back, and the ring around it and its chairs pulses once.
+              active && selected && 'pulse-ring motion-safe:animate-table-settle',
+              active && hinted && 'motion-safe:animate-table-dip',
+            )}
+          />
+        )
+        if (!active) {
+          return <Fragment key={table.id}>{shape}</Fragment>
+        }
+        return (
+          <Tooltip
+            key={table.id}
+            open={tip === table.id || hinted}
+            // The reason after a tap stays its two seconds, whatever the tooltip's hover and focus do meanwhile;
+            // another table's tooltip takes its place.
+            onOpenChange={(open) => {
+              setTip((current) => (open ? table.id : current === table.id ? null : current))
+              if (open) {
+                setHint((current) => (current?.id === table.id ? current : null))
+              }
+            }}
+          >
+            <TooltipTrigger asChild>{shape}</TooltipTrigger>
+            <TooltipContent side="top">{hinted ? reason(table) : tooltip(table)}</TooltipContent>
+          </Tooltip>
+        )
+      })}
+    </FloorPlan>
+  )
 
   /**
    * Chooses a table. From the list or the keyboard, and after a tap on a phone, the plan brings it into view; a tap with the
@@ -208,6 +312,7 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
       choose(table, 'list')
     }
   }
+  const leaving = leavingArea === area.id ? undefined : areas.data.find((option) => option.id === leavingArea)
   const freeCount = (option: PublicArea) => option.tables.filter((table) => table.available).length
 
   return (
@@ -248,97 +353,24 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
         </div>
 
         {area.tables.length > 0 && (
-          // The plan's own name for the view transition between the areas; the key starts every area unzoomed.
-          <div className={cn('[view-transition-name:table-plan]', fill && 'md:flex md:min-h-0 md:flex-1 md:flex-col')}>
-            <FloorPlan
-              key={area.id}
-              imageUrl={area.floorPlanUrl}
-              imageAlt=""
-              roomStyle={area.roomStyle}
-              roomElements={area.roomElements}
-              tables={area.tables}
-              tableScale={area.tableScale}
-              zoomControls="inside"
-              zoomButton={ZoomButton}
-              dark={dark}
-              widthMeters={area.widthMeters}
-              fill={fill}
-              fluid
-              focus={focus}
-            >
-              {byNumber(area.tables).map((table) => {
-                const selected = table.id === value
-                const look = tableLook(tableStyle, selected ? 'selected' : table.available ? 'free' : 'unavailable')
-                const hinted = hint?.id === table.id
-                return (
-                  <Tooltip
-                    key={table.id}
-                    open={tip === table.id || hinted}
-                    // The reason after a tap stays its two seconds, whatever the tooltip's hover and focus do meanwhile;
-                    // another table's tooltip takes its place.
-                    onOpenChange={(open) => {
-                      setTip((current) => (open ? table.id : current === table.id ? null : current))
-                      if (open) {
-                        setHint((current) => (current?.id === table.id ? current : null))
-                      }
-                    }}
-                  >
-                    <TooltipTrigger asChild>
-                      <TableShape
-                        number={table.number}
-                        seats={table.seats}
-                        shape={table.shape}
-                        rotation={table.rotation}
-                        posX={table.posX}
-                        posY={table.posY}
-                        tableScale={area.tableScale}
-                        dark={dark}
-                        {...look}
-                        note={selected ? <CheckIcon aria-hidden="true" className="my-px size-3" strokeWidth={3} /> : undefined}
-                        // A free table is a button, named like its tooltip; one that cannot be chosen is only announced.
-                        {...(table.available
-                          ? {
-                              role: 'button',
-                              tabIndex: 0,
-                              'aria-pressed': selected,
-                              onClick: () => choose(table, 'plan'),
-                              onKeyDown: (event: KeyboardEvent) => handleTableKey(event, table),
-                              onFocus: (event) => {
-                                if (event.currentTarget.matches(':focus-visible')) {
-                                  setFocus({ x: table.posX, y: table.posY })
-                                }
-                              },
-                            }
-                          : {
-                              role: 'img',
-                              // The tooltip's own closing on a click is skipped (preventDefault): the reason shows instead.
-                              onClick: (event) => {
-                                event.preventDefault()
-                                setHint({ id: table.id })
-                              },
-                            })}
-                        aria-label={tooltip(table)}
-                        className={cn(
-                          // Above the other tables, so its check is never covered; under the pointer above all of them.
-                          selected ? 'z-2' : 'z-1',
-                          table.shape === 'Round' ? 'rounded-full' : 'rounded-[20%]',
-                          // The colours of table, chairs and badge change with a short transition.
-                          '[&_svg_*]:transition-[fill,stroke] [&_svg_*]:duration-(--motion-medium) [&>span_span]:transition-colors [&>span_span]:duration-(--motion-medium)',
-                          'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
-                          table.available
-                            ? 'cursor-pointer transition-[scale] duration-(--motion-fast) hover:z-3 motion-safe:hover:scale-110'
-                            : 'cursor-not-allowed',
-                          // Just chosen: it gives way and springs back, and the ring around it and its chairs pulses once.
-                          selected && 'pulse-ring motion-safe:animate-table-settle',
-                          hinted && 'motion-safe:animate-table-dip',
-                        )}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent side="top">{hinted ? reason(table) : tooltip(table)}</TooltipContent>
-                  </Tooltip>
-                )
-              })}
-            </FloorPlan>
+          // The plan shown and, for a moment after a switch, the one it replaces, fading out above it.
+          <div className={cn('relative', fill && 'md:flex md:min-h-0 md:flex-1 md:flex-col')}>
+            {/* The key starts every area unzoomed. */}
+            <div key={area.id} className={cn(fill && 'md:flex md:min-h-0 md:flex-1 md:flex-col', switched && 'animate-plan-in')}>
+              {plan(area, true)}
+            </div>
+            {leaving !== undefined && leaving.tables.length > 0 && (
+              <div
+                key={leaving.id}
+                aria-hidden="true"
+                inert
+                // Removed at once, so nothing waits for a plan that is gone already.
+                onAnimationEnd={(event) => event.target === event.currentTarget && flushSync(() => setLeavingArea(null))}
+                className={cn('pointer-events-none absolute inset-x-0 top-0 animate-plan-out', fill && 'md:bottom-0 md:flex md:flex-col')}
+              >
+                {plan(leaving, false)}
+              </div>
+            )}
           </div>
         )}
 
@@ -440,7 +472,7 @@ function ZoomButton({ label, icon, disabled, onClick }: ZoomButtonProps) {
 /**
  * An area as a small card: its photo (without one, or when it cannot be loaded, a calm surface with a chair), its name and
  * how many suitable tables are free. Without a free table it is disabled and says "Fully booked"; the chosen one has a ring
- * in the accent colour (crossfading with the plans, see showArea) and its check pops in. Under the pointer it lifts a little and its photo zooms in its frame.
+ * in the accent colour and its check pops in. Under the pointer it lifts a little and its photo zooms in its frame.
  */
 function AreaCard({ area, freeCount, selected, onSelect }: { area: PublicArea; freeCount: number; selected: boolean; onSelect: () => void }) {
   const { t } = useTranslation()

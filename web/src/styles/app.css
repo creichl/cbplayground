@@ -310,6 +310,15 @@
   --animate-table-settle: table-settle var(--motion-slow) var(--ease-spring);
   /* A table that cannot be chosen, tapped: it dims for a moment while the reason shows. */
   --animate-table-dip: table-dip var(--motion-long) var(--ease-out);
+  /*
+   * The success moment of the confirmation, in sequence: the hand of a request's clock turns once, the line of its timeline
+   * draws itself, the characters of the reference code appear one after another (their delay set per character).
+   */
+  --animate-clock-hand: clock-hand var(--motion-long) var(--ease-spring) 100ms backwards;
+  --animate-line-draw: line-draw var(--motion-slow) var(--ease-out) 300ms backwards;
+  --animate-code-char: code-char var(--motion-fast) var(--ease-out) backwards;
+  /* The current step of a request's timeline: a soft ring around its dot, on and on (only with motion). */
+  --animate-dot-pulse: dot-pulse 1.8s var(--ease-out) infinite;
 }
 
 @theme {
@@ -416,6 +425,33 @@
   @keyframes table-dip {
     35% {
       opacity: 0.5;
+    }
+  }
+  @keyframes clock-hand {
+    from {
+      rotate: -1turn;
+    }
+  }
+  @keyframes line-draw {
+    from {
+      scale: 1 0;
+    }
+  }
+  @keyframes code-char {
+    from {
+      opacity: 0;
+      translate: 0 0.25rem;
+    }
+  }
+  @keyframes dot-pulse {
+    from {
+      opacity: 0.6;
+      scale: 1;
+    }
+    70%,
+    to {
+      opacity: 0;
+      scale: 2.2;
     }
   }
   /* From the edge of the circle outwards; --angle is the particle's direction. */
@@ -562,26 +598,34 @@
     [data-stagger]:not([data-reveal='hidden']) > * {
       animation: rise var(--motion-long) var(--ease-out) backwards;
     }
+    /*
+     * A list that rises as part of an entrance in sequence (the actions of the confirmation) waits for what comes before it
+     * (--stagger-start on it, added to each child's delay) and may rise faster (--stagger-duration).
+     */
+    [data-stagger]:not([data-reveal='hidden']) > * {
+      animation-duration: var(--stagger-duration, var(--motion-long));
+      animation-delay: calc(var(--stagger-start, 0ms) + var(--stagger-delay, 0ms));
+    }
     [data-stagger] > :nth-child(2) {
-      animation-delay: 40ms;
+      --stagger-delay: 40ms;
     }
     [data-stagger] > :nth-child(3) {
-      animation-delay: 80ms;
+      --stagger-delay: 80ms;
     }
     [data-stagger] > :nth-child(4) {
-      animation-delay: 120ms;
+      --stagger-delay: 120ms;
     }
     [data-stagger] > :nth-child(5) {
-      animation-delay: 160ms;
+      --stagger-delay: 160ms;
     }
     [data-stagger] > :nth-child(6) {
-      animation-delay: 200ms;
+      --stagger-delay: 200ms;
     }
     [data-stagger] > :nth-child(7) {
-      animation-delay: 240ms;
+      --stagger-delay: 240ms;
     }
     [data-stagger] > :nth-child(n + 8) {
-      animation-delay: 280ms;
+      --stagger-delay: 280ms;
     }
   }
 
@@ -627,6 +671,12 @@
  * cover image of a restaurant (view-transition-name restaurant-cover) moves from the card of the start page into the cover
  * image of the booking page, and the header stays on top. Without the API the page simply changes.
  */
+[data-page-part='restaurant-cover'] {
+  view-transition-name: restaurant-cover;
+}
+[data-page-part='site-header'] {
+  view-transition-name: site-header;
+}
 ::view-transition-old(root),
 ::view-transition-new(root) {
   animation-duration: var(--motion-slow);
@@ -646,18 +696,15 @@
   z-index: 1;
 }
 /*
- * Another area in the guest's table choice (TablePicker, view-transition-name table-plan): the plan shown fades out, the
- * new one fades in from a little smaller. With less motion the view transitions above have no animation.
+ * Another area in the guest's table choice (TablePicker): the plan shown fades out above the new one, which fades in from a
+ * little smaller. CSS animations on the plans, not a view transition: that would paint the page above the booking dialog.
+ * With less motion the view transitions above have no animation and TablePicker simply changes the plan.
  */
-::view-transition-group(table-plan) {
-  animation-duration: var(--motion-slow);
-  animation-timing-function: var(--ease-out);
-}
-::view-transition-old(table-plan) {
-  animation: fade-out var(--motion-slow) var(--ease-out) both;
-}
-::view-transition-new(table-plan) {
+@utility animate-plan-in {
   animation: plan-in var(--motion-slow) var(--ease-out) both;
+}
+@utility animate-plan-out {
+  animation: fade-out var(--motion-slow) var(--ease-out) both;
 }
 @keyframes plan-in {
   from {
@@ -670,8 +717,13 @@
  * Layout transitions (src/ui/motion/layout-transition.ts): while one runs, the reservation card, its times and its footer
  * have names, so the card's snapshot is clipped to its height as it glides from the old to the new one, the times
  * cross-fade within it and the footer moves along; only transform, opacity and the snapshots' size change, the page is not
- * laid out per frame. The rest of the page is not animated: it shows its new state at once.
+ * laid out per frame. The rest of the page is not animated: it shows its new state at once. The parts named for page
+ * transitions (the cover image, the header's row) are not named then: they would be painted above the rest of the page, which
+ * has nothing to move.
  */
+:root[data-layout-transition] [data-page-part] {
+  view-transition-name: none;
+}
 :root[data-layout-transition] [data-layout-part='booking-card'] {
   view-transition-name: booking-card;
 }

@@ -1,6 +1,5 @@
 import type { ParseKeys, TFunction } from 'i18next'
 import {
-  ArmchairIcon,
   ArrowRightIcon,
   BanIcon,
   CalendarClockIcon,
@@ -15,7 +14,6 @@ import {
   GlobeIcon,
   HistoryIcon,
   HourglassIcon,
-  LayoutGridIcon,
   LoaderCircleIcon,
   MailIcon,
   MapPinIcon,
@@ -23,7 +21,6 @@ import {
   RefreshCwIcon,
   RouteIcon,
   UserIcon,
-  UsersIcon,
   XIcon,
 } from 'lucide-react'
 import { type ReactNode, useEffect, useRef, useState } from 'react'
@@ -35,6 +32,7 @@ import {
   isNotFound,
   managePath,
   type PublicRestaurant,
+  todayIn,
   useCancelGuestReservation,
   useGuestReservation,
   usePublicRestaurant,
@@ -44,7 +42,8 @@ import { ChangeReservation } from '../components/booking/ChangeReservation.tsx'
 import { addressLines, formatAddress, mapSearchUrl } from '../components/booking/format.ts'
 import { forgetBooking } from '../components/booking/rememberedBookings.ts'
 import { CalendarMenu, ShareMenu } from '../components/booking/ReservationShare.tsx'
-import { formatLongDate, formatTime } from '../i18n/format.ts'
+import { RequestTimeline } from '../components/booking/RequestTimeline.tsx'
+import { formatLongDate, formatRelativeDay, formatTime } from '../i18n/format.ts'
 import { useDocumentTitle } from '../i18n/title.ts'
 import { cn } from '../lib/utils.ts'
 import { Alert, AlertDescription } from '../ui/alert.tsx'
@@ -68,7 +67,7 @@ const pageClassName = '-mb-12 min-h-[calc(100dvh-4rem)] bg-background pb-16 font
  * The narrow band of the cover image below the header, and the column of the cards, which overlaps it a little. In page
  * transitions the band is the element the cover image of the booking page moves into, and back (app.css).
  */
-const bandClassName = 'h-28 sm:h-44 [view-transition-name:restaurant-cover]'
+const bandClassName = 'h-28 sm:h-44'
 const columnClassName = 'relative mx-auto -mt-12 flex max-w-3xl flex-col gap-6 px-4 sm:-mt-20 sm:px-6'
 
 /** The colours of a state: the surface of its symbol and the line on top of its card. Never by colour alone: each has its icon and title. */
@@ -153,13 +152,18 @@ function phoneHref(phone: string) {
 
 /**
  * The guest's page of a reservation, opened through the link from the booking (/r/:slug/reservation/:code?t=token), branded
- * like the booking page: below the header a narrow band of the cover image (otherwise the first photo of the gallery), on it a large status card (symbol, colour and
- * title per status), below it the details card as in the confirmation (reference code to copy, what was booked, the
- * restaurant's address with directions and its contact) and the actions: "Add to calendar" (a menu: Google Calendar,
- * Outlook.com, .ics), "Share", while possible "Change reservation" (ChangeReservation: inline below the details card, a sheet on
- * phones) and, until the start, a quiet "Cancel" that asks first; afterwards the hint to call. After a change the status card
- * says so with a small success mark, after cancelling it confirms it and offers "Book again"; the heading takes the focus.
- * A cancelled reservation is forgotten by the browser (rememberedBookings). A wrong restaurant, code or token all show the same "not found".
+ * like the booking page: below the header a narrow band of the cover image (otherwise the first photo of the gallery), on it a
+ * large status card (symbol, colour and title per status; for an open request the timeline of what happens next), below it the
+ * details card, which leads with when and where ("Tomorrow, 7:30 PM" in the restaurant's time zone, the party and the table),
+ * then the other details, the reference code to copy and the restaurant's address with directions and its contact, and the
+ * actions with one primary per status: confirmed "Add to calendar" (a menu: Google Calendar, Outlook.com, .ics), for a request
+ * none; "Change reservation" while possible (ChangeReservation: inline below the details card, a sheet on phones) and "Share"
+ * as secondary, and, until the start, a quiet "Cancel" that asks first; afterwards the hint to call. Cancelled, declined or
+ * over, "Book again" is the primary. After a change the status card says so with a small success mark, after cancelling it
+ * confirms it; the heading takes the focus. An open request is asked for again every 30 s while the page is visible
+ * (useGuestReservation): confirmed or declined meanwhile, the status card changes its colour and symbol (confirmed with the
+ * success mark) and a polite live region says it. A cancelled reservation is forgotten by the browser (rememberedBookings).
+ * A wrong restaurant, code or token all show the same "not found".
  */
 export function GuestReservationPage() {
   const { t } = useTranslation()
@@ -176,7 +180,7 @@ export function GuestReservationPage() {
   if (restaurant.isPending || reservation.isPending) {
     return (
       <div className={pageClassName} aria-hidden="true">
-        <Skeleton className={cn(bandClassName, 'rounded-none')} />
+        <Skeleton data-page-part="restaurant-cover" className={cn(bandClassName, 'rounded-none')} />
         <div className={columnClassName}>
           <Skeleton className="h-44 rounded-xl border border-border bg-card" />
           <Skeleton className="h-96 rounded-xl border border-border bg-card" />
@@ -189,7 +193,8 @@ export function GuestReservationPage() {
     return <NotFound icon={<CalendarX2Icon />} title={t('guestReservation.notFoundTitle')} text={t('guestReservation.notFoundText')} />
   }
 
-  if (restaurant.isError || reservation.isError) {
+  // A failed refetch of a request (every 30 s) keeps the page as it is; only without data the error shows.
+  if (restaurant.data === undefined || reservation.data === undefined) {
     const error = (restaurant.error ?? reservation.error)!
     return (
       <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-4 py-16 text-center font-sans text-foreground">
@@ -221,7 +226,7 @@ export function GuestReservationPage() {
 
   return (
     <div className={pageClassName}>
-      <div className={cn(bandClassName, 'bg-primary dark:bg-stone-900')}>
+      <div data-page-part="restaurant-cover" className={cn(bandClassName, 'bg-primary dark:bg-stone-900')}>
         {/*
           Only a picture of the place: the cover image, otherwise the first photo of the gallery. The first thing on the page,
           so not lazy; on the band's colour while it loads or when it fails.
@@ -255,6 +260,15 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
   const statusHeading = useRef<HTMLHeadingElement>(null)
   const changeButton = useRef<HTMLButtonElement>(null)
 
+  // The restaurant's decision on a request while the page is open (its status refetched every 30 s): the status card shows it
+  // with a transition and the live region says it.
+  const [seenStatus, setSeenStatus] = useState(reservation.status)
+  const [decided, setDecided] = useState<'Confirmed' | 'Declined' | null>(null)
+  if (reservation.status !== seenStatus) {
+    setSeenStatus(reservation.status)
+    setDecided(seenStatus === 'Requested' && (reservation.status === 'Confirmed' || reservation.status === 'Declined') ? reservation.status : null)
+  }
+
   // A cancelled reservation is no longer one to find again on the restaurant's page.
   useEffect(() => {
     if (reservation.status === 'Cancelled') {
@@ -273,11 +287,12 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
   const closed = cancelled || reservation.status === 'Declined'
   const past = !closed && hasEnded(reservation, restaurant.timeZoneId)
   const upcoming = !closed && !past
-  const justChanged = changed && !cancel.isSuccess && !closed
+  const requested = reservation.status === 'Requested'
+  const justChanged = changed && !cancel.isSuccess && !closed && decided === null
   const look = cancel.isSuccess
     ? justCancelledLook
     : justChanged
-      ? reservation.status === 'Requested'
+      ? requested
         ? justChangedRequestLook
         : justChangedLook
       : past
@@ -289,38 +304,49 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
       ? t(look.text)
       : null
 
+  const timeZoneId = restaurant.timeZoneId
   const date = formatLongDate(reservation.date, language)
   const time = t('common.timeRange', { start: formatTime(reservation.time, language), end: formatTime(reservation.endTime, language) })
+  // When, in the restaurant's time zone: "Today", "Tomorrow" or the weekday with the date, and the start.
+  const headline = t('guestReservation.when', {
+    day: formatRelativeDay(reservation.date, todayIn(timeZoneId ?? Intl.DateTimeFormat().resolvedOptions().timeZone), language),
+    time: formatTime(reservation.time, language),
+  })
   const guests = t('booking.guestsCount', { count: reservation.guests })
   const combined = reservation.tableNumbers.length > 1
   const tableInArea = t(combined ? 'booking.confirmation.tablesInArea' : 'booking.confirmation.tableInArea', {
     number: reservation.tableNumber,
     area: reservation.area,
   })
-  const timeZoneId = restaurant.timeZoneId
   const manageUrl = `${window.location.origin}${managePath(slug, reservation.referenceCode, token)}`
 
   const details = [
     { icon: <CalendarIcon />, label: t('booking.confirmation.date'), value: date },
     { icon: <ClockIcon />, label: t('booking.confirmation.time'), value: time },
-    { icon: <UsersIcon />, label: t('booking.confirmation.guests'), value: guests },
-    { icon: <LayoutGridIcon />, label: t('booking.confirmation.area'), value: reservation.area },
-    { icon: <ArmchairIcon />, label: t(combined ? 'booking.confirmation.tables' : 'booking.confirmation.table'), value: reservation.tableNumber },
     { icon: <UserIcon />, label: t('guestReservation.name'), value: reservation.name },
   ]
 
   // The dialog's root holds the whole view: its trigger, the cancel button, is gone after cancelling, while the dialog closes.
   return (
     <Dialog open={confirming} onOpenChange={(open) => !cancel.isPending && setConfirming(open)}>
-      <Card className={cn('gap-0 border-t-4 px-6 py-6 sm:px-8 sm:py-8', tones[look.tone].card)}>
+      {/* The colour of the status crossfades when the restaurant decides while the page is open. */}
+      <Card className={cn('gap-0 border-t-4 px-6 py-6 transition-colors duration-(--motion-slow) sm:px-8 sm:py-8', tones[look.tone].card)}>
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:gap-6">
-          {justChanged ? (
+          {justChanged || decided === 'Confirmed' ? (
             // The success mark of the booking's confirmation, in the size of the status symbols.
-            <SuccessMark key={`${reservation.date} ${reservation.time} ${reservation.guests}`} className="size-14 shrink-0 scale-[0.875] sm:size-16 sm:scale-100" />
+            <SuccessMark
+              key={decided ?? `${reservation.date} ${reservation.time} ${reservation.guests}`}
+              className="size-14 shrink-0 scale-[0.875] sm:size-16 sm:scale-100"
+            />
           ) : (
             <span
+              key={decided ?? 'status'}
               aria-hidden="true"
-              className={cn('flex size-14 shrink-0 items-center justify-center rounded-full sm:size-16 [&_svg]:size-7 sm:[&_svg]:size-8', tones[look.tone].icon)}
+              className={cn(
+                'flex size-14 shrink-0 items-center justify-center rounded-full sm:size-16 [&_svg]:size-7 sm:[&_svg]:size-8',
+                tones[look.tone].icon,
+                decided !== null && 'animate-pop-in',
+              )}
             >
               {look.icon}
             </span>
@@ -332,7 +358,8 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
               {t(look.title)}
             </h1>
             {statusText !== null && <p className="max-w-[60ch] text-lg text-muted-foreground">{statusText}</p>}
-            {closed && (
+            {requested && upcoming && <RequestTimeline className="mt-3" />}
+            {(closed || past) && (
               <Button asChild size="lg" className="mt-2 self-start">
                 <Link to={`/r/${encodeURIComponent(slug)}`} viewTransition>
                   {t('guestReservation.bookAgain')}
@@ -342,34 +369,44 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
             )}
           </div>
         </div>
+        {/* Says the restaurant's decision, made while the page is open; in the page from the start, so it is heard. */}
+        <p role="status" className="sr-only">
+          {decided === 'Confirmed' ? t('guestReservation.live.confirmed') : decided === 'Declined' ? t('guestReservation.live.declined') : ''}
+        </p>
       </Card>
 
       {/* Below the first screen (on phones) the cards rise in as they are scrolled into view. */}
       <Reveal>
         <Card className="gap-0 py-0">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-6 py-5 sm:px-8">
+          {/* When and where first. */}
+          <div className={cn('flex flex-col gap-1 px-6 pt-6 pb-5 sm:px-8 sm:pt-8', closed && 'text-muted-foreground line-through')}>
+            <p className="font-display text-lg wrap-anywhere">{restaurant.name}</p>
+            <h2 className="font-display text-3xl text-balance sm:text-4xl">{headline}</h2>
+            <p className="text-lg wrap-anywhere">
+              {guests} · {tableInArea}
+            </p>
+          </div>
+
+          <dl className="grid gap-x-6 gap-y-4 border-t border-border px-6 py-5 sm:grid-cols-2 sm:px-8">
+            {details.map((row) => (
+              <div key={row.label} className="flex min-w-0 flex-col gap-0.5">
+                <dt className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
+                  <span aria-hidden="true" className="flex">
+                    {row.icon}
+                  </span>
+                  {row.label}
+                </dt>
+                <dd className={cn('pl-6 font-medium wrap-anywhere', closed && 'text-muted-foreground line-through')}>{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border px-6 py-5 sm:px-8">
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">{t('guestReservation.referenceCode')}</span>
               <span className="font-mono text-2xl font-semibold tracking-[0.15em]">{reservation.referenceCode}</span>
             </div>
             <CopyButton value={reservation.referenceCode} />
-          </div>
-
-          <div className="flex flex-col gap-4 px-6 py-6 sm:px-8">
-            <h2 className="font-display text-xl wrap-anywhere">{restaurant.name}</h2>
-            <dl className="grid gap-x-6 gap-y-4 sm:grid-cols-2">
-              {details.map((row) => (
-                <div key={row.label} className="flex min-w-0 flex-col gap-0.5">
-                  <dt className="flex items-center gap-2 text-sm text-muted-foreground [&_svg]:size-4">
-                    <span aria-hidden="true" className="flex">
-                      {row.icon}
-                    </span>
-                    {row.label}
-                  </dt>
-                  <dd className={cn('pl-6 font-medium wrap-anywhere', closed && 'text-muted-foreground line-through')}>{row.value}</dd>
-                </div>
-              ))}
-            </dl>
           </div>
 
           <RestaurantContact restaurant={restaurant} />
@@ -390,6 +427,7 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
           }}
           onChanged={() => {
             setChanging(false)
+            setDecided(null)
             setChanges((count) => count + 1)
           }}
           onCloseAutoFocus={(event) => {
@@ -405,12 +443,10 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
       {upcoming && (
         <Reveal>
           <div className="flex flex-col gap-4">
+            {/* One primary per status: "Add to calendar" once it is confirmed, none for a request; the rest secondary or quiet. */}
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              {timeZoneId !== null && (
-                <>
-                  <CalendarMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
-                  <ShareMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
-                </>
+              {timeZoneId !== null && !requested && (
+                <CalendarMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />
               )}
               {reservation.canChange && timeZoneId !== null && (
                 <Button ref={changeButton} variant="outline" size="lg" aria-expanded={changing} onClick={() => setChanging(!changing)}>
@@ -418,6 +454,7 @@ function ReservationView({ slug, code, token, restaurant, reservation }: Reserva
                   {t('guestReservation.change.open')}
                 </Button>
               )}
+              {timeZoneId !== null && <ShareMenu reservation={reservation} restaurant={restaurant} timeZoneId={timeZoneId} manageUrl={manageUrl} />}
               {reservation.canCancel && (
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="lg" className="text-destructive hover:bg-destructive/10 hover:text-destructive sm:ml-auto">
