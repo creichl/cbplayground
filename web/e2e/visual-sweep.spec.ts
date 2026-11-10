@@ -35,14 +35,33 @@ async function faults(page: Page, touch: boolean) {
     const found = []
     const root = document.scrollingElement
     if (root.scrollWidth > root.clientWidth + 1) found.push('page scrolls sideways: ' + root.scrollWidth + ' > ' + root.clientWidth)
-    // Text that runs out of its box or is cut off without an ellipsis (an ellipsis is a deliberate cut).
+    // Text that runs out of its box, or out of the box around it (a hint in a chip), or is cut off without an ellipsis (an
+    // ellipsis is a deliberate cut). Measured on the text itself; boxes that scroll sideways (strips of chips) are left out.
+    const scrolls = (element) => ['auto', 'scroll'].includes(getComputedStyle(element).overflowX)
     for (const element of document.body.querySelectorAll('*')) {
-      if (![...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim() !== '')) continue
-      if (element.closest('.sr-only, [inert]')) continue
+      const texts = [...element.childNodes].filter((node) => node.nodeType === 3 && node.textContent.trim() !== '')
+      if (texts.length === 0 || element.closest('.sr-only, [inert]')) continue
       const style = getComputedStyle(element)
-      if (style.display === 'inline' || style.display === 'contents' || style.visibility === 'hidden' || style.textOverflow === 'ellipsis') continue
-      if (element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1) {
-        found.push('text runs out of its box: "' + element.textContent.trim().slice(0, 40) + '" (' + element.tagName.toLowerCase() + ', ' + element.scrollWidth + ' > ' + element.clientWidth + ')')
+      if (style.visibility === 'hidden' || style.textOverflow === 'ellipsis') continue
+      const range = document.createRange()
+      range.setStartBefore(texts[0])
+      range.setEndAfter(texts[texts.length - 1])
+      const text = range.getBoundingClientRect()
+      if (text.width === 0) continue
+      // The text's own box and the one around it, each the nearest element that has a box (not inline, not display: contents).
+      const boxOf = (start) => {
+        let current = start
+        while (current !== null && ['inline', 'contents'].includes(getComputedStyle(current).display)) current = current.parentElement
+        return current
+      }
+      const box = boxOf(element)
+      for (const frame of [box, box === null ? null : boxOf(box.parentElement)]) {
+        if (frame === null || frame === undefined || frame === document.body || scrolls(frame)) continue
+        const outer = frame.getBoundingClientRect()
+        if (text.left < outer.left + frame.clientLeft - 1 || text.right > outer.left + frame.clientLeft + frame.clientWidth + 1) {
+          found.push('text runs out of its box: "' + element.textContent.trim().slice(0, 40) + '" (' + frame.tagName.toLowerCase() + ')')
+          break
+        }
       }
     }
     if (${touch}) {
