@@ -278,13 +278,14 @@ function TimeChip({
       aria-pressed={chosen}
       aria-label={[label ?? time, scarce].filter((part) => part !== null).join(', ')}
       onClick={onClick}
-      className={cn(chipClassName, 'w-full flex-col gap-0 leading-tight', chipLook(chosen))}
+      // As high as the highest chip of its row: a hint that does not fit beside the flame (long words) wraps instead of spilling.
+      className={cn(chipClassName, 'h-full min-h-11 w-full flex-col gap-0 py-1 leading-tight', chipLook(chosen))}
     >
       {time}
       {scarce !== null && (
         <span
           data-tables-left=""
-          className={cn('inline-flex items-center gap-0.5 text-xs leading-none font-medium whitespace-nowrap', chosen ? 'text-primary-foreground' : 'text-primary-text')}
+          className={cn('inline-flex items-center gap-0.5 text-center text-xs leading-none font-medium', chosen ? 'text-primary-foreground' : 'text-primary-text')}
         >
           <FlameIcon aria-hidden="true" className="size-3 shrink-0" />
           {scarce}

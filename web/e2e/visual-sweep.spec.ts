@@ -35,6 +35,16 @@ async function faults(page: Page, touch: boolean) {
     const found = []
     const root = document.scrollingElement
     if (root.scrollWidth > root.clientWidth + 1) found.push('page scrolls sideways: ' + root.scrollWidth + ' > ' + root.clientWidth)
+    // Text that runs out of its box or is cut off without an ellipsis (an ellipsis is a deliberate cut).
+    for (const element of document.body.querySelectorAll('*')) {
+      if (![...element.childNodes].some((node) => node.nodeType === 3 && node.textContent.trim() !== '')) continue
+      if (element.closest('.sr-only, [inert]')) continue
+      const style = getComputedStyle(element)
+      if (style.display === 'inline' || style.display === 'contents' || style.visibility === 'hidden' || style.textOverflow === 'ellipsis') continue
+      if (element.clientWidth > 0 && element.scrollWidth > element.clientWidth + 1) {
+        found.push('text runs out of its box: "' + element.textContent.trim().slice(0, 40) + '" (' + element.tagName.toLowerCase() + ', ' + element.scrollWidth + ' > ' + element.clientWidth + ')')
+      }
+    }
     if (${touch}) {
       const controls = document.querySelectorAll('button, a[href], summary, [role="button"], [role="tab"], [role="radio"], [role="checkbox"], input:not([type="hidden"]):not([type="radio"]):not([type="checkbox"]), select, textarea')
       for (const control of controls) {
@@ -740,6 +750,15 @@ test.describe('Contrast and focus rings at 1440 px', () => {
       expect(await focusRings(page, 12), 'dialog focus').toEqual([])
       // The dialog with a focused control, its ring in the accent colour.
       await shoot(page, `focus-${restaurant.slug}`, sizes[0], { theme: restaurant.theme, language: 'en' }, { fullPage: false })
+      // Where the guest chooses the table: on to the first free table of the plan, its ring around it.
+      if (await dialog.locator('[data-floor-table][role="button"]').count() > 0) {
+        for (let i = 0; i < 40 && !(await page.evaluate(`document.activeElement?.hasAttribute('data-floor-table') === true`)); i++) {
+          await page.keyboard.press('Tab')
+        }
+        await expect(dialog.locator('[data-floor-table]:focus-visible')).toHaveCount(1)
+        expect(await page.evaluate('window.__sweep.focus()'), 'table focus').toEqual([])
+        await shoot(page, `focus-table-${restaurant.slug}`, sizes[0], { theme: restaurant.theme, language: 'en' }, { fullPage: false })
+      }
     })
   }
 })

@@ -147,7 +147,7 @@ function MenuContent({ menu, restaurantName }: { menu: PublicMenu; restaurantNam
                         imageClassName="transition-[opacity,scale] duration-(--motion-long) group-hover:scale-105"
                       />
                       <span className="flex flex-col">
-                        <span className="font-display text-lg leading-snug">{dish.name}</span>
+                        <span className="font-display text-lg leading-snug wrap-break-word">{dish.name}</span>
                         {dish.price !== null && <Price price={dish.price} currency={menu.currency} className="text-muted-foreground" />}
                       </span>
                     </button>
