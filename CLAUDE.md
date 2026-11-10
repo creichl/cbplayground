@@ -38,7 +38,7 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   primary action, a request's timeline, the reference code typed in, less motion; "Your reservation" leading with "Today"
   or "Tomorrow" and turning confirmed by itself), `visual-sweep.spec.ts` (every guest screen and its states at 1440, 1024
   and 390 px, light and dark, in English, German and Serbian Cyrillic, as screenshots `<screen>-<size>-<theme>-<language>`,
-  each checked for sideways scrolling and touch targets below 44 px; the motion of the main flow: no entrance that jumps at its
+  each checked for sideways scrolling, text running out of its box or cut off without an ellipsis, and touch targets below 44 px; the motion of the main flow: no entrance that jumps at its
   start, no two animations of the same property at once, everything ends fully visible, the page does not shift, nothing
   moves with less motion, and its performance trace attached when it fails; contrast of text and field borders and the focus
   rings, visible and not cut off, on the start page and every demo restaurant's page and booking dialog).
