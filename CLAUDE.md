@@ -98,8 +98,8 @@ the web frontend again after every change to it): `npx playwright test`, or one 
 
 The tests run in English (`locale: 'en-US'`) against the demo data of the development seed, with one browser at a time,
 so the run fits in the agent container's memory (2 GB). `.connbridge/autotest.json` runs the same script for the review
-packages, within 25 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
-the tests about 16 minutes. Keep new tests short: one page per state, several checks on it, instead of a page load per check.
+packages, within 40 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
+the tests about 27 minutes (the visual sweep about 7 of them). Keep new tests short: one page per state, several checks on it, instead of a page load per check.
 
 ## Working in parallel and merging
 

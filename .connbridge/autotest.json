@@ -1,5 +1,5 @@
 {
   "command": "bash web/e2e/run.sh",
   "results": "test-results",
-  "timeoutMinutes": 35
+  "timeoutMinutes": 40
 }
