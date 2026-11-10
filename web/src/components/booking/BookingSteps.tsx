@@ -282,7 +282,7 @@ export function BookingSteps({ slug, restaurant, timeZoneId, flow, frame }: Book
           </Button>
         </div>
         {!summaryBesideLogo && summary}
-        <ol className="flex items-center gap-2 text-xs">
+        <ol className="flex items-start gap-2 text-xs">
           {steps.map((option, position) => (
             <li
               key={option}

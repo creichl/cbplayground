@@ -53,7 +53,8 @@ function Chip({ pressed, onClick, children }: { pressed: boolean; onClick: () =>
 }
 
 /** A thin line between the groups of the bar. */
-const divider = <span aria-hidden="true" className="h-6 w-px shrink-0 bg-border" />
+// Only in the single row of phones: where the groups wrap (from 768 px on), a divider would hang at a row's end or start.
+const divider = <span aria-hidden="true" className="h-6 w-px shrink-0 bg-border md:hidden" />
 
 /** The value of "All cities" in the select: a city is stored trimmed, so it is never a single space. */
 const allCities = ' '
@@ -137,7 +138,8 @@ export function RestaurantFilterBar({ tenants, filters, onChange, matchCount }: 
     <div
       role="group"
       aria-label={t('home.filters.label')}
-      className="-mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden"
+      // Relative, so the texts for screen readers inside (absolutely positioned) scroll with the bar instead of widening the page.
+      className="relative -mx-4 mb-8 flex items-center gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:overflow-visible md:px-0 [&::-webkit-scrollbar]:hidden"
     >
       {groups.map((group, index) => (
         <div key={index} className="contents">

@@ -36,7 +36,12 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   open, the page dimmed, its content fully opaque, the card behind it keeping the booked choice; the header logo never over
   the restaurant's name; the page transition from the start page), `confirmation-polish.spec.ts` (the confirmation's one
   primary action, a request's timeline, the reference code typed in, less motion; "Your reservation" leading with "Today"
-  or "Tomorrow" and turning confirmed by itself).
+  or "Tomorrow" and turning confirmed by itself), `visual-sweep.spec.ts` (every guest screen and its states at 1440, 1024
+  and 390 px, light and dark, in English, German and Serbian Cyrillic, as screenshots `<screen>-<size>-<theme>-<language>`,
+  each checked for sideways scrolling, text running out of its box or cut off without an ellipsis, and touch targets below 44 px; the motion of the main flow: no entrance that jumps at its
+  start, no two animations of the same property at once, everything ends fully visible, the page does not shift, nothing
+  moves with less motion, and its performance trace attached when it fails; contrast of text and field borders and the focus
+  rings, visible and not cut off, on the start page and every demo restaurant's page and booking dialog).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
   with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
   width, tables, archived tables), `pacing.spec.ts`, `reports.spec.ts` (reports page), `superadmin.spec.ts`,
@@ -95,8 +100,8 @@ the web frontend again after every change to it): `npx playwright test`, or one 
 
 The tests run in English (`locale: 'en-US'`) against the demo data of the development seed, with one browser at a time,
 so the run fits in the agent container's memory (2 GB). `.connbridge/autotest.json` runs the same script for the review
-packages, within 25 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
-the tests about 16 minutes. Keep new tests short: one page per state, several checks on it, instead of a page load per check.
+packages, within 40 minutes (`timeoutMinutes`): the setup (`npm ci`, Chromium, both builds) takes about a minute and a half,
+the tests about 29 minutes (the visual sweep about 9 of them). Keep new tests short: one page per state, several checks on it, instead of a page load per check.
 
 ## Working in parallel and merging
 

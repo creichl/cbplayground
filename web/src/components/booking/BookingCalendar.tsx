@@ -170,13 +170,14 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
   return (
     <div role="group" aria-labelledby={labelId} className="flex min-w-0 flex-col gap-1.5">
       {/* The label, and on the right the arrows (desktops) and "More dates", so the strip has the card's full width. */}
-      <div className="flex min-w-0 items-center justify-between gap-2">
+      {/* Where the month and the buttons do not fit side by side (long month names), the buttons go below instead of cutting the month. */}
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <div className="flex min-w-0 items-baseline gap-2">
           <Label id={labelId} asChild>
             <span>{t('booking.bar.date')}</span>
           </Label>
           {/* The day names say their month already; this is for the eye. */}
-          <span aria-hidden="true" data-strip-month="" className="truncate text-xs text-muted-foreground">
+          <span aria-hidden="true" data-strip-month="" className="text-xs whitespace-nowrap text-muted-foreground">
             {formatMonth(firstInView, language)}
           </span>
         </div>

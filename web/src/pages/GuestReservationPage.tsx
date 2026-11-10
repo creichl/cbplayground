@@ -182,8 +182,26 @@ export function GuestReservationPage() {
       <div className={pageClassName} aria-hidden="true">
         <Skeleton data-page-part="restaurant-cover" className={cn(bandClassName, 'rounded-none')} />
         <div className={columnClassName}>
-          <Skeleton className="h-44 rounded-xl border border-border bg-card" />
-          <Skeleton className="h-96 rounded-xl border border-border bg-card" />
+          {/* In the shape of the two cards: the status with its icon and title, then the reservation's details. */}
+          <div className="flex min-h-44 flex-col gap-3 rounded-xl border border-border bg-card p-6">
+            <Skeleton className="size-14 rounded-full" />
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-9 w-3/4" />
+            <Skeleton className="h-5 w-1/2" />
+          </div>
+          <div className="flex min-h-96 flex-col gap-3 rounded-xl border border-border bg-card p-6">
+            <Skeleton className="h-6 w-1/2" />
+            <Skeleton className="h-9 w-2/3" />
+            <Skeleton className="h-5 w-1/2" />
+            <div className="mt-3 flex flex-col gap-5 border-t border-border pt-6">
+              {Array.from({ length: 3 }, (_, i) => (
+                <div key={i} className="flex flex-col gap-1.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-5 w-56 max-w-full" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     )
