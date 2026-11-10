@@ -129,7 +129,7 @@ function MenuContent({ menu, restaurantName }: { menu: PublicMenu; restaurantNam
           <div className="flex flex-col gap-3">
             <h3 className="font-display text-xl">{t('booking.menu.recommendations')}</h3>
             <Stagger>
-              <ul className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden">
+              <ul className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto overscroll-x-contain px-4 pb-2 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:grid lg:grid-cols-4 lg:overflow-visible lg:px-0 lg:pb-0 [&::-webkit-scrollbar]:hidden">
                 {recommendations.map((dish) => (
                   <li key={dish.id} className="group w-[70%] shrink-0 snap-start lift sm:w-[40%] lg:w-auto">
                     <button
