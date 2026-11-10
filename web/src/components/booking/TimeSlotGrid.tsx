@@ -1,12 +1,13 @@
-import { CalendarXIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react'
+import { CalendarXIcon, FlameIcon, TriangleAlertIcon, UsersIcon } from 'lucide-react'
 import type { ParseKeys } from 'i18next'
-import { type MouseEvent, useEffect, useRef, useState } from 'react'
+import { type MouseEvent, type ReactElement, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type Availability, type AvailabilityTime, type ExcludedReservation, useAvailabilities, useAvailability, useNextFreeDays } from '../../api/publicBooking.ts'
 import { formatLongDate, formatShortDate, formatTime, periodLabel } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription } from '../../ui/alert.tsx'
 import { layoutTransition, layoutTransitions } from '../../ui/motion/layout-transition.ts'
+import { Stagger } from '../../ui/motion/reveal.tsx'
 import { Skeleton } from '../../ui/skeleton.tsx'
 import { RequestError } from './RequestError.tsx'
 
@@ -38,6 +39,9 @@ export const timeChipAttribute = 'data-time-chip'
 /** Up to this many free tables a time says how many are left ("2 tables left"). */
 const scarceRemaining = 2
 
+/** From this many taken times in a row on, they are one quiet chip ("19:00–20:30 full") instead of one chip each. */
+const takenRun = 3
+
 /** How many next free days a fully booked day offers, and how many times of each. */
 const alternativeDays = 3
 const alternativeTimes = 3
@@ -57,9 +61,26 @@ function freeTimes(availability: Availability | undefined, earliestStart: string
   return offeredPeriods(availability, earliestStart).flatMap((period) => period.times.filter((slot) => slot.available))
 }
 
+/**
+ * The chips of an opening window's times in their order: each free time one, and taken ones one each too, except runs of
+ * takenRun or more taken times in a row, which are one chip together.
+ */
+function chipsOf(times: AvailabilityTime[]) {
+  const runs: AvailabilityTime[][] = []
+  for (const slot of times) {
+    const run = runs.at(-1)
+    if (run !== undefined && !slot.available && !run[0].available) {
+      run.push(slot)
+    } else {
+      runs.push([slot])
+    }
+  }
+  return runs.flatMap((run) => (run[0].available || run.length < takenRun ? run.map((slot) => [slot]) : [run]))
+}
+
 /** Chips of times: 44 px high, in a grid that keeps them the same width; they give way a little while pressed. */
 const chipClassName =
-  'relative inline-flex h-11 items-center justify-center rounded-full border px-3 text-sm font-medium tabular-nums press focus-ring'
+  'relative inline-flex h-11 items-center justify-center rounded-full border px-1.5 text-sm font-medium tabular-nums press focus-ring'
 
 /** The look of a chip that can be chosen, chosen (filled, with the pulse) or not. */
 function chipLook(chosen: boolean) {
@@ -98,11 +119,13 @@ function usePulseThenChoose() {
 
 /**
  * The start times of a day as chips, grouped by opening window ("Lunch 11:30–14:30"). Free times can be chosen; one with
- * only one or two tables left says so; taken ones are struck through and disabled. Times in the past or within the lead
- * time are left out. On another party size or day the previous chips stay, dimmed and inert, until the new ones arrive;
- * then the new ones cross-fade in and the card glides to its new height (layoutTransition, a view transition, so nothing
- * is laid out per frame and the embed reports only the end height): the skeleton only shows on the very first load. A click on
- * a time pulses its chip and then opens the booking dialog. A fully booked day offers alternatives instead (FullDay).
+ * only one or two tables left says so, with a flame; taken ones recede (muted, struck through in a lighter tone) and are
+ * disabled, and three or more in a row are one quiet chip ("19:00–20:30 full"). Times in the past or within the lead time are
+ * left out. On the very first load the skeleton fades out above the first chips, which rise in one after another (Stagger).
+ * On another party size or day the previous chips stay, dimmed and inert, until the new ones arrive; then the new ones
+ * cross-fade in and the card glides to its new height (layoutTransition, a view transition, so nothing is laid out per frame
+ * and the embed reports only the end height). A click on a time pulses its chip and then opens the booking dialog. A fully
+ * booked day offers alternatives instead (FullDay).
  */
 export function TimeSlotGrid(props: TimeSlotGridProps) {
   const { slug, date, guests, value, waiting = false, earliestStart, notice, onChange, exclude } = props
@@ -125,6 +148,18 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
     }
   }, [another, data])
   const stale = availability.isPlaceholderData || waiting || shown !== data
+  // The first times shown (null before them, false once others have taken their place): they rise in where the skeleton was.
+  const key = shown === undefined ? null : `${shown.date}/${shown.guests}`
+  const [first, setFirst] = useState<string | null | false>(null)
+  if (key !== null && first === null) {
+    setFirst(key)
+  } else if (key !== null && first !== null && first !== false && first !== key) {
+    setFirst(false)
+  }
+  const entering = key !== null && first === key
+  // The skeleton that fades out above them, until its fade has ended.
+  const [skeletonFaded, setSkeletonFaded] = useState(false)
+  const rise = (list: ReactElement) => (entering ? <Stagger>{list}</Stagger> : list)
 
   return (
     <div className="flex flex-col gap-5">
@@ -136,7 +171,7 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
       )}
 
       {/* The part of the card that changes in a layout transition (app.css). */}
-      <div ref={timesRef} data-layout-part="booking-times">
+      <div ref={timesRef} data-layout-part="booking-times" className="relative">
         {availability.isError ? (
           <RequestError error={availability.error} onRetry={() => void availability.refetch()} />
         ) : shown === undefined ? (
@@ -160,32 +195,56 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
                       {t('common.timeRange', { start: formatTime(period.start, language), end: formatTime(period.end, language) })}
                     </span>
                   </h3>
-                  <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                    {period.times.map((slot) => (
-                      <li key={slot.time}>
-                        {slot.available ? (
-                          <TimeChip
-                            slot={slot}
-                            chosen={value === slot.time || picked === slot.time}
-                            {...{ [timeChipAttribute]: slot.time }}
-                            onClick={(event) => pick(slot.time, event.currentTarget, () => onChange(slot.time))}
-                          />
-                        ) : (
-                          <button
-                            type="button"
-                            disabled
-                            aria-label={t('booking.time.taken', { time: formatTime(slot.time, language) })}
-                            className={cn(chipClassName, 'w-full cursor-not-allowed border-dashed border-input text-muted-foreground line-through')}
-                          >
-                            {formatTime(slot.time, language)}
-                          </button>
-                        )}
-                      </li>
-                    ))}
-                  </ul>
+                  {rise(
+                    <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                      {chipsOf(period.times).map(([slot, ...more]) => (
+                        <li key={slot.time} className={cn(more.length > 0 && 'col-span-2')}>
+                          {slot.available ? (
+                            <TimeChip
+                              slot={slot}
+                              chosen={value === slot.time || picked === slot.time}
+                              {...{ [timeChipAttribute]: slot.time }}
+                              onClick={(event) => pick(slot.time, event.currentTarget, () => onChange(slot.time))}
+                            />
+                          ) : more.length > 0 ? (
+                            <button
+                              type="button"
+                              disabled
+                              data-taken-run=""
+                              aria-label={t('booking.time.taken', { time: [slot, ...more].map((taken) => formatTime(taken.time, language)).join(', ') })}
+                              className={cn(chipClassName, 'w-full cursor-not-allowed border-transparent bg-muted/60 font-normal text-muted-foreground')}
+                            >
+                              {t('booking.time.takenRun', { start: formatTime(slot.time, language), end: formatTime(more[more.length - 1].time, language) })}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled
+                              aria-label={t('booking.time.taken', { time: formatTime(slot.time, language) })}
+                              className={cn(
+                                chipClassName,
+                                'w-full cursor-not-allowed border-transparent font-normal text-muted-foreground line-through decoration-muted-foreground/40',
+                              )}
+                            >
+                              {formatTime(slot.time, language)}
+                            </button>
+                          )}
+                        </li>
+                      ))}
+                    </ul>,
+                  )}
                 </section>
               ))
             )}
+          </div>
+        )}
+        {entering && !skeletonFaded && (
+          // Above the first times, in the place of the skeleton before them (also the card's, in its shape), fading out.
+          <div
+            className="pointer-events-none absolute inset-x-0 top-0 animate-fade-out [animation-fill-mode:forwards] motion-reduce:hidden"
+            onAnimationEnd={(event) => event.target === event.currentTarget && setSkeletonFaded(true)}
+          >
+            <TimeSlotsSkeleton />
           </div>
         )}
       </div>
@@ -193,7 +252,7 @@ export function TimeSlotGrid(props: TimeSlotGridProps) {
   )
 }
 
-/** A free time to choose; with one or two tables left it says so below the time, in the accent colour. */
+/** A free time to choose; with one or two tables left it says so below the time, with a flame, in the accent colour. */
 function TimeChip({
   slot,
   chosen,
@@ -223,7 +282,11 @@ function TimeChip({
     >
       {time}
       {scarce !== null && (
-        <span className={cn('text-[0.6875rem] leading-none font-medium whitespace-nowrap', chosen ? 'text-primary-foreground' : 'text-primary-text')}>
+        <span
+          data-tables-left=""
+          className={cn('inline-flex items-center gap-0.5 text-xs leading-none font-medium whitespace-nowrap', chosen ? 'text-primary-foreground' : 'text-primary-text')}
+        >
+          <FlameIcon aria-hidden="true" className="size-3 shrink-0" />
           {scarce}
         </span>
       )}

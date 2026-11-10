@@ -224,6 +224,7 @@
       "freeTimes": "Free times",
       "nextFreeDays": "Next free days",
       "taken": "{{time}}, fully booked",
+      "takenRun": "{{start}}–{{end}} full",
       "tablesLeft_one": "{{count}} table left",
       "tablesLeft_other": "{{count}} tables left",
       "smallerParty_one": "For {{count}} person there are times at {{times}}",
@@ -290,7 +291,9 @@
       "notYou": "Not you?",
       "clearRemembered": "Clear",
       "submitting": "Booking…",
-      "submittingRequest": "Sending request…"
+      "submittingRequest": "Sending request…",
+      "submitted": "Booked",
+      "submittedRequest": "Request sent"
     },
     "errors": {
       "slotTaken": "Sorry, this time has just been booked by someone else. Please choose another time – the free times have been updated.",
@@ -368,7 +371,8 @@
     "card": {
       "instantMode": "Instant confirmation",
       "requestMode": "Request – the restaurant confirms",
-      "freeCancellation": "Free cancellation through the link"
+      "freeCancellation": "Free cancellation through the link",
+      "change": "Change"
     },
     "dialog": {
       "stepTable": "Table",
@@ -378,12 +382,21 @@
       "back": "Back"
     },
     "hold": {
-      "holding": "We're holding table {{table}} for you · {{left}}",
-      "holdingTables": "We're holding tables {{table}} for you · {{left}}",
-      "expired": "Your hold has expired. The table may still be free – you can still book.",
+      "holding": "We're holding table {{table}} for you · <left/>",
+      "holdingTables": "We're holding tables {{table}} for you · <left/>",
+      "ended": "Your hold has ended.",
+      "lastMinute": "One minute left on your hold.",
+      "holdAgain": "Hold again",
       "nearbyTimes": "Free times nearby",
       "noNearbyTimes": "There are no other free times on this day.",
       "otherDay": "Choose another day or time"
+    },
+    "leave": {
+      "title": "Leave?",
+      "held": "Your table is held for {{left}} more.",
+      "unfinished": "Your booking isn't finished yet.",
+      "stay": "Stay",
+      "leave": "Leave"
     },
     "gallery": {
       "title": "Photos",

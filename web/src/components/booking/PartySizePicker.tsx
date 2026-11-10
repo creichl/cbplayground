@@ -1,9 +1,10 @@
 import { PhoneIcon } from 'lucide-react'
-import { useId } from 'react'
+import { useId, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { cn } from '../../lib/utils.ts'
 import { Alert, AlertDescription, AlertTitle } from '../../ui/alert.tsx'
 import { Label } from '../../ui/label.tsx'
+import { useSelectionPill } from '../../ui/motion/selection-pill.ts'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectSeparator, SelectTrigger, SelectValue } from '../../ui/select.tsx'
 
 /** Party sizes offered as chips one by one; larger ones up to the online limit follow under "More". */
@@ -15,17 +16,21 @@ type PartySizePickerProps = {
   onChange: (guests: number) => void
 }
 
-/** The look of a chip, chosen (filled in the accent colour) or not. */
+/**
+ * The look of a chip, chosen or not. The chosen one is see-through: the selection pill below it fills it in the accent colour,
+ * and its label's colour cross-fades (press). Its content lies above the pill (relative), the other chips' surfaces below it.
+ */
 function chipLook(chosen: boolean) {
   return chosen
-    ? 'border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
-    : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent'
+    ? 'border-transparent bg-transparent text-primary-foreground [&>*]:relative'
+    : 'border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent [&>*]:relative'
 }
 
 /**
  * The party size on the reservation card: chips for 1 to 8 people, one tap each (on phones a row that scrolls sideways),
  * then "More" with the larger parties up to the largest that can be booked online, and one entry for still larger parties
- * (one more than that), which leads to the hint to call (PartySizeCallHint). The chosen size is filled.
+ * (one more than that), which leads to the hint to call (PartySizeCallHint). The chosen size is filled by one selection pill,
+ * which glides from chip to chip (useSelectionPill).
  */
 export function PartySizePicker({ value, maxOnlinePartySize, onChange }: PartySizePickerProps) {
   const { t } = useTranslation()
@@ -38,6 +43,9 @@ export function PartySizePicker({ value, maxOnlinePartySize, onChange }: PartySi
     </SelectItem>
   )
   const moreChosen = value > listedSizes || value > maxOnlinePartySize
+  const rowRef = useRef<HTMLDivElement>(null)
+  const pillRef = useRef<HTMLSpanElement>(null)
+  useSelectionPill(rowRef, pillRef)
 
   return (
     <div role="group" aria-labelledby={labelId} className="flex min-w-0 flex-col gap-1.5">
@@ -45,11 +53,16 @@ export function PartySizePicker({ value, maxOnlinePartySize, onChange }: PartySi
         <span>{t('booking.bar.guests')}</span>
       </Label>
       {/* The padding keeps the focus rings inside the row, which clips what is outside it while it scrolls. */}
-      <div className="-m-1 flex snap-x scroll-px-1 gap-1.5 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden">
+      <div
+        ref={rowRef}
+        className="relative -m-1 flex snap-x scroll-px-1 gap-1.5 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible [&::-webkit-scrollbar]:hidden"
+      >
+        <span ref={pillRef} aria-hidden="true" data-selection-pill="" className="pointer-events-none absolute top-0 left-0 rounded-full bg-primary opacity-0" />
         {sizes(1, Math.min(listedSizes, maxOnlinePartySize)).map((size) => (
           <button
             key={size}
             type="button"
+            data-chosen={value === size || undefined}
             aria-pressed={value === size}
             aria-label={t('booking.guestsCount', { count: size })}
             onClick={() => onChange(size)}
@@ -58,11 +71,12 @@ export function PartySizePicker({ value, maxOnlinePartySize, onChange }: PartySi
               chipLook(value === size),
             )}
           >
-            {size}
+            <span>{size}</span>
           </button>
         ))}
         <Select value={moreChosen ? String(Math.min(value, tooLargeValue)) : ''} onValueChange={(selected) => onChange(Number(selected))}>
           <SelectTrigger
+            data-chosen={moreChosen || undefined}
             className={cn(
               'h-11 w-auto shrink-0 snap-start rounded-full px-4 text-sm font-medium press touch:h-11 [&>svg]:text-current',
               chipLook(moreChosen),

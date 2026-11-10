@@ -3,11 +3,13 @@ import { Drawer as DrawerPrimitive } from 'vaul'
 import { ThemeRootContext } from '../brandTheme.ts'
 import { cn } from '../lib/utils.ts'
 
-// A sheet (vaul): from the bottom on phones, where it can be dragged down to close, or from the side (`direction="right"`).
+// A sheet (vaul): from the bottom on phones, where it can be dragged down to close (with `handleOnly` only by its handle), or
+// from the side (`direction="right"`).
 // vaul animates it itself (with its own stylesheet); its duration follows the motion token for sheets, also when the user
 // asked for less motion, and it opens with the soft spring of the dialogs.
 const motion = { animationDuration: 'var(--motion-slow)' }
 const contentMotion = { ...motion, animationTimingFunction: 'var(--ease-spring)' }
+const handleStyle = { width: '100%', height: '1.5rem', margin: 0, opacity: 1, background: 'none', borderRadius: 0, touchAction: 'none' }
 
 function Sheet(props: ComponentProps<typeof DrawerPrimitive.Root>) {
   return <DrawerPrimitive.Root data-slot="sheet" {...props} />
@@ -37,8 +39,16 @@ function SheetContent({ className, children, style, ...props }: ComponentProps<t
         style={{ ...contentMotion, ...style }}
         {...props}
       >
-        {/* The handle: shows that the sheet can be dragged down. */}
-        <div aria-hidden="true" className="mx-auto mt-3 hidden h-1.5 w-12 shrink-0 rounded-full bg-muted group-data-[vaul-drawer-direction=bottom]/sheet:block" />
+        {/*
+         * The handle: shows that the sheet can be dragged down, across the sheet's width; with `handleOnly` on the Sheet it is the
+         * only place a drag starts. vaul styles it as a small bar with a stylesheet of its own (outside the cascade layers), which
+         * only the inline style overrides.
+         */}
+        <div className="hidden shrink-0 group-data-[vaul-drawer-direction=bottom]/sheet:block">
+          <DrawerPrimitive.Handle style={handleStyle}>
+            <span className="absolute top-1/2 left-1/2 h-1.5 w-12 -translate-1/2 rounded-full bg-muted" />
+          </DrawerPrimitive.Handle>
+        </div>
         {children}
       </DrawerPrimitive.Content>
     </DrawerPrimitive.Portal>

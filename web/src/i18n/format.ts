@@ -17,6 +17,15 @@ export function formatShortDate(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { weekday: 'short', day: 'numeric', month: 'short' }).format(toDate(date))
 }
 
+/**
+ * The month of a date, written out ("November", "Novembar") or short ("Nov", "Dez."), with a capital letter also in Serbian,
+ * which writes its months in lower case: it stands alone as a label.
+ */
+export function formatMonth(date: string, language: string, month: 'long' | 'short' = 'long') {
+  const name = new Intl.DateTimeFormat(language, { month }).format(toDate(date))
+  return name.charAt(0).toLocaleUpperCase(language) + name.slice(1)
+}
+
 /** A date as day and month in figures, e.g. "31.10." or "10/31", for the axis of a chart. */
 export function formatDayMonth(date: string, language: string) {
   return new Intl.DateTimeFormat(language, { day: 'numeric', month: 'numeric' }).format(toDate(date))

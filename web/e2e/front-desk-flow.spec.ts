@@ -31,6 +31,20 @@ async function createTodaysReservation(page: Page, name: string) {
   return time
 }
 
+/** The day `days` after `date`, both "YYYY-MM-DD". */
+function addDays(date: string, days: number) {
+  const [year, month, day] = date.split('-').map(Number)
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10)
+}
+
+/** How many times of Kafana Dunav have a free table for 2 on `date`, from the staff's availability (signed in as its front desk). */
+async function freeTimes(page: Page, date: string) {
+  const availability = (await (await page.request.get(`/api/staff/availability?date=${date}&guests=2`)).json()) as {
+    periods?: { times: { tables: unknown[] }[] }[]
+  }
+  return (availability.periods ?? []).flatMap((period) => period.times).filter((slot) => slot.tables.length > 0).length
+}
+
 test.describe('Front desk: accepting a request', () => {
   test('lists the online request among the open requests and confirms it', async ({ page }) => {
     // A name the demo reservations never get (DevelopmentSeed), so the open requests list it once.
@@ -107,9 +121,16 @@ test.describe('Front desk: phone reservation', () => {
     const name = 'Jovana Telefon'
     await signIn(page, 'frontdesk@kafana-dunav.local')
     await expect(page).toHaveURL(/\/frontdesk$/)
-    // Tomorrow: Kafana Dunav is open every day, and the whole day lies ahead.
-    await page.getByRole('button', { name: 'Next day' }).click()
-    await expect(page).toHaveURL(/\/frontdesk\?date=/)
+    // From tomorrow on, so the whole day lies ahead: the first day with a free time. Kafana Dunav is open every day except on
+    // Serbia's public holidays (e.g. November 11).
+    let days = 1
+    while (days < 8 && (await freeTimes(page, addDays(todayInBelgrade(), days))) === 0) {
+      days++
+    }
+    for (let step = 0; step < days; step++) {
+      await page.getByRole('button', { name: 'Next day' }).click()
+      await expect(page).toHaveURL(new RegExp(`date=${addDays(todayInBelgrade(), step + 1)}$`))
+    }
     const date = new URL(page.url()).searchParams.get('date')!
     // The address changes first; the page shows the day right after.
     await expect(page.getByRole('button', { name: 'Date', exact: true })).toHaveText(pickerDate(date))
