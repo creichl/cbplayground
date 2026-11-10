@@ -125,8 +125,8 @@ export function GuestDetailsForm({ initialValues, onValuesChange, onSubmit, subm
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    // The button keeps the focus while the booking is sent, so it is not disabled; a second press does nothing.
-    if (submitting) {
+    // The button keeps the focus while the booking is sent, so it is not disabled; a second press does nothing, nor one on the check.
+    if (submitting || succeeded) {
       return
     }
     setValidated(true)
