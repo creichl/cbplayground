@@ -231,6 +231,7 @@
       "freeTimes": "Слободни термини",
       "nextFreeDays": "Следећи слободни дани",
       "taken": "{{time}}, попуњено",
+      "takenRun": "{{start}}–{{end}} попуњено",
       "tablesLeft_one": "Још {{count}} сто",
       "tablesLeft_few": "Још {{count}} стола",
       "tablesLeft_other": "Још {{count}} столова",
@@ -385,7 +386,8 @@
     "card": {
       "instantMode": "Тренутна потврда",
       "requestMode": "Захтев – ресторан потврђује",
-      "freeCancellation": "Бесплатно отказивање преко линка"
+      "freeCancellation": "Бесплатно отказивање преко линка",
+      "change": "Промени"
     },
     "dialog": {
       "stepTable": "Сто",

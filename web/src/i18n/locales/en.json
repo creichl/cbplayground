@@ -224,6 +224,7 @@
       "freeTimes": "Free times",
       "nextFreeDays": "Next free days",
       "taken": "{{time}}, fully booked",
+      "takenRun": "{{start}}–{{end}} full",
       "tablesLeft_one": "{{count}} table left",
       "tablesLeft_other": "{{count}} tables left",
       "smallerParty_one": "For {{count}} person there are times at {{times}}",
@@ -368,7 +369,8 @@
     "card": {
       "instantMode": "Instant confirmation",
       "requestMode": "Request – the restaurant confirms",
-      "freeCancellation": "Free cancellation through the link"
+      "freeCancellation": "Free cancellation through the link",
+      "change": "Change"
     },
     "dialog": {
       "stepTable": "Table",

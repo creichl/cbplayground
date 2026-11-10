@@ -1,12 +1,13 @@
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
-import { type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { Fragment, type KeyboardEvent, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { type CalendarDay, type ExcludedReservation, monthsBetween, useBookingCalendar, useBookingCalendarMonths } from '../../api/publicBooking.ts'
-import { formatLongDate, formatShortDate, formatWeekday } from '../../i18n/format.ts'
+import { formatLongDate, formatMonth, formatShortDate, formatWeekday } from '../../i18n/format.ts'
 import { cn } from '../../lib/utils.ts'
 import { Button } from '../../ui/button.tsx'
 import { Calendar } from '../../ui/calendar.tsx'
 import { Label } from '../../ui/label.tsx'
+import { useSelectionPill } from '../../ui/motion/selection-pill.ts'
 import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover.tsx'
 import { RequestError } from './RequestError.tsx'
 import { addDays } from './useBookingFlow.ts'
@@ -55,9 +56,10 @@ function scrollBehavior(): ScrollBehavior {
  * The date on the reservation card: a strip of the next 14 days (weekday and day number) in the card's full width to choose
  * with one tap, and "More dates" beside its label, which opens the calendar in a popover for the days after them. Available days have a dot; closed days (also those
  * beyond the booking horizon) and fully booked ones are struck through and cannot be chosen, and their names say why. The
- * chosen day is filled and scrolled into view. The strip scrolls sideways, snapping to the days, with arrows on desktops;
- * the arrow keys move between the days (one tab stop for the whole strip). The current and the next month are loaded
- * together.
+ * chosen day is filled by a selection pill, which glides from day to day (useSelectionPill), and scrolled into view. Beside the
+ * label the month of the first day in view ("November"), which follows the scrolling; where the strip reaches the 1st of a month,
+ * a divider with that month's name. The strip scrolls sideways, snapping to the days, with arrows on desktops; the arrow keys
+ * move between the days (one tab stop for the whole strip). The current and the next month are loaded together.
  */
 export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChange, exclude }: BookingCalendarProps) {
   const { t, i18n } = useTranslation()
@@ -66,6 +68,8 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
   const [open, setOpen] = useState(false)
   const scrollerRef = useRef<HTMLDivElement>(null)
   const [edges, setEdges] = useState({ start: true, end: true })
+  const pillRef = useRef<HTMLSpanElement>(null)
+  useSelectionPill(scrollerRef, pillRef)
 
   const days = Array.from({ length: stripDays }, (_, i) => addDays(minDate, i)).filter((day) => day <= maxDate)
   const months = monthsBetween(minDate, nextMonth(minDate) + '-01').filter((month) => month <= maxDate.slice(0, 7))
@@ -105,14 +109,26 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
     }
   }, [value, valueInStrip])
 
-  // Whether the strip can scroll further to either side, for the arrows.
+  // The first day in view, for the month beside the label: the first one more than half in the strip.
+  const [firstInView, setFirstInView] = useState(minDate)
+
+  // Whether the strip can scroll further to either side, for the arrows, and which day is the first one in view.
   useEffect(() => {
     const scroller = scrollerRef.current
     if (scroller === null) {
       return
     }
-    const update = () =>
+    const update = () => {
       setEdges({ start: scroller.scrollLeft <= 1, end: scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 1 })
+      const left = scroller.getBoundingClientRect().left
+      const first = [...scroller.querySelectorAll<HTMLElement>('[data-day]')].find((button) => {
+        const box = button.getBoundingClientRect()
+        return box.left + box.width / 2 >= left
+      })
+      if (first?.dataset.day !== undefined) {
+        setFirstInView(first.dataset.day)
+      }
+    }
     update()
     scroller.addEventListener('scroll', update, { passive: true })
     const observer = new ResizeObserver(update)
@@ -155,9 +171,15 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
     <div role="group" aria-labelledby={labelId} className="flex min-w-0 flex-col gap-1.5">
       {/* The label, and on the right the arrows (desktops) and "More dates", so the strip has the card's full width. */}
       <div className="flex min-w-0 items-center justify-between gap-2">
-        <Label id={labelId} asChild>
-          <span>{t('booking.bar.date')}</span>
-        </Label>
+        <div className="flex min-w-0 items-baseline gap-2">
+          <Label id={labelId} asChild>
+            <span>{t('booking.bar.date')}</span>
+          </Label>
+          {/* The day names say their month already; this is for the eye. */}
+          <span aria-hidden="true" data-strip-month="" className="truncate text-xs text-muted-foreground">
+            {formatMonth(firstInView, language)}
+          </span>
+        </div>
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -219,7 +241,8 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
         aria-busy={calendar.days.length === 0}
         className="relative -m-1 flex min-w-0 snap-x snap-mandatory scroll-px-1 gap-1 overflow-x-auto overscroll-x-contain p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
-        {days.map((day) => {
+        <span ref={pillRef} aria-hidden="true" data-selection-pill="" className="pointer-events-none absolute top-0 left-0 rounded-xl bg-primary opacity-0" />
+        {days.map((day, index) => {
           const state = status.get(day)
           const chosen = day === value
           // Until its month is loaded only the chosen day can be taken (it is known to be free or was chosen before).
@@ -228,34 +251,44 @@ export function BookingCalendar({ slug, guests, value, minDate, maxDate, onChang
           const weekday = formatWeekday(toDate(day).getDay() || 7, language)
           const number = toDate(day).getDate()
           return (
-            <button
-              key={day}
-              type="button"
-              data-day={day}
-              tabIndex={day === tabDay ? 0 : -1}
-              aria-pressed={chosen}
-              aria-disabled={!selectable}
-              aria-label={dayName(day)}
-              onFocus={() => setFocusDay(day)}
-              onClick={() => selectable && onChange(day)}
-              className={cn(
-                'relative flex h-16 w-11 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl border text-foreground press focus-ring',
-                chosen
-                  ? 'cursor-pointer border-primary bg-primary text-primary-foreground hover:bg-primary-hover'
-                  : selectable
-                    ? 'cursor-pointer border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent'
-                    : 'cursor-not-allowed border-transparent bg-transparent text-muted-foreground',
-                state !== undefined && state !== 'available' && !chosen && 'line-through',
+            <Fragment key={day}>
+              {/* Where the strip reaches the next month: a line with its name, which the snapping and the arrow keys pass by. */}
+              {index > 0 && day.endsWith('-01') && (
+                <span aria-hidden="true" data-month-divider={day.slice(0, 7)} className="flex h-16 shrink-0 items-center gap-1 px-0.5">
+                  <span className="rotate-180 text-xs font-medium text-muted-foreground [writing-mode:vertical-rl]">{formatMonth(day, language, 'short')}</span>
+                  <span className="h-full w-px bg-border" />
+                </span>
               )}
-            >
-              <span className={cn('text-xs', !chosen && 'text-muted-foreground')}>{weekday}</span>
-              <span className="text-base leading-none font-semibold tabular-nums">{number}</span>
-              {/* The mark of an available day. */}
-              <span
-                aria-hidden="true"
-                className={cn('size-1 rounded-full', state === 'available' ? (chosen ? 'bg-primary-foreground' : 'bg-primary') : 'bg-transparent')}
-              />
-            </button>
+              <button
+                type="button"
+                data-day={day}
+                data-chosen={chosen || undefined}
+                tabIndex={day === tabDay ? 0 : -1}
+                aria-pressed={chosen}
+                aria-disabled={!selectable}
+                aria-label={dayName(day)}
+                onFocus={() => setFocusDay(day)}
+                onClick={() => selectable && onChange(day)}
+                className={cn(
+                  // The day's content lies above the selection pill (relative), the other days' surfaces below it.
+                  'flex h-16 w-11 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-xl border text-foreground press focus-ring [&>*]:relative',
+                  chosen
+                    ? 'cursor-pointer border-transparent bg-transparent text-primary-foreground'
+                    : selectable
+                      ? 'cursor-pointer border-input bg-background hover:border-primary hover:bg-primary-50 dark:hover:bg-accent'
+                      : 'cursor-not-allowed border-transparent bg-transparent text-muted-foreground',
+                  state !== undefined && state !== 'available' && !chosen && 'line-through',
+                )}
+              >
+                <span className={cn('text-xs transition-colors', !chosen && 'text-muted-foreground')}>{weekday}</span>
+                <span className="text-base leading-none font-semibold tabular-nums">{number}</span>
+                {/* The mark of an available day. */}
+                <span
+                  aria-hidden="true"
+                  className={cn('size-1 rounded-full transition-colors', state === 'available' ? (chosen ? 'bg-primary-foreground' : 'bg-primary') : 'bg-transparent')}
+                />
+              </button>
+            </Fragment>
           )
         })}
       </div>

@@ -224,8 +224,9 @@
       "freeTimes": "Freie Zeiten",
       "nextFreeDays": "Nächste freie Tage",
       "taken": "{{time}}, ausgebucht",
-      "tablesLeft_one": "Nur noch {{count}} Tisch",
-      "tablesLeft_other": "Nur noch {{count}} Tische",
+      "takenRun": "{{start}}–{{end}} ausgebucht",
+      "tablesLeft_one": "Noch {{count}} Tisch",
+      "tablesLeft_other": "Noch {{count}} Tische",
       "smallerParty_one": "Für {{count}} Person gibt es Zeiten um {{times}}",
       "smallerParty_other": "Für {{count}} Personen gibt es Zeiten um {{times}}"
     },
@@ -368,7 +369,8 @@
     "card": {
       "instantMode": "Sofortige Bestätigung",
       "requestMode": "Anfrage – das Restaurant bestätigt",
-      "freeCancellation": "Kostenlos stornierbar über den Link"
+      "freeCancellation": "Kostenlos stornierbar über den Link",
+      "change": "Ändern"
     },
     "dialog": {
       "stepTable": "Tisch",

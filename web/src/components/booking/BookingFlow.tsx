@@ -95,14 +95,19 @@ function Booking({ slug, restaurant, timeZoneId, inline, className }: Required<O
 
   if (inline) {
     return (
-      <div className={className}>
-        <RememberedBookingNotice slug={slug} newTab className="mb-4" />
-        <ReservationCard ref={cardRef} slug={slug} restaurant={restaurant} flow={flow} />
-        {/* The main buttons stay below the step: a bar at the bottom of the screen does not work in an iframe that grows with its content. */}
+      // A column with gaps, not margins: the card folds with a margin of its own that must add up (ReservationCard).
+      <div className={cn('flex flex-col gap-4', className)}>
+        <RememberedBookingNotice slug={slug} newTab />
+        {/* While the steps are open, the card folds to one line with the choice and "Change". */}
+        <ReservationCard ref={cardRef} slug={slug} restaurant={restaurant} flow={flow} foldable />
+        {/*
+         * The steps rise in below the card. The main buttons stay below the step: a bar at the bottom of the screen does not
+         * work in an iframe that grows with its content.
+         */}
         {flow.dialogOpen && (
           <Card
             data-motion-frame=""
-            className="mt-4 gap-0 overflow-clip py-0 [&_[data-slot=step-actions]]:static [&_[data-slot=step-actions]]:mx-0 [&_[data-slot=step-actions]]:border-0 [&_[data-slot=step-actions]]:bg-transparent [&_[data-slot=step-actions]]:p-0 [&_[data-slot=step-actions]]:pb-6"
+            className="gap-0 overflow-clip py-0 motion-safe:animate-rise [&_[data-slot=step-actions]]:static [&_[data-slot=step-actions]]:mx-0 [&_[data-slot=step-actions]]:border-0 [&_[data-slot=step-actions]]:bg-transparent [&_[data-slot=step-actions]]:p-0 [&_[data-slot=step-actions]]:pb-6"
           >
             <div data-motion-frame-content="">{steps('inline')}</div>
           </Card>
