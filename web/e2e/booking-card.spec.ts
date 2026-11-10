@@ -194,7 +194,8 @@ test.describe('Booking card', () => {
     expect((await timesOf(page, date, guests)).some((slot) => slot.available)).toBe(true)
 
     await page.goto(`/r/zur-linde?guests=${guests}&date=${date}`)
-    const taken = page.getByRole('button', { name: `${timeOfDay(time)}, fully booked`, exact: true })
+    // Alone or within three or more taken times in a row, which are one chip whose name lists them all.
+    const taken = page.getByRole('button', { name: new RegExp(`(^|, )${timeOfDay(time)}, (.+, )?fully booked$`) })
     await expect(taken).toBeDisabled()
     await expect(page.locator(`[data-time-chip="${time}"]`)).toHaveCount(0)
     await shoot(page, 'taken-time', taken)

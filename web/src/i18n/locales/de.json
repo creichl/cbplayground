@@ -224,6 +224,7 @@
       "freeTimes": "Freie Zeiten",
       "nextFreeDays": "Nächste freie Tage",
       "taken": "{{time}}, ausgebucht",
+      "takenRun": "{{start}}–{{end}} ausgebucht",
       "tablesLeft_one": "Nur noch {{count}} Tisch",
       "tablesLeft_other": "Nur noch {{count}} Tische",
       "smallerParty_one": "Für {{count}} Person gibt es Zeiten um {{times}}",
@@ -368,7 +369,8 @@
     "card": {
       "instantMode": "Sofortige Bestätigung",
       "requestMode": "Anfrage – das Restaurant bestätigt",
-      "freeCancellation": "Kostenlos stornierbar über den Link"
+      "freeCancellation": "Kostenlos stornierbar über den Link",
+      "change": "Ändern"
     },
     "dialog": {
       "stepTable": "Tisch",
