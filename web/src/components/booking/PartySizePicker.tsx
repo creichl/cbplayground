@@ -76,6 +76,8 @@ export function PartySizePicker({ value, maxOnlinePartySize, onChange }: PartySi
         ))}
         <Select value={moreChosen ? String(Math.min(value, tooLargeValue)) : ''} onValueChange={(selected) => onChange(Number(selected))}>
           <SelectTrigger
+            // A combobox is not named by its text: the visible "More" as its name, the chosen size as its value.
+            aria-label={t('booking.partySize.more')}
             data-chosen={moreChosen || undefined}
             className={cn(
               'h-11 w-auto shrink-0 snap-start rounded-full px-4 text-sm font-medium press touch:h-11 [&>svg]:text-current',
