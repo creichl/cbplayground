@@ -36,7 +36,10 @@ One file per feature in `web/e2e/`; shared helpers (`signIn`, `settle`, `revealA
   open, the page dimmed, its content fully opaque, the card behind it keeping the booked choice; the header logo never over
   the restaurant's name; the page transition from the start page), `confirmation-polish.spec.ts` (the confirmation's one
   primary action, a request's timeline, the reference code typed in, less motion; "Your reservation" leading with "Today"
-  or "Tomorrow" and turning confirmed by itself).
+  or "Tomorrow" and turning confirmed by itself), `visual-sweep.spec.ts` (every guest screen and its states at 1440, 1024
+  and 390 px, light and dark, in English, German and Serbian Cyrillic, as screenshots `<screen>-<size>-<theme>-<language>`,
+  each checked for sideways scrolling and touch targets below 44 px; the motion of the main flow: everything ends fully
+  visible, the page does not shift, nothing moves with less motion, and its performance trace).
 - Staff side: `sign-in.spec.ts`, `admin.spec.ts` (admin overview), `admin-structure.spec.ts` (sidebar, save bar, leaving
   with unsaved changes), `appearance.spec.ts` (table style on the appearance page), `areas.spec.ts` (area editor: real
   width, tables, archived tables), `pacing.spec.ts`, `reports.spec.ts` (reports page), `superadmin.spec.ts`,
