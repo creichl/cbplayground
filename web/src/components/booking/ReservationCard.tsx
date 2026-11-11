@@ -294,10 +294,12 @@ export function ReservationCardSkeleton({ className }: { className?: string }) {
       </div>
       <div className="flex flex-col gap-1.5">
         <Skeleton className="h-4 w-16" />
-        <div className="flex gap-1.5 overflow-hidden">
-          {Array.from({ length: 9 }, (_, i) => (
+        {/* Like the party sizes: 1–8 and "More", in one row on phones, wrapping from 640 px on. */}
+        <div className="flex gap-1.5 overflow-hidden sm:flex-wrap">
+          {Array.from({ length: 8 }, (_, i) => (
             <Skeleton key={i} className="size-11 shrink-0 rounded-full" />
           ))}
+          <Skeleton className="h-11 w-24 shrink-0 rounded-full" />
         </div>
       </div>
       <div className="flex flex-col gap-1.5">

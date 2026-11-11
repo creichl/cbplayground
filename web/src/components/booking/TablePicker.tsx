@@ -246,7 +246,8 @@ export function TablePicker({ slug, date, time, guests, value, onChange, onConti
               table.shape === 'Round' ? 'rounded-full' : 'rounded-[20%]',
               // The colours of table, chairs and badge change with a short transition.
               '[&_svg_*]:transition-[fill,stroke] [&_svg_*]:duration-(--motion-medium) [&>span_span]:transition-colors [&>span_span]:duration-(--motion-medium)',
-              'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring',
+              // outline-none also sets the outline's style to none (Tailwind 4): the ring needs its style back.
+              'outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid',
               table.available
                 ? 'cursor-pointer transition-[scale] duration-(--motion-fast) hover:z-3 motion-safe:hover:scale-110'
                 : 'cursor-not-allowed',

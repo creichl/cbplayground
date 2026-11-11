@@ -119,7 +119,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
             {restaurant.isPending ? (
               <Skeleton className="h-10 w-30" />
             ) : restaurant.isError ? (
-              <Link to="/" viewTransition className="shrink-0 rounded-lg font-display text-lg text-primary-text focus-ring">
+              <Link to="/" viewTransition className="inline-flex shrink-0 items-center rounded-lg font-display text-lg text-primary-text focus-ring touch:min-h-11">
                 {t('app.name')}
               </Link>
             ) : (
@@ -128,7 +128,7 @@ function RestaurantFrame({ slug }: { slug: string }) {
                 viewTransition
                 aria-label={restaurant.data.name}
                 // Over the cover image without logo, the name stands large in the image itself.
-                className={cn('flex min-w-0 items-center rounded-lg focus-ring', overHero && logoUrl === null && 'invisible')}
+                className={cn('flex min-w-0 items-center rounded-lg focus-ring touch:min-h-11', overHero && logoUrl === null && 'invisible')}
               >
                 {logoUrl !== null ? (
                   <BrandLogo src={logoUrl} height={40} maxWidth={180} accent="var(--primary)" onPhoto={overHero} fallback={<RestaurantName name={restaurant.data.name} />} />

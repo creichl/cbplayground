@@ -26,7 +26,8 @@ function breakable(text: string) {
   ))
 }
 
-const linkClassName = 'rounded-sm underline-offset-4 hover:underline focus-ring'
+// On touch screens 44 px high, the margin taking back what it adds to the row.
+const linkClassName = 'rounded-sm underline-offset-4 hover:underline focus-ring touch:-my-2.5 touch:inline-flex touch:min-h-11 touch:items-center'
 
 /**
  * "Contact" at the end of the restaurant's page: its phone, email and website, one row each with its icon (lucide) in the
