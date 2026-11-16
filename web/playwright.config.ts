@@ -35,7 +35,7 @@ export default defineConfig({
       // The built API (e2e/run.sh builds it first), started directly instead of through "dotnet run", whose own process
       // costs memory the agent container does not have to spare. Its project folder is the content root (seed assets).
       // The preview server forwards /api to http://localhost:5025 (vite.config.ts), so the API has to listen there.
-      command: 'dotnet bin/Debug/net10.0/Cbplayground.Api.dll --reset-demo-data',
+      command: 'dotnet bin/Debug/net11.0/Cbplayground.Api.dll --reset-demo-data',
       cwd: join(import.meta.dirname, '../api/Cbplayground.Api'),
       url: 'http://localhost:5025/api/health',
       reuseExistingServer: false,
