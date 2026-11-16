@@ -126,7 +126,7 @@ This README describes the full product vision.
 
 | Layer | Technology |
 | --- | --- |
-| Backend | .NET 10 Minimal API |
+| Backend | .NET 11 Minimal API |
 | Frontend | React web frontend |
 | Database | SQLite, accessed via EF Core |
 | Staff authentication | ASP.NET Core Identity |
@@ -134,7 +134,7 @@ This README describes the full product vision.
 
 ## Architecture overview
 
-- **API:** a .NET 10 Minimal API.
+- **API:** a .NET 11 Minimal API.
 - **Web:** a React web frontend for all user interfaces: guest booking, admin and front desk. It also serves the guest booking UI that restaurants embed via an iframe snippet.
 - **Database:** a single SQLite database, accessed via EF Core.
 - **Multi-tenancy:** one tenant is one restaurant. All tenants share one database. Every tenant-owned table has a `TenantId` column, and EF Core global query filters keep the data of each tenant isolated.
@@ -145,7 +145,7 @@ This README describes the full product vision.
 
 ```text
 /
-├── api/                          # .NET 10 Minimal API
+├── api/                          # .NET 11 Minimal API
 │   ├── Cbplayground.slnx
 │   ├── dotnet-tools.json         # local tool manifest (dotnet-ef)
 │   ├── Cbplayground.Api/
@@ -168,7 +168,7 @@ The repository contains a first walking skeleton: the API stores restaurants (te
 
 Prerequisites:
 
-- .NET 10 SDK
+- .NET 11 SDK
 - Node.js
 
 ### Run the API

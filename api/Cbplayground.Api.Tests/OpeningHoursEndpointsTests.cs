@@ -255,18 +255,26 @@ public class OpeningHoursEndpointsTests(ApiFactory factory) : IClassFixture<ApiF
         await PutHoursAsync(linde, new PeriodDto(DayOfWeek.Thursday, "11:00", "22:00"));
         await linde.PutAsJsonAsync("/api/admin/holidays/2026-06-04", new HolidayOverrideRequest(true), Token);
 
-        Assert.Empty((await dunav.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Token))!.Periods!);
-        Assert.Equal(new LocationResponse(null, null, null), await dunav.GetFromJsonAsync<LocationResponse>("/api/admin/location", Token));
-        Assert.Empty(await Holidays2026Async(dunav));
+        // The shared database must not keep the override for the tests that run after this one.
+        try
+        {
+            Assert.Empty((await dunav.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Token))!.Periods!);
+            Assert.Equal(new LocationResponse(null, null, null), await dunav.GetFromJsonAsync<LocationResponse>("/api/admin/location", Token));
+            Assert.Empty(await Holidays2026Async(dunav));
 
-        // Dunav's changes stay with Dunav.
-        await SetLocationAsync(dunav, "RS", null);
-        await PutHoursAsync(dunav, new PeriodDto(DayOfWeek.Monday, "08:00", "12:00"));
-        Assert.Equal("not_a_holiday", await ErrorOf(await dunav.PutAsJsonAsync("/api/admin/holidays/2026-06-04", new HolidayOverrideRequest(true), Token)));
+            // Dunav's changes stay with Dunav.
+            await SetLocationAsync(dunav, "RS", null);
+            await PutHoursAsync(dunav, new PeriodDto(DayOfWeek.Monday, "08:00", "12:00"));
+            Assert.Equal("not_a_holiday", await ErrorOf(await dunav.PutAsJsonAsync("/api/admin/holidays/2026-06-04", new HolidayOverrideRequest(true), Token)));
 
-        Assert.Equal([new PeriodDto(DayOfWeek.Thursday, "11:00", "22:00")], (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Token))!.Periods!);
-        Assert.Equal(new LocationResponse("DE", "DE-BY", "Europe/Berlin"), await linde.GetFromJsonAsync<LocationResponse>("/api/admin/location", Token));
-        Assert.True((await Holidays2026Async(linde)).Single(h => h.Date == new DateOnly(2026, 6, 4)).IsOpen);
-        Assert.False((await Holidays2026Async(dunav)).Single(h => h.Date == new DateOnly(2026, 1, 7)).IsOpen);
+            Assert.Equal([new PeriodDto(DayOfWeek.Thursday, "11:00", "22:00")], (await linde.GetFromJsonAsync<OpeningHoursDto>("/api/admin/opening-hours", Token))!.Periods!);
+            Assert.Equal(new LocationResponse("DE", "DE-BY", "Europe/Berlin"), await linde.GetFromJsonAsync<LocationResponse>("/api/admin/location", Token));
+            Assert.True((await Holidays2026Async(linde)).Single(h => h.Date == new DateOnly(2026, 6, 4)).IsOpen);
+            Assert.False((await Holidays2026Async(dunav)).Single(h => h.Date == new DateOnly(2026, 1, 7)).IsOpen);
+        }
+        finally
+        {
+            await linde.PutAsJsonAsync("/api/admin/holidays/2026-06-04", new HolidayOverrideRequest(false), Token);
+        }
     }
 }
